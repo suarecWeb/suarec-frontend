@@ -67,3 +67,21 @@
       @apply bg-background text-foreground;
     }
   }
+
+@layer components {
+  .nav-logo {
+    @apply px-3 py-2 rounded-md text-sm font-bold text-lg;
+  }
+
+  .nav-link {
+    @apply px-3 py-2 rounded-md text-sm font-medium duration-300;
+  }
+
+  .nav-link:hover {
+    @apply text-base;
+  }
+}
+
+.bg-dark-blue {
+  background-color: #1c3d5a;
+}
