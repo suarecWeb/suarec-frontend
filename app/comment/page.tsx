@@ -37,7 +37,7 @@ const CommentPage = () => {
           {comments.map(comment => (
             <TableRow key={comment.id}>
               <TableCell>{comment.id}</TableCell>
-              <TableCell>{comment.content}</TableCell>
+              <TableCell>{comment.description}</TableCell>
               <TableCell>
                 <button onClick={() => handleEdit(comment.id)} className={buttonVariants({ variant: "default" })}>Editar</button>
                 <button onClick={() => handleDelete(comment.id)} className={buttonVariants({ variant: "destructive" })}>Eliminar</button>

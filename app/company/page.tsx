@@ -21,10 +21,10 @@ const CompanyPage = () => {
     updateAll();
   }, []);
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
   };
 
   return (

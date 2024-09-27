@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
@@ -12,11 +14,11 @@ const PublicationPage = () => {
     // setPublications(fetchedPublications);
   }, []);
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     // Implement edit logic
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     // Implement delete logic
   };
 

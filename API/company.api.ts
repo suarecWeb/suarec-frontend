@@ -27,7 +27,7 @@ export class CompanyApi {
                 })
             
             return res.data;
-        }catch(error){
+        } catch (error){
             throw error
         }
     }
