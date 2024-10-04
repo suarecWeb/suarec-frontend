@@ -16,6 +16,6 @@ export interface User {
   created_at: Date;
   role: Role;
   company: Company | null;
-  publications: Publication[];
-  comments: Comment[];
+  publications: Publication[] | null;
+  comments: Comment[] | null;
 }

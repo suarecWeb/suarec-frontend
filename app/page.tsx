@@ -2,10 +2,13 @@ import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link";
 import buildingImage from "@/public/building.jpg"; // Asegúrate de tener esta imagen en tu carpeta public
+import Navbar from "@/components/navbar";
 
 export default function Home() {
   return (
-    <main>
+    <>
+    <Navbar/>
+    <main className="bg-secondary">
       <div className="relative h-screen">
         <div className="absolute inset-0">
           <Image 
@@ -32,5 +35,6 @@ export default function Home() {
         </div>
       </div>
     </main>
+    </>
   );
 }

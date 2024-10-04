@@ -82,6 +82,34 @@
   }
 }
 
-.bg-dark-blue {
-  background-color: #1c3d5a;
+.bg-primary {
+  background-color: #002169;
+}
+
+.bg-secondary {
+  background-color: #e5eafc;
+}
+
+.bg-primary-darker {
+  background-color: #001950;
+}
+
+.text-primary {
+  color: #e5eafc;
+}
+
+.text-secondary {
+  color: #002169;
+}
+
+.border-primary {
+  border-color: #c6d1f5;
+}
+
+.hover-primary:hover {
+  background-color: #001950;
+}
+
+.hover-secondary:hover {
+  background-color: #f2f5ff;
 }

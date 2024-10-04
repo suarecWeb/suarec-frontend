@@ -1,9 +1,8 @@
 import * as z from 'zod';
 
-
 export const RegisterSchema = z.object({
     email: z.string().email({
-        message: 'Por favor ingresa un correo electronico valido'
+        message: 'Ingresa un correo electronico válido'
     }),
     password: z.string().min(6,{
 
@@ -11,8 +10,14 @@ export const RegisterSchema = z.object({
     }),
     name: z.string().min(2,{
         message: 'El nombre es requerido'
-    })
-    
+    }),
+    genre: z.string(),
+    cellphone: z.string().min(3, {
+        message: 'Escribe un número de teléfono válido'
+    }),
+    born_at: z.date(),
+    role: z.string(),
+    cv_url: z.string()
 })
 
 export const LoginSchema = z.object({

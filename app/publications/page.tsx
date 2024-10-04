@@ -1,8 +1,11 @@
 // app/publication/page.tsx
 import Link from "next/link";
+import Navbar from "@/components/navbar";
 
 export default function PublicationPage() {
   return (
+    <>
+    <Navbar />
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Publicaciones</h1>
       <p className="mb-4">
@@ -32,5 +35,6 @@ export default function PublicationPage() {
         </tbody>
       </table>
     </main>
+    </>
   );
 }

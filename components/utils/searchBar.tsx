@@ -18,9 +18,9 @@ const SearchBar = () => {
         placeholder="Buscar..." 
         value={query} 
         onChange={(e) => setQuery(e.target.value)}
-        className="w-64"
+        className="w-64 bg-secondary"
       />
-      <Button onClick={handleSearch}>Buscar</Button>
+      <Button onClick={handleSearch} className='bg-primary-darker'>Buscar</Button>
     </div>
   );
 };

@@ -1,8 +1,11 @@
 // app/company/page.tsx
 import Link from "next/link";
+import Navbar from "@/components/navbar";
 
 export default function CompanyPage() {
   return (
+    <>
+    <Navbar />
     <main className="p-8">
       <h1 className="text-2xl font-bold mb-4">Compañías</h1>
       <p className="mb-4">
@@ -32,5 +35,6 @@ export default function CompanyPage() {
         </tbody>
       </table>
     </main>
+    </>
   );
 }

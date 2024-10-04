@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
 import Link from "next/link";
 import { Comment } from "@/interfaces/comment.interface";
+import Navbar from "@/components/navbar";
 
 const CommentPage = () => {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -22,6 +23,8 @@ const CommentPage = () => {
   };
 
   return (
+    <>
+    <Navbar />
     <main className="flex min-h-screen flex-col items-center gap-5 p-24">
       <h1 className="text-2xl font-bold">Comentarios</h1>
       <Link href="/comment/create" className={buttonVariants({ variant: "default" })}>Crear Comentario</Link>
@@ -47,6 +50,7 @@ const CommentPage = () => {
         </TableBody>
       </Table>
     </main>
+    </>
   );
 };
 

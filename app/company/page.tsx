@@ -6,6 +6,7 @@ import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/u
 import Link from "next/link";
 import { Company } from "@/interfaces/company.interface";
 import { CompanyApi } from "@/API/company.api";
+import Navbar from "@/components/navbar";
 
 const CompanyPage = () => {
     const companyApi: CompanyApi = new CompanyApi('https://localhost/3001')
@@ -28,6 +29,8 @@ const CompanyPage = () => {
   };
 
   return (
+    <>
+    <Navbar />
     <main className="flex min-h-screen flex-col items-center gap-5 p-24">
       <h1 className="text-2xl font-bold">Compañías</h1>
       <Link href="/company/create" className={buttonVariants({ variant: "default" })}>Crear Compañía</Link>
@@ -53,6 +56,7 @@ const CompanyPage = () => {
         </TableBody>
       </Table>
     </main>
+    </>
   );
 };
 

@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
 import Link from "next/link";
 import { Publication } from "@/interfaces/publication.interface";
+import Navbar from "@/components/navbar";
 
 const PublicationPage = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -23,6 +24,8 @@ const PublicationPage = () => {
   };
 
   return (
+    <>
+    <Navbar />
     <main className="flex min-h-screen flex-col items-center gap-5 p-24">
       <h1 className="text-2xl font-bold">Publicaciones</h1>
       <Link href="/publication/create" className={buttonVariants({ variant: "default" })}>Crear Publicación</Link>
@@ -48,6 +51,7 @@ const PublicationPage = () => {
         </TableBody>
       </Table>
     </main>
+    </>
   );
 };
 

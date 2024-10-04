@@ -5,7 +5,7 @@ import { IconExclamationCircle } from "@tabler/icons-react";
 import { IconCheck } from "@tabler/icons-react";
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLogin } from "@/hooks/auth/useLogin";
+import { useLogin } from "@/hooks/auth/use-login";
 import Cookies from "js-cookie";
 import Link from "next/link";
 
@@ -34,36 +34,44 @@ const FormLogin = () => {
     setSuccess("");
 
     setIsPending(() => {
+      console.log("haciendo login")
+
       login(values.email, values.password).then((data) => {
         if (data?.error) {
           setError(data.error);
           return;
         }
+
+        router.push("/");
+        
+        /* MANEJO ROL ADMIN
         const currentUser = Cookies.get("currentUser");
+
         const role = currentUser
           ? JSON.parse(currentUser).role
           : currentUser
           ? JSON.parse(String(currentUser)).role
           : null;
+
         if (role === "ADMIN") {
           router.push("/admin");
         } else {
           router.push("/");
-        }
+        }*/
       });
     });
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex gap-3 flex-col w-full">
+      <form onSubmit={handleSubmit} className="flex gap-3 flex-col w-full text-secondary">
         <label htmlFor="email">Correo electrónico</label>
         <input
           id="email"
           name="email"
           type="email"
           placeholder="jhonDoe@gmail.com"
-          className="w-full p-[10px] bg-primary border border-secondary rounded-lg"
+          className="w-full p-[10px] bg-transparent border border-primary rounded-lg"
           disabled={isPending}
           required
         />
@@ -73,7 +81,7 @@ const FormLogin = () => {
           name="password"
           type="password"
           placeholder="*******"
-          className="w-full p-[10px] bg-primary border border-secondary rounded-lg"
+          className="w-full p-[10px] bg-transparent border border-primary rounded-lg"
           disabled={isPending}
           required
         />
@@ -92,18 +100,20 @@ const FormLogin = () => {
         )}
         <button
           type="submit"
-          className="mt-2 bg-white/80 hover:bg-white text-[#1c1c3c] transition-all font-bold transition-all w-full p-[10px] rounded-3xl"
+          className="mt-2 bg-primary text-primary hover-primary transition-all font-bold transition-all w-full p-[10px] rounded-3xl"
           disabled={isPending}
         >
           Ingresar
         </button>
         <button
-          className="mt-2 bg-transparent border-2 border-white/80 hover:bg-[#14142c] text-white/80 transition-all font-bold transition-all w-full p-[10px] rounded-3xl"
+          className="mt-2 text-secondary bg-transparent hover-secondary border-2 border-primary text-white/80 transition-all transition-all w-full p-[10px] rounded-3xl"
           disabled={isPending}
           onClick={() => router.push("/")}
         >
           Volver al inicio
         </button>
+        {/*
+        OAUTH
         <div className="flex justify-center items-center gap-2">
           <div className="bg-secondary w-full h-[2px]"></div>
           <span>O</span>
@@ -116,6 +126,7 @@ const FormLogin = () => {
         >
           <IconBrandGoogleFilled className="text-primary" />
         </button>
+        */}
       </form>
     </>
   );

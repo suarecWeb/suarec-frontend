@@ -4,7 +4,7 @@ export class AuthApi {
 protected readonly instance: AxiosInstance;
   public constructor(url: string) {
     this.instance = axios.create({
-      baseURL: url,
+      baseURL: "https://localhost:3001",
       timeout: 30000,
       timeoutErrorMessage: "Time out!",
       headers: {
@@ -16,13 +16,16 @@ protected readonly instance: AxiosInstance;
 
   login = async(email:string, password:string) =>{
     try{
+      console.log(email);
+      console.log(password);
         const res = await this.instance
             .post('/auth/login',{
                 email: email,
                 password: password
             })
-        console.log(res.data)
-        return res.data
+
+      console.log(JSON.stringify(res))
+      return res.data
     }catch(error){
         throw error
     }
