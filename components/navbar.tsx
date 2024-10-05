@@ -5,25 +5,10 @@ import Cookies from "js-cookie";
 import { NavbarRole } from './navbar-role';
 
 const Navbar = () => {
-  let id: number | null = null;
-  const currentUser = Cookies.get("currentUser");
-
-  if (currentUser) {
-    try {
-      const parsedUser = JSON.parse(currentUser);
-      id = parsedUser.id;
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
-    }
-  }
-
   return (
     <nav className="bg-primary text-primary py-4">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className='nav-logo text-2xl font-bold'>SUAREC</Link>
-
-        
-
         <div className="flex-1 flex justify-center space-x-4">
             <SearchBar />
           <Link href="/users" className="nav-link">Usuarios</Link>

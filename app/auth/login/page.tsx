@@ -7,7 +7,7 @@ const Register = () => {
     <>
       <h1 className="text-4xl text-secondary text-center w-full font-bold">Iniciar sesión</h1>
       <FormLogin />
-      <a href="/auth/register" className="text-secondary mx-auto">
+      <a href="/auth/select-type" className="text-secondary mx-auto">
         ¿Aún no tienes cuenta?{" "}
         <span className="text-success underline text-secondary">Registrarse</span>
       </a>

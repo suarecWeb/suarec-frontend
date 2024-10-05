@@ -1,9 +1,7 @@
 "use client";
 
-import { IconBrandGoogleFilled, IconCheck } from "@tabler/icons-react";
-import { IconExclamationCircle } from "@tabler/icons-react";
-import { useState, useTransition } from "react";
-import { uploadImageCloudinary } from "@/cloudinary";
+import { IconCheck, IconExclamationCircle } from "@tabler/icons-react";
+import { useState, useTransition, useEffect } from "react";
 import { useRegister } from "@/hooks/auth/use-register";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -12,70 +10,80 @@ const FormRegister = () => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
+  const [userType, setUserType] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>("");
 
   const { register } = useRegister();
   const router = useRouter();
 
+  // Revisar el tipo de usuario almacenado en localStorage
+  useEffect(() => {
+    const storedUserType = localStorage.getItem("user-type");
+    console.log('user type: ' + storedUserType);
+    setUserType(storedUserType);
+  }, []);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
-
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-
-      reader.onload = () => {
-        setImagePreview(reader.result);
-      };
-
+      reader.onload = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
-
     const formData = new FormData(event.currentTarget);
 
-    const imageFile = formData.get("input_file") as File;
-    let [status, data] = [false, ""];
-
-    /*
-    if (imageFile) {
-      [status, data] = await uploadImageCloudinary(imageFile);
-    }*/
-
-    // Obtener los valores de los campos del formulario
     const values = {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       name: formData.get("fullname") as string,
-      photo_url: data || "",
+      photo_url: "", // Aquí puedes agregar lógica para la foto si la subes
       cellphone: formData.get("cellphone") as string,
-      genre: formData.get("genre") as string, // Si no se puede convertir a número, se usa 0
-      born_at: new Date(formData.get("born_at") as string), // Convierte la cadena a objeto Date
-      role: "Company", // Asignar un valor fijo para el rol
-      cv_url: "example.url.cv", // Usar la URL fija como solicitaste
+      genre: formData.get("genre") as string,
+      born_at: new Date(formData.get("born_at") as string),
+      role: userType || "Trabajador", // Rol basado en el userType de localStorage
+      cv_url: "",
+      company: {
+        nit: "",
+        name: "",
+        email: "",
+        cellphone: "",
+        born_at: new Date(),
+      }
     };
+
+    // Añadir campos adicionales según el tipo de usuario
+    if (userType === "trabajador") {
+      values["cv_url"] = formData.get("cv_url") as string;
+    } else if (userType === "compania") {
+      values["company"] = {
+        nit: formData.get("nit") as string,
+        name: formData.get("company_name") as string,
+        email: formData.get("company_email") as string,
+        cellphone: formData.get("company_cellphone") as string,
+        born_at: new Date(formData.get("company_born_at") as string),
+      };
+    }
 
     setError("");
     setSuccess("");
 
     startTransition(() => {
-      console.log("calling use register...");
-
       register(
         values.name,
         values.password,
         values.email,
-        values.cv_url,
+        values.cv_url || "", // Solo pasa cv_url si es Trabajador
         values.cellphone,
         values.genre,
         values.born_at,
-        values.role
+        values.role,
       )
         .then((data: any) => {
-          console.log("data received from use register hook... :" , data)
           setError(data.error);
           setSuccess(data.success);
           if (data?.success) {
@@ -90,35 +98,10 @@ const FormRegister = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-3 flex-col w-full">
-      {/* A JSX comment
+      {userType == "trabajador" || userType == "empleador" ? 
       
-      <label htmlFor="input_file" id="drop-area" className="flex-grow">
-        <input
-          type="file"
-          id="input_file"
-          name="input_file"
-          accept=".jpg"
-          hidden
-          onChange={handleFileChange}
-        />
-        <div
-          className="img-view w-[150px] h-full min-h-[150px] mx-auto border-2 border-black border-dashed rounded-full flex justify-center items-center flex-col gap-3 bg-gray-100 transition-all duration-200 ease-linear bg-cover"
-          style={{ backgroundImage: `url(${imagePreview})` }}
-        ></div>
-        {imagePreview ? (
-          <p className="cursor-pointer hover-secondary transition-all border-[3px] text-center mt-5 py-2 bg-secondary text-secondary rounded-3xl w-auto">
-            Cambiar imagen
-          </p>
-        ) : (
-          <p className="cursor-pointer hover-secondary transition-all border-[3px] border-primary text-center mt-5 py-2 bg-secondary text-secondary rounded-3xl w-auto">
-            Subir imagen 
-          </p>
-        )}
-      </label>
-      
-      */}
-
-      <label htmlFor="fullname">Nombre completo</label>
+        <>
+          <label htmlFor="fullname">Nombre completo</label>
       <input
         id="fullname"
         name="fullname"
@@ -128,7 +111,7 @@ const FormRegister = () => {
         disabled={isPending}
         required
       />
-      
+
       <label htmlFor="email">Correo electrónico</label>
       <input
         id="email"
@@ -139,7 +122,7 @@ const FormRegister = () => {
         disabled={isPending}
         required
       />
-      
+
       <label htmlFor="password">Contraseña</label>
       <input
         id="password"
@@ -150,39 +133,113 @@ const FormRegister = () => {
         disabled={isPending}
         required
       />
-      
+
       <label htmlFor="genre">Sexo</label>
       <input
         id="genre"
         name="genre"
-        type="text" // Cambié de 'genre' a 'text' para evitar confusiones
+        type="text"
         placeholder="M - F"
         className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
         disabled={isPending}
         required
       />
-      
+
       <label htmlFor="cellphone">Teléfono</label>
       <input
         id="cellphone"
         name="cellphone"
-        type="tel" // Cambié de 'cellphone' a 'tel' para que sea un tipo de input correcto
+        type="tel"
         placeholder="123456789"
         className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
         disabled={isPending}
         required
       />
-      
+
       <label htmlFor="born_at">Fecha de nacimiento</label>
       <input
         id="born_at"
         name="born_at"
-        type="date" // Cambié el tipo a 'date' para permitir seleccionar la fecha
+        type="date"
         className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
         disabled={isPending}
         required
-      />
+      />  
 
+        {/* Si es Trabajador, muestra el campo de URL de CV */}
+      {userType === "trabajador" && (
+        <>
+          <label htmlFor="cv_url">URL de CV</label>
+          <input
+            id="cv_url"
+            name="cv_url"
+            type="url"
+            placeholder="https://mi-cv.com"
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+        </>
+      )}
+        </>
+        :
+
+        <>
+          <label htmlFor="nit">NIT</label>
+          <input
+            id="nit"
+            name="nit"
+            type="text"
+            placeholder="1234567890"
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+
+          <label htmlFor="company_name">Nombre de la compañía</label>
+          <input
+            id="company_name"
+            name="company_name"
+            type="text"
+            placeholder="Mi Empresa S.A."
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+
+          <label htmlFor="company_email">Correo electrónico de la compañía</label>
+          <input
+            id="company_email"
+            name="company_email"
+            type="email"
+            placeholder="empresa@gmail.com"
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+
+          <label htmlFor="company_cellphone">Teléfono de la compañía</label>
+          <input
+            id="company_cellphone"
+            name="company_cellphone"
+            type="tel"
+            placeholder="123456789"
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+
+          <label htmlFor="company_born_at">Fecha de fundación</label>
+          <input
+            id="company_born_at"
+            name="company_born_at"
+            type="date"
+            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
+            disabled={isPending}
+            required
+          />
+        </>
+    }
       {error && (
         <div className="text-white font-bold bg-red-500 mt-2 rounded-lg px-2 py-1 flex gap-2">
           <IconExclamationCircle /> {error}
@@ -199,6 +256,12 @@ const FormRegister = () => {
         disabled={isPending}
       >
         Crear cuenta
+      </button>
+      <button
+        className="mt-2 text-secondary bg-transparent hover-secondary border-2 border-primary text-white/80 transition-all transition-all w-full p-[10px] rounded-3xl"
+        onClick={() => router.push("/auth/select-type")}
+      >
+        Volver
       </button>
     </form>
   );

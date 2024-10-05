@@ -73,6 +73,7 @@
     @apply px-3 py-2 rounded-md text-sm font-bold text-lg;
   }
 
+  
   .nav-link {
     @apply px-3 py-2 rounded-md text-sm font-medium duration-300;
   }
