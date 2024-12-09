@@ -2,6 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import buildingImage from "@/public/building.jpg"; // Asegúrate de tener esta imagen en la carpeta public
+import logoImage from "@/public/CafeYFogon.png"
+import logoImageDos from "@/public/veens.png"
+import logoImageTres from "@/public/enfacol.png"
+import logoImageCuatro from "@/public/OlimpoCocktail.png"
 
 export default function Home() {
   return (
@@ -38,34 +42,41 @@ export default function Home() {
         </div>
 
         {/* Sección de Alianzas */}
-        <section className="py-16 bg-white text-center">
+        <section className="py-16 bg-gradient-to-r from-blue-950 to-cyan-400 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Nuestras alianzas</h2>
           <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
             Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales.
           </p>
           <div className="flex justify-center items-center gap-8 flex-wrap">
-            {/* Logos de empresas 
+            {/* Logos de empresas */}
             <Image
-              src="/logo1.png"
+              src={logoImage}
               alt="Empresa 1"
-              width={100}
-              height={100}
+              width={150}
+              height={150}
               className="object-contain"
             />
             <Image
-              src="/logo2.png"
+              src={logoImageDos}
               alt="Empresa 2"
-              width={100}
-              height={100}
+              width={150}
+              height={150}
               className="object-contain"
             />
             <Image
-              src="/logo3.png"
+              src={logoImageTres}
               alt="Empresa 3"
-              width={100}
-              height={100}
+              width={150}
+              height={150}
               className="object-contain"
-            />*/}
+            />
+            <Image
+              src={logoImageCuatro}
+              alt="Empresa 4"
+              width={150}
+              height={150}
+              className="object-contain"
+            />
           </div>
         </section>
 
