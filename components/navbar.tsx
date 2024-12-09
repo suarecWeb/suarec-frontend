@@ -11,15 +11,16 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-primary text-primary py-4">
+    <nav className="bg-gradient-to-r from-blue-950 to-cyan-400 text-white py-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center relative">
-        <Link href="/" className="nav-logo text-2xl font-bold">
-          SUAREC
-        </Link>
+      <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
+      SUAREC
+      </Link>
 
-{/* menú hamburguesa*/}
+
+        {/* Menú hamburguesa */}
         <button
-          className="lg:hidden block text-primary"
+          className="lg:hidden block text-white"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -39,14 +40,14 @@ const Navbar = () => {
           </svg>
         </button>
 
-{/*  Menú desplegable (pantallas pequeñas) */}
+        {/* Menú desplegable (pantallas pequeñas) */}
         <div
-          className={`fixed top-0 left-0 w-full h-full bg-primary z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 w-full h-full bg-gradient-to-r from-blue-901 to-cyan-400 bg-opacity-90 z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
             isMenuOpen ? "translate-x-0" : "-translate-x-full"
           } lg:static lg:translate-x-0 lg:flex lg:flex-row lg:items-center lg:space-x-4 lg:h-auto`}
         >
           <button
-            className="absolute top-4 right-4 text-primary lg:hidden"
+            className="absolute top-4 right-4 text-white lg:hidden"
             onClick={() => setIsMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -80,7 +81,8 @@ const Navbar = () => {
             Compañías
           </Link>
         </div>
-{/* lo q haga el navbar role*/}
+        
+        {/* NavbarRole */}
         <NavbarRole isMobile={false} section="logIn" />
       </div>
     </nav>
