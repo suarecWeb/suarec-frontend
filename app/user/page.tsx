@@ -1,57 +1,31 @@
-'use client'
-import { useState, useEffect } from "react";
-import { buttonVariants } from "@/components/ui/button";
-import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
-import Link from "next/link";
-import { User } from "@/interfaces/user.interface";
-import Navbar from "@/components/navbar";
+import { useEffect, useState } from "react";
+import UserService from "@/services/UsersService";
 
-const UserPage = () => {
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  created_at: Date;
+  role: string;
+}
+
+const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // Fetch users from API
-    // setUsers(fetchedUsers);
+    UserService.getUsers().then((res: any) => setUsers(res.data));
   }, []);
 
-  const handleEdit = (id: string) => {
-    // Implement edit logic
-  };
-
-  const handleDelete = (id: string) => {
-    // Implement delete logic
-  };
-
   return (
-    <>
-    <Navbar />
-    <main className="flex min-h-screen flex-col items-center gap-5 p-24">
-      <h1 className="text-2xl font-bold">Usuarios</h1>
-      <Link href="/user/create" className={buttonVariants({ variant: "default" })}>Crear Usuario</Link>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>ID</TableCell>
-            <TableCell>Nombre</TableCell>
-            <TableCell>Acciones</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map(user => (
-            <TableRow key={user.id}>
-              <TableCell>{user.id}</TableCell>
-              <TableCell>{user.name}</TableCell>
-              <TableCell>
-                <button onClick={() => handleEdit(user.id)} className={buttonVariants({ variant: "default" })}>Editar</button>
-                <button onClick={() => handleDelete(user.id)} className={buttonVariants({ variant: "destructive" })}>Eliminar</button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </main>
-    </>
+    <div className="p-4 bg-white shadow rounded-lg">
+      <h2 className="text-xl font-semibold text-blue-600">Users</h2>
+      <ul>
+        {users.map((user) => (
+          <li key={user.id} className="border-b p-2">{user.name} - {user.email}</li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
-export default UserPage;
+export default UsersPage;
