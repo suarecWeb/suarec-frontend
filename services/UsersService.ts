@@ -7,8 +7,8 @@ export interface User {
   email: string;
   password?: string;
   name: string;
-  created_at: Date;
-  roles: any[];
+  created_at?: Date;
+  roles?: string[] | undefined;
 }
 
 const getUsers = () => api.get<User[]>(baseURL);
