@@ -1,5 +1,6 @@
 "use client";
 
+import { Role } from "@/interfaces/role.interface";
 import RolesService from "@/services/RolesService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,7 +44,7 @@ const UserTypeForm = () => {
           Selecciona una opción
         </option>
         { roles.map((role) => 
-          role.name == 'ADMIN' ? <></> : <option value={role.name}>{role.name == 'PERSON' ? 'Persona' : 'Empresa'}</option>
+          role.name == 'ADMIN' ? <></> : <option value={role.name} key={role.name}>{role.name == 'PERSON' ? 'Persona' : 'Empresa'}</option>
         ) }
       </select>
 

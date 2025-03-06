@@ -8,8 +8,8 @@ export interface User {
   email: string;
   password?: string;
   name: string;
-  created_at: Date;
-  roles: any[];
+  created_at?: Date | undefined;
+  roles?: any[];
 }
 
 const UsersPage = () => {
@@ -50,7 +50,7 @@ const UsersPage = () => {
             <li key={user.id} className="p-4 bg-gray-800 rounded-lg shadow">
               <p className="text-blue-300">{user.name}</p>
               <p className="text-sm text-gray-400">Email: {user.email}</p>
-              <p className="text-sm text-gray-400">Rol: {user.roles[0].name}</p>
+              <p className="text-sm text-gray-400">Rol: {user.roles? user.roles[0].name : 'No Rol'}</p>
               <div className="mt-2 space-x-2">
                 <button
                   onClick={() => alert(`Editar usuario con ID: ${user.id}`)}
