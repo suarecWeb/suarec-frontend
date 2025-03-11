@@ -1,40 +1,79 @@
-// app/company/page.tsx
-import Link from "next/link";
+'use client';
+import { useEffect, useState } from "react";
+import CompanyService from "@/services/CompanyService";
 import Navbar from "@/components/navbar";
 
-export default function CompanyPage() {
+interface Company {
+  id?: string;
+  nit: string;
+  name: string;
+  born_at: Date;
+  created_at: Date;
+  email: string;
+  cellphone: string;
+  userId: string;
+}
+
+const CompaniesPage = () => {
+  const [companies, setCompanies] = useState<Company[]>([]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = () => {
+    CompanyService.getCompanies()
+      .then((res) => setCompanies(res.data))
+      .catch((err) => console.error("Error al obtener empresas:", err));
+  };
+
+  const handleDelete = (id: string) => {
+    CompanyService.deleteCompany(id)
+      .then(() => {
+        alert("Empresa eliminada correctamente");
+        fetchCompanies(); // Recargar la lista de empresas
+      })
+      .catch((err) => console.error("Error al eliminar empresa:", err));
+  };
+
   return (
     <>
-    <Navbar />
-    <main className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Compañías</h1>
-      <p className="mb-4">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-      </p>
-      <Link href="/company/create" className="bg-blue-500 text-white px-4 py-2 rounded-md">
-        Crear
-      </Link>
-      <table className="w-full mt-8 border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th className="border border-gray-300 px-4 py-2">Nombre</th>
-            <th className="border border-gray-300 px-4 py-2">Ubicación</th>
-            <th className="border border-gray-300 px-4 py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Aquí se mapearán los registros de las compañías */}
-          <tr>
-            <td className="border border-gray-300 px-4 py-2">Compañía 1</td>
-            <td className="border border-gray-300 px-4 py-2">Ubicación 1</td>
-            <td className="border border-gray-300 px-4 py-2">
-              <button className="bg-yellow-500 text-white px-2 py-1 rounded-md mr-2">Editar</button>
-              <button className="bg-red-500 text-white px-2 py-1 rounded-md">Eliminar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </main>
+      <Navbar />
+      <div className="p-4 bg-gray-900 text-white min-h-screen">
+        <h2 className="text-2xl font-semibold text-blue-400 mb-4">Empresas</h2>
+        <button
+          onClick={() => alert("Crear nueva empresa")}
+          className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Crear Empresa
+        </button>
+        <ul className="space-y-2">
+          {companies.map((company) => (
+            <li key={company.id} className="p-4 bg-gray-800 rounded-lg shadow">
+              <p className="text-blue-300">{company.name}</p>
+              <p className="text-sm text-gray-400">NIT: {company.nit}</p>
+              <p className="text-sm text-gray-400">Email: {company.email}</p>
+              <p className="text-sm text-gray-400">Teléfono: {company.cellphone}</p>
+              <div className="mt-2 space-x-2">
+                <button
+                  onClick={() => alert(`Editar empresa con ID: ${company.id}`)}
+                  className="px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(company.id+'')}
+                  className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </>
   );
-}
+};
+
+export default CompaniesPage;

@@ -1,15 +1,22 @@
 "use client";
 
+import { Role } from "@/interfaces/role.interface";
+import RolesService from "@/services/RolesService";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const UserTypeForm = () => {
   const [userType, setUserType] = useState<string | null>(null);
   const router = useRouter();
+  const [roles, setRoles] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setUserType(event.target.value);
   };
+
+  useEffect(() => {
+    RolesService.getRoles().then((res: any) => setRoles(res.data));
+  }, []);
 
   const handleNext = () => {
     if (userType) {
@@ -36,9 +43,9 @@ const UserTypeForm = () => {
         <option value="" disabled>
           Selecciona una opción
         </option>
-        <option value="empleador">Empleador</option>
-        <option value="trabajador">Trabajador</option>
-        <option value="compania">Compañía</option>
+        { roles.map((role) => 
+          role.name == 'ADMIN' ? <></> : <option value={role.name} key={role.name}>{role.name == 'PERSON' ? 'Persona' : 'Empresa'}</option>
+        ) }
       </select>
 
       <button
