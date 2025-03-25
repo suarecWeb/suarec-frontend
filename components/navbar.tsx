@@ -1,5 +1,3 @@
-//components/navbar
-//para que use lo que sea que usas para las rutas
 "use client";
 
 import Link from "next/link";
@@ -9,15 +7,14 @@ import { NavbarRole } from "./navbar-role";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  
   return (
-    <nav className="bg-gradient-to-r from-blue-950 to-cyan-400 text-white py-4 shadow-md">
+    <nav className="bg-[#097EEC] text-white py-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center relative">
-      <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
-      SUAREC
-      </Link>
-
-
+        <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
+          SUAREC
+        </Link>
+        
         {/* Menú hamburguesa */}
         <button
           className="lg:hidden block text-white"
@@ -39,10 +36,10 @@ const Navbar = () => {
             ></path>
           </svg>
         </button>
-
+        
         {/* Menú desplegable (pantallas pequeñas) */}
         <div
-          className={`fixed top-0 left-0 w-full h-full bg-gradient-to-r from-blue-901 to-cyan-400 bg-opacity-90 z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 w-full h-full bg-[#2171BC] bg-opacity-90 z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
             isMenuOpen ? "translate-x-0" : "-translate-x-full"
           } lg:static lg:translate-x-0 lg:flex lg:flex-row lg:items-center lg:space-x-4 lg:h-auto`}
         >
@@ -66,18 +63,18 @@ const Navbar = () => {
               ></path>
             </svg>
           </button>
-
+          
           <SearchBar />
-          <Link href="/users" className="nav-link text-xl my-2 lg:my-0">
+          <Link href="/users" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
             Usuarios
           </Link>
-          <Link href="/comments" className="nav-link text-xl my-2 lg:my-0">
+          <Link href="/comments" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
             Comentarios
           </Link>
-          <Link href="/publications" className="nav-link text-xl my-2 lg:my-0">
+          <Link href="/publications" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
             Publicaciones
           </Link>
-          <Link href="/companies" className="nav-link text-xl my-2 lg:my-0">
+          <Link href="/companies" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
             Compañías
           </Link>
         </div>
