@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import PublicationService, { PaginationParams } from "@/services/PublicationsService";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import { Pagination } from "@/components/ui/pagination";
+import {
+  Pagination,
+} from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
+import { PlusCircle, Edit, Trash2, AlertCircle, Search, Calendar, Eye, Tag } from 'lucide-react';
 
 interface Publication {
   id?: string;
@@ -22,6 +25,7 @@ const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -54,83 +58,188 @@ const PublicationsPageContent = () => {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await PublicationService.deletePublication(id);
-      alert("Publicación eliminada correctamente");
-      // Recargar la página actual después de eliminar
-      fetchPublications({ page: pagination.page, limit: pagination.limit });
-    } catch (err) {
-      console.error("Error al eliminar publicación:", err);
+    if (confirm("¿Estás seguro de que deseas eliminar esta publicación?")) {
+      try {
+        await PublicationService.deletePublication(id);
+        // Recargar la página actual después de eliminar
+        fetchPublications({ page: pagination.page, limit: pagination.limit });
+      } catch (err) {
+        console.error("Error al eliminar publicación:", err);
+        setError("Error al eliminar la publicación");
+      }
     }
+  };
+
+  const filteredPublications = searchTerm 
+    ? publications.filter(pub => 
+        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (pub.description && pub.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        pub.category.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : publications;
+
+  const formatDate = (dateString: Date) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   return (
     <>
       <Navbar />
-      <div className="p-4 bg-gray-900 text-white min-h-screen">
-        <h2 className="text-2xl font-semibold text-blue-400 mb-4">Publicaciones</h2>
-        <Link href={'/publications/create'}>
-          <button
-            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Crear Publicación
-          </button>
-        </Link>
-
-        {loading && <p className="text-center py-4">Cargando publicaciones...</p>}
-        
-        {error && (
-          <div className="bg-red-800 border border-red-900 text-white px-4 py-3 rounded mb-4">
-            {error}
+      <div className="bg-gray-50 min-h-screen pb-12">
+        {/* Header */}
+        <div className="bg-[#097EEC] text-white py-8">
+          <div className="container mx-auto px-4">
+            <h1 className="text-3xl font-bold">Publicaciones</h1>
+            <p className="mt-2 text-blue-100">Gestiona todas las publicaciones de la plataforma</p>
           </div>
-        )}
+        </div>
 
-        <ul className="space-y-2">
-          {publications.length > 0 ? (
-            publications.map((publication) => (
-              <li key={publication.id} className="p-4 bg-gray-800 rounded-lg shadow">
-                <p className="text-blue-300">{publication.title}</p>
-                <p className="text-sm text-gray-400">{publication.description}</p>
-                <p className="text-sm text-gray-400">Categoría: {publication.category}</p>
-                <p className="text-sm text-gray-400">Visitas: {publication.visitors || 0}</p>
-                <div className="mt-2 space-x-2">
-                  <button
-                    onClick={() => alert(`Editar publicación con ID: ${publication.id}`)}
-                    className="px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(publication.id+'')}
-                    className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                  >
-                    Eliminar
-                  </button>
+        {/* Content */}
+        <div className="container mx-auto px-4 -mt-6">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            {/* Actions Bar */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
                 </div>
-              </li>
-            ))
-          ) : (
-            <li className="p-4 bg-gray-800 rounded-lg shadow text-center">
-              No hay publicaciones disponibles
-            </li>
-          )}
-        </ul>
-        
-        {pagination.totalPages > 1 && (
-          <div className="mt-4">
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              onPageChange={handlePageChange}
-            />
+                <input
+                  type="text"
+                  placeholder="Buscar publicaciones..."
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <Link href="/publications/create">
+                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
+                  <PlusCircle className="h-5 w-5" />
+                  <span>Crear Publicación</span>
+                </button>
+              </Link>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-red-800 font-medium">Error</h3>
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {loading ? (
+              <div className="py-32 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#097EEC]"></div>
+              </div>
+            ) : (
+              <>
+                {/* Publications List */}
+                {filteredPublications.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredPublications.map((publication) => (
+                      <div key={publication.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        {/* Publication Image */}
+                        <div className="h-40 bg-gray-200 relative">
+                          {publication.image_url ? (
+                            <img 
+                              src={publication.image_url || "/placeholder.svg"} 
+                              alt={publication.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                              <span>Sin imagen</span>
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2 bg-white/90 text-gray-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{publication.visitors || 0}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Publication Content */}
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Tag className="h-4 w-4 text-[#097EEC]" />
+                            <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                              {publication.category}
+                            </span>
+                          </div>
+                          
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">{publication.title}</h3>
+                          
+                          {publication.description && (
+                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{publication.description}</p>
+                          )}
+                          
+                          <div className="flex items-center text-xs text-gray-500 mb-4">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            <span>Creado: {formatDate(publication.created_at)}</span>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex justify-between pt-3 border-t border-gray-100">
+                            <button
+                              onClick={() => alert(`Editar publicación con ID: ${publication.id}`)}
+                              className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span>Editar</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => publication.id && handleDelete(publication.id)}
+                              className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Eliminar</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-16 text-center">
+                    <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
+                      <AlertCircle className="h-10 w-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900">No hay publicaciones disponibles</h3>
+                    <p className="mt-2 text-gray-500">No se encontraron publicaciones que coincidan con tu búsqueda.</p>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="mt-8 flex justify-center">
+                    <Pagination
+                      currentPage={pagination.page}
+                      totalPages={pagination.totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
+                )}
+                
+                {/* Results Summary */}
+                {!loading && !error && filteredPublications.length > 0 && (
+                  <div className="mt-6 text-sm text-gray-500 text-center">
+                    Mostrando {filteredPublications.length} de {pagination.total} publicaciones
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
-        
-        {!loading && !error && publications.length > 0 && (
-          <div className="text-sm text-gray-400 mt-4 text-center">
-            Mostrando {publications.length} de {pagination.total} publicaciones
-          </div>
-        )}
+        </div>
       </div>
     </>
   );
