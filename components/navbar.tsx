@@ -45,12 +45,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-blue-950 to-cyan-400 text-white py-4 shadow-md">
+    <nav className="bg-[#097EEC] text-white py-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center relative">
         <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
           SUAREC
         </Link>
-
         {/* Menú hamburguesa */}
         <button
           className="lg:hidden block text-white"
@@ -72,10 +71,10 @@ const Navbar = () => {
             ></path>
           </svg>
         </button>
-
+        
         {/* Menú desplegable (pantallas pequeñas) */}
         <div
-          className={`fixed top-0 left-0 w-full h-full bg-gradient-to-r from-blue-901 to-cyan-400 bg-opacity-90 z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 w-full h-full bg-[#2171BC] bg-opacity-90 z-50 flex flex-col items-center justify-center transition-transform duration-300 ease-in-out ${
             isMenuOpen ? "translate-x-0" : "-translate-x-full"
           } lg:static lg:translate-x-0 lg:flex lg:flex-row lg:items-center lg:space-x-4 lg:h-auto`}
         >
@@ -99,29 +98,28 @@ const Navbar = () => {
               ></path>
             </svg>
           </button>
-
-          <SearchBar />
           
+          <SearchBar />
           {hasRole(['ADMIN']) && (
-            <Link href="/users" className="nav-link text-xl my-2 lg:my-0">
+            <Link href="/users" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
               Usuarios
             </Link>
           )}
           
           {hasRole(['ADMIN', 'PERSON']) && (
-            <Link href="/comments" className="nav-link text-xl my-2 lg:my-0">
+            <Link href="/comments" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
               Comentarios
             </Link>
           )}
           
           {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-            <Link href="/publications" className="nav-link text-xl my-2 lg:my-0">
+            <Link href="/publications" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
               Publicaciones
             </Link>
           )}
           
           {hasRole(['ADMIN', 'BUSINESS']) && (
-            <Link href="/companies" className="nav-link text-xl my-2 lg:my-0">
+            <Link href="/companies" className="nav-link text-xl my-2 lg:my-0 hover:text-[#EFF1F1]">
               Compañías
             </Link>
           )}

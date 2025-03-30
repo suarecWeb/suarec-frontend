@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
-import buildingImage from "@/public/building.jpg"; // Asegúrate de tener esta imagen en la carpeta public
+import buildingImage from "@/public/building.jpg";
 import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
@@ -11,17 +11,10 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <main className="bg-secondary">
+      <main className="bg-[#2171BC]">
         {/* Hero Section */}
         <div className="relative h-screen">
           <div className="absolute inset-0">
-          <Image 
-            src={buildingImage}
-            alt="Edificios"
-            fill
-            style={{ objectFit: "cover" }}
-            quality={100}
-          />
 
             <div className="absolute inset-0 bg-black opacity-50"></div>
           </div>
@@ -34,7 +27,7 @@ export default function Home() {
             </p>
             <Link 
                 href="/auth/select-type" 
-                className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition"
+                className="bg-[#097EEC] text-white px-6 py-3 rounded-md text-lg hover:bg-[#082D50] transition"
               >
                 Regístrate ahora
               </Link>
@@ -42,54 +35,63 @@ export default function Home() {
         </div>
 
         {/* Sección de Alianzas */}
-        <section className="py-16 bg-gradient-to-r from-blue-950 to-cyan-400 text-center">
+        <section className="py-16 bg-[#2171BC] text-white text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Nuestras alianzas</h2>
           <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
             Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales.
           </p>
           <div className="flex justify-center items-center gap-8 flex-wrap">
             {/* Logos de empresas */}
-            <Image
-              src={logoImage}
-              alt="Empresa 1"
-              width={150}
-              height={150}
-              className="object-contain"
-            />
-            <Image
-              src={logoImageDos}
-              alt="Empresa 2"
-              width={150}
-              height={150}
-              className="object-contain"
-            />
-            <Image
-              src={logoImageTres}
-              alt="Empresa 3"
-              width={150}
-              height={150}
-              className="object-contain"
-            />
-            <Image
-              src={logoImageCuatro}
-              alt="Empresa 4"
-              width={150}
-              height={150}
-              className="object-contain"
-            />
+            <div>
+              <Image
+                src={logoImage}
+                alt="Empresa 1"
+                width={150}
+                height={150}
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <Image
+                src={logoImageDos}
+                alt="Empresa 2"
+                width={150}
+                height={150}
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <Image
+                src={logoImageTres}
+                alt="Empresa 3"
+                width={150}
+                height={150}
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <Image
+                src={logoImageCuatro}
+                alt="Empresa 4"
+                width={150}
+                height={150}
+                className="object-contain"
+              />
+            </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="bg-primary text-white py-6 text-center">
+        <footer className="bg-[#082D50] text-white py-6 text-center">
           <p className="text-sm">
             © {new Date().getFullYear()} SUAREC. Todos los derechos reservados.
           </p>
           <div className="flex justify-center gap-4 mt-4">
-            <Link href="/privacy" className="hover:underline">Política de Privacidad
+            <Link href="/privacy" className="hover:text-[#EFF1F1]">
+              Política de Privacidad
             </Link>
-            <Link href="/terms"
-              className="hover:underline">Términos y Condiciones
+            <Link href="/terms" className="hover:text-[#EFF1F1]">
+              Términos y Condiciones
             </Link>
           </div>
         </footer>
