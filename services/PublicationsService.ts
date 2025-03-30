@@ -1,3 +1,4 @@
+// services/PublicationsService.ts
 import api from "./axios_config";
 
 const baseURL = "/publications";
@@ -14,15 +15,40 @@ interface Publication {
   userId: string;
 }
 
-const getPublications = () => api.get<Publication[]>(baseURL);
+// Estructura de parámetros de paginación
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
 
-const getPublicationById = (id: string) => api.get<Publication>(`${baseURL}/${id}`);
+// Estructura de respuesta paginada
+interface PaginationResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
 
-const createPublication = (publicationData: Publication) => api.post<Publication>(baseURL, publicationData);
+// Estructura de respuesta de publicación
+const getPublications = (params?: PaginationParams) => 
+  api.get<PaginationResponse<Publication>>(baseURL, { params });
 
-const updatePublication = (id: string, publicationData: Partial<Publication>) => api.patch<Publication>(`${baseURL}/${id}`, publicationData);
+const getPublicationById = (id: string) => 
+  api.get<Publication>(`${baseURL}/${id}`);
 
-const deletePublication = (id: string) => api.delete(`${baseURL}/${id}`);
+const createPublication = (publicationData: Publication) => 
+  api.post<Publication>(baseURL, publicationData);
+
+const updatePublication = (id: string, publicationData: Partial<Publication>) => 
+  api.patch<Publication>(`${baseURL}/${id}`, publicationData);
+
+const deletePublication = (id: string) => 
+  api.delete(`${baseURL}/${id}`);
 
 const PublicationService = {
   getPublications,

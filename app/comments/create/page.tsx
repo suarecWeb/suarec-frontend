@@ -1,86 +1,149 @@
-'use client';
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import CommentService from "@/services/CommentsService";
-import Navbar from "@/components/navbar";
+'use client'
 
-const CreateCommentPage = () => {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    description: "",
-    created_at: new Date().toISOString(),
-    publicationId: "",
-    userId: "", // Aquí deberías obtener el userId del contexto o sesión
+import { useState, useEffect } from "react";
+import { buttonVariants } from "@/components/ui/button";
+import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
+import Link from "next/link";
+import { Company } from "@/interfaces/company.interface";
+import { CompanyApi } from "@/API/company.api";
+import Navbar from "@/components/navbar";
+import { Pagination } from "@/components/ui/pagination";
+
+const CompanyPage = () => {
+  const companyApi: CompanyApi = new CompanyApi('https://localhost/3001');
+
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const fetchCompanies = async (params = { page: 1, limit: 10 }) => {
+    try {
+      setLoading(true);
+      const response = await companyApi.findAllCompany(params);
+      
+      // Adaptación dependiendo de cómo devuelve los datos CompanyApi
+      // Si CompanyApi ya devuelve una estructura paginada:
+      if (response.data && response.meta) {
+        setCompanies(response.data);
+        setPagination(response.meta);
+      } 
+      // Si CompanyApi solo devuelve un array (sin paginación)
+      else {
+        setCompanies(response);
+        // En este caso, no podemos establecer la información de paginación correctamente
+      }
+    } catch (err) {
+      setError("Error al cargar las compañías");
+      console.error("Error al obtener compañías:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const handlePageChange = (page: number) => {
+    fetchCompanies({ page, limit: pagination.limit });
+  };
+
+  const handleEdit = (id: string) => {
+    // Implementar lógica de edición
+  };
+
+  const handleDelete = async (id: string) => {
     try {
-      await CommentService.createComment({
-        ...formData,
-        created_at: new Date(formData.created_at), // Convertir a Date
-      });
-      alert("Comentario creado correctamente");
-      router.push("/comments");
-    } catch (error) {
-      console.error("Error al crear el comentario:", error);
-      alert("Error al crear el comentario");
+      // Implementar lógica de eliminación usando companyApi
+      await companyApi.deleteCompany(id);
+      // Recargar la página actual después de eliminar
+      fetchCompanies({ page: pagination.page, limit: pagination.limit });
+    } catch (err) {
+      console.error("Error al eliminar compañía:", err);
     }
   };
 
   return (
     <>
-        <Navbar/>
-        <div className="p-4 bg-gray-900 text-white min-h-screen">
-      <h2 className="text-2xl font-semibold text-blue-400 mb-4">Crear Comentario</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Descripción</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Publicación ID</label>
-          <input
-            type="text"
-            name="publicationId"
-            value={formData.publicationId}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Usuario ID</label>
-          <input
-            type="text"
-            name="userId"
-            value={formData.userId}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Crear Comentario
-        </button>
-      </form>
-    </div>
+      <Navbar />
+      <main className="flex min-h-screen flex-col items-center gap-5 p-24">
+        <h1 className="text-2xl font-bold">Compañías</h1>
+        <Link href="/company/create" className={buttonVariants({ variant: "default" })}>Crear Compañía</Link>
+        
+        {loading && <p>Cargando compañías...</p>}
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+        
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Nombre</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {companies.length > 0 ? (
+              companies.map(company => (
+                <TableRow key={company.id}>
+                  <TableCell>{company.id}</TableCell>
+                  <TableCell>{company.name}</TableCell>
+                  <TableCell className="flex space-x-2">
+                    <button 
+                      onClick={() => handleEdit(company.id)} 
+                      className={buttonVariants({ variant: "default", size: "sm" })}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(company.id)} 
+                      className={buttonVariants({ variant: "destructive", size: "sm" })}
+                    >
+                      Eliminar
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">
+                  No hay compañías disponibles
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        
+        {pagination.totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
+        
+        {!loading && !error && companies.length > 0 && (
+          <div className="text-sm text-gray-500 mt-4">
+            Mostrando {companies.length} de {pagination.total} compañías
+          </div>
+        )}
+      </main>
     </>
   );
 };
 
-export default CreateCommentPage;
+export default CompanyPage;
