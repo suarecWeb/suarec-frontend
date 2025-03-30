@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import UserService, { PaginationParams, User } from "@/services/UsersService";
 import Navbar from "@/components/navbar";
 import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
 
-const UsersPage = () => {
+const UsersPageContent = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +128,15 @@ const UsersPage = () => {
         )}
       </div>
     </>
+  );
+};
+
+// Componente principal protegido con RoleGuard
+const UsersPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN']}>
+      <UsersPageContent />
+    </RoleGuard>
   );
 };
 

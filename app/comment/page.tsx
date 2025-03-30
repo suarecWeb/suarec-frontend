@@ -7,8 +7,9 @@ import { Comment } from "@/interfaces/comment.interface";
 import Navbar from "@/components/navbar";
 import CommentService, { PaginationParams } from "@/services/CommentsService";
 import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
 
-const CommentPage = () => {
+const CommentPageContent = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,14 @@ const CommentPage = () => {
         )}
       </main>
     </>
+  );
+};
+
+const CommentPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'PERSON']}>
+      <CommentPageContent />
+    </RoleGuard>
   );
 };
 

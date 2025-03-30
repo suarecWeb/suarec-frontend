@@ -4,6 +4,7 @@ import PublicationService, { PaginationParams } from "@/services/PublicationsSer
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
 
 interface Publication {
   id?: string;
@@ -17,7 +18,7 @@ interface Publication {
   userId: string;
 }
 
-const PublicationsPage = () => {
+const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +133,15 @@ const PublicationsPage = () => {
         )}
       </div>
     </>
+  );
+};
+
+// Componente principal protegido con RoleGuard
+const PublicationsPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS', 'PERSON']}>
+      <PublicationsPageContent />
+    </RoleGuard>
   );
 };
 

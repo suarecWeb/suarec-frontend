@@ -8,8 +8,9 @@ import { Company } from "@/interfaces/company.interface";
 import { CompanyApi, PaginationParams } from "@/API/company.api";
 import Navbar from "@/components/navbar";
 import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
 
-const CompanyPage = () => {
+const CompanyPageContent = () => {
   const companyApi: CompanyApi = new CompanyApi('https://localhost/3001');
 
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -141,6 +142,15 @@ const CompanyPage = () => {
         )}
       </main>
     </>
+  );
+};
+
+// Componente principal protegido con RoleGuard
+const CompanyPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS']}>
+      <CompanyPageContent />
+    </RoleGuard>
   );
 };
 

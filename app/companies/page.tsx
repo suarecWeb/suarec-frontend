@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import CompanyService, { PaginationParams } from "@/services/CompanyService";
 import Navbar from "@/components/navbar";
 import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
 
 interface Company {
   id?: string;
@@ -15,7 +16,7 @@ interface Company {
   userId: string;
 }
 
-const CompaniesPage = () => {
+const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +130,15 @@ const CompaniesPage = () => {
         )}
       </div>
     </>
+  );
+};
+
+// Componente principal protegido con RoleGuard
+const CompaniesPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS']}>
+      <CompaniesPageContent />
+    </RoleGuard>
   );
 };
 
