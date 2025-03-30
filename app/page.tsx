@@ -15,13 +15,6 @@ export default function Home() {
         {/* Hero Section */}
         <div className="relative h-screen">
           <div className="absolute inset-0">
-          <Image 
-            src={buildingImage}
-            alt="Edificios"
-            fill
-            style={{ objectFit: "cover" }}
-            quality={100}
-          />
 
             <div className="absolute inset-0 bg-black opacity-50"></div>
           </div>
@@ -49,7 +42,7 @@ export default function Home() {
           </p>
           <div className="flex justify-center items-center gap-8 flex-wrap">
             {/* Logos de empresas */}
-            <div className="bg-[#EFF1F1] p-4 rounded-lg">
+            <div>
               <Image
                 src={logoImage}
                 alt="Empresa 1"
@@ -58,7 +51,7 @@ export default function Home() {
                 className="object-contain"
               />
             </div>
-            <div className="bg-[#EFF1F1] p-4 rounded-lg">
+            <div>
               <Image
                 src={logoImageDos}
                 alt="Empresa 2"
@@ -67,7 +60,7 @@ export default function Home() {
                 className="object-contain"
               />
             </div>
-            <div className="bg-[#EFF1F1] p-4 rounded-lg">
+            <div>
               <Image
                 src={logoImageTres}
                 alt="Empresa 3"
@@ -76,7 +69,7 @@ export default function Home() {
                 className="object-contain"
               />
             </div>
-            <div className="bg-[#EFF1F1] p-4 rounded-lg">
+            <div>
               <Image
                 src={logoImageCuatro}
                 alt="Empresa 4"
