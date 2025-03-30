@@ -31,7 +31,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section }: Nav
     return (
       <div className={`flex ${isMobile ? "flex-col space-y-3" : "items-center space-x-3"}`}>
         <Link
-          href="/"
+          href="/profile"
           className={`
             flex items-center gap-1.5 
             ${

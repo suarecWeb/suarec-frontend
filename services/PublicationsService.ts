@@ -36,19 +36,19 @@ interface PaginationResponse<T> {
 
 // Estructura de respuesta de publicación
 const getPublications = (params?: PaginationParams) => 
-  api.get<PaginationResponse<Publication>>(baseURL, { params });
+  { return api.get<PaginationResponse<Publication>>(baseURL, { params })};
 
 const getPublicationById = (id: string) => 
-  api.get<Publication>(`${baseURL}/${id}`);
+  { return api.get<Publication>(`${baseURL}/${id}`)};
 
 const createPublication = (publicationData: Publication) => 
-  api.post<Publication>(baseURL, publicationData);
+  { return api.post<Publication>(baseURL, publicationData)};
 
 const updatePublication = (id: string, publicationData: Partial<Publication>) => 
-  api.patch<Publication>(`${baseURL}/${id}`, publicationData);
+  { return api.patch<Publication>(`${baseURL}/${id}`, publicationData)};
 
 const deletePublication = (id: string) => 
-  api.delete(`${baseURL}/${id}`);
+  { return api.delete(`${baseURL}/${id}`)};
 
 const PublicationService = {
   getPublications,

@@ -38,7 +38,13 @@ const PublicationsPageContent = () => {
   const fetchPublications = async (params: PaginationParams = { page: 1, limit: 10 }) => {
     try {
       setLoading(true);
+      
+      console.log('trayendo publis')
+      
       const response = await PublicationService.getPublications(params);
+
+      console.log('publis: ' + response)
+
       setPublications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
