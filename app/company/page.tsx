@@ -1,20 +1,17 @@
 'use client'
-
+import CompanyService from "@/services/CompanyService";
 import { useState, useEffect } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
 import Link from "next/link";
 import { Company } from "@/interfaces/company.interface";
-import { CompanyApi } from "@/API/company.api";
 import Navbar from "@/components/navbar";
 
 const CompanyPage = () => {
-    const companyApi: CompanyApi = new CompanyApi('https://localhost/3001')
-
   const [companies, setCompanies] = useState<Company[]>([]);
 
     const updateAll = async () => {
-        const fetchedCompanies = await companyApi.findAllCompany();
+        const fetchedCompanies = (await CompanyService.getCompanies()).data;
         setCompanies(fetchedCompanies);
     }
 

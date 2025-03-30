@@ -1,11 +1,11 @@
 "use client";
-
+import AuthService from "@/services/AuthService";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import { IconExclamationCircle } from "@tabler/icons-react";
 import { IconCheck } from "@tabler/icons-react";
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLogin } from "@/hooks/auth/use-login";
+//import { useLogin } from "@/hooks/auth/use-login";
 import Cookies from "js-cookie";
 import Link from "next/link";
 
@@ -13,7 +13,7 @@ const FormLogin = () => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, setIsPending] = useTransition();
-  const { login } = useLogin();
+  //const { login } = useLogin();
   const router = useRouter();
 
   const handleGoogleSubmit = () => {
@@ -34,14 +34,18 @@ const FormLogin = () => {
     setSuccess("");
 
     setIsPending(() => {
-      console.log("haciendo login")
+      const res = AuthService.login({email: values.email, 
+        password: values.password})
 
-      login(values.email, values.password).then((data) => {
-        if (data?.error) {
-          setError(data.error);
+      res.then((data) => {
+        if (data.data.token == undefined || data.data.token == null) {
+          setError('Error iniciando sesión');
           return;
         }
 
+        Cookies.set('token', data.data.token)
+        Cookies.set('email', data.data.email)
+        Cookies.set('role', data.data.roles[0].name)
         router.push("/");
         
         /* MANEJO ROL ADMIN
