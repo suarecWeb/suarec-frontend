@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie';
 
 export const logOut = async () => {
-    Cookies.remove("currentUser");
+    Cookies.remove("email");
+    Cookies.remove("role");
     Cookies.remove("token");
 };

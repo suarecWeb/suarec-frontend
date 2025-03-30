@@ -1,22 +1,55 @@
-//components/navbar
-//para que use lo que sea que usas para las rutas
+// File: components/navbar.tsx
+// Description: This component represents the navigation bar of the application.
+// It includes links to different sections of the app based on user roles and a search bar.
+// The navbar is responsive and includes a hamburger menu for mobile devices.
+// It uses the `NavbarRole` component to handle user authentication and role management.
+// It also uses the `jwt-decode` library to decode JWT tokens and extract user roles from them.
+// The component is styled using Tailwind CSS classes for a modern and clean look.
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "./utils/searchBar";
 import { NavbarRole } from "./navbar-role";
+import Cookies from "js-cookie";
+import { jwtDecode } from 'jwt-decode';
+
+interface TokenPayload {
+  roles?: { name: string }[];
+}
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+
+  useEffect(() => {
+    const token = Cookies.get('token');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode<TokenPayload>(token);
+        const roles = decodedToken.roles?.map(role => role.name) || [];
+        
+        console.log("Roles decodificados:", roles);    
+        setUserRoles(roles);
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+        setUserRoles([]);
+      }
+    } else {
+      setUserRoles([]);
+    }
+  }, []);
+
+  const hasRole = (roles: string[]): boolean => {
+    return roles.some(role => userRoles.includes(role));
+  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-950 to-cyan-400 text-white py-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center relative">
-      <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
-      SUAREC
-      </Link>
-
+        <Link href="/" className="nav-logo text-2xl font-extrabold font-sans">
+          SUAREC
+        </Link>
 
         {/* Menú hamburguesa */}
         <button
@@ -68,20 +101,32 @@ const Navbar = () => {
           </button>
 
           <SearchBar />
-          <Link href="/users" className="nav-link text-xl my-2 lg:my-0">
-            Usuarios
-          </Link>
-          <Link href="/comments" className="nav-link text-xl my-2 lg:my-0">
-            Comentarios
-          </Link>
-          <Link href="/publications" className="nav-link text-xl my-2 lg:my-0">
-            Publicaciones
-          </Link>
-          <Link href="/companies" className="nav-link text-xl my-2 lg:my-0">
-            Compañías
-          </Link>
+          
+          {hasRole(['ADMIN']) && (
+            <Link href="/users" className="nav-link text-xl my-2 lg:my-0">
+              Usuarios
+            </Link>
+          )}
+          
+          {hasRole(['ADMIN', 'PERSON']) && (
+            <Link href="/comments" className="nav-link text-xl my-2 lg:my-0">
+              Comentarios
+            </Link>
+          )}
+          
+          {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+            <Link href="/publications" className="nav-link text-xl my-2 lg:my-0">
+              Publicaciones
+            </Link>
+          )}
+          
+          {hasRole(['ADMIN', 'BUSINESS']) && (
+            <Link href="/companies" className="nav-link text-xl my-2 lg:my-0">
+              Compañías
+            </Link>
+          )}
         </div>
-        
+
         {/* NavbarRole */}
         <NavbarRole isMobile={false} section="logIn" />
       </div>

@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PublicationService from "@/services/PublicationsService";
 import Navbar from "@/components/navbar";
+import RoleGuard from "@/components/role-guard";
 
-const CreatePublicationPage = () => {
+const CreatePublicationContent = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
@@ -40,71 +41,80 @@ const CreatePublicationPage = () => {
 
   return (
     <>
-        <Navbar/>
-        <div className="p-4 bg-gray-900 text-white min-h-screen">
-      <h2 className="text-2xl font-semibold text-blue-400 mb-4">Crear Publicación</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Título</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Descripción</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Categoría</label>
-          <input
-            type="text"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">URL de la Imagen</label>
-          <input
-            type="url"
-            name="image_url"
-            value={formData.image_url}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300">Usuario ID</label>
-          <input
-            type="text"
-            name="userId"
-            value={formData.userId}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Crear Publicación
-        </button>
-      </form>
-    </div>
-    </> 
+      <Navbar/>
+      <div className="p-4 bg-gray-900 text-white min-h-screen">
+        <h2 className="text-2xl font-semibold text-blue-400 mb-4">Crear Publicación</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Título</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Descripción</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Categoría</label>
+            <input
+              type="text"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">URL de la Imagen</label>
+            <input
+              type="url"
+              name="image_url"
+              value={formData.image_url}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Usuario ID</label>
+            <input
+              type="text"
+              name="userId"
+              value={formData.userId}
+              onChange={handleChange}
+              className="mt-1 p-2 w-full bg-gray-800 text-white rounded"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Crear Publicación
+          </button>
+        </form>
+      </div>
+    </>
+  );
+};
+
+// Componente principal protegido con RoleGuard
+const CreatePublicationPage = () => {
+  return (
+    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS', 'PERSON']}>
+      <CreatePublicationContent />
+    </RoleGuard>
   );
 };
 

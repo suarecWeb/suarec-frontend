@@ -18,7 +18,7 @@ const handleNoLogin = () => {
 
 export const NavbarRole: React.FC<NavbarRoleProps> = ({isMobile, section }: NavbarRoleProps) => {
 
-    const currentUser = Cookies.get("currentUser");
+    const token = Cookies.get("token");
 
     const handleLogOutClick = () => {
         logOut();
@@ -26,14 +26,14 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({isMobile, section }: Navb
 
   return (
     <>
-        {section == 'logIn' && currentUser ?
+        {section == 'logIn' && token ?
             <>
                 <Link href="/" className="nav-link">Perfil</Link>
                 <Link href="/auth/login" className="nav-link" onClick={handleLogOutClick}>Log Out</Link>
             </> : <></>
         }
 
-        {section == 'logIn' && !currentUser ?
+        {section == 'logIn' && !token ?
             <Link href="/auth/login" className="nav-link">Iniciar Sesión</Link> : <></>
         }
     </>
