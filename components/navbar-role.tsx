@@ -2,11 +2,8 @@
 
 import React from "react";
 import styles from "./navbar.module.css";
-//import { UserButton } from "./profile/user-button-page";
 import Link from "next/link";
-//import { LogoutButton } from "./dashboard/logout-button";
 import toast from "react-hot-toast";
-import { useCurrentUser } from "@/hooks/auth/use-current-user";
 import { logOut } from "@/actions/log-out";
 import Cookies from "js-cookie";
 

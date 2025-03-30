@@ -1,15 +1,24 @@
 "use client"
-import { authApi, userApi } from "@/API"
+import AuthService from "@/services/AuthService"
+import UserService from "@/services/UsersService"
 import { TextField } from "@mui/material"
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { User } from "@/interfaces/user.interface"
 import toast from "react-hot-toast"
 
 
 interface ForgotProps {
     id:string
 }
+
+export interface User {
+    id?: string;
+    email: string;
+    password?: string;
+    name: string;
+    created_at?: Date;
+    roles?: string[] | undefined;
+  }
 
 const ForgotForm: React.FC<ForgotProps> = ({id}) =>{
 
@@ -21,8 +30,8 @@ const ForgotForm: React.FC<ForgotProps> = ({id}) =>{
 
     useEffect(()=>{
         const fetchData = async() =>{
-            const res = await userApi.findOneUser(id)
-            setUser(res)
+            const res = await UserService.getUserById(id)
+            setUser(res.data)
         }
 
         fetchData();
@@ -32,7 +41,7 @@ const ForgotForm: React.FC<ForgotProps> = ({id}) =>{
     const handleChange = async () =>{
         if(password === confirmPassword){
             try { 
-                await authApi.changePassword(id, password)
+                await AuthService.changePassword(id, password)
                 toast.success('Contraseña cambiada correctamente.')
                 router.push('/auth/login')
             } catch {

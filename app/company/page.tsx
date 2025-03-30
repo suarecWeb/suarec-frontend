@@ -4,8 +4,19 @@ import { useState, useEffect } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
 import Link from "next/link";
-import { Company } from "@/interfaces/company.interface";
+// import { Company } from "@/interfaces/company.interface";
 import Navbar from "@/components/navbar";
+
+interface Company {
+  id?: string;
+  nit: string;
+  name: string;
+  born_at: Date;
+  created_at: Date;
+  email: string;
+  cellphone: string;
+  userId: string;
+}
 
 const CompanyPage = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -19,10 +30,10 @@ const CompanyPage = () => {
     updateAll();
   }, []);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: string | undefined) => {
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string | undefined) => {
   };
 
   return (

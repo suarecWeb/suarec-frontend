@@ -1,5 +1,5 @@
 "use client"
-import { authApi } from "@/API"
+import AuthService from "@/services/AuthService"
 import { TextField } from "@mui/material"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
@@ -12,7 +12,7 @@ const CheckForm = () =>{
     const [email, setEmail] = useState<string>('')
 
     const handleForgot = async() =>{
-        await authApi.forgot(email)
+        await AuthService.forgotPassword(email)
         toast.success('Revisa tu correo.')
     }
 
