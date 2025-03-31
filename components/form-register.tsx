@@ -3,7 +3,7 @@
 import { IconCheck, IconExclamationCircle } from "@tabler/icons-react";
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import UserService from "@/services/UsersService";
+import { UserService } from "@/services/UsersService";
 import CompanyService from "@/services/CompanyService";
 
 // Interfaces para los DTOs

@@ -14,8 +14,14 @@ const UserTypeForm = () => {
     setUserType(event.target.value);
   };
 
+  const fetchRoles = async () => {
+    const res = await RolesService.getRoles();
+    console.log(res.data.data)
+    setRoles(res.data.data)
+  }
+
   useEffect(() => {
-    RolesService.getRoles().then((res: any) => setRoles(res.data));
+    fetchRoles();
   }, []);
 
   const handleNext = () => {

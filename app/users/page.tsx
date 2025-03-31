@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import UserService, { type PaginationParams, type User } from "@/services/UsersService"
+import { UserService, type PaginationParams, type User } from "@/services/UsersService"
 import Navbar from "@/components/navbar"
 import { Pagination } from "@/components/ui/pagination"
 import RoleGuard from "@/components/role-guard"
@@ -206,7 +206,7 @@ const UsersPageContent = () => {
                                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role.toString())}`}
                                     >
                                       <Shield className="h-3 w-3 mr-1" />
-                                      {role}
+                                      {typeof role === "string" ? role.toLowerCase().includes(searchTerm.toLowerCase()) : role.name}
                                     </span>
                                   ))}
                                 </div>
