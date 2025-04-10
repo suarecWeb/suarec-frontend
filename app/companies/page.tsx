@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
-import CompanyService, { type PaginationParams } from "@/services/CompanyService"
+import CompanyService from "@/services/CompanyService"
+import { PaginationParams } from "@/interfaces/pagination-params.interface"
 import Navbar from "@/components/navbar"
 import { Pagination } from "@/components/ui/pagination"
 import RoleGuard from "@/components/role-guard"

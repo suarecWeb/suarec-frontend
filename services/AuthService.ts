@@ -1,13 +1,5 @@
 import api from "./axios_config";
-
-interface SignInData {
-  email: string;
-  password: string;
-}
-
-interface PasswordChange {
-  password: string;
-}
+import { SignInData } from "@/interfaces/auth.interface";
 
 const login = (signInData: SignInData) => {
   return api.post("/auth/login", signInData);

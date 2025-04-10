@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import { jwtDecode } from "jwt-decode"
 import {
-  User,
+  User as UserIcon,
   Mail,
   Phone,
   Calendar,
@@ -22,17 +22,12 @@ import {
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { UserService, type User as UserType } from "@/services/UsersService"
-
-// Interfaces para el token
-interface TokenPayload {
-  id: string
-  email: string
-  roles: { id: string; name: string }[]
-}
+import { UserService } from "@/services/UsersService"
+import { User } from "@/interfaces/user.interface";
+import { TokenPayload } from "@/interfaces/auth.interface"
 
 const ProfilePage = () => {
-  const [user, setUser] = useState<UserType | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -156,7 +151,7 @@ const ProfilePage = () => {
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">
                       <div className="h-32 w-32 bg-white/20 rounded-full flex items-center justify-center text-white">
-                        <User className="h-16 w-16" />
+                        <UserIcon className="h-16 w-16" />
                       </div>
                       <button className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md text-[#097EEC] hover:bg-gray-100 transition-colors">
                         <Edit className="h-4 w-4" />
@@ -230,7 +225,7 @@ const ProfilePage = () => {
                           </div>
 
                           <div className="flex items-start gap-3">
-                            <User className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <UserIcon className="h-5 w-5 text-[#097EEC] mt-0.5" />
                             <div>
                               <p className="text-sm text-gray-500">Género</p>
                               <p className="text-gray-800">{user.genre}</p>
