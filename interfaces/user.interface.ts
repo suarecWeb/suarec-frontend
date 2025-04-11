@@ -20,3 +20,16 @@ export interface User {
   publications?: Publication[]
   comments?: Comment[]
 }
+
+export // Interfaces para los DTOs
+interface CreateUserDto {
+  name: string;
+  password: string;
+  cv_url?: string;
+  genre: string;
+  cellphone: string;
+  email: string;
+  born_at: Date;
+  roles?: string[];
+  companyId?: string;
+}

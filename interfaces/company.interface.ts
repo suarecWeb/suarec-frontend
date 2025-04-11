@@ -11,3 +11,14 @@ export interface Company {
   userId: string;
   user: User | null;
 }
+
+
+export interface CreateCompanyDto {
+  nit: string;
+  name: string;
+  born_at: Date;
+  created_at: Date;
+  email: string;
+  cellphone: string;
+  userId: number;
+}

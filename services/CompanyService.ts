@@ -1,5 +1,5 @@
 import api from "./axios_config";
-import { Company } from "@/interfaces/company.interface";
+import { Company, CreateCompanyDto } from "@/interfaces/company.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
@@ -12,7 +12,7 @@ const getCompanies = (params?: PaginationParams) =>
 
 const getCompanyById = (id: string) => api.get<Company>(`${baseURL}/${id}`);
 
-const createCompany = (companyData: Company) => api.post<Company>(baseURL, companyData);
+const createCompany = (companyData: CreateCompanyDto) => api.post<Company>(baseURL, companyData);
 const updateCompany = (id: string, companyData: Partial<Company>) => api.patch<Company>(`${baseURL}/${id}`, companyData);
 const deleteCompany = (id: string) => api.delete(`${baseURL}/${id}`);
 
