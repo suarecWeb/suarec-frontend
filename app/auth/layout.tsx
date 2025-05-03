@@ -1,7 +1,13 @@
-import Image from "next/image";
+'use client'
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
+  // Usar el pathname actual para detectar la página de registro
+  // Esto es más seguro que revisar el children
+  const pathname = usePathname();
+  const isRegistrationPage = pathname?.includes("/register");
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#097EEC] to-[#082D50]">
       {/* Header con logo */}
@@ -20,9 +26,14 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="absolute top-1/2 left-1/4 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Contenido principal - Ancho adaptativo según la página */}
       <div className="flex-grow flex justify-center items-center w-full px-4 py-8 relative z-10">
-        <div className="w-full max-w-[500px] bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className={`w-full ${
+          // Usar clases dinámicas según la página
+          isRegistrationPage 
+            ? "max-w-5xl" // Más ancho para el registro
+            : "max-w-[500px]" // Ancho original para otros contenidos
+        } bg-white rounded-xl shadow-2xl overflow-hidden`}>
           <div className="p-8 md:p-10">
             {children}
           </div>

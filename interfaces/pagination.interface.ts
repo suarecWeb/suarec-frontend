@@ -7,8 +7,3 @@ export interface PaginationMeta {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   }
-  
-  export interface PaginationResponse<T> {
-    data: T[];
-    meta: PaginationMeta;
-  }

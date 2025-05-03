@@ -1,24 +1,16 @@
+/* eslint-disable */
 "use client"
 import AuthService from "@/services/AuthService"
-import UserService from "@/services/UsersService"
+import { UserService } from "@/services/UsersService"
 import { TextField } from "@mui/material"
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
-
+import { User } from "@/interfaces/user.interface"
 
 interface ForgotProps {
     id:string
 }
-
-export interface User {
-    id?: string;
-    email: string;
-    password?: string;
-    name: string;
-    created_at?: Date;
-    roles?: string[] | undefined;
-  }
 
 const ForgotForm: React.FC<ForgotProps> = ({id}) =>{
 
@@ -30,7 +22,7 @@ const ForgotForm: React.FC<ForgotProps> = ({id}) =>{
 
     useEffect(()=>{
         const fetchData = async() =>{
-            const res = await UserService.getUserById(id)
+            const res = await UserService.getUserById(+id)
             setUser(res.data)
         }
 

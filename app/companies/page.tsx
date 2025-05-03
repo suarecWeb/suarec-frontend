@@ -1,38 +1,63 @@
+/* eslint-disable */
 "use client"
 import { useEffect, useState } from "react"
-import CompanyService, { type PaginationParams } from "@/services/CompanyService"
+import CompanyService from "@/services/CompanyService"
+import { Company } from "@/interfaces/company.interface"
+import { PaginationParams } from "@/interfaces/pagination-params.interface"
 import Navbar from "@/components/navbar"
 import { Pagination } from "@/components/ui/pagination"
 import RoleGuard from "@/components/role-guard"
-import { PlusCircle, Edit, Trash2, AlertCircle, Search, Building2, Mail, Phone, Calendar } from "lucide-react"
+import { 
+  PlusCircle, 
+  Edit, 
+  Trash2, 
+  AlertCircle, 
+  Search, 
+  Building2, 
+  Mail, 
+  Phone, 
+  Calendar,
+  Eye,
+  User,
+  Info
+} from "lucide-react"
 import Link from "next/link"
-
-interface Company {
-  id?: string
-  nit: string
-  name: string
-  born_at: Date
-  created_at: Date
-  email: string
-  cellphone: string
-  userId: string
-}
+import Cookies from "js-cookie"
+import { jwtDecode } from "jwt-decode"
+import { TokenPayload } from "@/interfaces/auth.interface"
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [userRoles, setUserRoles] = useState<string[]>([])
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 10,
+    limit: 12,
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
   })
 
-  const fetchCompanies = async (params: PaginationParams = { page: 1, limit: 10 }) => {
+  // Obtener información del usuario al cargar
+  useEffect(() => {
+    const token = Cookies.get("token")
+    if (token) {
+      try {
+        const decoded = jwtDecode<TokenPayload>(token)
+        setCurrentUserId(decoded.id)
+        setUserRoles(decoded.roles.map(role => role.name))
+      } catch (error) {
+        console.error('Error al decodificar token:', error)
+      }
+    }
+  }, [])
+
+  // Cargar empresas
+  const fetchCompanies = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
     try {
       setLoading(true)
       const response = await CompanyService.getCompanies(params)
@@ -54,11 +79,20 @@ const CompaniesPageContent = () => {
     fetchCompanies({ page, limit: pagination.limit })
   }
 
+  // Verificar si el usuario es administrador
+  const isAdmin = () => {
+    return userRoles.includes("ADMIN")
+  }
+
   const handleDelete = async (id: string) => {
+    if (!isAdmin()) {
+      setError("No tienes permisos para eliminar empresas")
+      return
+    }
+
     if (confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
       try {
         await CompanyService.deleteCompany(id)
-        // Recargar la página actual después de eliminar
         fetchCompanies({ page: pagination.page, limit: pagination.limit })
       } catch (err) {
         console.error("Error al eliminar empresa:", err)
@@ -76,7 +110,7 @@ const CompaniesPageContent = () => {
       )
     : companies
 
-  const formatDate = (dateString: Date) => {
+  const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("es-ES", {
       day: "2-digit",
@@ -93,7 +127,7 @@ const CompaniesPageContent = () => {
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold">Empresas</h1>
-            <p className="mt-2 text-blue-100">Gestiona todas las empresas registradas en la plataforma</p>
+            <p className="mt-2 text-blue-100">Explora y conoce las empresas registradas en la plataforma</p>
           </div>
         </div>
 
@@ -115,13 +149,26 @@ const CompaniesPageContent = () => {
                 />
               </div>
 
-              <Link href="/companies/create">
-                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
-                  <PlusCircle className="h-5 w-5" />
-                  <span>Crear Empresa</span>
-                </button>
-              </Link>
+              {isAdmin() && (
+                <Link href="/companies/create">
+                  <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
+                    <PlusCircle className="h-5 w-5" />
+                    <span>Crear Empresa</span>
+                  </button>
+                </Link>
+              )}
             </div>
+
+            {/* Admin info banner */}
+            {!isAdmin() && (
+              <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md flex items-start gap-3">
+                <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-blue-800 font-medium">Información</h3>
+                  <p className="text-blue-700">Solo los administradores pueden crear, editar y eliminar empresas.</p>
+                </div>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (
@@ -141,98 +188,71 @@ const CompaniesPageContent = () => {
               </div>
             ) : (
               <>
-                {/* Companies List */}
+                {/* Companies Cards */}
                 {filteredCompanies.length > 0 ? (
-                  <div className="overflow-hidden rounded-lg border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Empresa
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                          >
-                            NIT
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                          >
-                            Contacto
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell"
-                          >
-                            Fecha de creación
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Acciones
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredCompanies.map((company) => (
-                          <tr key={company.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-[#097EEC]" />
-                                </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">{company.name}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                              <div className="text-sm text-gray-500">{company.nit}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                              <div className="text-sm text-gray-500 flex flex-col gap-1">
-                                <div className="flex items-center gap-1">
-                                  <Mail className="h-3 w-3 text-gray-400" />
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredCompanies.map((company) => (
+                      <div 
+                        key={company.id} 
+                        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                      >
+                        <div className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 h-12 w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
+                              <Building2 className="h-6 w-6 text-[#097EEC]" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-800 mb-1">{company.name}</h3>
+                              <p className="text-sm text-gray-500 font-medium">NIT: {company.nit}</p>
+                              
+                              <div className="mt-4 space-y-2">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Mail className="h-4 w-4 text-gray-400" />
                                   <span>{company.email}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3 text-gray-400" />
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="h-4 w-4 text-gray-400" />
                                   <span>{company.cellphone}</span>
                                 </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Calendar className="h-4 w-4 text-gray-400" />
+                                  <span>Fundada: {formatDate(company.born_at)}</span>
+                                </div>
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3 text-gray-400" />
-                                <span>{formatDate(company.created_at)}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex justify-end gap-3">
-                                <button
-                                  onClick={() => alert(`Editar empresa con ID: ${company.id}`)}
-                                  className="text-amber-600 hover:text-amber-700 transition-colors"
-                                >
-                                  <Edit className="h-5 w-5" />
-                                </button>
+                            </div>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
+                            <Link href={`/companies/${company.id}`}>
+                              <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm">
+                                <Eye className="h-4 w-4" />
+                                <span>Ver detalles</span>
+                              </button>
+                            </Link>
+                            
+                            {isAdmin() && (
+                              <div className="flex gap-3">
+                                <Link href={`/companies/${company.id}/edit`}>
+                                  <button className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm">
+                                    <Edit className="h-4 w-4" />
+                                    <span>Editar</span>
+                                  </button>
+                                </Link>
+                                
                                 <button
                                   onClick={() => company.id && handleDelete(company.id)}
-                                  className="text-red-600 hover:text-red-700 transition-colors"
+                                  className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
                                 >
-                                  <Trash2 className="h-5 w-5" />
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>Eliminar</span>
                                 </button>
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="py-16 text-center">
@@ -273,11 +293,10 @@ const CompaniesPageContent = () => {
 // Componente principal protegido con RoleGuard
 const CompaniesPage = () => {
   return (
-    <RoleGuard allowedRoles={["ADMIN", "BUSINESS"]}>
+    <RoleGuard allowedRoles={["ADMIN", "BUSINESS", "PERSON"]}>
       <CompaniesPageContent />
     </RoleGuard>
   )
 }
 
 export default CompaniesPage
-

@@ -1,36 +1,9 @@
 import api from "./axios_config";
+import { Company, CreateCompanyDto } from "@/interfaces/company.interface";
+import { PaginationParams } from "@/interfaces/pagination-params.interface";
+import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
 const baseURL = "/companies";
-
-interface Company {
-  id?: string;
-  nit: string;
-  name: string;
-  born_at: Date;
-  created_at: Date;
-  email: string;
-  cellphone: string;
-  userId: string;
-}
-
-// Interfaz para los parámetros de paginación
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-}
-
-// Interfaz para la respuesta paginada
-interface PaginationResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
 
 // Función para obtener empresas con paginación
 const getCompanies = (params?: PaginationParams) => 
@@ -39,7 +12,7 @@ const getCompanies = (params?: PaginationParams) =>
 
 const getCompanyById = (id: string) => api.get<Company>(`${baseURL}/${id}`);
 
-const createCompany = (companyData: Company) => api.post<Company>(baseURL, companyData);
+const createCompany = (companyData: CreateCompanyDto) => api.post<Company>(baseURL, companyData);
 const updateCompany = (id: string, companyData: Partial<Company>) => api.patch<Company>(`${baseURL}/${id}`, companyData);
 const deleteCompany = (id: string) => api.delete(`${baseURL}/${id}`);
 

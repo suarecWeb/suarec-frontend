@@ -60,15 +60,11 @@ const Navbar = () => {
                 <NavLink href="/users">Usuarios</NavLink>
               )}
               
-              {hasRole(['ADMIN', 'PERSON']) && (
-                <NavLink href="/comments">Comentarios</NavLink>
-              )}
-              
               {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/publications">Publicaciones</NavLink>
               )}
               
-              {hasRole(['ADMIN', 'BUSINESS']) && (
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/companies">Compañías</NavLink>
               )}
               

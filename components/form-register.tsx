@@ -1,10 +1,27 @@
+/* eslint-disable */
 "use client";
 
-import { IconCheck, IconExclamationCircle } from "@tabler/icons-react";
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UserService } from "@/services/UsersService";
 import CompanyService from "@/services/CompanyService";
+import {
+  AlertCircle,
+  Check,
+  ArrowLeft,
+  Loader2,
+  User,
+  Building2,
+  Calendar,
+  Mail,
+  Phone,
+  FileText,
+  Key,
+  X,
+  Eye,
+  EyeOff
+} from "lucide-react";
+import Link from "next/link";
 
 // Interfaces para los DTOs
 interface CreateUserDto {
@@ -26,7 +43,7 @@ interface CreateCompanyDto {
   created_at: Date;
   email: string;
   cellphone: string;
-  userId: string;
+  userId: number;
 }
 
 const FormRegister = () => {
@@ -35,6 +52,7 @@ const FormRegister = () => {
   const [isPending, startTransition] = useTransition();
   const [userType, setUserType] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const router = useRouter();
 
@@ -52,6 +70,21 @@ const FormRegister = () => {
       const reader = new FileReader();
       reader.onload = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const clearImagePreview = () => {
+    setImagePreview(null);
+    // También resetear el input de archivo
+    const fileInput = document.getElementById(
+      userType === "PERSON" ? "profile_image" : "company_logo"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
     }
   };
 
@@ -82,51 +115,108 @@ const FormRegister = () => {
           setSuccess("Usuario creado correctamente");
           
         } else if (userType === "BUSINESS") {
-          // Para empresas, usamos el nombre y email de la empresa para el usuario
-          const companyName = formData.get("company_name") as string;
-          const companyEmail = formData.get("company_email") as string;
-          const companyPhone = formData.get("company_cellphone") as string;
-          const companyBornAt = new Date(formData.get("company_born_at") as string);
-          
-          // Datos del usuario para BUSINESS con valores predeterminados para campos personales
-          const userData: CreateUserDto = {
-            // Usamos el nombre de la empresa como nombre de usuario
-            name: companyName,
-            password: formData.get("password") as string,
-            // Campos personales con valores predeterminados
-            genre: "O", // Otro
-            cellphone: companyPhone, // Usar el teléfono de la empresa
-            email: companyEmail, // Usar el email de la empresa
-            born_at: companyBornAt, // Usar la fecha de fundación
-            cv_url: "", // CV vacío
-            roles: ["BUSINESS"],
-          };
-          
-          // Creamos primero el usuario
-          const userResponse = await UserService.createUser(userData);
-          
-          // Obtenemos el ID del usuario creado
-          const userId = userResponse.data.id;
-          
-          if (userId) {
-            // Creamos los datos de la empresa
-            const companyData: CreateCompanyDto = {
-              nit: formData.get("nit") as string,
+            // Para empresas, usamos el nombre y email de la empresa para el usuario
+            const companyName = formData.get("company_name") as string;
+            const companyEmail = formData.get("company_email") as string;
+            const companyPhone = formData.get("company_cellphone") as string;
+            const companyBornAtDate = new Date(formData.get("company_born_at") as string);
+            const companyNit = formData.get("nit") as string;
+            
+            // Validar el formato del teléfono
+            const phoneRegex = /^\+\d{1,3}\s?\d{1,14}$/;
+            if (!phoneRegex.test(companyPhone)) {
+              setError("El formato del teléfono debe ser: +código país número (Ej: +57 3001234567)");
+              return;
+            }
+            
+            // Validar longitud del NIT
+            if (companyNit.length < 8 || companyNit.length > 15) {
+              setError("El NIT debe tener entre 8 y 15 caracteres");
+              return;
+            }
+            
+            // Datos del usuario para BUSINESS con valores predeterminados para campos personales
+            const userData: CreateUserDto = {
+              // Usamos el nombre de la empresa como nombre de usuario
               name: companyName,
-              email: companyEmail,
-              cellphone: companyPhone,
-              born_at: companyBornAt,
-              created_at: new Date(), // Fecha actual
-              userId: userId,
+              password: formData.get("password") as string,
+              // Campos personales con valores predeterminados
+              genre: "O", // Otro
+              cellphone: companyPhone, // Usar el teléfono de la empresa
+              email: companyEmail, // Usar el email de la empresa
+              born_at: companyBornAtDate, // Usar la fecha de fundación
+              cv_url: "", // CV vacío
+              roles: ["BUSINESS"],
             };
             
-            // Creamos la empresa asociada al usuario
-            const companyResponse = await CompanyService.createCompany(companyData);
-            
-            setSuccess("Usuario y empresa creados correctamente");
-          }
-        }
+            try {
+              // Creamos primero el usuario
+              console.log("Enviando datos de usuario:", userData);
+              const userResponse = await UserService.createUser(userData);
+              
+              // Obtenemos el ID del usuario creado
+              const userId = userResponse.data.id;
+              
+              if (userId) {
+                // Asegurarnos de que userId sea un número
+                const userIdNumber = Number(userId);
+                
+                if (isNaN(userIdNumber)) {
+                  throw new Error("ID de usuario inválido");
+                }
+                
+                // Creamos los datos de la empresa - NO CONVERTIR fechas a string
+                // El backend espera objetos Date
+                const companyData: CreateCompanyDto = {
+                  nit: companyNit,
+                  name: companyName,
+                  email: companyEmail,
+                  cellphone: companyPhone,
+                  born_at: companyBornAtDate, // Mantener como Date
+                  created_at: new Date(), // Mantener como Date
+                  userId: userIdNumber, // Número
+                };
+                
+                console.log("Enviando datos de empresa:", companyData);
+                
+                // Creamos la empresa asociada al usuario
+                try {
+                  const companyResponse = await CompanyService.createCompany(companyData);
+                
+                  setSuccess("Usuario y empresa creados correctamente");
+                } catch (error: any) {
+                  const res = UserService.deleteUser(userId)
+                  console.error("Error específico:", error);
+                  if (error.response?.data?.message) {
+                    // Si el backend devuelve un mensaje específico
+                    setError(error.response.data.message);
+                  } else if (error.message) {
+                    // Si es un error generado en el frontend
+                    setError(error.message);
+                  } else {
+                    // Mensaje genérico
+                    setError("Error al crear la empresa");
+                  }
+                  return;
+                }
         
+              }
+            } catch (error: any) {
+              console.error("Error específico:", error);
+              if (error.response?.data?.message) {
+                // Si el backend devuelve un mensaje específico
+                setError(error.response.data.message);
+              } else if (error.message) {
+                // Si es un error generado en el frontend
+                setError(error.message);
+              } else {
+                // Mensaje genérico
+                setError("Error al crear la empresa");
+              }
+              return;
+            }
+          }
+
         // Redirigir al login después de un tiempo
         setTimeout(() => {
           router.push("/auth/login");
@@ -139,229 +229,436 @@ const FormRegister = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 flex-col w-full">
-      {userType === "PERSON" || userType === "BUSINESS" ? (
-        <>
-          {/* Campos específicos por tipo de usuario */}
-          {userType === "PERSON" ? (
-            // Campos solo para PERSON
-            <>
-              <label htmlFor="fullname">Nombre completo</label>
-              <input
-                id="fullname"
-                name="fullname"
-                type="text"
-                placeholder="Jhon Doe"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="jhonDoe@gmail.com"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="genre">Sexo</label>
-              <select
-                id="genre"
-                name="genre"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              >
-                <option value="">Seleccionar</option>
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-                <option value="O">Otro</option>
-              </select>
-
-              <label htmlFor="cellphone">Teléfono</label>
-              <input
-                id="cellphone"
-                name="cellphone"
-                type="tel"
-                placeholder="+57 123456789"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="born_at">Fecha de nacimiento</label>
-              <input
-                id="born_at"
-                name="born_at"
-                type="date"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />  
-
-              <label htmlFor="cv_url">URL de CV</label>
-              <input
-                id="cv_url"
-                name="cv_url"
-                type="url"
-                placeholder="https://mi-cv.com"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="profile_image">Foto de perfil (opcional)</label>
-              <input
-                id="profile_image"
-                name="profile_image"
-                type="file"
-                accept="image/*"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                onChange={handleFileChange}
-                disabled={isPending}
-              />
-            </>
-          ) : (
-            // Campos solo para BUSINESS
-            <>
-              <label htmlFor="nit">NIT</label>
-              <input
-                id="nit"
-                name="nit"
-                type="text"
-                placeholder="1234567890"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="company_name">Nombre de la compañía</label>
-              <input
-                id="company_name"
-                name="company_name"
-                type="text"
-                placeholder="Mi Empresa S.A."
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="company_email">Correo electrónico de la compañía</label>
-              <input
-                id="company_email"
-                name="company_email"
-                type="email"
-                placeholder="empresa@gmail.com"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="company_cellphone">Teléfono de la compañía</label>
-              <input
-                id="company_cellphone"
-                name="company_cellphone"
-                type="tel"
-                placeholder="+57 123456789"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="company_born_at">Fecha de fundación</label>
-              <input
-                id="company_born_at"
-                name="company_born_at"
-                type="date"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                disabled={isPending}
-                required
-              />
-
-              <label htmlFor="company_logo">Logo de la empresa (opcional)</label>
-              <input
-                id="company_logo"
-                name="company_logo"
-                type="file"
-                accept="image/*"
-                className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-                onChange={handleFileChange}
-                disabled={isPending}
-              />
-            </>
-          )}
-
-          {/* Campos comunes para ambos tipos */}
-          <label htmlFor="password">Contraseña</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="*******"
-            className="w-full p-[10px] bg-secondary border border-primary rounded-lg"
-            disabled={isPending}
-            required
-          />
-
-          {imagePreview && (
-            <div className="mt-2">
-              <img 
-                src={imagePreview.toString()} 
-                alt="Vista previa" 
-                className="w-32 h-32 object-cover rounded-lg mx-auto" 
-              />
+    <div className="w-full max-w-5xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 w-full">
+        {userType === "PERSON" || userType === "BUSINESS" ? (
+          <div className="bg-white p-8 rounded-lg shadow-lg">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#097EEC]/10 flex items-center justify-center">
+                {userType === "PERSON" ? (
+                  <User className="h-6 w-6 text-[#097EEC]" />
+                ) : (
+                  <Building2 className="h-6 w-6 text-[#097EEC]" />
+                )}
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-800">
+                {userType === "PERSON" ? "Registro Personal" : "Registro Empresarial"}
+              </h2>
             </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center p-4">
-          <p className="text-red-500">No se ha seleccionado un tipo de usuario.</p>
-          <button
-            className="mt-4 bg-primary text-white px-4 py-2 rounded-lg"
-            onClick={() => router.push("/auth/select-type")}
-            type="button"
-          >
-            Seleccionar tipo de usuario
-          </button>
-        </div>
-      )}
 
-      {error && (
-        <div className="text-white font-bold bg-red-500 mt-2 rounded-lg px-2 py-1 flex gap-2 items-center">
-          <IconExclamationCircle size={18} /> {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="text-white font-bold bg-green-500 rounded-lg mt-2 px-2 py-1 flex gap-2 items-center">
-          <IconCheck size={18} /> {success}
-        </div>
-      )}
+            {/* Campos específicos por tipo de usuario */}
+            {userType === "PERSON" ? (
+              // Campos solo para PERSON
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="fullname" className="block text-sm font-medium text-gray-700">
+                      Nombre completo <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="fullname"
+                        name="fullname"
+                        type="text"
+                        placeholder="Jhon Doe"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
 
-      {(userType === "PERSON" || userType === "BUSINESS") && (
-        <>
-          <button
-            type="submit"
-            className="mt-4 bg-primary hover:bg-primary/80 text-white font-bold transition-all w-full p-[10px] rounded-3xl"
-            disabled={isPending}
-          >
-            {isPending ? "Procesando..." : "Crear cuenta"}
-          </button>
-          
-          <button
-            className="mt-2 bg-transparent hover:bg-primary/10 border-2 border-primary text-primary transition-all w-full p-[10px] rounded-3xl"
-            onClick={() => router.push("/auth/select-type")}
-            type="button"
-          >
-            Volver
-          </button>
-        </>
-      )}
-    </form>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Correo electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="jhonDoe@gmail.com"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="genre" className="block text-sm font-medium text-gray-700">
+                      Sexo <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="genre"
+                      name="genre"
+                      className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                      disabled={isPending}
+                      required
+                    >
+                      <option value="">Seleccionar</option>
+                      <option value="M">Masculino</option>
+                      <option value="F">Femenino</option>
+                      <option value="O">Otro</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="password"
+                        name="password"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {passwordVisible ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="cellphone" className="block text-sm font-medium text-gray-700">
+                      Teléfono <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="cellphone"
+                        name="cellphone"
+                        type="tel"
+                        placeholder="+57 123456789"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="born_at" className="block text-sm font-medium text-gray-700">
+                      Fecha de nacimiento <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="born_at"
+                        name="born_at"
+                        type="date"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="cv_url" className="block text-sm font-medium text-gray-700">
+                      URL de CV (opcional)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="cv_url"
+                        name="cv_url"
+                        type="url"
+                        placeholder="https://mi-cv.com"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="profile_image" className="block text-sm font-medium text-gray-700">
+                      Foto de perfil (opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile_image"
+                        name="profile_image"
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        onChange={handleFileChange}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Campos solo para BUSINESS
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="nit" className="block text-sm font-medium text-gray-700">
+                      NIT <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building2 className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="nit"
+                        name="nit"
+                        type="text"
+                        placeholder="1234567890"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
+                      Nombre de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building2 className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_name"
+                        name="company_name"
+                        type="text"
+                        placeholder="Mi Empresa S.A."
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_email" className="block text-sm font-medium text-gray-700">
+                      Correo electrónico de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_email"
+                        name="company_email"
+                        type="email"
+                        placeholder="empresa@gmail.com"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="password"
+                        name="password"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {passwordVisible ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="company_cellphone" className="block text-sm font-medium text-gray-700">
+                      Teléfono de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_cellphone"
+                        name="company_cellphone"
+                        type="tel"
+                        placeholder="+57 123456789"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_born_at" className="block text-sm font-medium text-gray-700">
+                      Fecha de fundación <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_born_at"
+                        name="company_born_at"
+                        type="date"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_logo" className="block text-sm font-medium text-gray-700">
+                      Logo de la empresa (opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="company_logo"
+                        name="company_logo"
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        onChange={handleFileChange}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Previsualización de imagen */}
+            {imagePreview && (
+              <div className="mt-4 flex justify-center">
+                <div className="w-32 h-32 relative rounded-lg overflow-hidden border-2 border-[#097EEC]">
+                  <img
+                    src={imagePreview.toString()}
+                    alt="Vista previa"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={clearImagePreview}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Mensajes de error y éxito */}
+            {error && (
+              <div className="mt-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-red-800 font-medium">Error</h3>
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {success && (
+              <div className="mt-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex items-start gap-3">
+                <Check className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-green-800 font-medium">¡Listo!</h3>
+                  <p className="text-green-700">{success}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Botones de acción */}
+            <div className="mt-8 space-y-3">
+              <button
+                type="submit"
+                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  "Crear cuenta"
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/auth/select-type")}
+                className="w-full border border-[#097EEC] text-[#097EEC] py-3 px-6 rounded-lg hover:bg-[#097EEC]/5 transition-colors flex justify-center items-center"
+              >
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Volver
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No se ha seleccionado un tipo de usuario</h3>
+            <p className="text-gray-600 mb-6">Debes seleccionar si eres una persona o una empresa para continuar con el registro.</p>
+            <button
+              className="bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors"
+              onClick={() => router.push("/auth/select-type")}
+              type="button"
+            >
+              Seleccionar tipo de usuario
+            </button>
+          </div>
+        )}
+      </form>
+    </div>
   );
 };
 
