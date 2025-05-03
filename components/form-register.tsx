@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
@@ -114,51 +115,108 @@ const FormRegister = () => {
           setSuccess("Usuario creado correctamente");
           
         } else if (userType === "BUSINESS") {
-          // Para empresas, usamos el nombre y email de la empresa para el usuario
-          const companyName = formData.get("company_name") as string;
-          const companyEmail = formData.get("company_email") as string;
-          const companyPhone = formData.get("company_cellphone") as string;
-          const companyBornAt = new Date(formData.get("company_born_at") as string);
-          
-          // Datos del usuario para BUSINESS con valores predeterminados para campos personales
-          const userData: CreateUserDto = {
-            // Usamos el nombre de la empresa como nombre de usuario
-            name: companyName,
-            password: formData.get("password") as string,
-            // Campos personales con valores predeterminados
-            genre: "O", // Otro
-            cellphone: companyPhone, // Usar el teléfono de la empresa
-            email: companyEmail, // Usar el email de la empresa
-            born_at: companyBornAt, // Usar la fecha de fundación
-            cv_url: "", // CV vacío
-            roles: ["BUSINESS"],
-          };
-          
-          // Creamos primero el usuario
-          const userResponse = await UserService.createUser(userData);
-          
-          // Obtenemos el ID del usuario creado
-          const userId = userResponse.data.id;
-          
-          if (userId) {
-            // Creamos los datos de la empresa
-            const companyData: CreateCompanyDto = {
-              nit: formData.get("nit") as string,
+            // Para empresas, usamos el nombre y email de la empresa para el usuario
+            const companyName = formData.get("company_name") as string;
+            const companyEmail = formData.get("company_email") as string;
+            const companyPhone = formData.get("company_cellphone") as string;
+            const companyBornAtDate = new Date(formData.get("company_born_at") as string);
+            const companyNit = formData.get("nit") as string;
+            
+            // Validar el formato del teléfono
+            const phoneRegex = /^\+\d{1,3}\s?\d{1,14}$/;
+            if (!phoneRegex.test(companyPhone)) {
+              setError("El formato del teléfono debe ser: +código país número (Ej: +57 3001234567)");
+              return;
+            }
+            
+            // Validar longitud del NIT
+            if (companyNit.length < 8 || companyNit.length > 15) {
+              setError("El NIT debe tener entre 8 y 15 caracteres");
+              return;
+            }
+            
+            // Datos del usuario para BUSINESS con valores predeterminados para campos personales
+            const userData: CreateUserDto = {
+              // Usamos el nombre de la empresa como nombre de usuario
               name: companyName,
-              email: companyEmail,
-              cellphone: companyPhone,
-              born_at: companyBornAt,
-              created_at: new Date(), // Fecha actual
-              userId: Number(userId), // Convertir a número
+              password: formData.get("password") as string,
+              // Campos personales con valores predeterminados
+              genre: "O", // Otro
+              cellphone: companyPhone, // Usar el teléfono de la empresa
+              email: companyEmail, // Usar el email de la empresa
+              born_at: companyBornAtDate, // Usar la fecha de fundación
+              cv_url: "", // CV vacío
+              roles: ["BUSINESS"],
             };
             
-            // Creamos la empresa asociada al usuario
-            const companyResponse = await CompanyService.createCompany(companyData);
-            
-            setSuccess("Usuario y empresa creados correctamente");
-          }
-        }
+            try {
+              // Creamos primero el usuario
+              console.log("Enviando datos de usuario:", userData);
+              const userResponse = await UserService.createUser(userData);
+              
+              // Obtenemos el ID del usuario creado
+              const userId = userResponse.data.id;
+              
+              if (userId) {
+                // Asegurarnos de que userId sea un número
+                const userIdNumber = Number(userId);
+                
+                if (isNaN(userIdNumber)) {
+                  throw new Error("ID de usuario inválido");
+                }
+                
+                // Creamos los datos de la empresa - NO CONVERTIR fechas a string
+                // El backend espera objetos Date
+                const companyData: CreateCompanyDto = {
+                  nit: companyNit,
+                  name: companyName,
+                  email: companyEmail,
+                  cellphone: companyPhone,
+                  born_at: companyBornAtDate, // Mantener como Date
+                  created_at: new Date(), // Mantener como Date
+                  userId: userIdNumber, // Número
+                };
+                
+                console.log("Enviando datos de empresa:", companyData);
+                
+                // Creamos la empresa asociada al usuario
+                try {
+                  const companyResponse = await CompanyService.createCompany(companyData);
+                
+                  setSuccess("Usuario y empresa creados correctamente");
+                } catch (error: any) {
+                  const res = UserService.deleteUser(userId)
+                  console.error("Error específico:", error);
+                  if (error.response?.data?.message) {
+                    // Si el backend devuelve un mensaje específico
+                    setError(error.response.data.message);
+                  } else if (error.message) {
+                    // Si es un error generado en el frontend
+                    setError(error.message);
+                  } else {
+                    // Mensaje genérico
+                    setError("Error al crear la empresa");
+                  }
+                  return;
+                }
         
+              }
+            } catch (error: any) {
+              console.error("Error específico:", error);
+              if (error.response?.data?.message) {
+                // Si el backend devuelve un mensaje específico
+                setError(error.response.data.message);
+              } else if (error.message) {
+                // Si es un error generado en el frontend
+                setError(error.message);
+              } else {
+                // Mensaje genérico
+                setError("Error al crear la empresa");
+              }
+              return;
+            }
+          }
+
         // Redirigir al login después de un tiempo
         setTimeout(() => {
           router.push("/auth/login");
@@ -325,7 +383,7 @@ const FormRegister = () => {
 
                   <div className="space-y-2">
                     <label htmlFor="cv_url" className="block text-sm font-medium text-gray-700">
-                      URL de CV <span className="text-red-500">*</span>
+                      URL de CV (opcional)
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

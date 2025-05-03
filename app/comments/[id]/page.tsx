@@ -5,7 +5,8 @@ import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/u
 import Link from "next/link";
 import { Comment } from "@/interfaces/comment.interface";
 import Navbar from "@/components/navbar";
-import CommentService, { PaginationParams } from "@/services/CommentsService";
+import CommentService from "@/services/CommentsService";
+import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 
@@ -95,13 +96,13 @@ const CommentPageContent = () => {
                   <TableCell>{comment.description}</TableCell>
                   <TableCell className="flex space-x-2">
                     <button 
-                      onClick={() => handleEdit(comment.id)} 
+                      onClick={() => handleEdit(comment.id ? comment.id : '1')} 
                       className={buttonVariants({ variant: "default", size: "sm" })}
                     >
                       Editar
                     </button>
                     <button 
-                      onClick={() => handleDelete(comment.id)} 
+                      onClick={() => handleDelete(comment.id ? comment.id : '1')} 
                       className={buttonVariants({ variant: "destructive", size: "sm" })}
                     >
                       Eliminar

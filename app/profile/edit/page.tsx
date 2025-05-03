@@ -9,7 +9,8 @@ import { jwtDecode } from "jwt-decode"
 import { Save, AlertCircle, CheckCircle, ArrowLeft, Upload, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { UserService, type User as UserType } from "@/services/UsersService"
+import { UserService } from "@/services/UsersService"
+import { User as UserType } from "@/interfaces/user.interface"
 
 // Interfaces para el token
 interface TokenPayload {
@@ -57,7 +58,7 @@ const ProfileEditPage = () => {
         const decoded = jwtDecode<TokenPayload>(token)
 
         // Obtener los datos del usuario desde el backend
-        const response = await UserService.getUserById(decoded.id)
+        const response = await UserService.getUserById(+decoded.id)
         const userData = response.data
 
         // Establecer los datos del usuario
@@ -148,6 +149,8 @@ const ProfileEditPage = () => {
       if (hasBusinessRole && user.company) {
         userData.company = {
           ...formData.company,
+          userId: user.id,
+          user: user,
           id: user.company.id,
           created_at: user.company.created_at,
           born_at: formData.company.born_at ? new Date(formData.company.born_at) : new Date(), // Convertir a Date
