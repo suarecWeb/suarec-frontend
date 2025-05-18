@@ -35,6 +35,8 @@ interface CreateUserDto {
   born_at: Date;
   roles?: string[];
   companyId?: string;
+  profession: string;
+  skills: string[];
 }
 
 interface CreateCompanyDto {
@@ -117,6 +119,8 @@ const FormRegister = () => {
             born_at: new Date(formData.get("born_at") as string),
             cv_url: formData.get("cv_url") as string,
             roles: ["PERSON"],
+            profession: "Profesional independiente",
+            skills: ["Ninguna"],
           };
           
           // Para usuarios tipo PERSON, simplemente creamos el usuario
@@ -156,6 +160,8 @@ const FormRegister = () => {
               born_at: companyBornAtDate, // Usar la fecha de fundación
               cv_url: "", // CV vacío
               roles: ["BUSINESS"],
+              profession: "Profesional independiente",
+              skills: ["Ninguna"],
             };
             
             try {

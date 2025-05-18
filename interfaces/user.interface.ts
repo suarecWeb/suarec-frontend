@@ -14,6 +14,8 @@ export interface User {
   cv_url?: string
   created_at?: Date
   roles?: string[] | { id: string; name: string }[] | undefined
+  profession?: string
+  skills?: string[]
 
   // Relaciones
   company?: Company
@@ -32,4 +34,6 @@ interface CreateUserDto {
   born_at: Date;
   roles?: string[];
   companyId?: string;
+  profession?: string;
+  skills?: string[];
 }

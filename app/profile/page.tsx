@@ -256,6 +256,32 @@ const ProfilePage = () => {
                               <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
                             </div>
                           </div>
+
+                          {user.profession && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div>
+                                <p className="text-sm text-gray-500">Profesión</p>
+                                <p className="text-gray-800">{user.profession}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {user.skills && user.skills.length > 0 && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div>
+                                <p className="text-sm text-gray-500">Habilidades</p>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {user.skills.map((skill, idx) => (
+                                    <span key={idx} className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-0.5 rounded-full text-xs font-medium">
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 

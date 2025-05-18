@@ -11,6 +11,7 @@ import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UserService } from "@/services/UsersService"
 import { User as UserType } from "@/interfaces/user.interface"
+import ProfessionAutocomplete from "@/components/ProfessionAutocomplete"
 
 // Interfaces para el token
 interface TokenPayload {
@@ -18,6 +19,143 @@ interface TokenPayload {
   email: string
   roles: { id: string; name: string }[]
 }
+
+// Lista de profesiones sugeridas
+const profesionesSugeridas = [
+  // TRABAJOS OPERATIVOS Y DE CAMPO
+  "Obrero de construcción",
+  "Electricista",
+  "Plomero",
+  "Carpintero",
+  "Albañil",
+  "Jardinero",
+  "Pintor",
+  "Soldador",
+  "Mecánico automotriz",
+  "Técnico de mantenimiento industrial",
+  "Operador de maquinaria pesada",
+  "Conductor (camión, taxi, plataforma)",
+  "Instalador de paneles solares",
+  "Técnico de aire acondicionado",
+  "Personal de mudanza",
+  "Guardia de seguridad",
+  "Aseador / Personal de limpieza",
+  // PROFESIONALES ACADÉMICOS
+  "Abogado",
+  "Contador",
+  "Ingeniero civil",
+  "Ingeniero industrial",
+  "Ingeniero de sistemas",
+  "Arquitecto",
+  "Médico general",
+  "Enfermero",
+  "Psicólogo",
+  "Nutricionista",
+  "Profesor / Tutor (colegio o universidad)",
+  "Investigador",
+  "Ingeniero ambiental",
+  "Economista",
+  "Administrador de empresas",
+  "Consultor empresarial",
+  // CREATIVOS Y ARTÍSTICOS
+  "Diseñador gráfico",
+  "Fotógrafo",
+  "Videógrafo",
+  "Editor de video",
+  "Community Manager",
+  "Creador de contenido digital",
+  "Animador 2D/3D",
+  "Modelador 3D",
+  "Ilustrador",
+  "Músico (guitarrista, pianista, baterista, etc.)",
+  "Cantante",
+  "Actor / Actriz",
+  "Artista plástico",
+  "Decorador de interiores",
+  "Organizador de eventos",
+  // TECNOLOGÍA Y DIGITAL
+  "Desarrollador web",
+  "Desarrollador de apps móviles",
+  "Programador backend/frontend",
+  "Ingeniero en inteligencia artificial",
+  "Científico de datos",
+  "Analista de ciberseguridad",
+  "Experto en blockchain",
+  "Administrador de bases de datos",
+  "Especialista en SEO/SEM",
+  "Growth hacker",
+  "UX/UI designer",
+  "Project manager IT",
+  "Tester de software (QA)",
+  // SERVICIOS TÉCNICOS ESPECIALIZADOS
+  "Técnico de redes y telecomunicaciones",
+  "Técnico electrónico",
+  "Técnico de sistemas",
+  "Reparador de electrodomésticos",
+  "Instalador de cámaras de seguridad",
+  "Asesor en energías renovables",
+  "Especialista en domótica (casas inteligentes)",
+  "Operador de drones",
+  // VENTAS, FINANZAS Y ADMINISTRACIÓN
+  "Asesor comercial",
+  "Ejecutivo de ventas",
+  "Telemercaderista",
+  "Agente de seguros",
+  "Broker inmobiliario",
+  "Asistente administrativo",
+  "Secretaria",
+  "Personal de servicio al cliente",
+  "Recepcionista",
+  "Auxiliar contable",
+  "Asistente de recursos humanos",
+  // GASTRONOMÍA Y TURISMO
+  "Chef",
+  "Cocinero",
+  "Repostero",
+  "Bartender",
+  "Mesero",
+  "Guía turístico",
+  "Agente de viajes",
+  "Organizador de bodas (wedding planner)",
+  "Barista",
+  // SALUD, BIENESTAR Y DEPORTE
+  "Entrenador personal",
+  "Instructor de yoga",
+  "Fisioterapeuta",
+  "Terapeuta ocupacional",
+  "Masajista",
+  "Esteticista",
+  "Cosmetólogo",
+  "Barbero",
+  "Peluquero",
+  "Maquillador profesional",
+  "Podólogo",
+  // SERVICIOS PARA MASCOTAS
+  "Paseador de perros",
+  "Entrenador de mascotas",
+  "Veterinario",
+  "Peluquero canino",
+  "Cuidador de mascotas",
+  // LOGÍSTICA Y TRANSPORTE
+  "Mensajero",
+  "Domiciliario",
+  "Transportador de carga",
+  "Coordinador logístico",
+  "Auxiliar de bodega",
+  "Operador de montacargas",
+  // OTROS TALENTOS Y OFICIOS VARIOS
+  "Artesano",
+  "Costurero",
+  "Modista",
+  "Reparador de calzado",
+  "Zapatero",
+  "Cuidador de personas mayores",
+  "Niñera",
+  "Asistente de hogar",
+  "Especialista en permacultura/agricultura sostenible",
+  // Opción personalizada
+  "Otra"
+];
 
 const ProfileEditPage = () => {
   const [user, setUser] = useState<UserType | null>(null)
@@ -35,6 +173,10 @@ const ProfileEditPage = () => {
     cellphone: "",
     born_at: "",
     cv_url: "",
+    profession: "",
+    customProfession: "",
+    skills: [] as string[],
+    skillInput: "",
     company: {
       name: "",
       nit: "",
@@ -72,6 +214,10 @@ const ProfileEditPage = () => {
             cellphone: userData.cellphone || "",
             born_at: userData.born_at ? formatDateForInput(new Date(userData.born_at)) : "",
             cv_url: userData.cv_url || "",
+            profession: userData.profession || "",
+            customProfession: "",
+            skills: userData.skills || [],
+            skillInput: "",
             company: userData.company
               ? {
                   name: userData.company.name,
@@ -125,6 +271,48 @@ const ProfileEditPage = () => {
     }
   }
 
+  const handleProfessionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      profession: value,
+      customProfession: value === "Otra" ? prev.customProfession : "",
+    }));
+  };
+
+  const handleCustomProfessionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      customProfession: e.target.value,
+      profession: "Otra",
+    }));
+  };
+
+  const handleSkillInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, skillInput: e.target.value }));
+  };
+
+  const handleSkillInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === "Enter" || e.key === ",") && formData.skillInput.trim()) {
+      e.preventDefault();
+      const newSkill = formData.skillInput.trim();
+      if (!formData.skills.includes(newSkill)) {
+        setFormData((prev) => ({
+          ...prev,
+          skills: [...prev.skills, newSkill],
+          skillInput: "",
+        }));
+      }
+    }
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((s) => s !== skill),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -136,14 +324,22 @@ const ProfileEditPage = () => {
         throw new Error("ID de usuario no disponible");
       }
   
+      // Determinar la profesión final
+      let finalProfession = formData.profession;
+      if (formData.profession === "Otra") {
+        finalProfession = formData.customProfession.trim() || "Otra";
+      }
+  
       // Convertir born_at a Date antes de enviarlo
       const userData: Partial<UserType> = {
         name: formData.name,
         email: formData.email,
         genre: formData.genre,
         cellphone: formData.cellphone,
-        born_at: formData.born_at ? new Date(formData.born_at) : undefined, // Convertir solo si tiene valor
+        born_at: formData.born_at ? new Date(formData.born_at) : undefined,
         cv_url: formData.cv_url,
+        profession: finalProfession,
+        skills: formData.skills,
       };
   
       if (hasBusinessRole && user.company) {
@@ -153,7 +349,7 @@ const ProfileEditPage = () => {
           user: user,
           id: user.company.id,
           created_at: user.company.created_at,
-          born_at: formData.company.born_at ? new Date(formData.company.born_at) : new Date(), // Convertir a Date
+          born_at: formData.company.born_at ? new Date(formData.company.born_at) : new Date(),
         };
       }
   
@@ -355,6 +551,50 @@ const ProfileEditPage = () => {
                           </button>
                         </div>
                         <p className="text-xs text-gray-500">Sube tu CV en formato PDF o proporciona una URL</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">
+                        </label>
+                        <ProfessionAutocomplete
+                          value={formData.profession}
+                          onChange={(val) => setFormData((prev) => ({ ...prev, profession: val }))}
+                          suggestions={profesionesSugeridas}
+                        />
+                        {formData.profession === "Otra" && (
+                          <input
+                            type="text"
+                            placeholder="Escribe tu profesión"
+                            value={formData.customProfession}
+                            onChange={handleCustomProfessionChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none mt-2"
+                          />
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
+                          Habilidades
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {formData.skills.map((skill) => (
+                            <span key={skill} className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                              {skill}
+                              <button type="button" onClick={() => handleRemoveSkill(skill)} className="ml-1 text-red-500 hover:text-red-700">&times;</button>
+                            </span>
+                          ))}
+                        </div>
+                        <input
+                          id="skills"
+                          name="skills"
+                          type="text"
+                          placeholder="Agrega una habilidad y presiona Enter o coma"
+                          value={formData.skillInput}
+                          onChange={handleSkillInputChange}
+                          onKeyDown={handleSkillInputKeyDown}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Ejemplo: Comunicación, Liderazgo, Creatividad...</p>
                       </div>
                     </div>
                   </TabsContent>

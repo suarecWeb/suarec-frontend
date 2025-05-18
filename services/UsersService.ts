@@ -11,7 +11,7 @@ const getUsers = (params?: PaginationParams) => api.get<PaginationResponse<User>
 
 const getUserById = (id: number) => api.get<User>(`${baseURL}/${id}`)
 const createUser = (userData: User) => api.post<User>(baseURL, userData)
-const updateUser = (id: string, userData: Partial<User>) => api.patch<User>(`${baseURL}/${id}`, userData)
+const updateUser = (id: string, userData: Partial<User>) => api.put<User>(`${baseURL}/${id}`, userData)
 const deleteUser = (id: string) => api.delete(`${baseURL}/${id}`)
 
 export const UserService = {
