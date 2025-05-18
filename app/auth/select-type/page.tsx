@@ -8,7 +8,7 @@ const UserType = () => {
   return (
     <div className="w-full">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Tipo de Registro</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Tipo de registro</h1>
         <p className="mt-2 text-gray-600">Selecciona cómo deseas registrarte en nuestra plataforma</p>
       </div>
       

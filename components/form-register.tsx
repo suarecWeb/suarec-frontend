@@ -22,6 +22,7 @@ import {
   EyeOff
 } from "lucide-react";
 import Link from "next/link";
+import TermsModal from "./terms-modal";
 
 // Interfaces para los DTOs
 interface CreateUserDto {
@@ -53,6 +54,8 @@ const FormRegister = () => {
   const [userType, setUserType] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>("");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const router = useRouter();
 
@@ -90,6 +93,12 @@ const FormRegister = () => {
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
+    
+    if (!acceptedTerms) {
+      setError("Debes aceptar los términos y condiciones para continuar");
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     
     setError("");
@@ -396,7 +405,6 @@ const FormRegister = () => {
                         placeholder="https://mi-cv.com"
                         className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
-                        required
                       />
                     </div>
                   </div>
@@ -616,6 +624,39 @@ const FormRegister = () => {
               </div>
             )}
 
+            {/* Add terms and conditions checkbox before the submit button */}
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-[#097EEC]"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="font-medium text-gray-700">
+                    Acepto los{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsTermsModalOpen(true)}
+                      className="text-[#097EEC] hover:underline"
+                    >
+                      términos y condiciones
+                    </button>
+                  </label>
+                </div>
+              </div>
+
+              {/* Error message for terms */}
+              {error && error.includes("términos y condiciones") && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+            </div>
+
             {/* Botones de acción */}
             <div className="mt-8 space-y-3">
               <button
@@ -658,6 +699,12 @@ const FormRegister = () => {
           </div>
         )}
       </form>
+
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+      />
     </div>
   );
 };
