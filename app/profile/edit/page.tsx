@@ -553,49 +553,55 @@ const ProfileEditPage = () => {
                         <p className="text-xs text-gray-500">Sube tu CV en formato PDF o proporciona una URL</p>
                       </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="profession" className="block text-sm font-medium text-gray-700">
-                        </label>
-                        <ProfessionAutocomplete
-                          value={formData.profession}
-                          onChange={(val) => setFormData((prev) => ({ ...prev, profession: val }))}
-                          suggestions={profesionesSugeridas}
-                        />
-                        {formData.profession === "Otra" && (
-                          <input
-                            type="text"
-                            placeholder="Escribe tu profesión"
-                            value={formData.customProfession}
-                            onChange={handleCustomProfessionChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none mt-2"
-                          />
-                        )}
-                      </div>
+                      {/* PROFESIÓN Y HABILIDADES SOLO PARA NO-EMPRESAS */}
+                      {!hasBusinessRole && (
+                        <>
+                          <div className="space-y-2">
+                            <label htmlFor="profession" className="block text-sm font-medium text-gray-700">
+                              Profesión
+                            </label>
+                            <ProfessionAutocomplete
+                              value={formData.profession}
+                              onChange={(val) => setFormData((prev) => ({ ...prev, profession: val }))}
+                              suggestions={profesionesSugeridas}
+                            />
+                            {formData.profession === "Otra" && (
+                              <input
+                                type="text"
+                                placeholder="Escribe tu profesión"
+                                value={formData.customProfession}
+                                onChange={handleCustomProfessionChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none mt-2"
+                              />
+                            )}
+                          </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
-                          Habilidades
-                        </label>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {formData.skills.map((skill) => (
-                            <span key={skill} className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
-                              {skill}
-                              <button type="button" onClick={() => handleRemoveSkill(skill)} className="ml-1 text-red-500 hover:text-red-700">&times;</button>
-                            </span>
-                          ))}
-                        </div>
-                        <input
-                          id="skills"
-                          name="skills"
-                          type="text"
-                          placeholder="Agrega una habilidad y presiona Enter o coma"
-                          value={formData.skillInput}
-                          onChange={handleSkillInputChange}
-                          onKeyDown={handleSkillInputKeyDown}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Ejemplo: Comunicación, Liderazgo, Creatividad...</p>
-                      </div>
+                          <div className="space-y-2">
+                            <label htmlFor="skills" className="block text-sm font-medium text-gray-700">
+                              Habilidades
+                            </label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {formData.skills.map((skill) => (
+                                <span key={skill} className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                                  {skill}
+                                  <button type="button" onClick={() => handleRemoveSkill(skill)} className="ml-1 text-red-500 hover:text-red-700">&times;</button>
+                                </span>
+                              ))}
+                            </div>
+                            <input
+                              id="skills"
+                              name="skills"
+                              type="text"
+                              placeholder="Agrega una habilidad y presiona Enter o coma"
+                              value={formData.skillInput}
+                              onChange={handleSkillInputChange}
+                              onKeyDown={handleSkillInputKeyDown}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Ejemplo: Comunicación, Liderazgo, Creatividad...</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </TabsContent>
 

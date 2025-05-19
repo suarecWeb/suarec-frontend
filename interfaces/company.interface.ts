@@ -10,6 +10,11 @@ export interface Company {
   cellphone: string;
   userId: string;
   user: User | null;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  city?: string;
+  country?: string;
 }
 
 // Actualizado para coincidir exactamente con el DTO del backend
@@ -21,4 +26,9 @@ export interface CreateCompanyDto {
   email: string;
   cellphone: string;
   userId: number; // Mantener como number porque el backend lo necesita así
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  city?: string;
+  country?: string;
 }

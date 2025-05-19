@@ -16,12 +16,19 @@ const createCompany = (companyData: CreateCompanyDto) => api.post<Company>(baseU
 const updateCompany = (id: string, companyData: Partial<Company>) => api.patch<Company>(`${baseURL}/${id}`, companyData);
 const deleteCompany = (id: string) => api.delete(`${baseURL}/${id}`);
 
+// Métodos para la ubicación
+const getLocation = (id: string) => api.get(`${baseURL}/${id}/location`);
+const updateLocation = (id: string, locationData: { latitude: number; longitude: number; address?: string; city?: string; country?: string }) => 
+  api.patch(`${baseURL}/${id}/location`, locationData);
+
 const CompanyService = {
   getCompanies,
   getCompanyById,
   createCompany,
   updateCompany,
   deleteCompany,
+  getLocation,
+  updateLocation,
 };
 
 export default CompanyService;

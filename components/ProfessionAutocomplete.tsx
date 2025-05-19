@@ -67,7 +67,6 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
         placeholder={placeholder}
         aria-autocomplete="list"
         aria-controls="profession-suggestions"
-        aria-expanded={showSuggestions}
         aria-activedescendant={showSuggestions && filteredSuggestions.length > 0 ? `suggestion-0` : undefined}
       />
       {showSuggestions && filteredSuggestions.length > 0 && (
@@ -83,6 +82,7 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
               id={`suggestion-${idx}`}
               role="option"
               tabIndex={-1}
+              aria-selected={inputValue === suggestion}
               className="px-4 py-2 cursor-pointer hover:bg-[#097EEC]/10"
               onMouseDown={() => handleSuggestionClick(suggestion)}
             >
