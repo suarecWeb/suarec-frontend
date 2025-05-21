@@ -1,12 +1,34 @@
 import { User } from "./user.interface";
 
 export interface Company {
-  id: string;
-  nit: string; // Unique identifier (possibly tax ID)
+  id?: string;
+  nit: string;
   name: string;
   born_at: Date;
   created_at: Date;
   email: string;
   cellphone: string;
-  user: User | null; // One-to-one relationship with User
+  userId: string;
+  user: User | null;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  city?: string;
+  country?: string;
+}
+
+// Actualizado para coincidir exactamente con el DTO del backend
+export interface CreateCompanyDto {
+  nit: string;
+  name: string;
+  born_at: Date; // No modificar este tipo, el backend espera Date
+  created_at: Date; // No modificar este tipo, el backend espera Date
+  email: string;
+  cellphone: string;
+  userId: number; // Mantener como number porque el backend lo necesita así
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  city?: string;
+  country?: string;
 }

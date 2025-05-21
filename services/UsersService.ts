@@ -1,32 +1,24 @@
-import api from "./axios_config";
+import api from "./axios_config"
+import { User } from "@/interfaces/user.interface"
+import { PaginationParams } from "@/interfaces/pagination-params.interface"
+import { PaginationResponse } from "@/interfaces/pagination-response.interface"
 
-const baseURL = "/users";
+const baseURL = "/users"
 
-export interface User {
-  id?: string;
-  email: string;
-  password?: string;
-  name: string;
-  created_at?: Date;
-  roles?: string[] | undefined;
-}
 
-const getUsers = () => api.get<User[]>(baseURL);
+// Función para obtener usuarios con paginación
+const getUsers = (params?: PaginationParams) => api.get<PaginationResponse<User>>(baseURL, { params })
 
-const getUserById = (id: string) => api.get<User>(`${baseURL}/${id}`);
+const getUserById = (id: number) => api.get<User>(`${baseURL}/${id}`)
+const createUser = (userData: User) => api.post<User>(baseURL, userData)
+const updateUser = (id: string, userData: Partial<User>) => api.put<User>(`${baseURL}/${id}`, userData)
+const deleteUser = (id: string) => api.delete(`${baseURL}/${id}`)
 
-const createUser = (userData: User) => api.post<User>(baseURL, userData);
-
-const updateUser = (id: string, userData: Partial<User>) => api.patch<User>(`${baseURL}/${id}`, userData);
-
-const deleteUser = (id: string) => api.delete(`${baseURL}/${id}`);
-
-const UserService = {
+export const UserService = {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
-};
+}
 
-export default UserService;

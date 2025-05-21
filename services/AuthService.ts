@@ -1,39 +1,24 @@
-import axios from "axios";
-
-const baseURL = "http://localhost:3000/auth"; // Ajusta la URL de la API según corresponda
-
-interface SignInData {
-  email: string;
-  password: string;
-}
-
-interface PasswordChange {
-  password: string;
-}
-
-const api = axios.create({
-  baseURL,
-  withCredentials: true, // Permite el manejo de cookies HTTP-only
-});
+import api from "./axios_config";
+import { SignInData } from "@/interfaces/auth.interface";
 
 const login = (signInData: SignInData) => {
-  return api.post("/login", signInData);
+  return api.post("/auth/login", signInData);
 };
 
 const forgotPassword = (email: string) => {
-  return api.post("/forgot", { email });
+  return api.post("/auth/forgot", { email });
 };
 
 const changePassword = (id: string, password: string) => {
-  return api.post(`/change/${id}`, { password });
+  return api.post(`/auth/change/${id}`, { password });
 };
 
 const logout = () => {
-  return api.post("/logout"); // Endpoint para cerrar sesión y eliminar la cookie
+  return api.post("/auth/logout"); // Endpoint para cerrar sesión y eliminar la cookie
 };
 
 const getUser = () => {
-  return api.get("/user"); // Endpoint para obtener datos del usuario autenticado
+  return api.get("/auth/user"); // Endpoint para obtener datos del usuario autenticado
 };
 
 const AuthService = {
