@@ -1,6 +1,6 @@
 /* eslint-disable */
 "use client";
-
+import StartChatButton from "@/components/start-chat-button";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";

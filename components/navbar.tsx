@@ -67,6 +67,10 @@ const Navbar = () => {
               {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/companies">Compañías</NavLink>
               )}
+
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                <NavLink href="/chat">Mensajes</NavLink>
+              )}
               
               {/* User Menu */}
               <div className="ml-2 pl-2 border-l border-white/20">
@@ -130,9 +134,15 @@ const Navbar = () => {
                 </MobileNavLink>
               )}
               
-              {hasRole(['ADMIN', 'BUSINESS']) && (
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <MobileNavLink href="/companies" onClick={() => setIsMenuOpen(false)}>
                   Compañías
+                </MobileNavLink>
+              )}
+
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                <MobileNavLink href="/chat" onClick={() => setIsMenuOpen(false)}>
+                  Mensajes
                 </MobileNavLink>
               )}
             </div>

@@ -1,5 +1,7 @@
 /* eslint-disable */
 'use client';
+import StartChatButton from "@/components/start-chat-button";
+
 import { useEffect, useState } from "react";
 import PublicationService from "@/services/PublicationsService";
 import { Publication } from "@/interfaces/publication.interface"; 
@@ -270,12 +272,23 @@ const PublicationsPageContent = () => {
                 </button>
               </>
             ) : (
-              <Link 
-                href={`/publications/${publication.id}`}
-                className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm w-full justify-center"
-              >
-                <span>Ver detalles</span>
-              </Link>
+              <>
+                <Link 
+                  href={`/publications/${publication.id}`}
+                  className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm"
+                >
+                  <span>Ver detalles</span>
+                </Link>
+                
+                {/* Botón de chat si no es el autor */}
+                {currentUserId && publication.userId !== currentUserId && (
+                  <StartChatButton
+                    recipientId={publication.userId}
+                    recipientName="Autor"
+                    className="text-xs px-2 py-1"
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
