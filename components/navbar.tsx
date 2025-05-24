@@ -7,6 +7,7 @@ import { NavbarRole } from "./navbar-role";
 import Cookies from "js-cookie";
 import { jwtDecode } from 'jwt-decode';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import NotificationBadge from "./notification-badge";
 
 interface TokenPayload {
   roles?: { name: string }[];
@@ -66,6 +67,16 @@ const Navbar = () => {
               
               {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/companies">Compañías</NavLink>
+              )}
+
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <NotificationBadge userRoles={userRoles}>
+                  <NavLink href="/applications">Aplicaciones</NavLink>
+                </NotificationBadge>
+              )}
+
+              {hasRole(['PERSON', 'ADMIN']) && (
+                <NavLink href="/my-applications">Mis Aplicaciones</NavLink>
               )}
               
               {/* User Menu */}
@@ -130,9 +141,21 @@ const Navbar = () => {
                 </MobileNavLink>
               )}
               
-              {hasRole(['ADMIN', 'BUSINESS']) && (
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <MobileNavLink href="/companies" onClick={() => setIsMenuOpen(false)}>
                   Compañías
+                </MobileNavLink>
+              )}
+
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <MobileNavLink href="/applications" onClick={() => setIsMenuOpen(false)}>
+                  Aplicaciones
+                </MobileNavLink>
+              )}
+
+              {hasRole(['PERSON', 'ADMIN']) && (
+                <MobileNavLink href="/my-applications" onClick={() => setIsMenuOpen(false)}>
+                  Mis Aplicaciones
                 </MobileNavLink>
               )}
             </div>
