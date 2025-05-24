@@ -30,9 +30,43 @@ const getApplicationById = (id: string) =>
 const createApplication = (applicationData: CreateApplicationDto) => 
   api.post<Application>(baseURL, applicationData);
 
-// Actualizar el estado de una aplicación
-const updateApplication = (id: string, applicationData: UpdateApplicationDto) => 
-  api.patch<Application>(`${baseURL}/${id}`, applicationData);
+// Actualizar el estado de una aplicación con auto-agregado de empleado
+const updateApplication = async (id: string, applicationData: UpdateApplicationDto) => {
+  try {
+    // Primero actualizamos la aplicación
+    const response = await api.patch<Application>(`${baseURL}/${id}`, applicationData);
+    console.log("ACTUALIZANDO APLICACION")
+    
+    // Si la aplicación fue aceptada, automáticamente agregar como empleado
+    if (applicationData.status === 'ACCEPTED') {
+      const application = response.data;
+      
+        console.log('ES ACEPTADA, TENEMOS: USERID ' + application.user?.id +' publication user company id' + application.publication?.user?.company?.id)
+        console.log('APPLICATION PUBLICATION: ' + application.publication)
+        console.log('APP PUBLICATION USER ' + application.publication?.user)
+        console.log('APP PUBLICATION USER COMPANY ' + application.publication?.user?.company)
+
+        const userString = localStorage.getItem("user");
+        const user = JSON.parse(userString?userString:'');
+
+      // Verificar que tenemos toda la información necesaria
+      if (application.user?.id) {
+        try {
+          // Agregar el usuario como empleado de la empresa
+          await api.post(`/companies/${user.email}/employees-email/${application.user.id}`);
+          console.log(`Usuario ${application.user.id} agregado como empleado de la empresa ${user.email}`);
+        } catch (employeeError) {
+          console.warn('Error al agregar empleado automáticamente:', employeeError);
+          // No lanzamos el error para no afectar la actualización de la aplicación
+        }
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 
 // Eliminar una aplicación
 const deleteApplication = (id: string) => 
