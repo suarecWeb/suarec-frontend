@@ -78,6 +78,10 @@ const Navbar = () => {
               {hasRole(['PERSON', 'ADMIN']) && (
                 <NavLink href="/my-applications">Mis Aplicaciones</NavLink>
               )}
+
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <NavLink href="/my-employees">Mis Empleados</NavLink>
+              )}
               
               {/* User Menu */}
               <div className="ml-2 pl-2 border-l border-white/20">
@@ -157,6 +161,10 @@ const Navbar = () => {
                 <MobileNavLink href="/my-applications" onClick={() => setIsMenuOpen(false)}>
                   Mis Aplicaciones
                 </MobileNavLink>
+              )}
+
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <NavLink href="/my-employees">Mis Empleados</NavLink>
               )}
             </div>
 
