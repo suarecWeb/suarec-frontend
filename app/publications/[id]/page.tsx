@@ -1,11 +1,12 @@
 /* eslint-disable */
 "use client";
-import StartChatButton from "@/components/start-chat-button";
+
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import PublicationService from "@/services/PublicationsService";
+import ApplicationService from "@/services/ApplicationService";
 import { UserService } from "@/services/UsersService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -27,6 +28,10 @@ import {
   Building2,
   Send,
   Loader2,
+  Briefcase,
+  HandHeart,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Publication } from "@/interfaces/publication.interface";
@@ -48,6 +53,13 @@ const PublicationDetailPage = () => {
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  
+  // Estados para aplicaciones
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [applicationMessage, setApplicationMessage] = useState("");
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
 
   useEffect(() => {
     const fetchPublicationDetails = async () => {
@@ -62,8 +74,10 @@ const PublicationDetailPage = () => {
 
         // Obtener el token y decodificarlo
         const token = Cookies.get("token");
+        let decoded: TokenPayload | null = null;
+        
         if (token) {
-          const decoded = jwtDecode<TokenPayload>(token);
+          decoded = jwtDecode<TokenPayload>(token);
           setCurrentUserId(decoded.id);
           setUserRoles(decoded.roles.map(role => role.name));
         }
@@ -74,16 +88,36 @@ const PublicationDetailPage = () => {
         const publicationData = response.data;
         
         setPublication(publicationData);
-        
+        console.log(response.data.user?.id + " pub data")
         // Obtener información del autor
-        if (publicationData.userId) {
-          const authorResponse = await UserService.getUserById(publicationData.userId);
+        if (publicationData.user?.id) {
+          const authorResponse = await UserService.getUserById(parseInt(publicationData.user.id));
+          console.log(authorResponse + " obtener user by id")
           setAuthor(authorResponse.data);
         }
         
         // Obtener comentarios
         if (publicationData.comments) {
           setComments(publicationData.comments);
+        }
+
+        // Verificar si el usuario ya aplicó (solo si no es el autor y está logueado)
+        if (publicationData.user?.id) {
+          if (decoded && parseInt(publicationData.user.id) !== decoded.id) {
+            try {
+              const applicationCheck = await ApplicationService.checkUserApplication(
+                decoded.id.toString(), 
+                publicationId
+              );
+              setHasApplied(applicationCheck.data.hasApplied);
+              if (applicationCheck.data.application) {
+                setApplicationId(applicationCheck.data.application.id || null);
+              }
+            } catch (err) {
+              // Si hay error, asumimos que no ha aplicado
+              setHasApplied(false);
+            }
+          }
         }
         
         setIsLoading(false);
@@ -128,7 +162,53 @@ const PublicationDetailPage = () => {
 
   const canEditPublication = () => {
     if (!publication || !currentUserId) return false;
-    return publication.userId === currentUserId || userRoles.includes("ADMIN");
+    if (!publication.user?.id) return false;
+    return parseInt(publication.user?.id) === currentUserId || userRoles.includes("ADMIN");
+  };
+
+  // Función para determinar si la publicación es de una empresa
+  const isCompanyPublication = () => {
+    console.log(author + " autoroorrr")
+    return author?.company !== undefined && author?.company !== null;
+  };
+
+  // Función para manejar la aplicación a una publicación
+  const handleApply = async () => {
+    if (!currentUserId || !publication?.id) return;
+    
+    setIsApplying(true);
+    
+    try {
+      const applicationData = {
+        userId: currentUserId,
+        publicationId: publication.id,
+        message: applicationMessage.trim() || undefined,
+      };
+      
+      const response = await ApplicationService.createApplication(applicationData);
+      
+      setHasApplied(true);
+      setApplicationId(response.data.id || null);
+      setShowApplicationModal(false);
+      setApplicationMessage("");
+      
+      // Mostrar mensaje de éxito
+      setError(null);
+      // Podrías mostrar un toast de éxito aquí
+      
+    } catch (err: any) {
+      console.error("Error al aplicar:", err);
+      setError(err.response?.data?.message || "No se pudo enviar la aplicación. Inténtalo de nuevo.");
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  // Función para manejar contratar (redirigir a mensajes)
+  const handleHire = () => {
+    if (!author?.id) return;
+    router.push(`/messages?userId=${author.id}`);
   };
 
   // Función para compartir la publicación
@@ -141,7 +221,6 @@ const PublicationDetailPage = () => {
       })
         .catch((error) => console.log("Error al compartir:", error));
     } else {
-      // Fallback para navegadores que no soportan Web Share API
       navigator.clipboard.writeText(window.location.href)
         .then(() => alert("Enlace copiado al portapapeles"))
         .catch((error) => console.error("Error al copiar enlace:", error));
@@ -154,7 +233,6 @@ const PublicationDetailPage = () => {
     setIsSubmittingComment(true);
     
     try {
-      // Crear el objeto de comentario según el DTO del backend
       const commentData = {
         description: commentText,
         created_at: new Date(),
@@ -162,27 +240,23 @@ const PublicationDetailPage = () => {
         userId: currentUserId,
       };
       
-      // Llamar al servicio para crear el comentario
       const response = await CommentService.createComment(commentData);
       const newComment = response.data;
       
-      // Para la UI, creamos un objeto de comentario con la información mínima necesaria
       const commentForUI = {
         ...newComment,
         user: {
           id: currentUserId,
-          name: "Tú", // Esto se actualizará al recargar la página
+          name: "Tú",
         }
       };
       
-      // Actualizar la interfaz con el nuevo comentario
       setComments([commentForUI, ...comments]);
       setCommentText("");
       
     } catch (err) {
       console.error("Error al enviar comentario:", err);
       setError("No se pudo enviar el comentario. Inténtalo de nuevo.");
-      // Mostrar el error por 3 segundos
       setTimeout(() => setError(null), 3000);
     } finally {
       setIsSubmittingComment(false);
@@ -215,6 +289,57 @@ const PublicationDetailPage = () => {
                   <ArrowLeft className="h-4 w-4 inline mr-1" />
                   Volver a publicaciones
                 </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de aplicación */}
+          {showApplicationModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Aplicar a esta publicación</h3>
+                <p className="text-gray-600 mb-4">
+                  ¿Estás interesado en esta oportunidad? Puedes enviar un mensaje opcional junto con tu aplicación.
+                </p>
+                
+                <textarea
+                  placeholder="Escribe un mensaje opcional..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  rows={4}
+                  value={applicationMessage}
+                  onChange={(e) => setApplicationMessage(e.target.value)}
+                  disabled={isApplying}
+                />
+                
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowApplicationModal(false);
+                      setApplicationMessage("");
+                    }}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
+                    disabled={isApplying}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleApply}
+                    className="px-4 py-2 bg-[#097EEC] hover:bg-[#0A6BC7] text-white rounded-lg transition-colors flex items-center gap-2"
+                    disabled={isApplying}
+                  >
+                    {isApplying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Briefcase className="h-4 w-4" />
+                        Aplicar
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -333,6 +458,50 @@ const PublicationDetailPage = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Botones de Aplicar/Contratar */}
+                    {currentUserId && publication.userId !== currentUserId && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        {isCompanyPublication() ? (
+                          // Botón para aplicar a empresa
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            {hasApplied ? (
+                              <div className="flex items-center gap-2 text-green-600">
+                                <CheckCircle className="h-5 w-5" />
+                                <span className="font-medium">Ya aplicaste a esta publicación</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowApplicationModal(true)}
+                                className="flex items-center gap-2 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
+                                disabled={isApplying}
+                              >
+                                <Briefcase className="h-5 w-5" />
+                                Aplicar a esta oportunidad
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          // Botón para contratar persona
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <button
+                              onClick={handleHire}
+                              className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                            >
+                              <HandHeart className="h-5 w-5" />
+                              Contratar este servicio
+                            </button>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-500 mt-2">
+                          {isCompanyPublication() 
+                            ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
+                            : "Serás redirigido a los mensajes para coordinar los detalles del servicio."
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Content */}
@@ -360,14 +529,14 @@ const PublicationDetailPage = () => {
                         </div>
                       </div>
 
-                      {/* Comments section placeholder */}
+                      {/* Comments section */}
                       <div className="border-t border-gray-200 pt-6 mt-8">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                           <MessageSquare className="h-5 w-5 mr-2 text-[#097EEC]" />
                           Comentarios
                         </h3>
                         
-                        {/* Comment form placeholder */}
+                        {/* Comment form */}
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                           <textarea
                             placeholder="Deja un comentario..."

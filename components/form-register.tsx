@@ -396,41 +396,6 @@ const FormRegister = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="cv_url" className="block text-sm font-medium text-gray-700">
-                      URL de CV (opcional)
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FileText className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="cv_url"
-                        name="cv_url"
-                        type="url"
-                        placeholder="https://mi-cv.com"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="profile_image" className="block text-sm font-medium text-gray-700">
-                      Foto de perfil (opcional)
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="profile_image"
-                        name="profile_image"
-                        type="file"
-                        accept="image/*"
-                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        onChange={handleFileChange}
-                        disabled={isPending}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : (
