@@ -1,7 +1,7 @@
 import { User } from "./user.interface";
 
 export interface Company {
-  id?: string;
+  id: string;
   nit: string;
   name: string;
   born_at: Date;
