@@ -15,16 +15,6 @@ const getPublicationById = (id: string) =>
 
 const createPublication = (publicationData: Publication) => 
   { 
-    console.log('seding...: ' + publicationData.id)
-    console.log('seding...: ' + publicationData.title)
-    console.log('seding...: ' + publicationData.visitors)
-    console.log('seding...: ' + publicationData.userId)
-    console.log('seding...: ' + publicationData.user)
-    console.log('seding...: ' + publicationData.image_url)
-    console.log('seding...: ' + publicationData.description)
-    console.log('seding...: ' + publicationData.created_at)
-    console.log('seding...: ' + publicationData.comments)
-    console.log('seding...: ' + publicationData.category)
     return api.post<Publication>(baseURL, publicationData)};
 
 const updatePublication = (id: string, publicationData: Partial<Publication>) => 

@@ -1,3 +1,6 @@
+import { Publication } from "./publication.interface";
+import { User } from "./user.interface";
+
 // interfaces/application.interface.ts
 export interface Application {
     id?: string;
@@ -9,20 +12,8 @@ export interface Application {
     // Relaciones
     userId: number;
     publicationId: string;
-    user?: {
-      id: string;
-      name: string;
-      email: string;
-      cellphone: string;
-      cv_url?: string;
-      profession?: string;
-      skills?: string[];
-    };
-    publication?: {
-      id: string;
-      title: string;
-      category: string;
-    };
+    user?: User,
+    publication?: Publication,
   }
   
   export interface CreateApplicationDto {

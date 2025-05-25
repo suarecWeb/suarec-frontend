@@ -159,17 +159,6 @@ const CompaniesPageContent = () => {
               )}
             </div>
 
-            {/* Admin info banner */}
-            {!isAdmin() && (
-              <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md flex items-start gap-3">
-                <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="text-blue-800 font-medium">Información</h3>
-                  <p className="text-blue-700">Solo los administradores pueden crear, editar y eliminar empresas.</p>
-                </div>
-              </div>
-            )}
-
             {/* Error Message */}
             {error && (
               <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start gap-3">

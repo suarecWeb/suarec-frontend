@@ -76,7 +76,15 @@ const Navbar = () => {
               )}
 
               {hasRole(['PERSON', 'ADMIN']) && (
-                <NavLink href="/my-applications">Mis Aplicaciones</NavLink>
+                <NavLink href="/my-applications">Mis aplicaciones</NavLink>
+              )}
+
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <NavLink href="/my-employees">Mis empleados</NavLink>
+              )}
+
+              {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                <NavLink href="/chat">Mensajes</NavLink>
               )}
               
               {/* User Menu */}
@@ -99,8 +107,8 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-[#097EEC] bg-opacity-98">
-          <div className="flex flex-col h-full p-4">
+        <div className="lg:hidden fixed inset-0 z-50 bg-[#097EEC] bg-opacity-98 overflow-y-auto">
+          <div className="flex flex-col min-h-screen p-4">
             <div className="flex justify-between items-center mb-8">
               <Link 
                 href="/" 
@@ -122,45 +130,59 @@ const Navbar = () => {
               <SearchBar />
             </div>
 
-            <div className="flex flex-col space-y-4">
-              {hasRole(['ADMIN']) && (
-                <MobileNavLink href="/users" onClick={() => setIsMenuOpen(false)}>
-                  Usuarios
-                </MobileNavLink>
-              )}
-              
-              {hasRole(['ADMIN', 'PERSON']) && (
-                <MobileNavLink href="/comments" onClick={() => setIsMenuOpen(false)}>
-                  Comentarios
-                </MobileNavLink>
-              )}
-              
-              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                <MobileNavLink href="/publications" onClick={() => setIsMenuOpen(false)}>
-                  Publicaciones
-                </MobileNavLink>
-              )}
-              
-              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                <MobileNavLink href="/companies" onClick={() => setIsMenuOpen(false)}>
-                  Compañías
-                </MobileNavLink>
-              )}
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex flex-col space-y-4 pb-4">
+                {hasRole(['ADMIN']) && (
+                  <MobileNavLink href="/users" onClick={() => setIsMenuOpen(false)}>
+                    Usuarios
+                  </MobileNavLink>
+                )}
+                
+                {hasRole(['ADMIN', 'PERSON']) && (
+                  <MobileNavLink href="/comments" onClick={() => setIsMenuOpen(false)}>
+                    Comentarios
+                  </MobileNavLink>
+                )}
+                
+                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                  <MobileNavLink href="/publications" onClick={() => setIsMenuOpen(false)}>
+                    Publicaciones
+                  </MobileNavLink>
+                )}
+                
+                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                  <MobileNavLink href="/companies" onClick={() => setIsMenuOpen(false)}>
+                    Compañías
+                  </MobileNavLink>
+                )}
 
-              {hasRole(['BUSINESS', 'ADMIN']) && (
-                <MobileNavLink href="/applications" onClick={() => setIsMenuOpen(false)}>
-                  Aplicaciones
-                </MobileNavLink>
-              )}
+                {hasRole(['BUSINESS', 'ADMIN']) && (
+                  <MobileNavLink href="/applications" onClick={() => setIsMenuOpen(false)}>
+                    Aplicaciones
+                  </MobileNavLink>
+                )}
 
-              {hasRole(['PERSON', 'ADMIN']) && (
-                <MobileNavLink href="/my-applications" onClick={() => setIsMenuOpen(false)}>
-                  Mis Aplicaciones
-                </MobileNavLink>
-              )}
+                {hasRole(['PERSON', 'ADMIN']) && (
+                  <MobileNavLink href="/my-applications" onClick={() => setIsMenuOpen(false)}>
+                    Mis aplicaciones
+                  </MobileNavLink>
+                )}
+
+                {hasRole(['BUSINESS', 'ADMIN']) && (
+                  <MobileNavLink href="/my-employees" onClick={() => setIsMenuOpen(false)}>
+                    Mis empleados
+                  </MobileNavLink>
+                )}
+
+                {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                  <MobileNavLink href="/chat" onClick={() => setIsMenuOpen(false)}>
+                    Mensajes
+                  </MobileNavLink>
+                )}
+              </div>
             </div>
 
-            <div className="mt-auto pt-4 border-t border-white/20">
+            <div className="pt-4 border-t border-white/20 pb-8">
               <div className="flex justify-center">
                 <NavbarRole isMobile={true} section="logIn" />
               </div>
