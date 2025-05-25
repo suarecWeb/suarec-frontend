@@ -39,6 +39,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import { User } from "@/interfaces/user.interface";
 import { Comment } from "@/interfaces/comment.interface";
 import CommentService from "@/services/CommentsService";
+import MessageService from "@/services/MessageService";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -206,9 +207,22 @@ const PublicationDetailPage = () => {
   };
 
   // Función para manejar contratar (redirigir a mensajes)
-  const handleHire = () => {
+  const handleHire = async () => {
     if (!author?.id) return;
-    router.push(`/messages?userId=${author.id}`);
+
+    try {
+      const res = await MessageService.createMessage({
+        content: 'Hola! Quiero contratar tu servicio de ' + publication?.title,
+        senderId: currentUserId ? currentUserId : 0,
+        recipientId: parseInt(author.id)
+      })
+
+      router.push(`/chat`);
+    } catch (error: any) {
+      console.error("Error al enviar mensaje:", error);
+      setError("No se pudo enviar el mensaje. Inténtalo de nuevo.");
+      setTimeout(() => setError(null), 3000);
+    }
   };
 
   // Función para compartir la publicación
@@ -418,10 +432,6 @@ const PublicationDetailPage = () => {
                             <Calendar className="h-4 w-4 mr-1" />
                             Publicado el {formatDate(publication.created_at)}
                           </span>
-                          <span className="inline-flex items-center text-sm text-gray-500">
-                            <Eye className="h-4 w-4 mr-1" />
-                            {publication.visitors || 0} visitas
-                          </span>
                           <span className="inline-flex items-center px-2.5 py-0.5 bg-blue-50 text-[#097EEC] rounded-full text-xs font-medium">
                             <Tag className="h-3.5 w-3.5 mr-1" />
                             {publication.category}
@@ -473,7 +483,7 @@ const PublicationDetailPage = () => {
                             ) : (
                               <button
                                 onClick={() => setShowApplicationModal(true)}
-                                className="flex items-center gap-2 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
+                                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
                                 disabled={isApplying}
                               >
                                 <Briefcase className="h-5 w-5" />

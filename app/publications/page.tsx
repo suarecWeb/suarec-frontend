@@ -21,7 +21,8 @@ import {
   Eye, 
   Tag, 
   User,
-  FileText
+  FileText,
+  User2Icon
 } from 'lucide-react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -98,7 +99,7 @@ const PublicationsPageContent = () => {
       
       // Filtrar solo las publicaciones del usuario actual
       const userPublications = response.data.data.filter(
-        pub => pub.userId === currentUserId
+        pub => parseInt(pub.user?.id || '0') === currentUserId
       );
       
       setMyPublications(userPublications);
@@ -217,10 +218,6 @@ const PublicationsPageContent = () => {
                 <span>Sin imagen</span>
               </div>
             )}
-            <div className="absolute top-2 right-2 bg-white/90 text-gray-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              <span>{publication.visitors || 0}</span>
-            </div>
           </div>
           
           {/* Publication Content */}
@@ -241,6 +238,10 @@ const PublicationsPageContent = () => {
             <div className="flex items-center text-xs text-gray-500 mb-4">
               <Calendar className="h-3 w-3 mr-1" />
               <span>Creado: {formatDate(publication.created_at)}</span>
+            </div>
+            <div className="flex items-center text-xs text-gray-500 mb-4">
+              <User2Icon className="h-3 w-3 mr-1" />
+              <span>Autor: {publication.user?.name}</span>
             </div>
           </div>
         </Link>
@@ -356,7 +357,7 @@ const PublicationsPageContent = () => {
             >
               <TabsList className="grid grid-cols-2 mb-6 w-full sm:w-80">
                 <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
-                  Todas las publicaciones
+                  Ver todas
                 </TabsTrigger>
                 <TabsTrigger value="my" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Mis publicaciones

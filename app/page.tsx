@@ -12,82 +12,61 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative bg-[#2171BC] overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-grid-white/[0.2] bg-[length:20px_20px]" />
+      {/* Hero Section Moderna */}
+      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#097EEC] to-[#2171BC] overflow-hidden pt-20">
+        {/* Elementos decorativos de fondo */}
+        <div className="absolute inset-0">
+          {/* Círculos decorativos */}
+          <div className="absolute top-20 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/3 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/2 rounded-full blur-3xl"></div>
+          
+          {/* Grid sutil */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
         </div>
 
-        <div className="container mx-auto px-4 py-20 md:py-32 flex flex-col md:flex-row items-center">
-          {/* Hero Content */}
-          <div className="md:w-1/2 z-10 text-white space-y-6 md:pr-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Encuentra el trabajo <span className="text-[#97CBFF]">de tus sueños</span>
+        {/* Contenido principal */}
+        <div className="relative z-10 container mx-auto px-4 text-center mt-8">
+          {/* Logo/Título principal */}
+          <div className="mb-12">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6">
+              SUAREC
             </h1>
-
-            <p className="text-lg md:text-xl opacity-90 max-w-lg">
-              Te ayudamos a conectar con las mejores empresas del mercado y a impulsar tu carrera profesional.
-            </p>
-
-            <div className="pt-4 flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/auth/select-type"
-                className="bg-white text-[#097EEC] px-6 py-3 rounded-md text-lg font-medium hover:bg-opacity-90 transition flex items-center justify-center gap-2 shadow-lg"
-              >
-                Regístrate ahora
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-
-              <Link
-                href="/publications"
-                className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-white/10 transition flex items-center justify-center"
-              >
-                Ver oportunidades
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-8 mt-4 border-t border-white/20">
-              <div className="flex flex-col">
-                <span className="text-3xl font-bold">500+</span>
-                <span className="text-sm opacity-80">Empresas</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-3xl font-bold">10k+</span>
-                <span className="text-sm opacity-80">Usuarios</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-3xl font-bold">2k+</span>
-                <span className="text-sm opacity-80">Contrataciones</span>
-              </div>
-            </div>
+            <div className="w-24 h-0.5 bg-white/30 mx-auto"></div>
           </div>
 
-          {/* Hero Image */}
-          <div className="md:w-1/2 mt-12 md:mt-0 relative z-10">
-            <div className="relative h-[400px] md:h-[500px] w-full rounded-lg overflow-hidden shadow-2xl">
-              <Image
-                src="https://res.cloudinary.com/dxhi8xsyb/image/upload/v1743362098/carpinet_n4oyz8.jpg"
-                alt="Profesionales trabajando"
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#082D50]/70 to-transparent"></div>
+          {/* Subtítulo elegante */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-white/90 leading-relaxed">
+              Conectamos talento excepcional
+              <br />
+              <span className="text-[#97CBFF]">con oportunidades extraordinarias</span>
+            </h2>
+          </div>
 
-              {/* Floating Elements */}
-              <div className="absolute bottom-6 left-6 right-6 bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white rounded-full p-2">
-                    <CheckCircle className="h-6 w-6 text-[#097EEC]" />
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">Oportunidades verificadas</p>
-                    <p className="text-white/80 text-sm">Todas nuestras ofertas son validadas</p>
-                  </div>
-                </div>
-              </div>
+          {/* Descripción minimalista */}
+          <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-16 font-light leading-relaxed">
+            La plataforma donde los mejores profesionales encuentran 
+            las empresas que transformarán su carrera.
+          </p>
+
+          {/* Botón de acción */}
+          <div className="flex justify-center items-center mb-20">
+            <Link
+              href="/auth/select-type"
+              className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-xl font-medium hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105"
+            >
+              Comenzar ahora
+              <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Indicador de scroll */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="animate-bounce">
+            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+              <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -297,4 +276,3 @@ export default function Home() {
     </div>
   )
 }
-

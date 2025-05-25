@@ -33,7 +33,7 @@ import {
 
 const MyEmployeesPageContent = () => {
   const [employees, setEmployees] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,7 +98,7 @@ const MyEmployeesPageContent = () => {
   // Función para cargar empleados
   const fetchEmployees = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
     if (!companyId) return;
-    
+
     try {
       setLoading(true);
       const response = await CompanyService.getEmployees(companyId, params);

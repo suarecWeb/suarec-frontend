@@ -49,6 +49,7 @@ const ChatPageContent = () => {
       console.error("Error al decodificar token:", error);
       router.push("/auth/login");
     }
+
   }, [router]);
 
   useEffect(() => {
@@ -290,11 +291,11 @@ const ChatPageContent = () => {
                         messages.map((message) => (
                           <div
                             key={message.id}
-                            className={`flex ${message.senderId === currentUserId ? "justify-end" : "justify-start"}`}
+                            className={`flex ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
                           >
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                message.senderId === currentUserId
+                                message.sender?.id === currentUserId
                                   ? "bg-[#097EEC] text-white"
                                   : "bg-gray-200 text-gray-900"
                               }`}
@@ -302,11 +303,11 @@ const ChatPageContent = () => {
                               <p className="text-sm">{message.content}</p>
                               <div className="flex items-center justify-end gap-1 mt-1">
                                 <span className={`text-xs ${
-                                  message.senderId === currentUserId ? "text-blue-100" : "text-gray-500"
+                                  message.sender?.id === currentUserId ? "text-blue-100" : "text-gray-500"
                                 }`}>
                                   {formatTime(message.sent_at)}
                                 </span>
-                                {message.senderId === currentUserId && (
+                                {message.sender?.id === currentUserId && (
                                   <div className="w-4 h-4 flex items-center justify-center">
                                     {message.read ? (
                                       <div className="w-3 h-3 rounded-full bg-green-400"></div>
