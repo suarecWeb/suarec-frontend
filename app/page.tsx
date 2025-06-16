@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
@@ -6,8 +7,12 @@ import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
+import TermsModal from "@/components/terms-modal"
+import { useState } from "react"
 
 export default function Home() {
+  const [isTermsOpen, setTermsOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -212,17 +217,21 @@ export default function Home() {
               <ul className="space-y-2">
                 <li>
                   <Link href="/privacy" className="text-white/70 hover:text-white transition">
-                    Política de Privacidad
+                    Política de privacidad
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-white/70 hover:text-white transition">
-                    Términos y Condiciones
-                  </Link>
+                  <button
+                    type="button"
+                    className="text-white/70 hover:text-white transition text-left w-full"
+                    onClick={() => setTermsOpen(true)}
+                  >
+                    Términos y condiciones
+                  </button>
                 </li>
                 <li>
                   <Link href="/cookies" className="text-white/70 hover:text-white transition">
-                    Política de Cookies
+                    Política de cookies
                   </Link>
                 </li>
               </ul>
@@ -268,6 +277,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
     </div>
   )
 }
