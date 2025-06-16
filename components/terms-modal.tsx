@@ -40,7 +40,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
                   className="flex items-center justify-between mb-4"
                 >
                   <h3 className="text-2xl font-semibold text-gray-900">
-                    Términos y Condiciones
+                    Términos y condiciones
                   </h3>
                   <button
                     onClick={onClose}
@@ -132,7 +132,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">11. CONTACTO</h4>
-                      <p>Para dudas o solicitudes relacionadas con estos Términos y Condiciones o el tratamiento de datos, puede escribir a contactosuarec@gmail.com</p>
+                      <p>Para dudas o solicitudes relacionadas con estos términos y condiciones o el tratamiento de datos, puede escribir a contactosuarec@gmail.com</p>
                     </section>
 
                     <section>

@@ -8,10 +8,12 @@ import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
 import TermsModal from "@/components/terms-modal"
+import PrivacyModal from "@/components/privacy-modal"
 import { useState } from "react"
 
 export default function Home() {
   const [isTermsOpen, setTermsOpen] = useState(false)
+  const [isPrivacyOpen, setPrivacyOpen] = useState(false)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -216,9 +218,13 @@ export default function Home() {
               <h3 className="text-lg font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/privacy" className="text-white/70 hover:text-white transition">
+                  <button
+                    type="button"
+                    className="text-white/70 hover:text-white transition text-left w-full"
+                    onClick={() => setPrivacyOpen(true)}
+                  >
                     Política de privacidad
-                  </Link>
+                  </button>
                 </li>
                 <li>
                   <button
@@ -278,6 +284,7 @@ export default function Home() {
         </div>
       </footer>
       <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setPrivacyOpen(false)} />
     </div>
   )
 }
