@@ -83,6 +83,13 @@ const Navbar = () => {
                 <NavLink href="/my-employees">Mis empleados</NavLink>
               )}
 
+              {hasRole(['BUSINESS', 'ADMIN']) && (
+                <>
+                  <NavLink href="/attendance">Control de asistencia</NavLink>
+                  <NavLink href="/attendance/register">Registrar asistencia</NavLink>
+                </>
+              )}
+
               {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
                 <NavLink href="/chat">Mensajes</NavLink>
               )}
@@ -172,6 +179,17 @@ const Navbar = () => {
                   <MobileNavLink href="/my-employees" onClick={() => setIsMenuOpen(false)}>
                     Mis empleados
                   </MobileNavLink>
+                )}
+
+                {hasRole(['BUSINESS', 'ADMIN']) && (
+                  <>
+                    <MobileNavLink href="/attendance" onClick={() => setIsMenuOpen(false)}>
+                      Control de asistencia
+                    </MobileNavLink>
+                    <MobileNavLink href="/attendance/register" onClick={() => setIsMenuOpen(false)}>
+                      Registrar asistencia
+                    </MobileNavLink>
+                  </>
                 )}
 
                 {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (

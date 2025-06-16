@@ -387,7 +387,7 @@ const ProfileEditPage = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Editar Perfil</h1>
+            <h1 className="text-3xl font-bold">Editar perfil</h1>
             <p className="mt-2 text-blue-100">Actualiza tu información personal</p>
           </div>
         </div>
@@ -439,11 +439,11 @@ const ProfileEditPage = () => {
                 <Tabs defaultValue="personal">
                   <TabsList className="w-full mb-6">
                     <TabsTrigger value="personal" className="flex-1">
-                      Información Personal
+                      Información personal
                     </TabsTrigger>
                     {hasBusinessRole && (
                       <TabsTrigger value="company" className="flex-1">
-                        Información de Empresa
+                        Información de empresa
                       </TabsTrigger>
                     )}
                   </TabsList>
@@ -529,36 +529,11 @@ const ProfileEditPage = () => {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="cv_url" className="block text-sm font-medium text-gray-700">
-                          CV / Hoja de vida
-                        </label>
-                        <div className="flex">
-                          <input
-                            type="text"
-                            id="cv_url"
-                            name="cv_url"
-                            value={formData.cv_url}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="URL de tu CV"
-                          />
-                          <button
-                            type="button"
-                            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-r-lg border border-gray-300 border-l-0 hover:bg-gray-200 transition-colors"
-                          >
-                            <Upload className="h-5 w-5" />
-                          </button>
-                        </div>
-                        <p className="text-xs text-gray-500">Sube tu CV en formato PDF o proporciona una URL</p>
-                      </div>
-
                       {/* PROFESIÓN Y HABILIDADES SOLO PARA NO-EMPRESAS */}
                       {!hasBusinessRole && (
                         <>
                           <div className="space-y-2">
                             <label htmlFor="profession" className="block text-sm font-medium text-gray-700">
-                              Profesión
                             </label>
                             <ProfessionAutocomplete
                               value={formData.profession}

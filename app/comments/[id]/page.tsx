@@ -70,7 +70,7 @@ const CommentPageContent = () => {
       <Navbar />
       <main className="flex min-h-screen flex-col items-center gap-5 p-24">
         <h1 className="text-2xl font-bold">Comentarios</h1>
-        <Link href="/comment/create" className={buttonVariants({ variant: "default" })}>Crear Comentario</Link>
+        <Link href="/comment/create" className={buttonVariants({ variant: "default" })}>Crear comentario</Link>
         
         {loading && <p>Cargando comentarios...</p>}
         
