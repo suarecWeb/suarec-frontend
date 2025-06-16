@@ -9,11 +9,15 @@ import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
 import TermsModal from "@/components/terms-modal"
 import PrivacyModal from "@/components/privacy-modal"
+import ContactModal from "@/components/contact-modal"
+import CookiesModal from "@/components/cookies-modal"
 import { useState } from "react"
 
 export default function Home() {
   const [isTermsOpen, setTermsOpen] = useState(false)
   const [isPrivacyOpen, setPrivacyOpen] = useState(false)
+  const [isContactOpen, setContactOpen] = useState(false)
+  const [isCookiesOpen, setCookiesOpen] = useState(false)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -207,9 +211,13 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-white/70 hover:text-white transition">
+                  <button
+                    type="button"
+                    className="text-white/70 hover:text-white transition text-left w-full"
+                    onClick={() => setContactOpen(true)}
+                  >
                     Contacto
-                  </Link>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -236,9 +244,13 @@ export default function Home() {
                   </button>
                 </li>
                 <li>
-                  <Link href="/cookies" className="text-white/70 hover:text-white transition">
+                  <button
+                    type="button"
+                    className="text-white/70 hover:text-white transition text-left w-full"
+                    onClick={() => setCookiesOpen(true)}
+                  >
                     Política de cookies
-                  </Link>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -285,6 +297,8 @@ export default function Home() {
       </footer>
       <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
       <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setContactOpen(false)} />
+      <CookiesModal isOpen={isCookiesOpen} onClose={() => setCookiesOpen(false)} />
     </div>
   )
 }
