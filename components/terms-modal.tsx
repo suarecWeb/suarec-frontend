@@ -52,7 +52,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
 
                 <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4">
                   <p className="text-sm text-gray-500 mb-4">
-                    Fecha de entrada en vigencia: Julio 15 de 2025
+                    FECHA DE ENTRADA EN VIGENCIA: JULIO 15 DE 2025
                   </p>
 
                   <div className="space-y-6 text-gray-700">
@@ -90,10 +90,28 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
                       <h4 className="font-semibold text-gray-900 mb-2">7. POLÍTICA DE TRATAMIENTO DE DATOS Y PRIVACIDAD</h4>
                       <p>SUAREC S.A.S., en cumplimiento de la Ley 1581 de 2012, el Decreto 1377 de 2013 y demás normas concordantes, garantiza la protección de los datos personales suministrados por los usuarios. Al usar la plataforma, usted acepta el tratamiento de sus datos conforme a las siguientes condiciones:</p>
                       <ul className="list-disc pl-6 mt-2 space-y-2">
-                        <li>Finalidades del tratamiento: Efectuar gestiones relacionadas con el objeto social de SUAREC, procesar pagos, contactar usuarios, evaluar hojas de vida y facilitar conexiones laborales.</li>
-                        <li>Datos tratados: Se recopilarán datos personales, sensibles, y de empresas conforme al uso de la plataforma.</li>
-                        <li>Derechos de los titulares: Conocer, actualizar, corregir, suprimir y revocar autorización.</li>
-                        <li>Medidas de seguridad: Se implementan medidas administrativas, físicas y técnicas para garantizar la seguridad.</li>
+                        <li>Finalidades del tratamiento:
+                          <ul className="list-disc pl-6 mt-1">
+                            <li>Efectuar gestiones relacionadas con el objeto social de SUAREC.</li>
+                            <li>Procesar pagos, suscripciones y transacciones.</li>
+                            <li>Contactar a los usuarios.</li>
+                            <li>Evaluar hojas de vida y facilitar conexiones laborales.</li>
+                            <li>Realizar encuestas, estudios de mercado y estadísticas.</li>
+                            <li>Cumplir con obligaciones legales y contractuales.</li>
+                            <li>Garantizar seguridad operativa y tecnológica.</li>
+                          </ul>
+                        </li>
+                        <li>Datos tratados: Se recopilarán datos personales, sensibles, y de empresas conforme al uso de la plataforma y formularios registrados. El tratamiento se hará con base en consentimiento previo, expreso e informado.</li>
+                        <li>Derechos de los titulares:
+                          <ul className="list-disc pl-6 mt-1">
+                            <li>Conocer, actualizar, corregir, suprimir y revocar autorización.</li>
+                            <li>Acceder a los datos en cualquier momento.</li>
+                            <li>Solicitar prueba de la autorización otorgada.</li>
+                          </ul>
+                        </li>
+                        <li>Medidas de seguridad: Se implementan medidas administrativas, físicas y técnicas para garantizar la seguridad y confidencialidad de los datos almacenados.</li>
+                        <li>Transferencia y almacenamiento: Los datos podrán ser compartidos con terceros aliados para operaciones legítimas, bajo compromiso de cumplimiento legal.</li>
+                        <li>Conservación: Los datos serán almacenados mientras exista relación contractual o necesidad operativa. Posteriormente se eliminarán conforme a la ley.</li>
                       </ul>
                     </section>
 
@@ -114,37 +132,43 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">11. CONTACTO</h4>
-                      <p>Para dudas o solicitudes relacionadas con estos Términos y Condiciones o el tratamiento de datos, puede escribir al correo contactosuarec@gmail.com o comunicarse al número 3146373088.</p>
+                      <p>Para dudas o solicitudes relacionadas con estos Términos y Condiciones o el tratamiento de datos, puede escribir a contactosuarec@gmail.com</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">12. EXCLUSIÓN DE GARANTÍAS</h4>
-                      <p>SUAREC no garantiza que el acceso a la plataforma sea ininterrumpido o libre de errores. La plataforma se proporciona &quot;tal cual&quot; y &quot;según disponibilidad&quot;.</p>
+                      <p>SUAREC no garantiza que el acceso a la plataforma sea ininterrumpido o libre de errores. La plataforma se proporciona "tal cual" y "según disponibilidad". SUAREC no ofrece garantías sobre la precisión, confiabilidad o idoneidad de los servicios o productos ofrecidos por los usuarios registrados.</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">13. LIMITACIÓN DE RESPONSABILIDAD</h4>
-                      <p>SUAREC no será responsable por daños directos, indirectos, incidentales, especiales o consecuenciales derivados del uso o imposibilidad de uso de la plataforma.</p>
+                      <p>SUAREC no será responsable por daños directos, indirectos, incidentales, especiales o consecuenciales, incluyendo pero no limitado a pérdida de datos, lucro cesante, interrupciones de negocio, fallas de seguridad o cualquier otro daño derivado del uso o imposibilidad de uso de la plataforma.</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">14. INDEMNIZACIÓN</h4>
-                      <p>El usuario acepta indemnizar, defender y mantener indemne a SUAREC, sus representantes y aliados frente a cualquier reclamo derivado del mal uso de la plataforma.</p>
+                      <p>El usuario acepta indemnizar, defender y mantener indemne a SUAREC, sus representantes y aliados frente a cualquier reclamo, pérdida, gasto o responsabilidad (incluyendo honorarios legales) derivados del mal uso de la plataforma, violación de estos Términos o de los derechos de terceros.</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">15. CONTENIDO GENERADO POR EL USUARIO</h4>
-                      <p>El usuario acepta no publicar contenido ofensivo, ilegal, difamatorio o que viole derechos de terceros.</p>
+                      <p>El usuario acepta no publicar contenido ofensivo, ilegal, difamatorio o que viole derechos de terceros. SUAREC podrá eliminar dicho contenido sin previo aviso y cancelar cuentas si lo considera necesario.</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">16. ENLACES A TERCEROS</h4>
-                      <p>La plataforma puede contener enlaces a sitios web o servicios de terceros. SUAREC no controla ni es responsable por el contenido de sitios ajenos.</p>
+                      <p>La plataforma puede contener enlaces a sitios web o servicios de terceros. SUAREC no controla ni es responsable por el contenido, políticas o prácticas de sitios ajenos.</p>
                     </section>
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">17. DURACIÓN Y TERMINACIÓN DEL ACUERDO</h4>
-                      <p>Este acuerdo estará vigente mientras el usuario utilice la plataforma. SUAREC podrá darlo por terminado unilateralmente si detecta violación a estos Términos.</p>
+                      <p>Este acuerdo estará vigente mientras el usuario utilice la plataforma. SUAREC podrá darlo por terminado unilateralmente si detecta violación a estos Términos, sin que ello genere derecho a indemnización alguna.</p>
+                    </section>
+
+                    <section>
+                      <h4 className="font-semibold text-gray-900 mb-2">18. TRATAMIENTO DE DATOS PARA VERIFICACIÓN DE ANTECEDENTES</h4>
+                      <p>Al registrarse y utilizar la plataforma SUAREC, el usuario autoriza expresamente a SUAREC S.A.S. a recopilar, almacenar, procesar y consultar información personal, incluyendo pero no limitada a antecedentes judiciales, disciplinarios, fiscales, contractuales, comerciales y laborales, con el fin de verificar la idoneidad y confiabilidad de los usuarios registrados, ya sean personas naturales o jurídicas. Esta verificación podrá realizarse a través de fuentes públicas, bases de datos oficiales y alianzas con terceros autorizados.</p>
+                      <p className="mt-2">El tratamiento de estos datos se realiza en cumplimiento de la legislación colombiana vigente en materia de protección de datos personales (Ley 1581 de 2012 y demás normas aplicables), garantizando la confidencialidad, integridad y uso adecuado de la información. En todo momento, el usuario podrá ejercer sus derechos de consulta, actualización, rectificación o supresión de sus datos personales, conforme a nuestra Política de Tratamiento de Datos Personales.</p>
                     </section>
                   </div>
                 </div>
