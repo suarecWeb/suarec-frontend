@@ -243,24 +243,7 @@ const ProfilePage = () => {
                             </div>
                           )}
 
-                          <div className="flex items-start gap-3">
-                            <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                            <div>
-                              <p className="text-sm text-gray-500">Miembro desde</p>
-                              <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
-                            </div>
-                          </div>
-
-                          {user.profession && (
-                            <div className="flex items-start gap-3">
-                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                              <div>
-                                <p className="text-sm text-gray-500">Profesión</p>
-                                <p className="text-gray-800">{user.profession}</p>
-                              </div>
-                            </div>
-                          )}
-
+                          {/* Habilidades */}
                           {user.skills && user.skills.length > 0 && (
                             <div className="flex items-start gap-3">
                               <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
@@ -276,6 +259,14 @@ const ProfilePage = () => {
                               </div>
                             </div>
                           )}
+
+                          <div className="flex items-start gap-3">
+                            <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500">Miembro desde</p>
+                              <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
