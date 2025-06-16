@@ -223,7 +223,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
   </Link>
 );
 
-// Mobile Navigation Link component
+// Mobile Navigation link comp
 const MobileNavLink = ({ 
   href, 
   children, 
