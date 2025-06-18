@@ -99,7 +99,7 @@ const CookiesModal = ({ isOpen, onClose }: CookiesModalProps) => {
                   <section>
                     <h4 className="font-semibold text-gray-900 mb-2">7. Contacto</h4>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>Correo: contactosuarec@gmail.com</li>
+                      <li>Correo: soportesuarec@gmail.com</li>
                       <li>Teléfono: +57 314 637 3088</li>
                     </ul>
                   </section>

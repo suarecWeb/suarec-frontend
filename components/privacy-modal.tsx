@@ -170,7 +170,7 @@ const PrivacyModal = ({ isOpen, onClose }: PrivacyModalProps) => {
                       <li>Oponerte al tratamiento por motivos legítimos</li>
                       <li>Acceder a tus datos de forma fácil y gratuita</li>
                     </ul>
-                    <p className="mt-2">Para ejercer estos derechos, escríbenos a <span className="font-semibold">contactosuarec@gmail.com</span>, indicando claramente:</p>
+                    <p className="mt-2">Para ejercer estos derechos, escríbenos a <span className="font-semibold">soportesuarec@gmail.com</span>, indicando claramente:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Nombre completo</li>
                       <li>Identificación (tipo y número)</li>
@@ -190,7 +190,7 @@ const PrivacyModal = ({ isOpen, onClose }: PrivacyModalProps) => {
                   <section>
                     <h4 className="font-semibold text-gray-900 mb-2">Contacto</h4>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>Correo electrónico: contactosuarec@gmail.com</li>
+                      <li>Correo electrónico: soportesuarec@gmail.com</li>
                       <li>Dirección: Cali, Valle del Cauca, Colombia</li>
                       <li>Teléfono: +57 314 637 3088</li>
                     </ul>

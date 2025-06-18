@@ -3,6 +3,19 @@ import { Company } from "./company.interface";
 import { Publication } from "./publication.interface";
 import { Comment } from "./comment.interface";
 
+export interface Experience {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  startDate: Date;
+  endDate?: Date;
+  currentPosition: boolean;
+  description?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface User {
   id?: string
   email: string
@@ -21,6 +34,7 @@ export interface User {
   company?: Company
   publications?: Publication[]
   comments?: Comment[]
+  experiences?: Experience[]
 }
 
 export // Interfaces para los DTOs

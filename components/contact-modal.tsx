@@ -52,7 +52,7 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
 
                 <div className="mt-4 text-gray-700 space-y-4">
                   <div>
-                    <span className="font-semibold">Correo electrónico:</span> contactosuarec@gmail.com
+                    <span className="font-semibold">Correo electrónico:</span> soportesuarec@gmail.com
                   </div>
                   <div>
                     <span className="font-semibold">Dirección:</span> Cali, Valle del Cauca, Colombia

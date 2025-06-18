@@ -132,7 +132,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">11. CONTACTO</h4>
-                      <p>Para dudas o solicitudes relacionadas con estos términos y condiciones o el tratamiento de datos, puede escribir a contactosuarec@gmail.com</p>
+                      <p>Para dudas o solicitudes relacionadas con estos términos y condiciones o el tratamiento de datos, puede escribir a soportesuarec@gmail.com</p>
                     </section>
 
                     <section>

@@ -18,18 +18,32 @@ import {
   FileTextIcon as FileText2,
   Clock,
   Eye,
+  Trash2,
+  CheckCircle,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserService } from "@/services/UsersService"
 import { User } from "@/interfaces/user.interface";
 import { TokenPayload } from "@/interfaces/auth.interface"
+import ExperienceDialog from "@/components/ExperienceDialog"
+import { toast } from "react-hot-toast"
+import { ExperienceService } from "@/services/ExperienceService"
+import { Experience } from "@/interfaces/user.interface"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import jsPDF from 'jspdf'
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [experienceDialogOpen, setExperienceDialogOpen] = useState(false)
+  const [selectedExperience, setSelectedExperience] = useState<Experience | undefined>()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [experienceToDelete, setExperienceToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -96,6 +110,107 @@ const ProfilePage = () => {
     })
   }
 
+  const handleAddExperience = () => {
+    setSelectedExperience(undefined)
+    setExperienceDialogOpen(true)
+  }
+
+  const handleEditExperience = (experience: Experience) => {
+    setSelectedExperience(experience)
+    setExperienceDialogOpen(true)
+  }
+
+  const handleDeleteExperience = (id: string) => {
+    setExperienceToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteExperience = async () => {
+    if (!experienceToDelete) return
+    setDeleteDialogOpen(false)
+    setSuccess(null)
+    setError(null)
+    try {
+      await ExperienceService.deleteExperience(experienceToDelete)
+      setSuccess('Experiencia eliminada correctamente')
+      // Recargar los datos del usuario
+      const token = Cookies.get("token")
+      if (token) {
+        const decoded = jwtDecode<TokenPayload>(token)
+        const response = await UserService.getUserById(decoded.id)
+        setUser(response.data)
+      }
+    } catch (error) {
+      console.error('Error al eliminar la experiencia:', error)
+      setError('Ocurrió un error al eliminar la experiencia')
+    } finally {
+      setExperienceToDelete(null)
+    }
+  }
+
+  const exportToPDF = () => {
+    if (!user) return;
+    const doc = new jsPDF();
+    // Encabezado SUAREC
+    doc.setFillColor(9, 126, 236);
+    doc.rect(0, 0, 210, 25, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.setTextColor(255,255,255);
+    doc.text('SUAREC', 15, 17);
+
+    // Nombre y rol
+    doc.setFontSize(18);
+    doc.setTextColor(33, 37, 41);
+    doc.text(user.name || '', 15, 40);
+    if (user.roles && user.roles.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(9, 126, 236);
+      doc.text(getRoleNames(user.roles).join(', '), 15, 48);
+    }
+
+    let y = 60;
+    doc.setFontSize(12);
+    doc.setTextColor(33, 37, 41);
+    doc.text('Email:', 15, y); doc.text(user.email || '', 50, y);
+    y += 8;
+    doc.text('Teléfono:', 15, y); doc.text(user.cellphone || '', 50, y);
+    y += 8;
+    doc.text('Género:', 15, y); doc.text(user.genre || '', 50, y);
+    y += 8;
+    doc.text('Profesión:', 15, y); doc.text(user.profession || '', 50, y);
+    y += 8;
+    if (user.skills && user.skills.length > 0) {
+      doc.text('Habilidades:', 15, y);
+      doc.text(user.skills.join(', '), 50, y);
+      y += 8;
+    }
+    if (user.experiences && user.experiences.length > 0) {
+      doc.setFontSize(14);
+      doc.setTextColor(9, 126, 236);
+      doc.text('Experiencia', 15, y+4);
+      y += 10;
+      doc.setFontSize(12);
+      doc.setTextColor(33, 37, 41);
+      user.experiences.forEach((exp, idx) => {
+        doc.text(`• ${exp.title} - ${exp.company}`, 18, y);
+        y += 6;
+        if (exp.location) { doc.text(`  ${exp.location}`, 22, y); y += 6; }
+        doc.text(`  ${formatDate(exp.startDate)} - ${exp.currentPosition ? 'Presente' : exp.endDate ? formatDate(exp.endDate) : ''}`, 22, y);
+        y += 6;
+        if (exp.description) { doc.text(`  ${exp.description}`, 22, y); y += 6; }
+        y += 2;
+        if (y > 270 && idx < (user.experiences?.length || 0)-1) { doc.addPage(); y = 20; }
+      });
+    }
+    y += 4;
+    doc.setFontSize(11);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Miembro desde:', 15, y); doc.text(user.created_at ? formatDate(user.created_at) : '', 50, y);
+
+    doc.save(`Perfil_${user.name || 'usuario'}.pdf`);
+  }
+
   return (
     <>
       <Navbar />
@@ -116,6 +231,15 @@ const ProfilePage = () => {
               <div>
                 <h3 className="text-red-800 font-medium">Error</h3>
                 <p className="text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex items-start gap-3">
+              <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-green-800 font-medium">Éxito</h3>
+                <p className="text-green-700">{success}</p>
               </div>
             </div>
           )}
@@ -260,6 +384,79 @@ const ProfilePage = () => {
                             </div>
                           )}
 
+                          {/* Experiencias */}
+                          {user.experiences && user.experiences.length > 0 && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center mb-2">
+                                  <p className="text-sm text-gray-500">Experiencia</p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddExperience}
+                                    className="text-[#097EEC] hover:text-[#0A6BC7]"
+                                  >
+                                    Agregar experiencia
+                                  </Button>
+                                </div>
+                                <div className="space-y-4">
+                                  {user.experiences.map((exp, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3 relative group">
+                                      <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditExperience(exp)}
+                                          className="text-gray-500 hover:text-[#097EEC]"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDeleteExperience(exp.id)}
+                                          className="text-gray-500 hover:text-red-500"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                      <h4 className="font-medium text-gray-800">{exp.title}</h4>
+                                      <p className="text-sm text-gray-600">{exp.company}</p>
+                                      {exp.location && (
+                                        <p className="text-sm text-gray-500">{exp.location}</p>
+                                      )}
+                                      <p className="text-sm text-gray-500">
+                                        {formatDate(exp.startDate)} - {exp.currentPosition ? 'Presente' : exp.endDate ? formatDate(exp.endDate) : ''}
+                                      </p>
+                                      {exp.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{exp.description}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Si no hay experiencias, mostrar el botón para agregar */}
+                          {(!user.experiences || user.experiences.length === 0) && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div>
+                                <p className="text-sm text-gray-500">Experiencia</p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleAddExperience}
+                                  className="mt-2 text-[#097EEC] hover:text-[#0A6BC7]"
+                                >
+                                  Agregar experiencia
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-start gap-3">
                             <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
                             <div>
@@ -267,6 +464,14 @@ const ProfilePage = () => {
                               <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
                             </div>
                           </div>
+
+                          <Button
+                            variant="outline"
+                            className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC]/10 mb-4"
+                            onClick={exportToPDF}
+                          >
+                            Exportar a PDF
+                          </Button>
                         </div>
                       </div>
 
@@ -442,6 +647,44 @@ const ProfilePage = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de confirmación para eliminar experiencia */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>¿Eliminar experiencia?</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-700 mb-4">¿Estás seguro de que deseas eliminar esta experiencia? Esta acción no se puede deshacer.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white" onClick={confirmDeleteExperience}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de experiencia */}
+      <ExperienceDialog
+        open={experienceDialogOpen}
+        onOpenChange={setExperienceDialogOpen}
+        userId={Number(user?.id)}
+        experience={selectedExperience}
+        onSuccess={() => {
+          setSuccess('Experiencia agregada correctamente')
+          setError(null)
+          // Recargar los datos del usuario
+          const token = Cookies.get("token")
+          if (token) {
+            const decoded = jwtDecode<TokenPayload>(token)
+            UserService.getUserById(decoded.id).then(response => {
+              setUser(response.data)
+            })
+          }
+        }}
+      />
     </>
   )
 }
