@@ -56,7 +56,7 @@ const CookiesModal = ({ isOpen, onClose }: CookiesModalProps) => {
                     Fecha de última actualización: 16 de junio de 2025.
                   </p>
                   <section>
-                    <p>En SUAREC S.A.S. (en adelante "SUAREC"), utilizamos cookies para garantizar el correcto funcionamiento de nuestra plataforma web y app, mejorar la experiencia del usuario, ofrecer contenido personalizado y analizar el comportamiento de navegación con fines estadísticos y de mejora continua.</p>
+                    <p>En SUAREC S.A.S. (en adelante &quot;SUAREC&quot;), utilizamos cookies para garantizar el correcto funcionamiento de nuestra plataforma web y app, mejorar la experiencia del usuario, ofrecer contenido personalizado y analizar el comportamiento de navegación con fines estadísticos y de mejora continua.</p>
                   </section>
                   <section>
                     <h4 className="font-semibold text-gray-900 mb-2">1. ¿Qué son las cookies?</h4>

@@ -137,7 +137,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
 
                     <section>
                       <h4 className="font-semibold text-gray-900 mb-2">12. EXCLUSIÓN DE GARANTÍAS</h4>
-                      <p>SUAREC no garantiza que el acceso a la plataforma sea ininterrumpido o libre de errores. La plataforma se proporciona "tal cual" y "según disponibilidad". SUAREC no ofrece garantías sobre la precisión, confiabilidad o idoneidad de los servicios o productos ofrecidos por los usuarios registrados.</p>
+                      <p>SUAREC no garantiza que el acceso a la plataforma sea ininterrumpido o libre de errores. La plataforma se proporciona &quot;tal cual&quot; y &quot;según disponibilidad&quot;. SUAREC no ofrece garantías sobre la precisión, confiabilidad o idoneidad de los servicios o productos ofrecidos por los usuarios registrados.</p>
                     </section>
 
                     <section>
