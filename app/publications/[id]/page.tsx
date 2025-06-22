@@ -392,8 +392,8 @@ const PublicationDetailPage = () => {
                   Inicio
                 </Link>
                 <ChevronRight className="h-4 w-4 mx-2" />
-                <Link href="/publications" className="hover:text-[#097EEC] transition-colors">
-                  Publicaciones
+                <Link href="/feed" className="hover:text-[#097EEC] transition-colors">
+                  Encontrar
                 </Link>
                 <ChevronRight className="h-4 w-4 mx-2" />
                 <span className="text-gray-800 font-medium">Detalles</span>

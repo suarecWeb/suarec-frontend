@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Bell,
   Search,
-  Home
+  Home,
+  TrendingUp
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
 
@@ -63,7 +64,7 @@ const Navbar = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isScrolled 
-        ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100' 
+        ? 'bg-white/95 backdrop-blur-md shadow-lg' 
         : 'bg-[#097EEC]'
     }`}>
       <div className="container mx-auto px-4">
@@ -95,6 +96,12 @@ const Navbar = () => {
               {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/publications" icon={<FileText className="h-4 w-4" />} isScrolled={isScrolled}>
                   Publicaciones
+                </NavLink>
+              )}
+              
+              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
+                  Feed
                 </NavLink>
               )}
               
@@ -199,6 +206,12 @@ const Navbar = () => {
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                   <MobileNavLink href="/publications" icon={<FileText className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
                     Publicaciones
+                  </MobileNavLink>
+                )}
+                
+                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                  <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                    Feed
                   </MobileNavLink>
                 )}
                 
