@@ -50,7 +50,11 @@ export default function CompanyDetailsPage({ params }: { params: { id: string } 
 
   const isOwnerOrAdmin = () => {
     if (!company || !currentUserId) return false;
-    return company.user?.id === currentUserId.toString() || userRoles.includes("ADMIN");
+    return (
+      company.user?.id === currentUserId.toString() ||
+      userRoles.includes("ADMIN") ||
+      userRoles.includes("BUSINESS")
+    );
   };
 
   const canApply = () => {

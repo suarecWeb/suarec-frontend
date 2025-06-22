@@ -169,7 +169,7 @@ const CreatePublicationPage = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Crear Publicación</h1>
+            <h1 className="text-3xl font-bold">Crear publicación</h1>
             <p className="mt-2 text-blue-100">
               Comparte tus servicios o búsquedas con la comunidad
             </p>

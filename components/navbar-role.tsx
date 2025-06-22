@@ -6,6 +6,7 @@ import toast from "react-hot-toast"
 import { logOut } from "@/actions/log-out"
 import Cookies from "js-cookie"
 import { LogIn, LogOut, User } from "lucide-react"
+import { useState, useEffect } from "react"
 
 interface NavbarRoleProps {
   isMobile: boolean
@@ -17,7 +18,11 @@ const handleNoLogin = () => {
 }
 
 export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section }: NavbarRoleProps) => {
-  const token = Cookies.get("token")
+  const [token, setToken] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    setToken(Cookies.get("token"))
+  }, [])
 
   const handleLogOutClick = () => {
     logOut()
@@ -59,8 +64,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section }: Nav
             transition-colors
           `}
         >
+          <span>Cerrar sesión</span>
           <LogOut className={`${isMobile ? "h-5 w-5" : "h-4 w-4"}`} />
-          <span>Log Out</span>
         </Link>
       </div>
     )

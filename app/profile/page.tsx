@@ -103,7 +103,7 @@ const ProfilePage = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Mi Perfil</h1>
+            <h1 className="text-3xl font-bold">Mi perfil</h1>
             <p className="mt-2 text-blue-100">Gestiona tu información personal y revisa tu actividad</p>
           </div>
         </div>
@@ -175,7 +175,7 @@ const ProfilePage = () => {
                       <Link href="/profile/edit">
                         <button className="bg-white text-[#097EEC] px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
                           <Edit className="h-4 w-4" />
-                          <span>Editar Perfil</span>
+                          <span>Editar perfil</span>
                         </button>
                       </Link>
                     </div>
@@ -188,7 +188,7 @@ const ProfilePage = () => {
                     <Link href="/profile/edit">
                       <button className="w-full bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2">
                         <Edit className="h-4 w-4" />
-                        <span>Editar Perfil</span>
+                        <span>Editar perfil</span>
                       </button>
                     </Link>
                   </div>
@@ -197,7 +197,7 @@ const ProfilePage = () => {
                     {/* Left Column - Personal Info */}
                     <div className="md:w-1/3">
                       <div className="bg-gray-50 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Información personal</h3>
 
                         <div className="space-y-4">
                           <div className="flex items-start gap-3">
@@ -219,7 +219,7 @@ const ProfilePage = () => {
                           <div className="flex items-start gap-3">
                             <Calendar className="h-5 w-5 text-[#097EEC] mt-0.5" />
                             <div>
-                              <p className="text-sm text-gray-500">Fecha de Nacimiento</p>
+                              <p className="text-sm text-gray-500">Fecha de nacimiento</p>
                               <p className="text-gray-800">{formatDate(user.born_at)}</p>
                             </div>
                           </div>
@@ -232,19 +232,13 @@ const ProfilePage = () => {
                             </div>
                           </div>
 
-                          {user.cv_url && (
+                          {/* Profesión */}
+                          {user.profession && (
                             <div className="flex items-start gap-3">
                               <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
                               <div>
-                                <p className="text-sm text-gray-500">Curriculum Vitae</p>
-                                <a
-                                  href={user.cv_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[#097EEC] hover:underline"
-                                >
-                                  Ver CV
-                                </a>
+                                <p className="text-sm text-gray-500">Profesión</p>
+                                <p className="text-gray-800">{user.profession}</p>
                               </div>
                             </div>
                           )}
@@ -288,7 +282,7 @@ const ProfilePage = () => {
                       {/* Company Info (if BUSINESS role) */}
                       {user.company && (
                         <div className="bg-gray-50 rounded-lg p-6 mt-6">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de Empresa</h3>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de empresa</h3>
 
                           <div className="space-y-4">
                             <div className="flex items-start gap-3">
@@ -348,7 +342,7 @@ const ProfilePage = () => {
                         </TabsList>
 
                         <TabsContent value="publications">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis Publicaciones</h3>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis publicaciones</h3>
 
                           {user.publications && user.publications.length > 0 ? (
                             <div className="space-y-4">
@@ -394,7 +388,7 @@ const ProfilePage = () => {
                               <p className="text-gray-500 mt-2">Aún no has creado ninguna publicación</p>
                               <Link href="/publications/create">
                                 <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors">
-                                  Crear Publicación
+                                  Crear publicación
                                 </button>
                               </Link>
                             </div>
@@ -402,7 +396,7 @@ const ProfilePage = () => {
                         </TabsContent>
 
                         <TabsContent value="comments">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis Comentarios</h3>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis comentarios</h3>
 
                           {user.comments && user.comments.length > 0 ? (
                             <div className="space-y-4">

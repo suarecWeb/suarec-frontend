@@ -332,7 +332,7 @@ const PublicationsPageContent = () => {
               <Link href="/publications/create">
                 <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
                   <PlusCircle className="h-5 w-5" />
-                  <span>Crear Publicación</span>
+                  <span>Crear publicación</span>
                 </button>
               </Link>
             </div>
@@ -442,7 +442,7 @@ const PublicationsPageContent = () => {
                         <Link href="/publications/create">
                           <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
                             <PlusCircle className="h-5 w-5" />
-                            <span>Crear Publicación</span>
+                            <span>Crear publicación</span>
                           </button>
                         </Link>
                       </div>

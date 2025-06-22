@@ -200,11 +200,6 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-white/70 hover:text-white transition">
-                    Sobre nosotros
-                  </Link>
-                </li>
-                <li>
                   <Link href="/contact" className="text-white/70 hover:text-white transition">
                     Contacto
                   </Link>

@@ -316,7 +316,7 @@ const MyApplicationsPageContent = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Mis Aplicaciones</h1>
+            <h1 className="text-3xl font-bold">Mis aplicaciones</h1>
             <p className="mt-2 text-blue-100">
               Revisa el estado de todas tus aplicaciones laborales
             </p>
@@ -344,7 +344,7 @@ const MyApplicationsPageContent = () => {
               <Link href="/publications">
                 <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
                   <Briefcase className="h-5 w-5" />
-                  <span>Ver Oportunidades</span>
+                  <span>Ver oportunidades</span>
                 </button>
               </Link>
             </div>
@@ -415,7 +415,7 @@ const MyApplicationsPageContent = () => {
                           <Link href="/publications">
                             <button className="mt-4 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
                               <Briefcase className="h-5 w-5" />
-                              <span>Ver Oportunidades</span>
+                              <span>Ver oportunidades</span>
                             </button>
                           </Link>
                         )}

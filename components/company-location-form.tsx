@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import CompanyLocationMap from './company-location-map';
+import { useState } from 'react';
 import { Company } from '@/interfaces/company.interface';
 import CompanyService from '@/services/CompanyService';
 
@@ -36,14 +35,6 @@ export default function CompanyLocationForm({
     }));
   };
 
-  const handleLocationChange = (lat: number, lng: number) => {
-    setFormData(prev => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,12 +58,6 @@ export default function CompanyLocationForm({
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900">Ubicación de la Empresa</h3>
         
-        {/* Mapa */}
-        <CompanyLocationMap
-          initialPosition={[formData.latitude, formData.longitude]}
-          onLocationChange={handleLocationChange}
-        />
-
         {/* Campos de dirección */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -135,7 +120,6 @@ export default function CompanyLocationForm({
               onChange={handleInputChange}
               step="any"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#097EEC] focus:ring-[#097EEC] sm:text-sm"
-              readOnly
             />
           </div>
 
@@ -151,7 +135,6 @@ export default function CompanyLocationForm({
               onChange={handleInputChange}
               step="any"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#097EEC] focus:ring-[#097EEC] sm:text-sm"
-              readOnly
             />
           </div>
         </div>
