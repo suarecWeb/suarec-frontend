@@ -7,6 +7,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   // Esto es más seguro que revisar el children
   const pathname = usePathname();
   const isRegistrationPage = pathname?.includes("/register");
+  const isVerifyEmailPage = pathname?.includes("/verify-email");
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#097EEC] to-[#082D50]">
@@ -30,8 +31,8 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-grow flex justify-center items-center w-full px-4 py-8 relative z-10">
         <div className={`w-full ${
           // Usar clases dinámicas según la página
-          isRegistrationPage 
-            ? "max-w-5xl" // Más ancho para el registro
+          isRegistrationPage || isVerifyEmailPage
+            ? "max-w-4xl lg:max-w-5xl xl:max-w-6xl" // Ancho más equilibrado
             : "max-w-[500px]" // Ancho original para otros contenidos
         } bg-white rounded-xl shadow-2xl overflow-hidden`}>
           <div className="p-8 md:p-10">
