@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { X, Star, Send, Loader2 } from 'lucide-react';
 import StarRating from './star-rating';
 import RatingService from '@/services/RatingService';
+import { RatingCategory } from '@/interfaces/rating.interface';
 
 interface RateUserModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ interface RateUserModalProps {
     profile_image?: string;
   };
   workContractId?: string;
-  category?: 'SERVICE' | 'EMPLOYER' | 'EMPLOYEE';
+  category?: RatingCategory;
   onRatingSubmitted?: () => void;
 }
 
@@ -27,7 +28,7 @@ export default function RateUserModal({
   userId,
   userToRate,
   workContractId,
-  category = 'SERVICE',
+  category = RatingCategory.SERVICE,
   onRatingSubmitted
 }: RateUserModalProps) {
   const [rating, setRating] = useState(0);
@@ -80,11 +81,11 @@ export default function RateUserModal({
 
   const getCategoryText = () => {
     switch (category) {
-      case 'SERVICE':
+      case RatingCategory.SERVICE:
         return 'como proveedor de servicio';
-      case 'EMPLOYER':
+      case RatingCategory.EMPLOYER:
         return 'como empleador';
-      case 'EMPLOYEE':
+      case RatingCategory.EMPLOYEE:
         return 'como empleado';
       default:
         return '';
@@ -141,10 +142,10 @@ export default function RateUserModal({
             <div className="flex justify-center">
               <StarRating
                 rating={rating}
-                interactive={true}
+                readonly={false}
                 size="lg"
                 onRatingChange={setRating}
-                showText={true}
+                showValue={true}
               />
             </div>
           </div>

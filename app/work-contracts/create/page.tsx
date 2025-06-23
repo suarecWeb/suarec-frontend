@@ -137,7 +137,15 @@ const CreateWorkContractPageContent = () => {
 
     try {
       const response = await PublicationService.getPublications({ page: 1, limit: 10 });
-      setPublicationSearchResults(response.data.data)
+      // Filtrar publicaciones que tienen id y mapear al formato correcto
+      const filteredPublications: PublicationSearchResult[] = response.data.data
+        .filter((pub: any) => pub.id && typeof pub.id === 'string') // Solo publicaciones con id válido
+        .map((pub: any) => ({
+          id: pub.id as string,
+          title: pub.title,
+          category: pub.category
+        }));
+      setPublicationSearchResults(filteredPublications);
       /*const filtered = response.data.data.filter(pub =>
         pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pub.category.toLowerCase().includes(searchTerm.toLowerCase())

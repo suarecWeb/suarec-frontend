@@ -1,7 +1,7 @@
 // app/auth/verify-email/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import EmailVerificationService from "@/services/EmailVerificationService";
 import {
@@ -16,7 +16,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const EmailVerificationPage = () => {
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
+const EmailVerificationContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -28,17 +31,7 @@ const EmailVerificationPage = () => {
   const [message, setMessage] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>(email || "");
 
-  useEffect(() => {
-    if (token) {
-      verifyEmailToken(token);
-    } else if (email) {
-      // Si hay email pero no token, significa que viene del registro
-      setVerificationStatus('registered');
-      setUserEmail(email);
-    }
-  }, [token, email]);
-
-  const verifyEmailToken = async (verificationToken: string) => {
+  const verifyEmailToken = useCallback(async (verificationToken: string) => {
     setIsVerifying(true);
     try {
       const response = await EmailVerificationService.verifyEmail(verificationToken);
@@ -61,7 +54,17 @@ const EmailVerificationPage = () => {
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    if (token) {
+      verifyEmailToken(token);
+    } else if (email) {
+      // Si hay email pero no token, significa que viene del registro
+      setVerificationStatus('registered');
+      setUserEmail(email);
+    }
+  }, [token, email, verifyEmailToken]);
 
   const handleResendEmail = async () => {
     if (!userEmail.trim()) {
@@ -142,7 +145,7 @@ const EmailVerificationPage = () => {
                   <div className="bg-[#097EEC] text-white rounded-full p-1 mt-0.5 lg:p-1.5">
                     <Check className="h-3 w-3 lg:h-4 lg:w-4" />
                   </div>
-                  <p className="text-sm lg:text-base text-gray-700">Busca un email de "Suarec"</p>
+                  <p className="text-sm lg:text-base text-gray-700">Busca un email de &quot;Suarec&quot;</p>
                 </div>
                 <div className="flex items-start gap-3 lg:gap-4">
                   <div className="bg-[#097EEC] text-white rounded-full p-1 mt-0.5 lg:p-1.5">
@@ -321,6 +324,22 @@ const EmailVerificationPage = () => {
         </Link>
       </div>
     </div>
+  );
+};
+
+const EmailVerificationPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="text-center py-8 lg:py-12">
+        <div className="bg-blue-50 inline-flex rounded-full p-6 mb-6 lg:mb-8">
+          <Loader2 className="h-12 w-12 lg:h-16 lg:w-16 text-[#097EEC] animate-spin" />
+        </div>
+        <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Cargando...</h2>
+        <p className="text-gray-600 text-lg">Por favor espera mientras cargamos la página.</p>
+      </div>
+    }>
+      <EmailVerificationContent />
+    </Suspense>
   );
 };
 
