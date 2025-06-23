@@ -11,6 +11,7 @@ import RoleGuard from "@/components/role-guard";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { RatingCategory } from "@/interfaces/rating.interface";
 import {
   Briefcase,
   Plus,
@@ -520,7 +521,7 @@ const WorkContractsPageContent = () => {
           userId={currentUserId!}
           userToRate={selectedUserToRate}
           workContractId={selectedContractId || undefined}
-          category="SERVICE"
+          category={RatingCategory.SERVICE}
           onRatingSubmitted={() => {
             fetchContracts({ page: pagination.page, limit: pagination.limit });
           }}

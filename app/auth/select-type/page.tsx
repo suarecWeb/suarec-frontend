@@ -4,6 +4,9 @@ import UserTypeForm from "@/components/select-user-type-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
 const UserType = () => {
   return (
     <div className="w-full">

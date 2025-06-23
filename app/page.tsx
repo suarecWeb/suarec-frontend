@@ -285,8 +285,8 @@ export default function Home() {
               </p>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-white/80 font-eras">
-                  <Heart className="h-5 w-5 text-red-300" />
-                  <span>Hecho en Colombia</span>
+                  <Heart className="h-5 w-5 text-white-300" />
+                  <span>Hecho en Colombia, para Colombianos</span>
                 </div>
               </div>
             </div>
@@ -320,11 +320,11 @@ export default function Home() {
               <ul className="space-y-3">
                 <li className="text-white/80 font-eras">
                   <span className="block text-sm">Email</span>
-                  <span className="text-white">contacto@suarec.com</span>
+                  <span className="text-white">soportesuarec@gmail.com</span>
                 </li>
                 <li className="text-white/80 font-eras">
                   <span className="block text-sm">Teléfono</span>
-                  <span className="text-white">+57 300 123 4567</span>
+                  <span className="text-white">+57 314 6373088</span>
                 </li>
                 <li className="text-white/80 font-eras">
                   <span className="block text-sm">Ubicación</span>

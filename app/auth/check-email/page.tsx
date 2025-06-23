@@ -3,6 +3,9 @@ import { Container } from "@mui/material"
 import Image from "next/image"
 import Link from "next/link"
 
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
 const CheckPage = () =>{
     return(
         <>
