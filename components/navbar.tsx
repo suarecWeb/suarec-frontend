@@ -20,7 +20,8 @@ import {
   Bell,
   Search,
   Home,
-  TrendingUp
+  TrendingUp,
+  Handshake
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
 
@@ -93,11 +94,11 @@ const Navbar = () => {
                 </NavLink>
               )}
               
-              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+              {/*{hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/publications" icon={<FileText className="h-4 w-4" />} isScrolled={isScrolled}>
                   Publicaciones
                 </NavLink>
-              )}
+              )}*/}
               
               {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                 <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
@@ -147,6 +148,12 @@ const Navbar = () => {
                   Mensajes
                 </NavLink>
               )}
+
+              {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                <NavLink href="/contracts" icon={<Handshake className="h-4 w-4" />} isScrolled={isScrolled}>
+                  Contrataciones
+                </NavLink>
+              )}
               
               {/* User Menu */}
               <div className="ml-4 pl-4 border-l border-white/20">
@@ -172,42 +179,36 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white/98 backdrop-blur-md overflow-y-auto">
-          <div className="flex flex-col min-h-screen p-4">
-            <div className="flex justify-between items-center mb-8">
-              <Link 
-                href="/" 
-                className="text-2xl font-eras-bold-italic text-[#097EEC]"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                SUAREC
-              </Link>
+        <div className="lg:hidden fixed inset-0 z-50 bg-white/98 backdrop-blur-md overflow-y-auto hide-scrollbar">
+          <div className="flex min-h-screen flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#097EEC] rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S</span>
+                </div>
+                <span className="font-bold text-xl text-gray-900">Suarec</span>
+              </div>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-                aria-label="Close menu"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6 text-gray-600" />
               </button>
             </div>
-
-            <div className="mb-6">
-              <SearchBar isScrolled={true} />
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
+            
+            <div className="flex-1 overflow-y-auto hide-scrollbar">
               <div className="flex flex-col space-y-2 pb-4">
                 {hasRole(['ADMIN']) && (
                   <MobileNavLink href="/users" icon={<Users className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
                     Usuarios
                   </MobileNavLink>
                 )}
-                
+                {/*
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                   <MobileNavLink href="/publications" icon={<FileText className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
                     Publicaciones
                   </MobileNavLink>
-                )}
+                )}*/}
                 
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                   <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
@@ -253,6 +254,12 @@ const Navbar = () => {
                 {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
                   <MobileNavLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
                     Mensajes
+                  </MobileNavLink>
+                )}
+
+                {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                  <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                    Contrataciones
                   </MobileNavLink>
                 )}
               </div>

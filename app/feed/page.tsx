@@ -18,19 +18,25 @@ import {
   Heart,
   MessageSquare,
   Share2,
-  Send
+  Send,
+  MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from "@/components/ui/skeleton";
 import PublicationFeedCard from '@/components/publication-feed-card';
 import Navbar from '@/components/navbar';
+import CreatePublicationModal from '@/components/create-publication-modal';
 import PublicationService from '@/services/PublicationsService';
 import { Publication } from '@/interfaces/publication.interface';
 import { PaginationParams } from '@/interfaces/pagination-params.interface';
+import { PaginationResponse } from '@/interfaces/pagination-response.interface';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '@/interfaces/auth.interface';
 import Link from 'next/link';
+import { ContractService } from "@/services/ContractService";
+import { Contract } from "@/interfaces/contract.interface";
 
 export default function FeedPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -40,14 +46,23 @@ export default function FeedPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
-  const [pagination, setPagination] = useState({
-    total: 0,
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }>({
     page: 1,
     limit: 10,
+    total: 0,
     totalPages: 0,
     hasNextPage: false,
-    hasPrevPage: false,
+    hasPrevPage: false
   });
+  const [publicationBids, setPublicationBids] = useState<{[key: string]: { contracts: Contract[], totalBids: number }}>({});
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -63,6 +78,32 @@ export default function FeedPage() {
     }
   }, []);
 
+  // Función para cargar ofertas de publicaciones
+  const loadPublicationBids = async (publicationIds: string[]) => {
+    try {
+      const bidsPromises = publicationIds.map(async (id) => {
+        try {
+          const bidsData = await ContractService.getPublicationBids(id);
+          return { id, data: bidsData };
+        } catch (error) {
+          console.error(`Error loading bids for publication ${id}:`, error);
+          return { id, data: { contracts: [], totalBids: 0 } };
+        }
+      });
+
+      const bidsResults = await Promise.all(bidsPromises);
+      const bidsMap: {[key: string]: { contracts: Contract[], totalBids: number }} = {};
+      
+      bidsResults.forEach(({ id, data }) => {
+        bidsMap[id] = data;
+      });
+
+      setPublicationBids(bidsMap);
+    } catch (error) {
+      console.error('Error loading publication bids:', error);
+    }
+  };
+
   // Función para cargar publicaciones
   const fetchPublications = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
     try {
@@ -70,6 +111,10 @@ export default function FeedPage() {
       const response = await PublicationService.getPublications(params);
       setPublications(response.data.data);
       setPagination(response.data.meta);
+      
+      // Cargar ofertas para las publicaciones
+      const publicationIds = response.data.data.map((pub: Publication) => pub.id!);
+      await loadPublicationBids(publicationIds);
     } catch (err) {
       setError("Error al cargar las publicaciones");
       console.error("Error al obtener publicaciones:", err);
@@ -82,6 +127,12 @@ export default function FeedPage() {
   useEffect(() => {
     fetchPublications();
   }, []);
+
+  // Función para manejar cuando se crea una nueva publicación
+  const handlePublicationCreated = () => {
+    // Recargar las publicaciones para mostrar la nueva
+    fetchPublications();
+  };
 
   // Filtrar publicaciones
   const filteredPublications = publications.filter(pub => {
@@ -191,16 +242,34 @@ export default function FeedPage() {
                 <div className="flex-1 font-eras-semibold text-gray-900">
                     ¿Qué estás buscando hoy?
                 </div>
+                <Button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Publicación
+                </Button>
               </div>
             </div>
 
             {/* Feed */}
             <div className="space-y-6">
               {loading ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#097EEC] mx-auto mb-4"></div>
-                  <p className="text-gray-600 font-eras">Cargando publicaciones...</p>
-                </div>
+                // Loading skeletons
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-start gap-4 mb-4">
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-6 w-full mb-2" />
+                    <Skeleton className="h-4 w-3/4 mb-4" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
+                ))
               ) : error ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
                   <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -212,7 +281,7 @@ export default function FeedPage() {
                   <div key={publication.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-4">
                         <div className="relative">
                           <div className="w-12 h-12 bg-[#097EEC] rounded-full flex items-center justify-center">
                             <User className="h-6 w-6 text-white" />
@@ -245,9 +314,19 @@ export default function FeedPage() {
                               <Calendar className="h-3 w-3" />
                               <span>{formatDate(publication.created_at)}</span>
                             </div>
+                            {publication.price && (
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                <span className="font-medium text-green-600">${publication.price} {publication.priceUnit}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
+                      
+                      <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                      </button>
                     </div>
 
                     {/* Content */}
@@ -269,6 +348,21 @@ export default function FeedPage() {
                             alt={publication.title}
                             className="w-full h-48 object-cover rounded-lg"
                           />
+                        </div>
+                      )}
+
+                      {/* Información de ofertas activas */}
+                      {publicationBids[publication.id!] && publicationBids[publication.id!].totalBids > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                          <div className="flex items-center gap-2 text-blue-700">
+                            <TrendingUp className="h-4 w-4" />
+                            <span className="font-medium text-sm">
+                              {publicationBids[publication.id!].totalBids} oferta{publicationBids[publication.id!].totalBids > 1 ? 's' : ''} activa{publicationBids[publication.id!].totalBids > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Esta publicación tiene ofertas en negociación
+                          </p>
                         </div>
                       )}
                     </div>
@@ -340,6 +434,13 @@ export default function FeedPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de crear publicación */}
+      <CreatePublicationModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onPublicationCreated={handlePublicationCreated}
+      />
     </div>
   );
 } 

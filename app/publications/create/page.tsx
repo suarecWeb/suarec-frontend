@@ -25,6 +25,8 @@ interface FormData {
   description: string;
   category: string;
   image_url?: string;
+  price?: number;
+  priceUnit?: string;
 }
 
 // Categorías disponibles
@@ -40,6 +42,17 @@ const CATEGORIES = [
   "Finanzas",
   "Agricultura",
   "Otro",
+];
+
+// Unidades de precio disponibles
+const PRICE_UNITS = [
+  "hour", // Por hora
+  "project", // Por proyecto
+  "monthly", // Mensual
+  "daily", // Diario
+  "weekly", // Semanal
+  "piece", // Por pieza
+  "service", // Por servicio
 ];
 
 const CreatePublicationPage = () => {
@@ -63,6 +76,8 @@ const CreatePublicationPage = () => {
       description: "",
       category: "",
       image_url: "",
+      price: 0,
+      priceUnit: "",
     },
   });
 
@@ -106,6 +121,8 @@ const CreatePublicationPage = () => {
   };
 
   const onSubmit = async (data: FormData) => {
+    console.log(typeof data.price)
+
     try {
       setIsLoading(true);
       setError(null);
@@ -133,6 +150,8 @@ const CreatePublicationPage = () => {
         description: data.description || "", // Asegurar que no sea undefined
         category: data.category.toUpperCase(),
         image_url: imageUrl || undefined, // Opcional
+        price: data.price || 0, // Precio opcional
+        priceUnit: data.priceUnit || undefined, // Unidad de precio opcional
         created_at: new Date(), 
         modified_at: new Date(),
         userId: Number(decoded.id), // Asegurar que sea número
@@ -314,6 +333,64 @@ const CreatePublicationPage = () => {
                         Caracteres: {watch("description")?.length || 0}/500
                       </p>
                     )}
+                  </div>
+
+                  {/* Precio */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                        Precio (opcional)
+                      </label>
+                      <input
+                        type="number"
+                        id="price"
+                        step="0.01"
+                        min="0"
+                        {...register("price", {
+                          min: { value: 0, message: "El precio debe ser mayor a 0" }
+                        })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        placeholder="Ej: 50.00"
+                      />
+                      {errors.price && (
+                        <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="priceUnit" className="block text-sm font-medium text-gray-700 mb-2">
+                        Unidad de precio
+                      </label>
+                      <select
+                        id="priceUnit"
+                        {...register("priceUnit")}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                      >
+                        <option value="">Seleccionar unidad</option>
+                        <option value="hour">Por hora</option>
+                        <option value="project">Por proyecto</option>
+                        <option value="monthly">Mensual</option>
+                        <option value="daily">Diario</option>
+                        <option value="weekly">Semanal</option>
+                        <option value="piece">Por pieza</option>
+                        <option value="service">Por servicio</option>
+                      </select>
+                      {errors.priceUnit && (
+                        <p className="mt-1 text-sm text-red-600">{errors.priceUnit.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
+                    <div className="flex">
+                      <Info className="h-5 w-5 text-blue-400 mr-2 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-blue-700">
+                          <strong>Consejo:</strong> Si especificas un precio, los usuarios podrán contratar tu servicio directamente. 
+                          Si no lo especificas, los usuarios te contactarán para negociar el precio.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -32,6 +32,7 @@ import {
   HandHeart,
   CheckCircle,
   XCircle,
+  TrendingUp,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Publication } from "@/interfaces/publication.interface";
@@ -40,6 +41,9 @@ import { User } from "@/interfaces/user.interface";
 import { Comment } from "@/interfaces/comment.interface";
 import CommentService from "@/services/CommentsService";
 import MessageService from "@/services/MessageService";
+import ContractModal from "@/components/contract-modal";
+import { ContractService } from "@/services/ContractService";
+import { Contract } from "@/interfaces/contract.interface";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -61,6 +65,13 @@ const PublicationDetailPage = () => {
   const [isApplying, setIsApplying] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState("");
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+
+  // Estados para contratación
+  const [showContractModal, setShowContractModal] = useState(false);
+  
+  // Estados para ofertas
+  const [publicationBids, setPublicationBids] = useState<{ contracts: Contract[], totalBids: number }>({ contracts: [], totalBids: 0 });
+  const [isLoadingBids, setIsLoadingBids] = useState(false);
 
   useEffect(() => {
     const fetchPublicationDetails = async () => {
@@ -131,6 +142,13 @@ const PublicationDetailPage = () => {
 
     fetchPublicationDetails();
   }, [params.id]);
+
+  // Cargar ofertas cuando la publicación esté disponible
+  useEffect(() => {
+    if (publication?.id) {
+      loadPublicationBids();
+    }
+  }, [publication?.id]);
 
   const handleDeletePublication = async () => {
     if (!publication?.id) return;
@@ -206,23 +224,9 @@ const PublicationDetailPage = () => {
     }
   };
 
-  // Función para manejar contratar (redirigir a mensajes)
-  const handleHire = async () => {
-    if (!author?.id) return;
-
-    try {
-      const res = await MessageService.createMessage({
-        content: 'Hola! Quiero contratar tu servicio de ' + publication?.title,
-        senderId: currentUserId ? currentUserId : 0,
-        recipientId: parseInt(author.id)
-      })
-
-      router.push(`/chat`);
-    } catch (error: any) {
-      console.error("Error al enviar mensaje:", error);
-      setError("No se pudo enviar el mensaje. Inténtalo de nuevo.");
-      setTimeout(() => setError(null), 3000);
-    }
+  // Función para manejar contratar (nuevo sistema de contrataciones)
+  const handleHire = () => {
+    setShowContractModal(true);
   };
 
   // Función para compartir la publicación
@@ -274,6 +278,21 @@ const PublicationDetailPage = () => {
       setTimeout(() => setError(null), 3000);
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  // Función para cargar ofertas de la publicación
+  const loadPublicationBids = async () => {
+    if (!publication?.id) return;
+    
+    try {
+      setIsLoadingBids(true);
+      const bidsData = await ContractService.getPublicationBids(publication.id);
+      setPublicationBids(bidsData);
+    } catch (error) {
+      console.error('Error loading publication bids:', error);
+    } finally {
+      setIsLoadingBids(false);
     }
   };
 
@@ -436,6 +455,12 @@ const PublicationDetailPage = () => {
                             <Tag className="h-3.5 w-3.5 mr-1" />
                             {publication.category}
                           </span>
+                          {publication.price && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                              <span className="font-semibold">${publication.price}</span>
+                              <span className="ml-1">{publication.priceUnit}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -476,14 +501,14 @@ const PublicationDetailPage = () => {
                           // Botón para aplicar a empresa
                           <div className="flex flex-col sm:flex-row gap-4">
                             {hasApplied ? (
-                              <div className="flex items-center gap-2 text-green-600">
+                              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-3 rounded-lg">
                                 <CheckCircle className="h-5 w-5" />
                                 <span className="font-medium">Ya aplicaste a esta publicación</span>
                               </div>
                             ) : (
                               <button
                                 onClick={() => setShowApplicationModal(true)}
-                                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
                                 disabled={isApplying}
                               >
                                 <Briefcase className="h-5 w-5" />
@@ -496,7 +521,7 @@ const PublicationDetailPage = () => {
                           <div className="flex flex-col sm:flex-row gap-4">
                             <button
                               onClick={handleHire}
-                              className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                              className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg transform hover:scale-105"
                             >
                               <HandHeart className="h-5 w-5" />
                               Contratar este servicio
@@ -504,10 +529,10 @@ const PublicationDetailPage = () => {
                           </div>
                         )}
                         
-                        <p className="text-sm text-gray-500 mt-2">
+                        <p className="text-sm text-gray-500 mt-3">
                           {isCompanyPublication() 
                             ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
-                            : "Serás redirigido a los mensajes para coordinar los detalles del servicio."
+                            : "Inicia el proceso de contratación con negociación de precios."
                           }
                         </p>
                       </div>
@@ -520,7 +545,7 @@ const PublicationDetailPage = () => {
                     <div className="md:col-span-2 space-y-6">
                       {/* Publication image */}
                       {publication.image_url && (
-                        <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 bg-gray-50">
+                        <div className="rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-gray-50">
                           <img
                             src={publication.image_url}
                             alt={publication.title}
@@ -531,36 +556,132 @@ const PublicationDetailPage = () => {
 
                       {/* Publication description */}
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-800">Descripción</h3>
+                        <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                          <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
+                          Descripción
+                        </h3>
                         <div className="prose prose-gray max-w-none">
-                          <p className="text-gray-700 whitespace-pre-line">
+                          <p className="text-gray-700 whitespace-pre-line leading-relaxed">
                             {publication.description || "No hay descripción disponible."}
                           </p>
                         </div>
                       </div>
 
+                      {/* Ofertas recibidas - Solo mostrar si es el autor de la publicación */}
+                      {currentUserId && publication.userId === currentUserId && !isCompanyPublication() && (
+                        <div className="border-t border-gray-200 pt-6 mt-8">
+                          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                            <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
+                            <TrendingUp className="h-5 w-5 text-[#097EEC]" />
+                            Ofertas Recibidas
+                            {publicationBids.totalBids > 0 && (
+                              <span className="bg-[#097EEC] text-white text-sm px-2 py-1 rounded-full">
+                                {publicationBids.totalBids}
+                              </span>
+                            )}
+                          </h3>
+                          
+                          {isLoadingBids ? (
+                            <div className="space-y-4">
+                              {Array.from({ length: 3 }).map((_, index) => (
+                                <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                  <Skeleton className="h-4 w-32 mb-2" />
+                                  <Skeleton className="h-3 w-48" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : publicationBids.contracts.length > 0 ? (
+                            <div className="space-y-4">
+                              {publicationBids.contracts.map((contract) => (
+                                <div key={contract.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 bg-[#097EEC] rounded-full flex items-center justify-center">
+                                        <UserIcon className="h-5 w-5 text-white" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-900">{contract.client?.name || 'Usuario'}</p>
+                                        <p className="text-sm text-gray-500">{formatDate(contract.createdAt)}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-semibold text-green-600">
+                                        ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {contract.status === 'pending' ? 'Pendiente' : 
+                                         contract.status === 'negotiating' ? 'En negociación' : 
+                                         contract.status === 'accepted' ? 'Aceptado' : contract.status}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  {contract.clientMessage && (
+                                    <p className="text-sm text-gray-600 mb-3">{contract.clientMessage}</p>
+                                  )}
+                                  
+                                  {contract.bids && contract.bids.length > 0 && (
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                      <p className="text-xs font-medium text-gray-700 mb-2">
+                                        Ofertas en esta contratación:
+                                      </p>
+                                      <div className="space-y-2">
+                                        {contract.bids.map((bid) => (
+                                          <div key={bid.id} className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600">
+                                              {bid.bidder?.name || 'Usuario'}: ${bid.amount?.toLocaleString()}
+                                            </span>
+                                            {bid.isAccepted && (
+                                              <span className="text-green-600 text-xs font-medium">✓ Aceptada</span>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="flex gap-2 mt-3">
+                                    <Link href={`/contracts`}>
+                                      <button className="px-4 py-2 bg-[#097EEC] text-white text-sm rounded-lg hover:bg-[#097EEC]/90 transition-colors">
+                                        Ver detalles
+                                      </button>
+                                    </Link>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <TrendingUp className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                              <p>No hay ofertas aún. ¡Las ofertas aparecerán aquí cuando alguien contrate tu servicio!</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Comments section */}
                       <div className="border-t border-gray-200 pt-6 mt-8">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                          <MessageSquare className="h-5 w-5 mr-2 text-[#097EEC]" />
+                        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                          <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
+                          <MessageSquare className="h-5 w-5 text-[#097EEC]" />
                           Comentarios
                         </h3>
                         
                         {/* Comment form */}
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
                           <textarea
                             placeholder="Deja un comentario..."
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
                             rows={3}
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             disabled={!currentUserId || isSubmittingComment}
                           ></textarea>
-                          <div className="flex justify-between items-center mt-3">
+                          <div className="flex justify-between items-center mt-4">
                             <p className="text-sm text-gray-500">
                               {!currentUserId && (
                                 <span>
-                                  <Link href="/auth/login" className="text-[#097EEC] hover:underline">
+                                  <Link href="/auth/login" className="text-[#097EEC] hover:underline font-medium">
                                     Inicia sesión
                                   </Link>{" "}
                                   para comentar
@@ -568,7 +689,7 @@ const PublicationDetailPage = () => {
                               )}
                             </p>
                             <button
-                              className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="px-6 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#097EEC]/90 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                               disabled={!commentText.trim() || !currentUserId || isSubmittingComment}
                               onClick={handleSubmitComment}
                             >
@@ -591,123 +712,182 @@ const PublicationDetailPage = () => {
                         <div className="space-y-4">
                           {comments.length > 0 ? (
                             comments.map((comment) => (
-                              <div key={comment.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div key={comment.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-start">
-                                  <div className="flex items-start gap-3">
-                                    <div className="bg-gray-100 rounded-full p-2 text-gray-500">
+                                  <div className="flex items-start gap-4">
+                                    <div className="bg-[#097EEC] rounded-full p-3 text-white">
                                       <UserIcon className="h-5 w-5" />
                                     </div>
-                                    <div>
-                                      <p className="font-medium text-gray-800">
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-800">
                                         {comment.user?.name || "Usuario"}
                                       </p>
-                                      <p className="text-sm text-gray-500">
+                                      <p className="text-sm text-gray-500 mb-2">
                                         {formatDate(comment.created_at)} a las {formatTime(comment.created_at)}
+                                      </p>
+                                      <p className="text-gray-700 leading-relaxed">
+                                        {comment.description}
                                       </p>
                                     </div>
                                   </div>
-                                  
-                                  {currentUserId === comment.userId && (
-                                    <button
-                                      className="text-gray-400 hover:text-red-500 transition-colors"
-                                      aria-label="Eliminar comentario"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  )}
                                 </div>
-                                <p className="mt-3 text-gray-700">{comment.description}</p>
                               </div>
                             ))
                           ) : (
-                            <div className="text-center py-8 bg-gray-50 rounded-lg">
-                              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                              <p className="text-gray-500">No hay comentarios aún. ¡Sé el primero en comentar!</p>
+                            <div className="text-center py-8 text-gray-500">
+                              <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                              <p>No hay comentarios aún. ¡Sé el primero en comentar!</p>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
                     
-                    {/* Right column - Author info */}
-                    <div>
-                      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Información del publicador</h3>
+                    {/* Right column - Author info and pricing */}
+                    <div className="space-y-6">
+                      {/* Pricing Card */}
+                      {publication.price && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-6 shadow-sm">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="w-1 h-5 bg-green-500 rounded-full"></span>
+                            Tarifa del Servicio
+                          </h3>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-green-600 mb-1">
+                              ${publication.price.toLocaleString()}
+                            </div>
+                            <div className="text-sm text-gray-600 mb-4">
+                              por {publication.priceUnit}
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-green-200">
+                              <p className="text-xs text-gray-600">
+                                💡 Esta es la tarifa base. Puedes negociar durante el proceso de contratación.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Author info */}
+                      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <span className="w-1 h-5 bg-[#097EEC] rounded-full"></span>
+                          Información del Proveedor
+                        </h3>
                         
                         {author ? (
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <div className="bg-[#097EEC]/10 rounded-full p-3">
-                                <UserIcon className="h-6 w-6 text-[#097EEC]" />
+                              <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                <UserIcon className="h-6 w-6" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-800">{author.name}</p>
-                                {author.company && (
-                                  <span className="text-sm text-gray-500 flex items-center mt-1">
-                                    <Building2 className="h-3.5 w-3.5 mr-1" />
-                                    {author.company.name}
-                                  </span>
+                                <p className="font-semibold text-gray-800">{author.name}</p>
+                                {author.profession && (
+                                  <p className="text-sm text-gray-600">{author.profession}</p>
                                 )}
                               </div>
                             </div>
-                            
-                            <div className="space-y-3 pt-2">
-                              <div className="flex items-start gap-3">
-                                <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
-                                <div>
-                                  <p className="text-sm text-gray-500">Email</p>
-                                  <p className="text-gray-800">{author.email}</p>
+
+                            {author.skills && author.skills.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 mb-2">Habilidades:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {author.skills.slice(0, 5).map((skill: string, index: number) => (
+                                    <span
+                                      key={index}
+                                      className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                  {author.skills.length > 5 && (
+                                    <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full">
+                                      +{author.skills.length - 5} más
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              
-                              <div className="flex items-start gap-3">
-                                <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
-                                <div>
-                                  <p className="text-sm text-gray-500">Teléfono</p>
-                                  <p className="text-gray-800">{author.cellphone}</p>
+                            )}
+
+                            <div className="space-y-2">
+                              {author.email && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Mail className="h-4 w-4" />
+                                  <span>{author.email}</span>
                                 </div>
-                              </div>
-                              
-                              <div className="flex items-start gap-3">
-                                <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                                <div>
-                                  <p className="text-sm text-gray-500">Miembro desde</p>
-                                  <p className="text-gray-800">{author.created_at ? formatDate(author.created_at) : "N/A"}</p>
+                              )}
+                              {author.cellphone && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{author.cellphone}</span>
                                 </div>
-                              </div>
+                              )}
                             </div>
-                            
-                            <div className="pt-4 border-t border-gray-200 mt-4">
-                              <button
-                                className="w-full bg-[#097EEC] text-white py-2 px-4 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2"
-                              >
-                                <Mail className="h-4 w-4" />
-                                Contactar
-                              </button>
-                              
-                              <Link href={`/profile/${author.id}`}>
-                                <button className="w-full mt-2 border border-[#097EEC] text-[#097EEC] py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors">
-                                  Ver perfil completo
-                                </button>
-                              </Link>
-                            </div>
+
+                            {/* Rating section - solo mostrar si las propiedades existen */}
+                            {/* 
+                            {(author as any).average_rating > 0 && (
+                              <div className="pt-3 border-t border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <span
+                                        key={star}
+                                        className={`text-lg ${
+                                          star <= (author as any).average_rating
+                                            ? 'text-yellow-400'
+                                            : 'text-gray-300'
+                                        }`}
+                                      >
+                                        ★
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-gray-600">
+                                    ({(author as any).average_rating.toFixed(1)})
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {(author as any).total_ratings} calificaciones
+                                </p>
+                              </div>
+                            )}
+                            */}
                           </div>
                         ) : (
-                          <div className="text-center py-4">
-                            <p className="text-gray-500">Información no disponible</p>
+                          <div className="text-center py-4 text-gray-500">
+                            <UserIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                            <p>Información del proveedor no disponible</p>
                           </div>
                         )}
                       </div>
-                      
-                      {/* Related publications */}
-                      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 mt-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Publicaciones relacionadas</h3>
-                        
+
+                      {/* Publication stats */}
+                      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
+                          Estadísticas
+                        </h3>
                         <div className="space-y-3">
-                          {/* Aquí irían las publicaciones relacionadas */}
-                          <div className="text-center py-4">
-                            <p className="text-gray-500">No hay publicaciones relacionadas</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Visitas:</span>
+                            <span className="font-semibold text-gray-800">{publication.visitors || 0}</span>
                           </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Comentarios:</span>
+                            <span className="font-semibold text-gray-800">{comments.length}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Categoría:</span>
+                            <span className="font-semibold text-gray-800">{publication.category}</span>
+                          </div>
+                          {publicationBids.totalBids > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Ofertas activas:</span>
+                              <span className="font-semibold text-[#097EEC]">{publicationBids.totalBids}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -716,6 +896,15 @@ const PublicationDetailPage = () => {
               )
             )}
           </div>
+
+          {/* Contract Modal */}
+          {showContractModal && publication && (
+            <ContractModal
+              publication={publication}
+              isOpen={showContractModal}
+              onClose={() => setShowContractModal(false)}
+            />
+          )}
         </div>
       </div>
     </>
