@@ -48,6 +48,7 @@ const CATEGORIES = [
 const PRICE_UNITS = [
   "hour", // Por hora
   "project", // Por proyecto
+  "event", // Por evento
   "monthly", // Mensual
   "daily", // Diario
   "weekly", // Semanal
@@ -369,6 +370,7 @@ const CreatePublicationPage = () => {
                         <option value="">Seleccionar unidad</option>
                         <option value="hour">Por hora</option>
                         <option value="project">Por proyecto</option>
+                        <option value="event">Por evento</option>
                         <option value="monthly">Mensual</option>
                         <option value="daily">Diario</option>
                         <option value="weekly">Semanal</option>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Contract } from '../interfaces/contract.interface';
 import { ContractService } from '../services/ContractService';
 import { X, DollarSign, MessageSquare, TrendingUp, AlertCircle } from 'lucide-react';
+import { translatePriceUnit } from '@/lib/utils';
 
 interface BidModalProps {
   contract: Contract;
@@ -67,7 +68,7 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
               <div className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
-                <span>Precio actual: ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}</span>
+                <span>Precio actual: ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}</span>
               </div>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -81,7 +82,7 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
             {/* Amount Input */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tu oferta (${contract.priceUnit}):
+                Tu oferta (${translatePriceUnit(contract.priceUnit)}):
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
