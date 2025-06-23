@@ -132,17 +132,6 @@ const Navbar = () => {
                 </NavLink>
               )}
 
-              {hasRole(['BUSINESS', 'ADMIN']) && (
-                <>
-                  <NavLink href="/attendance" icon={<Clock className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Control de asistencia
-                  </NavLink>
-                  <NavLink href="/attendance/register" icon={<Clock className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Registrar asistencia
-                  </NavLink>
-                </>
-              )}
-
               {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
                 <NavLink href="/chat" icon={<MessageSquare className="h-4 w-4" />} isScrolled={isScrolled}>
                   Mensajes
@@ -238,17 +227,6 @@ const Navbar = () => {
                   <MobileNavLink href="/my-employees" icon={<Users className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
                     Mis empleados
                   </MobileNavLink>
-                )}
-
-                {hasRole(['BUSINESS', 'ADMIN']) && (
-                  <>
-                    <MobileNavLink href="/attendance" icon={<Clock className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
-                      Control de asistencia
-                    </MobileNavLink>
-                    <MobileNavLink href="/attendance/register" icon={<Clock className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
-                      Registrar asistencia
-                    </MobileNavLink>
-                  </>
                 )}
 
                 {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (

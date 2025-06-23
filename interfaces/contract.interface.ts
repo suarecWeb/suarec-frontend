@@ -65,7 +65,7 @@ export interface AcceptBidDto {
 
 export interface ProviderResponseDto {
   contractId: string;
-  action: 'accept' | 'reject' | 'negotiate';
+  action: ContractStatus.ACCEPTED | ContractStatus.REJECTED | ContractStatus.NEGOTIATING;
   providerMessage?: string;
   counterOffer?: number;
   proposedDate?: Date;

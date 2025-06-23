@@ -139,7 +139,7 @@ const RegisterAttendancePageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-20">
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">

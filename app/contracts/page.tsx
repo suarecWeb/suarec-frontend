@@ -22,6 +22,7 @@ import {
   MapPin
 } from 'lucide-react';
 import ProviderResponseModal from '@/components/provider-response-modal';
+import { translatePriceUnit } from '@/lib/utils';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{ asClient: Contract[], asProvider: Contract[] }>({
@@ -229,7 +230,7 @@ export default function ContractsPage() {
                           <span className="text-sm font-medium text-gray-700">Precio Inicial</span>
                         </div>
                         <p className="text-lg font-semibold text-gray-800">
-                          ${contract.initialPrice?.toLocaleString()} {contract.priceUnit}
+                          ${contract.initialPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
                         </p>
                       </div>
                       
@@ -239,7 +240,7 @@ export default function ContractsPage() {
                           <span className="text-sm font-medium text-blue-700">Precio Actual</span>
                         </div>
                         <p className="text-lg font-semibold text-blue-800">
-                          ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}
+                          ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
                         </p>
                       </div>
                     </div>
@@ -323,7 +324,7 @@ export default function ContractsPage() {
                                   <div className="flex items-center gap-2 mb-2">
                                     <DollarSign className="h-4 w-4 text-green-600" />
                                     <span className="font-semibold text-green-700">
-                                      ${bid.amount?.toLocaleString()} {contract.priceUnit}
+                                      ${bid.amount?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
                                     </span>
                                   </div>
                                   {bid.message && (
@@ -408,7 +409,7 @@ export default function ContractsPage() {
                           <span className="text-sm font-medium text-gray-700">Precio Inicial</span>
                         </div>
                         <p className="text-lg font-semibold text-gray-800">
-                          ${contract.initialPrice?.toLocaleString()} {contract.priceUnit}
+                          ${contract.initialPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
                         </p>
                       </div>
                       
@@ -418,7 +419,7 @@ export default function ContractsPage() {
                           <span className="text-sm font-medium text-green-700">Precio Actual</span>
                         </div>
                         <p className="text-lg font-semibold text-green-800">
-                          ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}
+                          ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
                         </p>
                       </div>
                     </div>
