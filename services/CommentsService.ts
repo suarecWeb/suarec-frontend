@@ -4,7 +4,7 @@ import { Comment } from "@/interfaces/comment.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
-const baseURL = "/comments";
+const baseURL = "/suarec/comments";
 
 // Función para obtener comentarios con paginación
 const getComments = (params?: PaginationParams) => 
@@ -12,7 +12,7 @@ const getComments = (params?: PaginationParams) =>
 
 // Función para obtener comentarios de una publicación específica
 const getPublicationComments = (publicationId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Comment>>(`/publications/${publicationId}/comments`, { params });
+  api.get<PaginationResponse<Comment>>(`/suarec/publications/${publicationId}/comments`, { params });
 
 // Función para obtener un comentario por ID
 const getCommentById = (id: string) => 

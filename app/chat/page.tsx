@@ -214,7 +214,7 @@ const ChatPageContent = () => {
                 </div>
 
                 {/* Conversations List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {loading ? (
                     <div className="p-8 text-center">
                       <Loader2 className="h-8 w-8 text-[#097EEC] animate-spin mx-auto mb-4" />
@@ -281,7 +281,7 @@ const ChatPageContent = () => {
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                       {loadingMessages ? (
                         <div className="text-center py-8">
                           <Loader2 className="h-8 w-8 text-[#097EEC] animate-spin mx-auto mb-4" />

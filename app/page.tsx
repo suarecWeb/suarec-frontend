@@ -1,7 +1,22 @@
 import Image from "next/image"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
-import { ArrowRight, Briefcase, Building2, Users, CheckCircle } from "lucide-react"
+import CountdownTimer from "@/components/countdown-timer"
+import { 
+  ArrowRight, 
+  Briefcase, 
+  Building2, 
+  Users, 
+  CheckCircle, 
+  Star,
+  TrendingUp,
+  Shield,
+  Zap,
+  Globe,
+  Award,
+  Heart,
+  FileText
+} from "lucide-react"
 import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
@@ -13,51 +28,85 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section Moderna */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#097EEC] to-[#2171BC] overflow-hidden pt-20">
+      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#097EEC] via-[#2171BC] to-[#082D50] overflow-hidden pt-20">
         {/* Elementos decorativos de fondo */}
         <div className="absolute inset-0">
-          {/* Círculos decorativos */}
-          <div className="absolute top-20 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/3 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/2 rounded-full blur-3xl"></div>
+          {/* Círculos decorativos animados */}
+          <div className="absolute top-20 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/2 rounded-full blur-3xl animate-pulse delay-500"></div>
           
           {/* Grid sutil */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+          
+          {/* Partículas flotantes */}
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-bounce"></div>
+          <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-bounce delay-300"></div>
+          <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-white/25 rounded-full animate-bounce delay-700"></div>
         </div>
 
         {/* Contenido principal */}
         <div className="relative z-10 container mx-auto px-4 text-center mt-8">
+          {/* Contador regresivo */}
+          <CountdownTimer />
+
           {/* Logo/Título principal */}
           <div className="mb-12">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6">
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-eras-bold-italic tracking-tight text-white mb-6 drop-shadow-2xl">
               SUAREC
             </h1>
-            <div className="w-24 h-0.5 bg-white/30 mx-auto"></div>
+            <div className="w-32 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-4"></div>
+            <div className="w-16 h-1 bg-white/30 mx-auto"></div>
           </div>
 
           {/* Subtítulo elegante */}
-          <div className="max-w-4xl mx-auto mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-white/90 leading-relaxed">
-              Conectamos talento excepcional
+          <div className="max-w-5xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-eras text-white/95 leading-relaxed">
+              Conectamos <span className="font-eras-bold-italic text-[#97CBFF]">talento excepcional</span>
               <br />
-              <span className="text-[#97CBFF]">con oportunidades extraordinarias</span>
+              <span className="text-[#97CBFF] font-eras-bold-italic">con oportunidades extraordinarias</span>
             </h2>
           </div>
 
           {/* Descripción minimalista */}
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-16 font-light leading-relaxed">
+          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-16 font-eras leading-relaxed">
             La plataforma donde los mejores profesionales encuentran 
-            las empresas que transformarán su carrera.
+            <br />
+            <span className="font-eras-bold">las empresas que transformarán su carrera.</span>
           </p>
 
+          {/* Estadísticas */}
+          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-16">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">500+</div>
+              <div className="text-white/70 text-sm font-eras">Empresas activas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">10K+</div>
+              <div className="text-white/70 text-sm font-eras">Profesionales</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">95%</div>
+              <div className="text-white/70 text-sm font-eras">Satisfacción</div>
+            </div>
+          </div>
+
           {/* Botón de acción */}
-          <div className="flex justify-center items-center mb-20">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
             <Link
               href="/auth/select-type"
-              className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-xl font-medium hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105"
+              className="group bg-white text-[#097EEC] px-12 py-6 rounded-full text-xl font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
             >
               Comenzar ahora
               <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            
+            <Link
+              href="/companies"
+              className="group border-2 border-white/30 text-white px-8 py-6 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
+            >
+              Ver empresas
+              <Building2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
             </Link>
           </div>
         </div>
@@ -73,53 +122,84 @@ export default function Home() {
       </section>
 
       {/* Beneficios */}
-      <section className="py-16 bg-white">
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
-            ¿Por qué elegir <span className="text-[#097EEC]">SUAREC</span>?
-          </h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">
+              ¿Por qué elegir <span className="text-[#097EEC] font-eras-bold-italic">SUAREC</span>?
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
+              Descubre las ventajas que nos hacen la plataforma preferida por profesionales y empresas
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition">
-              <div className="bg-[#097EEC]/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Briefcase className="h-6 w-6 text-[#097EEC]" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Briefcase className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Ofertas exclusivas</h3>
-              <p className="text-gray-600">Accede a oportunidades laborales que no encontrarás en otras plataformas.</p>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Ofertas exclusivas</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">Accede a oportunidades laborales únicas que no encontrarás en otras plataformas. Trabajamos directamente con las mejores empresas.</p>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition">
-              <div className="bg-[#097EEC]/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Building2 className="h-6 w-6 text-[#097EEC]" />
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Building2 className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Empresas de calidad</h3>
-              <p className="text-gray-600">
-                Trabajamos con las mejores empresas del mercado para garantizar buenas condiciones.
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Empresas verificadas</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Todas nuestras empresas pasan por un riguroso proceso de verificación para garantizar las mejores condiciones laborales.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition">
-              <div className="bg-[#097EEC]/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-[#097EEC]" />
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Comunidad activa</h3>
-              <p className="text-gray-600">
-                Forma parte de una red de profesionales que comparten oportunidades y experiencias.
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Comunidad activa</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Forma parte de una red de profesionales que comparten oportunidades, experiencias y crecen juntos.
               </p>
+            </div>
+
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Seguridad garantizada</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">Tu información está protegida con los más altos estándares de seguridad y privacidad.</p>
+            </div>
+
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Zap className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Proceso rápido</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">Conectamos profesionales con empresas en tiempo récord, sin trámites complicados.</p>
+            </div>
+
+            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Award className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Calidad premium</h3>
+              <p className="text-gray-600 leading-relaxed font-eras">Solo trabajamos con los mejores profesionales y las empresas más prestigiosas del mercado.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Sección de Alianzas */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-24 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-gray-800">Nuestras alianzas</h2>
-          <p className="text-lg text-center max-w-2xl mx-auto mb-12 text-gray-600">
-            Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales.
-          </p>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">Nuestras alianzas estratégicas</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
+              Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales del mercado.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
             {[
               { logo: logoImage, name: "Café y Fogón" },
               { logo: logoImageDos, name: "Veens" },
@@ -128,143 +208,138 @@ export default function Home() {
             ].map((company, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition flex flex-col items-center justify-center"
+                className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20 flex flex-col items-center justify-center transform hover:scale-105"
               >
-                <div className="h-24 flex items-center justify-center">
+                <div className="h-24 flex items-center justify-center mb-4">
                   <Image
                     src={company.logo || "/placeholder.svg"}
                     alt={company.name}
                     width={120}
                     height={120}
-                    className="object-contain"
+                    className="object-contain group-hover:scale-110 transition-transform duration-300"
                   />
                 </div>
-                <p className="mt-4 text-sm font-medium text-gray-700">{company.name}</p>
+                <p className="text-lg font-eras-bold text-gray-700 group-hover:text-[#097EEC] transition-colors">{company.name}</p>
               </div>
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center">
             <Link
               href="/companies"
-              className="inline-flex items-center text-[#097EEC] hover:text-[#082D50] font-medium"
+              className="inline-flex items-center gap-3 bg-[#097EEC] text-white px-8 py-4 rounded-full text-lg font-eras-bold hover:bg-[#097EEC]/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Ver todas nuestras empresas aliadas
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </Link>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-[#097EEC]">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            ¿Listo para encontrar tu próxima oportunidad?
-          </h2>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto mb-8">
-            Únete a miles de profesionales que ya han encontrado el trabajo de sus sueños con SUAREC.
-          </p>
-          <Link
-            href="/auth/select-type"
-            className="bg-white text-[#097EEC] px-8 py-4 rounded-md text-lg font-medium hover:bg-opacity-90 transition inline-flex items-center gap-2"
-          >
-            Comenzar ahora
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+      <section className="py-24 bg-gradient-to-br from-[#097EEC] to-[#097EEC] relative overflow-hidden">
+        {/* Elementos decorativos */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/3 rounded-full blur-2xl"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-eras-bold text-white mb-8">
+              ¿Listo para encontrar tu próxima oportunidad?
+            </h2>
+            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-eras">
+              Únete a miles de profesionales que ya han encontrado el trabajo de sus sueños con SUAREC.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+              <Link
+                href="/auth/select-type"
+                className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-xl font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
+              >
+                Comenzar ahora
+                <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              
+              <Link
+                href="/publications"
+                className="group border-2 border-white/30 text-white px-8 py-5 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
+              >
+                Ver ofertas
+                <Briefcase className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#082D50] text-white py-12">
+      <footer className="bg-[#097EEC] text-white py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">SUAREC</h3>
-              <p className="text-white/70 max-w-xs">
-                Conectamos talento con oportunidades para crear un futuro laboral mejor.
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            <div className="md:col-span-2">
+              <h3 className="text-3xl font-eras-bold mb-6">SUAREC</h3>
+              <p className="text-white/80 max-w-md leading-relaxed mb-6 font-eras">
+                Conectamos talento excepcional con oportunidades extraordinarias para crear un futuro laboral mejor en Colombia.
               </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-white/80 font-eras">
+                  <Heart className="h-5 w-5 text-red-300" />
+                  <span>Hecho en Colombia</span>
+                </div>
+              </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Enlaces rápidos</h3>
-              <ul className="space-y-2">
+              <h3 className="text-xl font-eras-bold mb-6">Enlaces rápidos</h3>
+              <ul className="space-y-3">
                 <li>
-                  <Link href="/publications" className="text-white/70 hover:text-white transition">
+                  <Link href="/publications" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
+                    <FileText className="h-4 w-4" />
                     Publicaciones
                   </Link>
                 </li>
                 <li>
-                  <Link href="/companies" className="text-white/70 hover:text-white transition">
+                  <Link href="/companies" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
+                    <Building2 className="h-4 w-4" />
                     Empresas
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-white/70 hover:text-white transition">
-                    Contacto
+                  <Link href="/auth/select-type" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
+                    <Users className="h-4 w-4" />
+                    Registrarse
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/privacy" className="text-white/70 hover:text-white transition">
-                    Política de Privacidad
-                  </Link>
+              <h3 className="text-xl font-eras-bold mb-6">Contacto</h3>
+              <ul className="space-y-3">
+                <li className="text-white/80 font-eras">
+                  <span className="block text-sm">Email</span>
+                  <span className="text-white">contacto@suarec.com</span>
                 </li>
-                <li>
-                  <Link href="/terms" className="text-white/70 hover:text-white transition">
-                    Términos y Condiciones
-                  </Link>
+                <li className="text-white/80 font-eras">
+                  <span className="block text-sm">Teléfono</span>
+                  <span className="text-white">+57 300 123 4567</span>
                 </li>
-                <li>
-                  <Link href="/cookies" className="text-white/70 hover:text-white transition">
-                    Política de Cookies
-                  </Link>
+                <li className="text-white/80 font-eras">
+                  <span className="block text-sm">Ubicación</span>
+                  <span className="text-white">Colombia</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-white/10 text-center md:flex md:justify-between md:items-center">
-            <p className="text-sm text-white/70">© {new Date().getFullYear()} SUAREC. Todos los derechos reservados.</p>
-            <div className="mt-4 md:mt-0 flex justify-center gap-4">
-              <a href="#" className="text-white/70 hover:text-white transition">
-                <span className="sr-only">Facebook</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </a>
-              <a href="#" className="text-white/70 hover:text-white transition">
-                <span className="sr-only">Instagram</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </a>
-              <a href="#" className="text-white/70 hover:text-white transition">
-                <span className="sr-only">Twitter</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                </svg>
-              </a>
-              <a href="#" className="text-white/70 hover:text-white transition">
-                <span className="sr-only">LinkedIn</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                </svg>
-              </a>
-            </div>
+          <div className="border-t border-white/20 pt-8 text-center">
+            <p className="text-white/60 font-eras">
+              © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. | 
+              <Link href="/privacy" className="hover:text-white transition-colors ml-2">Privacidad</Link> | 
+              <Link href="/terms" className="hover:text-white transition-colors ml-2">Términos</Link>
+            </p>
           </div>
         </div>
       </footer>

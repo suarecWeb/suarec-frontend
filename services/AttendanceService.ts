@@ -1,16 +1,16 @@
-import axios from 'axios';
+import api from './axios_config';
 import Cookies from 'js-cookie';
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec`;
 
 class AttendanceService {
   async registerAttendance(employeeId: number, checkInTime: string, date: Date, isAbsent: boolean = false, notes?: string) {
     const token = Cookies.get('token');
     const payload: any = { employeeId, checkInTime, date, isAbsent };
     if (notes) payload.notes = notes;
-    const response = await axios.post(
-      `${API_URL}/attendance/register`,
+    const response = await api.post(
+      '/suarec/attendance/register',
       payload,
       {
         headers: {
@@ -23,7 +23,7 @@ class AttendanceService {
 
   async getEmployeeAttendance(employeeId: number, startDate: Date, endDate: Date) {
     const token = Cookies.get('token');
-    const response = await axios.get(`${API_URL}/attendance/employee/${employeeId}`, {
+    const response = await api.get(`/suarec/attendance/employee/${employeeId}`, {
       params: {
         startDate,
         endDate,
@@ -37,7 +37,7 @@ class AttendanceService {
 
   async getEmployeeAttendanceStats(employeeId: number) {
     const token = Cookies.get('token');
-    const response = await axios.get(`${API_URL}/attendance/employee/${employeeId}/stats`, {
+    const response = await api.get(`/suarec/attendance/employee/${employeeId}/stats`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -47,7 +47,7 @@ class AttendanceService {
 
   async generateAttendanceReport(startDate: Date, endDate: Date) {
     const token = Cookies.get('token');
-    const response = await axios.get(`${API_URL}/attendance/report`, {
+    const response = await api.get(`/suarec/attendance/report`, {
       params: {
         startDate,
         endDate,
@@ -61,7 +61,7 @@ class AttendanceService {
 
   async getAttendanceById(id: string) {
     const token = Cookies.get('token');
-    const response = await axios.get(`${API_URL}/attendance/${id}`, {
+    const response = await api.get(`/suarec/attendance/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -71,7 +71,7 @@ class AttendanceService {
 
   async updateAttendance(id: string, data: Partial<{ checkInTime: string; isLate: boolean; isAbsent: boolean; notes: string; date: Date }>) {
     const token = Cookies.get('token');
-    const response = await axios.put(`${API_URL}/attendance/${id}`, data, {
+    const response = await api.put(`/suarec/attendance/${id}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -81,7 +81,7 @@ class AttendanceService {
 
   async deleteAttendance(id: string) {
     const token = Cookies.get('token');
-    const response = await axios.delete(`${API_URL}/attendance/${id}`, {
+    const response = await api.delete(`/suarec/attendance/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

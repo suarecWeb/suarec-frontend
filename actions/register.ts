@@ -7,7 +7,7 @@ export const createUser = async (name: string, password: string, email: string, 
     console.log("creating user...");
 
     try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/users`, {
             name: name,
             password: password,
             email: email,

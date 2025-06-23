@@ -2,8 +2,8 @@
 import AuthService from "@/services/AuthService"
 import type React from "react"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useTransition, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Cookies from "js-cookie"
 import Link from "next/link"
 import { AlertCircle, CheckCircle, ArrowLeft, Loader2 } from "lucide-react"
@@ -13,9 +13,18 @@ const FormLogin = () => {
   const [success, setSuccess] = useState<string | undefined>("")
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Verificar si viene de la verificación de email
+  useEffect(() => {
+    const verified = searchParams.get("verified")
+    if (verified === "true") {
+      setSuccess("¡Email verificado exitosamente! Ya puedes iniciar sesión.")
+    }
+  }, [searchParams])
 
   const handleGoogleSubmit = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/callback`
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/auth/google/callback`
   }
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
@@ -51,8 +60,24 @@ const FormLogin = () => {
         setTimeout(() => {
           router.push("/")
         }, 1000)
-      } catch (err) {
-        setError("Error al iniciar sesión. Verifica tus credenciales.")
+      } catch (err: any) {
+        // Verificar si es un error de email no verificado
+        const errorMessage = err.response?.data?.message || "";
+        
+        if (errorMessage.toLowerCase().includes("verify your email") || 
+            errorMessage.toLowerCase().includes("verificar") ||
+            errorMessage.toLowerCase().includes("verification")) {
+          
+          setError("Tu email no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.")
+          
+          // Redirigir a la página de verificación después de 3 segundos
+          setTimeout(() => {
+            router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}`)
+          }, 3000)
+        } else {
+          // Error genérico de credenciales
+          setError("Email o contraseña incorrectos. Por favor, verifica tus credenciales.")
+        }
       }
     })
   }
@@ -99,9 +124,20 @@ const FormLogin = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+        <div className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm ${
+          error.includes("no ha sido verificado") 
+            ? "bg-blue-50 text-blue-700 border border-blue-200" 
+            : "bg-red-50 text-red-700"
+        }`}>
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          <span>{error}</span>
+          <div className="flex-1">
+            <span className="block">{error}</span>
+            {error.includes("no ha sido verificado") && (
+              <span className="block text-xs mt-1 opacity-80">
+                Serás redirigido a la página de verificación en unos segundos...
+              </span>
+            )}
+          </div>
         </div>
       )}
 

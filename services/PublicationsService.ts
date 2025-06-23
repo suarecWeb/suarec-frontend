@@ -4,7 +4,7 @@ import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import { Publication } from "@/interfaces/publication.interface";
 
-const baseURL = "/publications";
+const baseURL = "/suarec/publications";
 
 // Estructura de respuesta de publicación
 const getPublications = (params?: PaginationParams) => 

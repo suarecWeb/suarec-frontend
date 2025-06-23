@@ -5,6 +5,7 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UserService } from "@/services/UsersService";
 import CompanyService from "@/services/CompanyService";
+import EmailVerificationService from "@/services/EmailVerificationService";
 import {
   AlertCircle,
   Check,
@@ -108,6 +109,9 @@ const FormRegister = () => {
   
     startTransition(async () => {
       try {
+        let createdUserId: number | null = null;
+        let userEmail: string = "";
+
         if (userType === "PERSON") {
           // Datos del usuario para PERSON
           const userData: CreateUserDto = {
@@ -123,8 +127,14 @@ const FormRegister = () => {
             skills: ["Ninguna"],
           };
           
+          userEmail = userData.email;
+          
           // Para usuarios tipo PERSON, simplemente creamos el usuario
           const response = await UserService.createUser(userData);
+          console.log("👤 Respuesta de creación de usuario:", response);
+          console.log("🆔 ID del usuario creado:", response.data.id);
+          createdUserId = response.data.id ? Number(response.data.id) : null;
+          console.log("🆔 createdUserId después de conversión:", createdUserId);
           setSuccess("Usuario creado correctamente");
           
         } else if (userType === "BUSINESS") {
@@ -164,17 +174,20 @@ const FormRegister = () => {
               skills: ["Ninguna"],
             };
             
+            userEmail = userData.email;
+            
             try {
               // Creamos primero el usuario
               console.log("Enviando datos de usuario:", userData);
               const userResponse = await UserService.createUser(userData);
+              console.log("👤 Respuesta de creación de usuario BUSINESS:", userResponse);
+              console.log("🆔 ID del usuario BUSINESS creado:", userResponse.data.id);
+              createdUserId = userResponse.data.id ? Number(userResponse.data.id) : null;
+              console.log("🆔 createdUserId BUSINESS después de conversión:", createdUserId);
               
-              // Obtenemos el ID del usuario creado
-              const userId = userResponse.data.id;
-              
-              if (userId) {
+              if (createdUserId) {
                 // Asegurarnos de que userId sea un número
-                const userIdNumber = Number(userId);
+                const userIdNumber = Number(createdUserId);
                 
                 if (isNaN(userIdNumber)) {
                   throw new Error("ID de usuario inválido");
@@ -200,7 +213,7 @@ const FormRegister = () => {
                 
                   setSuccess("Usuario y empresa creados correctamente");
                 } catch (error: any) {
-                  const res = UserService.deleteUser(userId)
+                  const res = UserService.deleteUser(createdUserId.toString())
                   console.error("Error específico:", error);
                   if (error.response?.data?.message) {
                     // Si el backend devuelve un mensaje específico
@@ -232,10 +245,41 @@ const FormRegister = () => {
             }
           }
 
-        // Redirigir al login después de un tiempo
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 2000);
+        // Si el usuario se creó exitosamente, enviar email de verificación
+        if (createdUserId && userEmail) {
+          console.log("🚀 Intentando enviar email de verificación...");
+          console.log("📧 Email:", userEmail);
+          console.log("🆔 User ID:", createdUserId);
+          
+          try {
+            await EmailVerificationService.sendVerificationEmail(createdUserId, userEmail);
+            console.log("✅ Email de verificación enviado exitosamente");
+            setSuccess("Cuenta creada exitosamente. Se ha enviado un email de verificación a tu correo.");
+            
+            // Redirigir a la página de verificación de email después de 2 segundos
+            setTimeout(() => {
+              console.log("🔄 Redirigiendo a página de verificación...");
+              router.push(`/auth/verify-email?email=${encodeURIComponent(userEmail)}`);
+            }, 2000);
+          } catch (error: any) {
+            console.error("❌ Error al enviar email de verificación:", error);
+            console.error("📋 Detalles del error:", error.response?.data);
+            setSuccess("Cuenta creada exitosamente, pero hubo un problema al enviar el email de verificación. Puedes solicitarlo más tarde.");
+            
+            // Redirigir al login después de 3 segundos
+            setTimeout(() => {
+              router.push("/auth/login");
+            }, 3000);
+          }
+        } else {
+          console.log("⚠️ No se pudo obtener ID de usuario o email");
+          console.log("🆔 createdUserId:", createdUserId);
+          console.log("📧 userEmail:", userEmail);
+          // Si no se pudo obtener el ID del usuario, redirigir al login
+          setTimeout(() => {
+            router.push("/auth/login");
+          }, 2000);
+        }
       } catch (error: any) {
         console.error("Error durante el registro:", error);
         setError(error.response?.data?.message || "Error al crear el usuario");

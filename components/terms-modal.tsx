@@ -23,8 +23,8 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+        <div className="fixed inset-0 overflow-y-auto modal-scrollbar">
+          <div className="flex min-h-screen items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -34,23 +34,18 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="div"
-                  className="flex items-center justify-between mb-4"
-                >
-                  <h3 className="text-2xl font-semibold text-gray-900">
-                    Términos y Condiciones
-                  </h3>
+              <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Términos y Condiciones</h2>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-500"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <X className="h-6 w-6" />
                   </button>
-                </Dialog.Title>
-
-                <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4">
+                </div>
+                
+                <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4 modal-scrollbar">
                   <p className="text-sm text-gray-500 mb-4">
                     Fecha de entrada en vigencia: Julio 15 de 2025
                   </p>

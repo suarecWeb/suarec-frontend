@@ -4,7 +4,7 @@ import { Message, CreateMessageDto, Conversation } from "@/interfaces/message.in
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
-const baseURL = "/messages";
+const baseURL = "/suarec/messages";
 
 // Obtener todas las conversaciones del usuario
 const getConversations = (userId: number) => 

@@ -4,7 +4,7 @@ export const getUsers = async (token: string) => {
     try {
         console.log("getting users...");
 
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`,{
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/users`,{
             headers: {
                 Authorization: `Bearer ${token}`
             }
