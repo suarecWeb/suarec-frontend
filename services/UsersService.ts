@@ -3,7 +3,7 @@ import { User } from "@/interfaces/user.interface"
 import { PaginationParams } from "@/interfaces/pagination-params.interface"
 import { PaginationResponse } from "@/interfaces/pagination-response.interface"
 
-const baseURL = "/users"
+const baseURL = "/suarec/users"
 
 
 // Función para obtener usuarios con paginación

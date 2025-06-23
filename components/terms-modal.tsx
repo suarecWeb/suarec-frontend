@@ -23,7 +23,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto hide-scrollbar">
+        <div className="fixed inset-0 overflow-y-auto modal-scrollbar">
           <div className="flex min-h-screen items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
@@ -45,7 +45,7 @@ const TermsModal = ({ isOpen, onClose }: TermsModalProps) => {
                   </button>
                 </div>
                 
-                <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4 hide-scrollbar">
+                <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4 modal-scrollbar">
                   <p className="text-sm text-gray-500 mb-4">
                     Fecha de entrada en vigencia: Julio 15 de 2025
                   </p>

@@ -34,6 +34,11 @@ export interface Contract {
   priceUnit: string;
   status: ContractStatus;
   clientMessage?: string;
+  providerMessage?: string;
+  requestedDate?: Date;
+  requestedTime?: string;
+  agreedDate?: Date;
+  agreedTime?: string;
   createdAt: Date;
   updatedAt: Date;
   bids: ContractBid[];
@@ -44,6 +49,8 @@ export interface CreateContractDto {
   initialPrice: number;
   priceUnit: string;
   clientMessage?: string;
+  requestedDate?: Date;
+  requestedTime?: string;
 }
 
 export interface CreateBidDto {
@@ -54,4 +61,13 @@ export interface CreateBidDto {
 
 export interface AcceptBidDto {
   bidId: string;
+}
+
+export interface ProviderResponseDto {
+  contractId: string;
+  action: 'accept' | 'reject' | 'negotiate';
+  providerMessage?: string;
+  counterOffer?: number;
+  proposedDate?: Date;
+  proposedTime?: string;
 } 

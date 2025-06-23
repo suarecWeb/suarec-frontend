@@ -18,8 +18,10 @@ import {
   TrendingUp,
   Users,
   FileText,
-  Calendar
+  Calendar,
+  MapPin
 } from 'lucide-react';
+import ProviderResponseModal from '@/components/provider-response-modal';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{ asClient: Contract[], asProvider: Contract[] }>({
@@ -29,6 +31,7 @@ export default function ContractsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
+  const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function ContractsPage() {
     return (
       <>
         <Navbar />
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-gray-50 min-h-screen pt-24">
           <div className="container mx-auto px-4 py-8">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -132,7 +135,7 @@ export default function ContractsPage() {
       <Navbar />
       <div className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] text-white py-12">
+        <div className="bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] text-white py-12 pt-24">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold mb-2">Mis Contrataciones</h1>
             <p className="text-blue-100 text-lg">
@@ -253,6 +256,59 @@ export default function ContractsPage() {
                       </div>
                     )}
 
+                    {/* Fecha y hora solicitadas */}
+                    {(contract.requestedDate || contract.requestedTime) && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <Clock className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-purple-800 mb-1">Fecha y hora solicitadas:</p>
+                            <div className="text-sm text-purple-700">
+                              {contract.requestedDate && (
+                                <p>📅 {new Date(contract.requestedDate).toLocaleDateString()}</p>
+                              )}
+                              {contract.requestedTime && (
+                                <p>🕐 {contract.requestedTime}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fecha y hora acordadas */}
+                    {(contract.agreedDate || contract.agreedTime) && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-green-800 mb-1">Fecha y hora acordadas:</p>
+                            <div className="text-sm text-green-700">
+                              {contract.agreedDate && (
+                                <p>📅 {new Date(contract.agreedDate).toLocaleDateString()}</p>
+                              )}
+                              {contract.agreedTime && (
+                                <p>🕐 {contract.agreedTime}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensaje del proveedor */}
+                    {contract.providerMessage && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-800 mb-1">Respuesta del proveedor:</p>
+                            <p className="text-sm text-blue-700">{contract.providerMessage}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {contract.bids.length > 0 && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -368,27 +424,99 @@ export default function ContractsPage() {
                     </div>
 
                     {contract.clientMessage && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                         <div className="flex items-start gap-2">
-                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <MessageSquare className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="text-sm font-medium text-blue-800 mb-1">Mensaje del cliente:</p>
-                            <p className="text-sm text-blue-700">{contract.clientMessage}</p>
+                            <p className="text-sm font-medium text-yellow-800 mb-1">Tu mensaje:</p>
+                            <p className="text-sm text-yellow-700">{contract.clientMessage}</p>
                           </div>
                         </div>
                       </div>
                     )}
 
+                    {/* Fecha y hora solicitadas */}
+                    {(contract.requestedDate || contract.requestedTime) && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <Clock className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-purple-800 mb-1">Fecha y hora solicitadas:</p>
+                            <div className="text-sm text-purple-700">
+                              {contract.requestedDate && (
+                                <p>📅 {new Date(contract.requestedDate).toLocaleDateString()}</p>
+                              )}
+                              {contract.requestedTime && (
+                                <p>🕐 {contract.requestedTime}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fecha y hora acordadas */}
+                    {(contract.agreedDate || contract.agreedTime) && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-green-800 mb-1">Fecha y hora acordadas:</p>
+                            <div className="text-sm text-green-700">
+                              {contract.agreedDate && (
+                                <p>📅 {new Date(contract.agreedDate).toLocaleDateString()}</p>
+                              )}
+                              {contract.agreedTime && (
+                                <p>🕐 {contract.agreedTime}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensaje del proveedor */}
+                    {contract.providerMessage && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-800 mb-1">Respuesta del proveedor:</p>
+                            <p className="text-sm text-blue-700">{contract.providerMessage}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Botones de acción para el proveedor */}
+                    {contract.status === ContractStatus.PENDING && (
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedContract(contract);
+                            setIsProviderResponseModalOpen(true);
+                          }}
+                          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Responder Solicitud
+                        </button>
+                      </div>
+                    )}
+
                     {contract.status === ContractStatus.NEGOTIATING && (
-                      <button
-                        onClick={() => {
-                          setSelectedContract(contract);
-                          setIsBidModalOpen(true);
-                        }}
-                        className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-sm"
-                      >
-                        Responder con Oferta
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedContract(contract);
+                            setIsBidModalOpen(true);
+                          }}
+                          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          Hacer Nueva Oferta
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -407,6 +535,19 @@ export default function ContractsPage() {
               setSelectedContract(null);
             }}
             onBidSubmitted={loadContracts}
+          />
+        )}
+
+        {/* Provider Response Modal */}
+        {isProviderResponseModalOpen && selectedContract && (
+          <ProviderResponseModal
+            contract={selectedContract}
+            isOpen={isProviderResponseModalOpen}
+            onClose={() => {
+              setIsProviderResponseModalOpen(false);
+              setSelectedContract(null);
+            }}
+            onResponseSubmitted={loadContracts}
           />
         )}
       </div>

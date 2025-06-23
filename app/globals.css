@@ -63,14 +63,56 @@
   }
 }
 
-/* Ocultar scrollbar en navegadores modernos */
+/* Estilos globales de scrollbar modernos y suaves */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.8) rgba(241, 245, 249, 0.4);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.4);
+  border-radius: 4px;
+  margin: 2px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.8);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+  transform: scale(1.05);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(71, 85, 105, 1);
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgba(241, 245, 249, 0.4);
+}
+
+/* Scrollbar para elementos con scroll horizontal */
+*::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+/* Ocultar scrollbar en navegadores modernos (clase utilitaria) */
 .hide-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari y Opera */
+  display: none;
 }
 
 @layer base {
@@ -149,100 +191,140 @@
   background-color: #f2f5ff;
 }
 
-/* Custom Scrollbar Styles */
+/* Scrollbar personalizada para elementos específicos */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: rgba(148, 163, 184, 0.9) rgba(241, 245, 249, 0.5);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 5px;
+  margin: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-  transition: background 0.2s ease;
+  background: rgba(148, 163, 184, 0.9);
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(100, 116, 139, 1);
+  transform: scale(1.1);
 }
 
-/* Modal specific scrollbar */
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(71, 85, 105, 1);
+}
+
+/* Scrollbar para modales y elementos pequeños */
 .modal-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #e2e8f0 #f8fafc;
+  scrollbar-color: rgba(148, 163, 184, 0.8) rgba(248, 250, 252, 0.4);
 }
 
 .modal-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 .modal-scrollbar::-webkit-scrollbar-track {
-  background: #f8fafc;
-  border-radius: 2px;
+  background: rgba(248, 250, 252, 0.4);
+  border-radius: 3px;
+  margin: 1px;
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 2px;
-  transition: background 0.2s ease;
+  background: rgba(148, 163, 184, 0.8);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
+  background: rgba(100, 116, 139, 0.9);
+  transform: scale(1.05);
 }
 
-/* Hide scrollbar but keep functionality */
+/* Scrollbar para elementos con tema oscuro */
+.dark-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.6) rgba(30, 41, 59, 0.4);
+}
+
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 4px;
+  margin: 2px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.6);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.8);
+  transform: scale(1.05);
+}
+
+/* Scrollbar ultra fina para elementos muy pequeños */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.7) rgba(241, 245, 249, 0.3);
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.3);
+  border-radius: 2px;
+  margin: 1px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.7);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+  transform: scale(1.1);
+}
+
+/* Clases utilitarias para ocultar scrollbar cuando sea necesario */
 .scrollbar-hide {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
 }
 
-.scrollbar-hide::-webkit-scrollbar-track {
-  display: none !important;
-}
-
-.scrollbar-hide::-webkit-scrollbar-thumb {
-  display: none !important;
-}
-
-.scrollbar-hide::-webkit-scrollbar-corner {
-  display: none !important;
-}
-
-/* Alternative scrollbar hide method */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-/* Force hide scrollbar for all browsers */
-.hide-scrollbar {
-  overflow: -moz-scrollbars-none;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
+  display: none;
 }

@@ -167,16 +167,16 @@ export default function FeedPage() {
       {/* Header azul extendido como en perfil */}
       <div className="bg-[#097EEC] text-white py-8">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-eras-bold">Feed de Publicaciones</h1>
-          <p className="mt-2 text-blue-100 font-eras">Descubre las mejores oportunidades laborales y servicios</p>
+          <h1 className="text-2xl md:text-3xl font-eras-bold">Feed de Publicaciones</h1>
+          <p className="mt-2 text-blue-100 font-eras text-sm md:text-base">Descubre las mejores oportunidades laborales y servicios</p>
         </div>
       </div>
 
       {/* Content con margen negativo para que se superponga */}
       <div className="container mx-auto px-4 -mt-6 pb-12">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar - Filtros */}
-          <div className="lg:col-span-1">
+        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
+          {/* Sidebar - Filtros (oculto en móvil) */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
               <h3 className="text-lg font-eras-bold text-gray-900 mb-4">Filtros</h3>
               
@@ -235,16 +235,52 @@ export default function FeedPage() {
           </div>
 
           {/* Main Content - Feed */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 col-span-full">
+            {/* Filtros móviles */}
+            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+              <div className="flex flex-col gap-4">
+                {/* Búsqueda móvil */}
+                <div>
+                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">Buscar</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Título, descripción..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 font-eras"
+                    />
+                  </div>
+                </div>
+                
+                {/* Categoría móvil */}
+                <div>
+                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">Categoría</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                  >
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category === 'all' ? 'Todas las categorías' : category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Create Post Button */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 font-eras-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1 font-eras-semibold text-gray-900 text-sm sm:text-base">
                     ¿Qué estás buscando hoy?
                 </div>
                 <Button
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium"
+                  className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Crear Publicación
@@ -253,11 +289,11 @@ export default function FeedPage() {
             </div>
 
             {/* Feed */}
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {loading ? (
                 // Loading skeletons
                 Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
                     <div className="flex items-start gap-4 mb-4">
                       <Skeleton className="h-12 w-12 rounded-full" />
                       <div className="flex-1">
@@ -271,31 +307,31 @@ export default function FeedPage() {
                   </div>
                 ))
               ) : error ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center">
                   <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
                   <h3 className="text-lg font-eras-bold text-gray-900 mb-2">Error al cargar</h3>
                   <p className="text-gray-600 font-eras">{error}</p>
                 </div>
               ) : filteredPublications.length > 0 ? (
                 filteredPublications.map((publication) => (
-                  <div key={publication.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
+                  <div key={publication.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-shadow duration-300">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start gap-4">
-                        <div className="relative">
-                          <div className="w-12 h-12 bg-[#097EEC] rounded-full flex items-center justify-center">
-                            <User className="h-6 w-6 text-white" />
+                      <div className="flex items-start gap-3 lg:gap-4 flex-1 min-w-0">
+                        <div className="relative flex-shrink-0">
+                          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-[#097EEC] rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                           </div>
                         </div>
                         
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-eras-bold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                            <h3 className="font-eras-bold text-gray-900 text-sm lg:text-base truncate">
                               {publication.user?.name || 'Usuario'}
                             </h3>
                             {/* Badge según el rol */}
                             {publication.user?.roles && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-eras-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-eras-medium bg-blue-100 text-blue-800 flex-shrink-0">
                                 {Array.isArray(publication.user.roles) && publication.user.roles.length > 0 ? (
                                   typeof publication.user.roles[0] === 'string' ? 
                                     (publication.user.roles[0] === 'PERSON' ? 'Ofrece servicios/productos' : 'Solicita personal/productos') :
@@ -305,7 +341,7 @@ export default function FeedPage() {
                             )}
                           </div>
                           
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-xs lg:text-sm text-gray-500">
                             <div className="flex items-center gap-1">
                               <Tag className="h-3 w-3" />
                               <span>{publication.category}</span>
@@ -324,19 +360,19 @@ export default function FeedPage() {
                         </div>
                       </div>
                       
-                      <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                      <button className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
                         <MoreHorizontal className="h-4 w-4 text-gray-500" />
                       </button>
                     </div>
 
                     {/* Content */}
                     <div className="mb-4">
-                      <h2 className="text-xl font-eras-bold text-gray-900 mb-2">
+                      <h2 className="text-lg lg:text-xl font-eras-bold text-gray-900 mb-2">
                         {publication.title}
                       </h2>
                       
                       {publication.description && (
-                        <p className="text-gray-700 leading-relaxed mb-4">
+                        <p className="text-gray-700 leading-relaxed mb-4 text-sm lg:text-base">
                           {publication.description}
                         </p>
                       )}
@@ -346,7 +382,7 @@ export default function FeedPage() {
                           <img 
                             src={publication.image_url} 
                             alt={publication.title}
-                            className="w-full h-48 object-cover rounded-lg"
+                            className="w-full h-32 lg:h-48 object-cover rounded-lg"
                           />
                         </div>
                       )}
@@ -368,8 +404,8 @@ export default function FeedPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center gap-4 lg:gap-6">
                         <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-500 transition-colors">
                           <Heart className="h-4 w-4" />
                           <span>0</span>
@@ -382,24 +418,24 @@ export default function FeedPage() {
                         
                         <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors">
                           <Share2 className="h-4 w-4" />
-                          <span>Compartir</span>
+                          <span className="hidden sm:inline">Compartir</span>
                         </button>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex items-center gap-2 border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white"
+                          className="flex items-center gap-2 border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white w-full sm:w-auto"
                         >
                           <Send className="h-4 w-4" />
-                          Mensaje
+                          <span className="hidden sm:inline">Mensaje</span>
                         </Button>
                         
-                        <Link href={`/publications/${publication.id}`}>
+                        <Link href={`/publications/${publication.id}`} className="w-full sm:w-auto">
                           <Button
                             size="sm"
-                            className="bg-[#097EEC] hover:bg-[#097EEC]/90"
+                            className="bg-[#097EEC] hover:bg-[#097EEC]/90 w-full sm:w-auto"
                           >
                             Ver más
                           </Button>
@@ -409,7 +445,7 @@ export default function FeedPage() {
                   </div>
                 ))
               ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center">
                   <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-eras-bold text-gray-900 mb-2">No se encontraron publicaciones</h3>
                   <p className="text-gray-600 font-eras">

@@ -82,9 +82,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex lg:items-center lg:space-x-2">
-            <div className="mr-6">
+            {/*<div className="mr-6">
               <SearchBar isScrolled={isScrolled} />
-            </div>
+            </div>*/}
             
             {/* Navigation Links */}
             <div className="flex items-center space-x-1">
@@ -179,14 +179,14 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white/98 backdrop-blur-md overflow-y-auto hide-scrollbar">
+        <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto custom-scrollbar">
           <div className="flex min-h-screen flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#097EEC] rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
-                <span className="font-bold text-xl text-gray-900">Suarec</span>
+                <span className="font-eras-bold text-xl text-gray-900">Suarec</span>
               </div>
               <button
                 onClick={() => setIsMenuOpen(false)}
@@ -196,7 +196,7 @@ const Navbar = () => {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto hide-scrollbar">
+            <div className="flex-1 p-4">
               <div className="flex flex-col space-y-2 pb-4">
                 {hasRole(['ADMIN']) && (
                   <MobileNavLink href="/users" icon={<Users className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
@@ -265,7 +265,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/20 pb-8">
+            <div className="pt-4 border-t border-gray-200 pb-8 bg-white">
               <div className="flex justify-center">
                 <NavbarRole isMobile={true} section="logIn" />
               </div>
@@ -307,7 +307,7 @@ const MobileNavLink = ({
   <Link 
     href={href} 
     onClick={onClick}
-    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-[#097EEC] transition-all duration-300 font-medium"
+    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-800 hover:bg-[#097EEC]/10 hover:text-[#097EEC] transition-all duration-300 font-eras-medium"
   >
     {icon}
     <span>{children}</span>

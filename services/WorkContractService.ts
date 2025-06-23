@@ -83,7 +83,7 @@ export interface WorkHistory {
   };
 }
 
-const baseURL = "/work-contracts";
+const baseURL = "/suarec/work-contracts";
 
 // Crear un nuevo contrato de trabajo
 const createWorkContract = (contractData: CreateWorkContractDto) => 

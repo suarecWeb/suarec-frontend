@@ -16,6 +16,8 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
   const [contractType, setContractType] = useState<'accept' | 'custom'>('accept');
   const [customPrice, setCustomPrice] = useState(0);
   const [message, setMessage] = useState('');
+  const [requestedDate, setRequestedDate] = useState('');
+  const [requestedTime, setRequestedTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -38,7 +40,9 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         publicationId: publication.id!,
         initialPrice: Number(price),
         priceUnit: publication.priceUnit || 'project',
-        clientMessage: message || undefined
+        clientMessage: message || undefined,
+        requestedDate: requestedDate ? new Date(requestedDate) : undefined,
+        requestedTime: requestedTime || undefined
       };
 
       console.log('Enviando datos de contratación:', contractData);
@@ -60,7 +64,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto hide-scrollbar">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto modal-scrollbar">
         {/* Header */}
         <div className="bg-[#097EEC] text-white p-4 rounded-t-xl">
           <div className="flex justify-between items-start">
@@ -191,6 +195,40 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               <p className="text-xs text-gray-500 mt-2">
                 Proporciona detalles específicos para obtener mejores resultados
               </p>
+            </div>
+
+            {/* Date and Time Input */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha deseada (opcional):
+                </label>
+                <input
+                  type="date"
+                  value={requestedDate}
+                  onChange={(e) => setRequestedDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ¿Cuándo necesitas el servicio?
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Hora deseada (opcional):
+                </label>
+                <input
+                  type="time"
+                  value={requestedTime}
+                  onChange={(e) => setRequestedTime(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ¿A qué hora prefieres el servicio?
+                </p>
+              </div>
             </div>
 
             {/* Action Buttons */}

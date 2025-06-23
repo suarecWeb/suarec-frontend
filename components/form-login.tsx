@@ -24,7 +24,7 @@ const FormLogin = () => {
   }, [searchParams])
 
   const handleGoogleSubmit = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/callback`
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/auth/google/callback`
   }
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {

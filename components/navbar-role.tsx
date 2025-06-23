@@ -7,6 +7,9 @@ import { logOut } from "@/actions/log-out"
 import Cookies from "js-cookie"
 import { LogIn, LogOut, User, ChevronDown, Settings } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
+
+
 
 interface NavbarRoleProps {
   isMobile: boolean
@@ -22,6 +25,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
   const [token, setToken] = useState<string | undefined>(undefined)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const router = useRouter()
 
   useEffect(() => {
     setToken(Cookies.get("token"))
@@ -40,8 +45,9 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
     }
   }, [])
 
-  const handleLogOutClick = () => {
-    logOut()
+  const handleLogOutClick = async () => {
+    await logOut()
+    router.push('/')
   }
 
   if (section !== "logIn") {
@@ -54,7 +60,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
         <div className="flex flex-col space-y-3">
           <Link
             href="/profile"
-            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-300"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
           >
             <User className="h-5 w-5" />
             <span>Mi Perfil</span>
@@ -62,7 +68,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
 
           <Link
             href="/profile/edit"
-            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-300"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
           >
             <Settings className="h-5 w-5" />
             <span>Configuración</span>
@@ -70,7 +76,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
 
           <button
             onClick={handleLogOutClick}
-            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-300"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-300 font-eras-medium"
           >
             <LogOut className="h-5 w-5" />
             <span>Cerrar sesión</span>
@@ -138,7 +144,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
       className={`
         flex items-center gap-2 px-4 py-2 rounded-lg font-eras-medium transition-all duration-300 ${
           isMobile
-            ? "py-3 px-4 text-lg justify-center bg-gray-100 hover:bg-gray-200 text-gray-700"
+            ? "py-3 px-4 text-lg justify-center bg-[#097EEC] hover:bg-[#097EEC]/90 text-white shadow-lg"
             : isScrolled
               ? "bg-[#097EEC] text-white hover:bg-[#097EEC]/90 shadow-lg hover:shadow-xl"
               : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"

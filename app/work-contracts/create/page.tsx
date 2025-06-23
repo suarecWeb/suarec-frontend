@@ -546,7 +546,7 @@ const CreateWorkContractPageContent = () => {
 
                       {/* User Search Results */}
                       {showUserSearch && userSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto thin-scrollbar">
                           {userSearchResults.map((user) => (
                             <button
                               key={user.id}
@@ -623,7 +623,7 @@ const CreateWorkContractPageContent = () => {
 
                       {/* Publication Search Results */}
                       {showPublicationSearch && publicationSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto thin-scrollbar">
                           {publicationSearchResults.map((publication) => (
                             <button
                               key={publication.id}

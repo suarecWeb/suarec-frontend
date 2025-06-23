@@ -53,7 +53,7 @@ export interface RatingStats {
   categoryStats: { [category: string]: { average: number; count: number } };
 }
 
-const baseURL = "/ratings";
+const baseURL = "/suarec/ratings";
 
 // Crear una nueva calificación
 const createRating = (ratingData: CreateRatingDto) => 

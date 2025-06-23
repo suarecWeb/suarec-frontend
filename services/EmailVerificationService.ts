@@ -11,7 +11,7 @@ export interface EmailVerificationStatus {
   email?: string;
 }
 
-const baseURL = "/email-verification";
+const baseURL = "/suarec/email-verification";
 
 // Enviar email de verificación
 const sendVerificationEmail = (userId: number, email: string) => 
