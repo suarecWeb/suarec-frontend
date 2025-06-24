@@ -16,6 +16,30 @@ export interface Experience {
   updated_at: Date;
 }
 
+export interface Education {
+  id?: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string;
+  startDate: string | Date;
+  endDate?: string | Date;
+  description?: string;
+}
+
+export interface Reference {
+  id?: string;
+  name: string;
+  relationship: string;
+  contact: string;
+  comment?: string;
+}
+
+export interface SocialLink {
+  id?: string;
+  type: 'LinkedIn' | 'GitHub' | 'Twitter' | 'Facebook' | 'Instagram' | 'Website' | string;
+  url: string;
+}
+
 export interface User {
   id?: string
   email: string
@@ -35,6 +59,10 @@ export interface User {
   publications?: Publication[]
   comments?: Comment[]
   experiences?: Experience[]
+  bio?: string
+  education?: Education[]
+  references?: Reference[]
+  socialLinks?: SocialLink[]
 }
 
 export // Interfaces para los DTOs

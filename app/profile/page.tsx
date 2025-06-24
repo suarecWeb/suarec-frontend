@@ -384,6 +384,89 @@ const ProfilePage = () => {
                             </div>
                           )}
 
+                          {/* SOBRE MÍ */}
+                          <div className="flex items-start gap-3">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500 font-semibold">Sobre mí</p>
+                              <p className="text-gray-800 whitespace-pre-line">{user.aboutMe || 'No hay información disponible.'}</p>
+                            </div>
+                          </div>
+
+                          {/* EDUCACIÓN */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Educación</p>
+                              </div>
+                              {user.education && user.education.length > 0 ? (
+                                <div className="space-y-3">
+                                  {user.education.map((edu, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3">
+                                      <h4 className="font-medium text-gray-800">{edu.degree} {edu.fieldOfStudy && `- ${edu.fieldOfStudy}`}</h4>
+                                      <p className="text-sm text-gray-600">{edu.institution}</p>
+                                      <p className="text-sm text-gray-500">{formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Presente'}</p>
+                                      {edu.description && <p className="text-sm text-gray-600 mt-1">{edu.description}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay información educativa registrada.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* REFERENCIAS */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Referencias</p>
+                              </div>
+                              {user.references && user.references.length > 0 ? (
+                                <div className="space-y-3">
+                                  {user.references.map((ref, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3">
+                                      <h4 className="font-medium text-gray-800">{ref.name} <span className="text-xs text-gray-500">({ref.relationship})</span></h4>
+                                      <p className="text-sm text-gray-600">Contacto: {ref.contact}</p>
+                                      {ref.comment && <p className="text-sm text-gray-600 mt-1">{ref.comment}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay referencias registradas.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* REDES SOCIALES */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Redes</p>
+                              </div>
+                              {user.socialLinks && user.socialLinks.length > 0 ? (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {user.socialLinks.map((link, idx) => (
+                                    <a
+                                      key={idx}
+                                      href={link.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-[#097EEC]/10 text-[#097EEC] rounded-full text-xs font-medium hover:bg-[#097EEC]/20 transition-colors"
+                                    >
+                                      {link.type}
+                                    </a>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay redes registradas.</p>
+                              )}
+                            </div>
+                          </div>
+
                           {/* Experiencias */}
                           {user.experiences && user.experiences.length > 0 && (
                             <div className="flex items-start gap-3">

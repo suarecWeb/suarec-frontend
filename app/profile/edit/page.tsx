@@ -10,7 +10,7 @@ import { Save, AlertCircle, CheckCircle, ArrowLeft, Upload, Loader2 } from "luci
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UserService } from "@/services/UsersService"
-import { User as UserType } from "@/interfaces/user.interface"
+import { User as UserType, Reference, SocialLink, Education } from "@/interfaces/user.interface"
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete"
 
 // Interfaces para el token
@@ -184,6 +184,10 @@ const ProfileEditPage = () => {
       cellphone: "",
       born_at: "",
     },
+    bio: "",
+    education: [] as Education[],
+    references: [] as Reference[],
+    socialLinks: [] as SocialLink[],
   })
 
   useEffect(() => {
@@ -233,6 +237,14 @@ const ProfileEditPage = () => {
                   cellphone: "",
                   born_at: "",
                 },
+            bio: userData.bio || "",
+            education: Array.isArray(userData.education) ? userData.education.map((edu: any) => ({
+              ...edu,
+              startDate: edu.startDate ? (typeof edu.startDate === 'string' ? new Date(edu.startDate) : edu.startDate) : new Date(),
+              endDate: edu.endDate ? (typeof edu.endDate === 'string' ? new Date(edu.endDate) : edu.endDate) : undefined,
+            })) : [],
+            references: Array.isArray(userData.references) ? userData.references : [],
+            socialLinks: Array.isArray(userData.socialLinks) ? userData.socialLinks : [],
           })          
 
         setLoading(false)
@@ -340,6 +352,14 @@ const ProfileEditPage = () => {
         cv_url: formData.cv_url,
         profession: finalProfession,
         skills: formData.skills,
+        bio: formData.bio,
+        education: formData.education.map(edu => ({
+          ...edu,
+          startDate: edu.startDate ? (typeof edu.startDate === 'string' ? new Date(edu.startDate) : edu.startDate) : new Date(),
+          endDate: edu.endDate ? (typeof edu.endDate === 'string' ? new Date(edu.endDate) : edu.endDate) : undefined,
+        })),
+        references: formData.references,
+        socialLinks: formData.socialLinks,
       };
   
       if (hasBusinessRole && user.company) {
@@ -577,6 +597,75 @@ const ProfileEditPage = () => {
                           </div>
                         </>
                       )}
+
+                      {/* SOBRE MÍ */}
+                      <div className="space-y-2">
+                        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">Sobre mí</label>
+                        <textarea
+                          id="bio"
+                          name="bio"
+                          value={formData.bio}
+                          onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none min-h-[80px]"
+                          placeholder="Cuéntanos sobre ti, tu experiencia, intereses, etc."
+                        />
+                      </div>
+
+                      {/* EDUCACIÓN */}
+                      <div className="space-y-2 mt-4">
+                        <label className="block text-sm font-medium text-gray-700">Educación</label>
+                        {formData.education.map((edu, idx) => (
+                          <div key={idx} className="border p-3 rounded-lg mb-2 relative">
+                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
+                            <input type="text" placeholder="Institución" className="w-full mb-1 px-2 py-1 border rounded" value={edu.institution || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, institution: e.target.value } : item); return { ...prev, education: arr }; })} />
+                            <input type="text" placeholder="Título" className="w-full mb-1 px-2 py-1 border rounded" value={edu.degree || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, degree: e.target.value } : item); return { ...prev, education: arr }; })} />
+                            <input type="text" placeholder="Campo de estudio" className="w-full mb-1 px-2 py-1 border rounded" value={edu.fieldOfStudy || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, fieldOfStudy: e.target.value } : item); return { ...prev, education: arr }; })} />
+                            <div className="flex gap-2 mb-1">
+                              <input type="date" className="flex-1 px-2 py-1 border rounded" value={typeof edu.startDate === 'string' ? edu.startDate : edu.startDate ? new Date(edu.startDate).toISOString().split('T')[0] : ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, startDate: e.target.value } : item); return { ...prev, education: arr }; })} />
+                              <input type="date" className="flex-1 px-2 py-1 border rounded" value={typeof edu.endDate === 'string' ? edu.endDate : edu.endDate ? new Date(edu.endDate).toISOString().split('T')[0] : ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, endDate: e.target.value } : item); return { ...prev, education: arr }; })} />
+                            </div>
+                            <textarea placeholder="Descripción" className="w-full px-2 py-1 border rounded" value={edu.description || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, description: e.target.value } : item); return { ...prev, education: arr }; })} />
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, education: [...prev.education, { institution: '', degree: '', startDate: '', endDate: '', description: '' }] }))} className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]">Agregar educación</button>
+                      </div>
+
+                      {/* REFERENCIAS */}
+                      <div className="space-y-2 mt-4">
+                        <label className="block text-sm font-medium text-gray-700">Referencias</label>
+                        {formData.references.map((ref, idx) => (
+                          <div key={idx} className="border p-3 rounded-lg mb-2 relative">
+                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, references: prev.references.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
+                            <input type="text" placeholder="Nombre" className="w-full mb-1 px-2 py-1 border rounded" value={ref.name || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, name: e.target.value } : item); return { ...prev, references: arr }; })} />
+                            <input type="text" placeholder="Relación" className="w-full mb-1 px-2 py-1 border rounded" value={ref.relationship || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, relationship: e.target.value } : item); return { ...prev, references: arr }; })} />
+                            <input type="text" placeholder="Contacto" className="w-full mb-1 px-2 py-1 border rounded" value={ref.contact || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, contact: e.target.value } : item); return { ...prev, references: arr }; })} />
+                            <textarea placeholder="Comentario" className="w-full px-2 py-1 border rounded" value={ref.comment || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, comment: e.target.value } : item); return { ...prev, references: arr }; })} />
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, references: [...prev.references, { name: '', relationship: '', contact: '', comment: '' }] }))} className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]">Agregar referencia</button>
+                      </div>
+
+                      {/* REDES SOCIALES */}
+                      <div className="space-y-2 mt-4">
+                        <label className="block text-sm font-medium text-gray-700">Redes</label>
+                        {formData.socialLinks.map((link, idx) => (
+                          <div key={idx} className="border p-3 rounded-lg mb-2 relative">
+                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, socialLinks: prev.socialLinks.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
+                            <select className="w-full mb-1 px-2 py-1 border rounded" value={link.type || ''} onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, type: e.target.value } : item); return { ...prev, socialLinks: arr }; })}>
+                              <option value="">Selecciona una red</option>
+                              <option value="LinkedIn">LinkedIn</option>
+                              <option value="GitHub">GitHub</option>
+                              <option value="Twitter">Twitter</option>
+                              <option value="Facebook">Facebook</option>
+                              <option value="Instagram">Instagram</option>
+                              <option value="Website">Website</option>
+                              <option value="Otra">Otra</option>
+                            </select>
+                            <input type="url" placeholder="URL" className="w-full mb-1 px-2 py-1 border rounded" value={link.url || ''} onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, url: e.target.value } : item); return { ...prev, socialLinks: arr }; })} />
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, socialLinks: [...prev.socialLinks, { type: '', url: '' }] }))} className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]">Agregar red</button>
+                      </div>
                     </div>
                   </TabsContent>
 
