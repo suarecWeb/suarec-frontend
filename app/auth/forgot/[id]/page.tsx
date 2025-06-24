@@ -4,10 +4,12 @@ import { Container } from "@mui/material"
 import Image from "next/image"
 import Link from "next/link"
 
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
 interface Props{
     params: {id:string}
 }
-
 
 const ForgotPage  = ({params}:Props) =>{
     return(

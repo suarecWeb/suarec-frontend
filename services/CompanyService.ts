@@ -4,7 +4,7 @@ import { User } from "@/interfaces/user.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
-const baseURL = "/companies";
+const baseURL = "/suarec/companies";
 
 // Función para obtener empresas con paginación
 const getCompanies = (params?: PaginationParams) => 

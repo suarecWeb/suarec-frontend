@@ -10,6 +10,8 @@ export interface Publication {
   category: string;
   image_url?: string;
   visitors?: number;
+  price?: number;
+  priceUnit?: string;
   userId: number;
   user?: User;
   comments?: Comment[];

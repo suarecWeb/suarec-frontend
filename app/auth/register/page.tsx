@@ -4,6 +4,9 @@ import FormRegister from "@/components/form-register";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
 const Register = () => {
   return (
       <div className="w-full max-w-6xl px-4">

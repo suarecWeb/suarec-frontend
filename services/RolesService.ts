@@ -1,6 +1,6 @@
 import api from "./axios_config";
 
-const baseURL = "/roles";
+const baseURL = "/suarec/roles";
 
 const getRoles = () => {
   return api.get(baseURL);

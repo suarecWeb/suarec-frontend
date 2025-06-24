@@ -2,6 +2,9 @@ import FormLogin from "@/components/form-login";
 import Link from "next/link";
 import { ArrowRight } from 'lucide-react';
 
+// Configuración para evitar prerenderización estática
+export const dynamic = 'force-dynamic';
+
 const Login = () => {
   return (
     <div className="space-y-8">
