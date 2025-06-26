@@ -1,7 +1,7 @@
 import api from './axios_config';
 import { Experience } from '@/interfaces/user.interface';
 
-const baseURL = '/experiences';
+const baseURL = '/suarec/experiences';
 
 export class ExperienceService {
   static async createExperience(experience: Omit<Experience, 'id' | 'created_at' | 'updated_at'>) {

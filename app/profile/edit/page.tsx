@@ -240,8 +240,16 @@ const ProfileEditPage = () => {
             bio: userData.bio || "",
             education: Array.isArray(userData.education) ? userData.education.map((edu: any) => ({
               ...edu,
-              startDate: edu.startDate ? (typeof edu.startDate === 'string' ? new Date(edu.startDate) : edu.startDate) : new Date(),
-              endDate: edu.endDate ? (typeof edu.endDate === 'string' ? new Date(edu.endDate) : edu.endDate) : undefined,
+              startDate: edu.startDate 
+                ? (typeof edu.startDate === 'string' 
+                    ? edu.startDate 
+                    : new Date(edu.startDate).toISOString().split('T')[0])
+                : '',
+              endDate: edu.endDate 
+                ? (typeof edu.endDate === 'string' 
+                    ? edu.endDate 
+                    : new Date(edu.endDate).toISOString().split('T')[0])
+                : '',
             })) : [],
             references: Array.isArray(userData.references) ? userData.references : [],
             socialLinks: Array.isArray(userData.socialLinks) ? userData.socialLinks : [],
@@ -342,6 +350,25 @@ const ProfileEditPage = () => {
         finalProfession = formData.customProfession.trim() || "Otra";
       }
   
+      // Filtrar educación válida (con campos requeridos)
+      const validEducation = formData.education.filter(edu => 
+        edu.institution && edu.degree && edu.startDate
+      ).map(edu => ({
+        ...edu,
+        startDate: edu.startDate ? (typeof edu.startDate === 'string' ? edu.startDate : new Date(edu.startDate).toISOString().split('T')[0]) : '',
+        endDate: edu.endDate ? (typeof edu.endDate === 'string' ? edu.endDate : new Date(edu.endDate).toISOString().split('T')[0]) : undefined,
+      }));
+
+      // Filtrar referencias válidas (con campos requeridos)
+      const validReferences = formData.references.filter(ref => 
+        ref.name && ref.relationship && ref.contact
+      );
+
+      // Filtrar redes sociales válidas (con campos requeridos)
+      const validSocialLinks = formData.socialLinks.filter(link => 
+        link.type && link.url
+      );
+  
       // Convertir born_at a Date antes de enviarlo
       const userData: Partial<UserType> = {
         name: formData.name,
@@ -353,13 +380,9 @@ const ProfileEditPage = () => {
         profession: finalProfession,
         skills: formData.skills,
         bio: formData.bio,
-        education: formData.education.map(edu => ({
-          ...edu,
-          startDate: edu.startDate ? (typeof edu.startDate === 'string' ? new Date(edu.startDate) : edu.startDate) : new Date(),
-          endDate: edu.endDate ? (typeof edu.endDate === 'string' ? new Date(edu.endDate) : edu.endDate) : undefined,
-        })),
-        references: formData.references,
-        socialLinks: formData.socialLinks,
+        education: validEducation,
+        references: validReferences,
+        socialLinks: validSocialLinks,
       };
   
       if (hasBusinessRole && user.company) {
@@ -614,15 +637,64 @@ const ProfileEditPage = () => {
                       {/* EDUCACIÓN */}
                       <div className="space-y-2 mt-4">
                         <label className="block text-sm font-medium text-gray-700">Educación</label>
+                        <p className="text-xs text-gray-500 mb-2">Los campos marcados con * son obligatorios</p>
                         {formData.education.map((edu, idx) => (
                           <div key={idx} className="border p-3 rounded-lg mb-2 relative">
                             <button type="button" onClick={() => setFormData(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
-                            <input type="text" placeholder="Institución" className="w-full mb-1 px-2 py-1 border rounded" value={edu.institution || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, institution: e.target.value } : item); return { ...prev, education: arr }; })} />
-                            <input type="text" placeholder="Título" className="w-full mb-1 px-2 py-1 border rounded" value={edu.degree || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, degree: e.target.value } : item); return { ...prev, education: arr }; })} />
+                            <input 
+                              type="text" 
+                              placeholder="Institución *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!edu.institution ? 'border-red-300' : ''}`} 
+                              value={edu.institution || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, institution: e.target.value } : item); return { ...prev, education: arr }; })} 
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="Título *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!edu.degree ? 'border-red-300' : ''}`} 
+                              value={edu.degree || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, degree: e.target.value } : item); return { ...prev, education: arr }; })} 
+                            />
                             <input type="text" placeholder="Campo de estudio" className="w-full mb-1 px-2 py-1 border rounded" value={edu.fieldOfStudy || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, fieldOfStudy: e.target.value } : item); return { ...prev, education: arr }; })} />
                             <div className="flex gap-2 mb-1">
-                              <input type="date" className="flex-1 px-2 py-1 border rounded" value={typeof edu.startDate === 'string' ? edu.startDate : edu.startDate ? new Date(edu.startDate).toISOString().split('T')[0] : ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, startDate: e.target.value } : item); return { ...prev, education: arr }; })} />
-                              <input type="date" className="flex-1 px-2 py-1 border rounded" value={typeof edu.endDate === 'string' ? edu.endDate : edu.endDate ? new Date(edu.endDate).toISOString().split('T')[0] : ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, endDate: e.target.value } : item); return { ...prev, education: arr }; })} />
+                              <input 
+                                type="date" 
+                                className={`flex-1 px-2 py-1 border rounded ${!edu.startDate ? 'border-red-300' : ''}`}
+                                value={
+                                  typeof edu.startDate === 'string' 
+                                    ? edu.startDate 
+                                    : edu.startDate 
+                                      ? new Date(edu.startDate).toISOString().split('T')[0] 
+                                      : ''
+                                } 
+                                onChange={e => setFormData(prev => { 
+                                  const arr = prev.education.map((item, i) => 
+                                    i === idx 
+                                      ? { ...item, startDate: e.target.value } 
+                                      : item
+                                  ); 
+                                  return { ...prev, education: arr }; 
+                                })} 
+                              />
+                              <input 
+                                type="date" 
+                                className="flex-1 px-2 py-1 border rounded" 
+                                value={
+                                  typeof edu.endDate === 'string' 
+                                    ? edu.endDate 
+                                    : edu.endDate 
+                                      ? new Date(edu.endDate).toISOString().split('T')[0] 
+                                      : ''
+                                } 
+                                onChange={e => setFormData(prev => { 
+                                  const arr = prev.education.map((item, i) => 
+                                    i === idx 
+                                      ? { ...item, endDate: e.target.value } 
+                                      : item
+                                  ); 
+                                  return { ...prev, education: arr }; 
+                                })} 
+                              />
                             </div>
                             <textarea placeholder="Descripción" className="w-full px-2 py-1 border rounded" value={edu.description || ''} onChange={e => setFormData(prev => { const arr = prev.education.map((item, i) => i === idx ? { ...item, description: e.target.value } : item); return { ...prev, education: arr }; })} />
                           </div>
@@ -633,12 +705,31 @@ const ProfileEditPage = () => {
                       {/* REFERENCIAS */}
                       <div className="space-y-2 mt-4">
                         <label className="block text-sm font-medium text-gray-700">Referencias</label>
+                        <p className="text-xs text-gray-500 mb-2">Los campos marcados con * son obligatorios</p>
                         {formData.references.map((ref, idx) => (
                           <div key={idx} className="border p-3 rounded-lg mb-2 relative">
                             <button type="button" onClick={() => setFormData(prev => ({ ...prev, references: prev.references.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
-                            <input type="text" placeholder="Nombre" className="w-full mb-1 px-2 py-1 border rounded" value={ref.name || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, name: e.target.value } : item); return { ...prev, references: arr }; })} />
-                            <input type="text" placeholder="Relación" className="w-full mb-1 px-2 py-1 border rounded" value={ref.relationship || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, relationship: e.target.value } : item); return { ...prev, references: arr }; })} />
-                            <input type="text" placeholder="Contacto" className="w-full mb-1 px-2 py-1 border rounded" value={ref.contact || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, contact: e.target.value } : item); return { ...prev, references: arr }; })} />
+                            <input 
+                              type="text" 
+                              placeholder="Nombre *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.name ? 'border-red-300' : ''}`} 
+                              value={ref.name || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, name: e.target.value } : item); return { ...prev, references: arr }; })} 
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="Relación *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.relationship ? 'border-red-300' : ''}`} 
+                              value={ref.relationship || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, relationship: e.target.value } : item); return { ...prev, references: arr }; })} 
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="Contacto *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.contact ? 'border-red-300' : ''}`} 
+                              value={ref.contact || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, contact: e.target.value } : item); return { ...prev, references: arr }; })} 
+                            />
                             <textarea placeholder="Comentario" className="w-full px-2 py-1 border rounded" value={ref.comment || ''} onChange={e => setFormData(prev => { const arr = prev.references.map((item, i) => i === idx ? { ...item, comment: e.target.value } : item); return { ...prev, references: arr }; })} />
                           </div>
                         ))}
@@ -648,11 +739,16 @@ const ProfileEditPage = () => {
                       {/* REDES SOCIALES */}
                       <div className="space-y-2 mt-4">
                         <label className="block text-sm font-medium text-gray-700">Redes</label>
+                        <p className="text-xs text-gray-500 mb-2">Los campos marcados con * son obligatorios</p>
                         {formData.socialLinks.map((link, idx) => (
                           <div key={idx} className="border p-3 rounded-lg mb-2 relative">
                             <button type="button" onClick={() => setFormData(prev => ({ ...prev, socialLinks: prev.socialLinks.filter((_, i) => i !== idx) }))} className="absolute top-2 right-2 text-red-500 hover:text-red-700">&times;</button>
-                            <select className="w-full mb-1 px-2 py-1 border rounded" value={link.type || ''} onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, type: e.target.value } : item); return { ...prev, socialLinks: arr }; })}>
-                              <option value="">Selecciona una red</option>
+                            <select 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!link.type ? 'border-red-300' : ''}`} 
+                              value={link.type || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, type: e.target.value } : item); return { ...prev, socialLinks: arr }; })}
+                            >
+                              <option value="">Selecciona una red *</option>
                               <option value="LinkedIn">LinkedIn</option>
                               <option value="GitHub">GitHub</option>
                               <option value="Twitter">Twitter</option>
@@ -661,7 +757,13 @@ const ProfileEditPage = () => {
                               <option value="Website">Website</option>
                               <option value="Otra">Otra</option>
                             </select>
-                            <input type="url" placeholder="URL" className="w-full mb-1 px-2 py-1 border rounded" value={link.url || ''} onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, url: e.target.value } : item); return { ...prev, socialLinks: arr }; })} />
+                            <input 
+                              type="url" 
+                              placeholder="URL *" 
+                              className={`w-full mb-1 px-2 py-1 border rounded ${!link.url ? 'border-red-300' : ''}`} 
+                              value={link.url || ''} 
+                              onChange={e => setFormData(prev => { const arr = prev.socialLinks.map((item, i) => i === idx ? { ...item, url: e.target.value } : item); return { ...prev, socialLinks: arr }; })} 
+                            />
                           </div>
                         ))}
                         <button type="button" onClick={() => setFormData(prev => ({ ...prev, socialLinks: [...prev.socialLinks, { type: '', url: '' }] }))} className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]">Agregar red</button>
