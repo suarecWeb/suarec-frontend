@@ -369,32 +369,21 @@ const ProfileEditPage = () => {
         link.type && link.url
       );
   
-      // Convertir born_at a Date antes de enviarlo
+      // Convertir born_at a Date antes de enviarlo y limpiar el payload
       const userData: Partial<UserType> = {
-        name: formData.name,
-        email: formData.email,
-        genre: formData.genre,
-        cellphone: formData.cellphone,
+        name: formData.name || undefined,
+        email: formData.email ? formData.email.toLowerCase() : undefined,
+        genre: formData.genre || undefined,
+        cellphone: formData.cellphone || undefined,
         born_at: formData.born_at ? new Date(formData.born_at) : undefined,
-        cv_url: formData.cv_url,
-        profession: finalProfession,
-        skills: formData.skills,
-        bio: formData.bio,
-        education: validEducation,
-        references: validReferences,
-        socialLinks: validSocialLinks,
+        cv_url: formData.cv_url || undefined,
+        profession: finalProfession || undefined,
+        skills: Array.isArray(formData.skills) && formData.skills.length > 0 ? formData.skills : undefined,
+        bio: formData.bio || undefined,
+        education: validEducation.length > 0 ? validEducation : undefined,
+        references: validReferences.length > 0 ? validReferences : undefined,
+        socialLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
       };
-  
-      if (hasBusinessRole && user.company) {
-        userData.company = {
-          ...formData.company,
-          userId: user.id,
-          user: user,
-          id: user.company.id,
-          created_at: user.company.created_at,
-          born_at: formData.company.born_at ? new Date(formData.company.born_at) : new Date(),
-        };
-      }
   
       await UserService.updateUser(user.id, userData);
       setSuccess("Perfil actualizado correctamente");
@@ -551,9 +540,9 @@ const ProfileEditPage = () => {
                           required
                         >
                           <option value="">Seleccionar género</option>
-                          <option value="Masculino">Masculino</option>
-                          <option value="Femenino">Femenino</option>
-                          <option value="Otro">Otro</option>
+                          <option value="M">Masculino</option>
+                          <option value="F">Femenino</option>
+                          <option value="O">Otro</option>
                         </select>
                       </div>
 

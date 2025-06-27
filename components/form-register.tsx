@@ -119,7 +119,7 @@ const FormRegister = () => {
             password: formData.get("password") as string,
             genre: formData.get("genre") as string,
             cellphone: formData.get("cellphone") as string,
-            email: formData.get("email") as string,
+            email: (formData.get("email") as string)?.toLowerCase(),
             born_at: new Date(formData.get("born_at") as string),
             cv_url: formData.get("cv_url") as string,
             roles: ["PERSON"],
@@ -140,7 +140,7 @@ const FormRegister = () => {
         } else if (userType === "BUSINESS") {
             // Para empresas, usamos el nombre y email de la empresa para el usuario
             const companyName = formData.get("company_name") as string;
-            const companyEmail = formData.get("company_email") as string;
+            const companyEmail = (formData.get("company_email") as string)?.toLowerCase();
             const companyPhone = formData.get("company_cellphone") as string;
             const companyBornAtDate = new Date(formData.get("company_born_at") as string);
             const companyNit = formData.get("nit") as string;

@@ -348,8 +348,8 @@ export default function Home() {
           <div className="border-t border-white/20 pt-8 text-center">
             <p className="text-white/60 font-eras">
               © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. | 
-              <Link href="/privacy" className="hover:text-white transition-colors ml-2">Privacidad</Link> | 
-              <Link href="/terms" className="hover:text-white transition-colors ml-2">Términos</Link>
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setPrivacyOpen(true); }}>Privacidad</a> | 
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setTermsOpen(true); }}>Términos</a>
             </p>
           </div>
         </div>
