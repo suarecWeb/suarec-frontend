@@ -38,6 +38,7 @@ interface CreateUserDto {
   companyId?: string;
   profession: string;
   skills: string[];
+  cedula: string;
 }
 
 interface CreateCompanyDto {
@@ -59,6 +60,17 @@ const FormRegister = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false,
+  });
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 
   const router = useRouter();
 
@@ -94,15 +106,71 @@ const FormRegister = () => {
     }
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword("");
+    setPasswordVisible(passwordVisible); // para mantener el estado
+    setPasswordStrength({
+      length: value.length >= 8,
+      upper: /[A-Z]/.test(value),
+      lower: /[a-z]/.test(value),
+      number: /\d/.test(value),
+      special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value),
+    });
+  };
+
+  const validateForm = (formData: FormData) => {
+    const errors: any = {};
+    // Validación nombre
+    if (!formData.get("fullname")) errors.fullname = "El nombre es obligatorio";
+    // Validación email
+    const email = formData.get("email") as string;
+    if (!email) errors.email = "El correo es obligatorio";
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = "Correo inválido";
+    // Validación teléfono
+    if (!formData.get("cellphone")) errors.cellphone = "El teléfono es obligatorio";
+    // Validación fecha de nacimiento y mayor de 18 años
+    const bornAt = formData.get("born_at") as string;
+    if (!bornAt) errors.born_at = "La fecha de nacimiento es obligatoria";
+    else {
+      const birthDate = new Date(bornAt);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        if (age - 1 < 18) errors.born_at = "Debes ser mayor de 18 años";
+      } else {
+        if (age < 18) errors.born_at = "Debes ser mayor de 18 años";
+      }
+    }
+    // Validación género
+    if (!formData.get("genre")) errors.genre = "El sexo es obligatorio";
+    // Validación contraseña
+    const password = formData.get("password") as string;
+    if (!password) errors.password = "La contraseña es obligatoria";
+    else if (!/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':\"\\|,.<>/?]).*$/.test(password)) {
+      errors.password = "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial";
+    }
+    // Confirmación de contraseña
+    if (userType === "PERSON" || userType === "BUSINESS") {
+      if (!confirmPassword) errors.confirmPassword = "Confirma tu contraseña";
+      else if (password !== confirmPassword) errors.confirmPassword = "Las contraseñas no coinciden";
+    }
+    // Validación cédula
+    const cedula = formData.get("cedula") as string;
+    if (!cedula) errors.cedula = "La cédula es obligatoria";
+    else if (!/^[0-9]{6,15}$/.test(cedula)) errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
+    // Validación términos
+    if (!acceptedTerms) errors.terms = "Debes aceptar los términos y condiciones";
+    return errors;
+  };
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
-    
-    if (!acceptedTerms) {
-      setError("Debes aceptar los términos y condiciones para continuar");
-      return;
-    }
-
     const formData = new FormData(event.currentTarget);
+    const errors = validateForm(formData);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     
     setError("");
     setSuccess("");
@@ -125,6 +193,7 @@ const FormRegister = () => {
             roles: ["PERSON"],
             profession: "Profesional independiente",
             skills: ["Ninguna"],
+            cedula: formData.get("cedula") as string,
           };
           
           userEmail = userData.email;
@@ -172,6 +241,7 @@ const FormRegister = () => {
               roles: ["BUSINESS"],
               profession: "Profesional independiente",
               skills: ["Ninguna"],
+              cedula: "", // Cedula vacía
             };
             
             userEmail = userData.email;
@@ -287,6 +357,14 @@ const FormRegister = () => {
     });
   };
 
+  // Validación en tiempo real de coincidencia de contraseñas
+  const showPasswordMismatch = confirmPasswordTouched && confirmPassword && confirmPassword !== (document.getElementById('password') as HTMLInputElement)?.value;
+
+  // Calcular la fecha máxima permitida para ser mayor de 18 años
+  const today = new Date();
+  const maxBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const maxBirthDateStr = maxBirthDate.toISOString().split('T')[0];
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6 w-full">
@@ -328,6 +406,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.fullname && <p className="text-red-600 text-sm">{formErrors.fullname}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -348,6 +427,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.email && <p className="text-red-600 text-sm">{formErrors.email}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -366,6 +446,7 @@ const FormRegister = () => {
                       <option value="F">Femenino</option>
                       <option value="O">Otro</option>
                     </select>
+                    {formErrors.genre && <p className="text-red-600 text-sm">{formErrors.genre}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -384,6 +465,7 @@ const FormRegister = () => {
                         className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
+                        onChange={handlePasswordChange}
                       />
                       <button
                         type="button"
@@ -397,6 +479,56 @@ const FormRegister = () => {
                         )}
                       </button>
                     </div>
+                    {/* Indicador de fortaleza de contraseña */}
+                    <ul className="text-xs mt-1 space-y-0.5">
+                      <li className={passwordStrength.length ? "text-green-600" : "text-gray-500"}>• Mínimo 8 caracteres</li>
+                      <li className={passwordStrength.upper ? "text-green-600" : "text-gray-500"}>• Al menos una mayúscula</li>
+                      <li className={passwordStrength.lower ? "text-green-600" : "text-gray-500"}>• Al menos una minúscula</li>
+                      <li className={passwordStrength.number ? "text-green-600" : "text-gray-500"}>• Al menos un número</li>
+                      <li className={passwordStrength.special ? "text-green-600" : "text-gray-500"}>• Al menos un carácter especial</li>
+                    </ul>
+                    {formErrors.password && <p className="text-red-600 text-sm">{formErrors.password}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      Confirmar contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={passwordVisible ? "text" : "password"}
+                      placeholder="*******"
+                      className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                      disabled={isPending}
+                      required
+                      value={confirmPassword}
+                      onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
+                      onBlur={() => setConfirmPasswordTouched(true)}
+                    />
+                    {(showPasswordMismatch || formErrors.confirmPassword) && (
+                      <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="cedula" className="block text-sm font-medium text-gray-700">
+                      Cédula <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="cedula"
+                        name="cedula"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="1234567890"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.cedula && <p className="text-red-600 text-sm">{formErrors.cedula}</p>}
                   </div>
                 </div>
 
@@ -419,6 +551,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.cellphone && <p className="text-red-600 text-sm">{formErrors.cellphone}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -433,11 +566,13 @@ const FormRegister = () => {
                         id="born_at"
                         name="born_at"
                         type="date"
+                        max={maxBirthDateStr}
                         className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
                       />
                     </div>
+                    {formErrors.born_at && <p className="text-red-600 text-sm">{formErrors.born_at}</p>}
                   </div>
 
                 </div>
@@ -445,154 +580,59 @@ const FormRegister = () => {
             ) : (
               // Campos solo para BUSINESS
               <div className="grid md:grid-cols-2 gap-6">
+                {/* Columna Izquierda */}
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="nit" className="block text-sm font-medium text-gray-700">
-                      NIT <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building2 className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="nit"
-                        name="nit"
-                        type="text"
-                        placeholder="1234567890"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                    </div>
+                    <label htmlFor="nit" className="block text-sm font-medium text-gray-700">NIT <span className="text-red-500">*</span></label>
+                    <input id="nit" name="nit" type="text" placeholder="1234567890" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
                   </div>
-
                   <div className="space-y-2">
-                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
-                      Nombre de la compañía <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building2 className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="company_name"
-                        name="company_name"
-                        type="text"
-                        placeholder="Mi Empresa S.A."
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                    </div>
+                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Nombre de la compañía <span className="text-red-500">*</span></label>
+                    <input id="company_name" name="company_name" type="text" placeholder="Mi Empresa S.A." className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
                   </div>
-
                   <div className="space-y-2">
-                    <label htmlFor="company_email" className="block text-sm font-medium text-gray-700">
-                      Correo electrónico de la compañía <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="company_email"
-                        name="company_email"
-                        type="email"
-                        placeholder="empresa@gmail.com"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                    </div>
+                    <label htmlFor="company_email" className="block text-sm font-medium text-gray-700">Correo electrónico de la compañía <span className="text-red-500">*</span></label>
+                    <input id="company_email" name="company_email" type="email" placeholder="empresa@gmail.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
                   </div>
-
                   <div className="space-y-2">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                      Contraseña <span className="text-red-500">*</span>
-                    </label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Key className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="password"
-                        name="password"
-                        type={passwordVisible ? "text" : "password"}
-                        placeholder="*******"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {passwordVisible ? (
-                          <EyeOff className="h-5 w-5 text-gray-400" />
-                        ) : (
-                          <Eye className="h-5 w-5 text-gray-400" />
-                        )}
+                      <input id="password" name="password" type={passwordVisible ? "text" : "password"} placeholder="*******" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required onChange={handlePasswordChange} />
+                      <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={togglePasswordVisibility}>
+                        {passwordVisible ? (<EyeOff className="h-5 w-5 text-gray-400" />) : (<Eye className="h-5 w-5 text-gray-400" />)}
                       </button>
                     </div>
+                    {/* Indicador de fortaleza de contraseña */}
+                    <ul className="text-xs mt-1 space-y-0.5">
+                      <li className={passwordStrength.length ? "text-green-600" : "text-gray-500"}>• Mínimo 8 caracteres</li>
+                      <li className={passwordStrength.upper ? "text-green-600" : "text-gray-500"}>• Al menos una mayúscula</li>
+                      <li className={passwordStrength.lower ? "text-green-600" : "text-gray-500"}>• Al menos una minúscula</li>
+                      <li className={passwordStrength.number ? "text-green-600" : "text-gray-500"}>• Al menos un número</li>
+                      <li className={passwordStrength.special ? "text-green-600" : "text-gray-500"}>• Al menos un carácter especial</li>
+                    </ul>
+                    {formErrors.password && <p className="text-red-600 text-sm">{formErrors.password}</p>}
                   </div>
                 </div>
-
+                {/* Columna Derecha */}
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="company_cellphone" className="block text-sm font-medium text-gray-700">
-                      Teléfono de la compañía <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="company_cellphone"
-                        name="company_cellphone"
-                        type="tel"
-                        placeholder="+57 123456789"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                    </div>
+                    <label htmlFor="company_cellphone" className="block text-sm font-medium text-gray-700">Teléfono de la compañía <span className="text-red-500">*</span></label>
+                    <input id="company_cellphone" name="company_cellphone" type="tel" placeholder="+57 123456789" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
                   </div>
-
                   <div className="space-y-2">
-                    <label htmlFor="company_born_at" className="block text-sm font-medium text-gray-700">
-                      Fecha de fundación <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="company_born_at"
-                        name="company_born_at"
-                        type="date"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        disabled={isPending}
-                        required
-                      />
-                    </div>
+                    <label htmlFor="company_born_at" className="block text-sm font-medium text-gray-700">Fecha de fundación <span className="text-red-500">*</span></label>
+                    <input id="company_born_at" name="company_born_at" type="date" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
                   </div>
-
                   <div className="space-y-2">
-                    <label htmlFor="company_logo" className="block text-sm font-medium text-gray-700">
-                      Logo de la empresa (opcional)
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="company_logo"
-                        name="company_logo"
-                        type="file"
-                        accept="image/*"
-                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        onChange={handleFileChange}
-                        disabled={isPending}
-                      />
-                    </div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirmar contraseña <span className="text-red-500">*</span></label>
+                    <input id="confirmPassword" name="confirmPassword" type={passwordVisible ? "text" : "password"} placeholder="*******" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }} onBlur={() => setConfirmPasswordTouched(true)} />
+                    {(showPasswordMismatch || formErrors.confirmPassword) && (
+                      <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="company_logo" className="block text-sm font-medium text-gray-700">Logo de la empresa (opcional)</label>
+                    <input id="company_logo" name="company_logo" type="file" accept="image/*" className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none" onChange={handleFileChange} disabled={isPending} />
                   </div>
                 </div>
               </div>
@@ -677,7 +717,7 @@ const FormRegister = () => {
               <button
                 type="submit"
                 className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center"
-                disabled={isPending}
+                disabled={isPending || !acceptedTerms}
               >
                 {isPending ? (
                   <>
