@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
@@ -21,8 +22,18 @@ import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
+import TermsModal from "@/components/terms-modal"
+import PrivacyModal from "@/components/privacy-modal"
+import ContactModal from "@/components/contact-modal"
+import CookiesModal from "@/components/cookies-modal"
+import { useState } from "react"
 
 export default function Home() {
+  const [isTermsOpen, setTermsOpen] = useState(false)
+  const [isPrivacyOpen, setPrivacyOpen] = useState(false)
+  const [isContactOpen, setContactOpen] = useState(false)
+  const [isCookiesOpen, setCookiesOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -337,12 +348,16 @@ export default function Home() {
           <div className="border-t border-white/20 pt-8 text-center">
             <p className="text-white/60 font-eras">
               © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. | 
-              <Link href="/privacy" className="hover:text-white transition-colors ml-2">Privacidad</Link> | 
-              <Link href="/terms" className="hover:text-white transition-colors ml-2">Términos</Link>
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setPrivacyOpen(true); }}>Privacidad</a> | 
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setTermsOpen(true); }}>Términos</a>
             </p>
           </div>
         </div>
       </footer>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setContactOpen(false)} />
+      <CookiesModal isOpen={isCookiesOpen} onClose={() => setCookiesOpen(false)} />
     </div>
   )
 }

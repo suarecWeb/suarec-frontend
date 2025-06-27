@@ -18,18 +18,32 @@ import {
   FileTextIcon as FileText2,
   Clock,
   Eye,
+  Trash2,
+  CheckCircle,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserService } from "@/services/UsersService"
 import { User } from "@/interfaces/user.interface";
 import { TokenPayload } from "@/interfaces/auth.interface"
+import ExperienceDialog from "@/components/ExperienceDialog"
+import { toast } from "react-hot-toast"
+import { ExperienceService } from "@/services/ExperienceService"
+import { Experience } from "@/interfaces/user.interface"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import jsPDF from 'jspdf'
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [experienceDialogOpen, setExperienceDialogOpen] = useState(false)
+  const [selectedExperience, setSelectedExperience] = useState<Experience | undefined>()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [experienceToDelete, setExperienceToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -96,6 +110,205 @@ const ProfilePage = () => {
     })
   }
 
+  const handleAddExperience = () => {
+    setSelectedExperience(undefined)
+    setExperienceDialogOpen(true)
+  }
+
+  const handleEditExperience = (experience: Experience) => {
+    setSelectedExperience(experience)
+    setExperienceDialogOpen(true)
+  }
+
+  const handleDeleteExperience = (id: string) => {
+    setExperienceToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteExperience = async () => {
+    if (!experienceToDelete) return
+    setDeleteDialogOpen(false)
+    setSuccess(null)
+    setError(null)
+    try {
+      await ExperienceService.deleteExperience(experienceToDelete)
+      setSuccess('Experiencia eliminada correctamente')
+      // Recargar los datos del usuario
+      const token = Cookies.get("token")
+      if (token) {
+        const decoded = jwtDecode<TokenPayload>(token)
+        const response = await UserService.getUserById(decoded.id)
+        setUser(response.data)
+      }
+    } catch (error) {
+      console.error('Error al eliminar la experiencia:', error)
+      setError('Ocurrió un error al eliminar la experiencia')
+    } finally {
+      setExperienceToDelete(null)
+    }
+  }
+
+  const exportToPDF = () => {
+    if (!user) return;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // Encabezado SUAREC (más delgado, centrado, grande, blanco)
+    const headerHeight = 22;
+    doc.setFillColor(9, 126, 236); // #097EEC
+    doc.rect(0, 0, 210, headerHeight, 'F');
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(30);
+    doc.setTextColor(255, 255, 255);
+    const suarecText = 'Hoja de vida SUAREC';
+    const suarecWidth = doc.getTextWidth(suarecText);
+    doc.text(suarecText, (210 - suarecWidth) / 2, headerHeight - 7);
+
+    // Dimensiones de columnas
+    const leftColWidth = 90;
+    const rightColStart = 110;
+    const rightColWidth = 210 - rightColStart - 15;
+
+    // Línea divisoria vertical
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.5);
+    doc.line(100, headerHeight + 5, 100, 290);
+
+    // --- Columna izquierda: Contacto, Referencias, Redes ---
+    let yLeft = headerHeight + 15;
+    const xLeft = 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(33, 37, 41);
+    doc.text('Contacto', xLeft, yLeft);
+    yLeft += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    if (user.cellphone) { doc.text('Teléfono:', xLeft, yLeft); doc.text(user.cellphone, xLeft + 25, yLeft); yLeft += 6; }
+    if (user.email) { doc.text('Email:', xLeft, yLeft); doc.text(user.email, xLeft + 25, yLeft); yLeft += 6; }
+
+    // Referencias
+    if (user.references && user.references.length > 0) {
+      yLeft += 3;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Referencias', xLeft, yLeft);
+      yLeft += 6;
+      doc.setFont('helvetica', 'normal');
+      user.references.forEach((ref) => {
+        let refLine = '';
+        if (ref.name) refLine += ref.name;
+        if (ref.comment) refLine += ' — ' + ref.comment;
+        doc.text(refLine, xLeft, yLeft);
+        yLeft += 5.5;
+        if (ref.contact) { doc.text('Teléfono: ' + ref.contact, xLeft + 3, yLeft); yLeft += 5.5; }
+      });
+    }
+
+    // Redes
+    if (user.socialLinks && user.socialLinks.length > 0) {
+      yLeft += 3;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Redes', xLeft, yLeft);
+      yLeft += 6;
+      doc.setFont('helvetica', 'normal');
+      user.socialLinks.forEach((link) => {
+        if (link.type && link.url) {
+          const linkText = `${link.type}: ${link.url}`;
+          const linkLines = doc.splitTextToSize(linkText, leftColWidth - 25);
+          doc.text(linkLines, xLeft, yLeft);
+          yLeft += linkLines.length * 5.5;
+        }
+      });
+    }
+
+    // --- Columna derecha: Perfil ---
+    let yRight = headerHeight + 25;
+    let xRight = rightColStart;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(33, 37, 41);
+    doc.text(user.name || '', xRight, yRight);
+    yRight += 9.5;
+    if (user.profession) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(13);
+      doc.text(user.profession, xRight, yRight);
+      yRight += 7.5;
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+
+    // Sobre mí
+    if (user.bio) {
+      yRight += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sobre mí', xRight, yRight);
+      yRight += 5.5;
+      doc.setFont('helvetica', 'normal');
+      const bioLines = doc.splitTextToSize(user.bio, rightColWidth);
+      doc.text(bioLines, xRight, yRight);
+      yRight += bioLines.length * 5.5;
+    }
+
+    // Experiencia
+    if (user.experiences && user.experiences.length > 0) {
+      yRight += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Experiencia', xRight, yRight);
+      yRight += 5.5;
+      doc.setFont('helvetica', 'normal');
+      user.experiences.forEach((exp) => {
+        let expLine = '';
+        if (exp.startDate) expLine += new Date(exp.startDate).getFullYear() + ' ';
+        if (exp.title) expLine += exp.title;
+        if (exp.company) expLine += ' en ' + exp.company;
+        doc.text(expLine, xRight, yRight);
+        yRight += 5.5;
+        if (exp.description) {
+          const descLines = doc.splitTextToSize(exp.description, rightColWidth - 8);
+          doc.text(descLines, xRight + 4, yRight);
+          yRight += descLines.length * 5.5;
+        }
+      });
+    }
+
+    // Educación
+    if (user.education && user.education.length > 0) {
+      yRight += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Educación', xRight, yRight);
+      yRight += 5.5;
+      doc.setFont('helvetica', 'normal');
+      user.education.forEach((edu) => {
+        let eduLine = '';
+        if (edu.degree) eduLine += edu.degree + ' ';
+        if (edu.institution) eduLine += edu.institution;
+        if (edu.startDate) eduLine += ' (' + new Date(edu.startDate).getFullYear();
+        if (edu.endDate) eduLine += ' - ' + new Date(edu.endDate).getFullYear();
+        if (edu.startDate) eduLine += ')';
+        doc.text(eduLine, xRight, yRight);
+        yRight += 5.5;
+        if (edu.description) {
+          const descLines = doc.splitTextToSize(edu.description, rightColWidth - 8);
+          doc.text(descLines, xRight + 4, yRight);
+          yRight += descLines.length * 5.5;
+        }
+      });
+    }
+
+    // Habilidades
+    if (user.skills && user.skills.length > 0) {
+      yRight += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Habilidades', xRight, yRight);
+      yRight += 5.5;
+      doc.setFont('helvetica', 'normal');
+      doc.text(user.skills.join(', '), xRight, yRight);
+      yRight += 5.5;
+    }
+
+    doc.save(`Perfil_${user.name || 'usuario'}.pdf`);
+  }
+
   return (
     <>
       <Navbar />
@@ -116,6 +329,15 @@ const ProfilePage = () => {
               <div>
                 <h3 className="text-red-800 font-medium">Error</h3>
                 <p className="text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex items-start gap-3">
+              <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-green-800 font-medium">Éxito</h3>
+                <p className="text-green-700">{success}</p>
               </div>
             </div>
           )}
@@ -243,24 +465,7 @@ const ProfilePage = () => {
                             </div>
                           )}
 
-                          <div className="flex items-start gap-3">
-                            <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                            <div>
-                              <p className="text-sm text-gray-500">Miembro desde</p>
-                              <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
-                            </div>
-                          </div>
-
-                          {user.profession && (
-                            <div className="flex items-start gap-3">
-                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                              <div>
-                                <p className="text-sm text-gray-500">Profesión</p>
-                                <p className="text-gray-800">{user.profession}</p>
-                              </div>
-                            </div>
-                          )}
-
+                          {/* Habilidades */}
                           {user.skills && user.skills.length > 0 && (
                             <div className="flex items-start gap-3">
                               <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
@@ -276,6 +481,178 @@ const ProfilePage = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* SOBRE MÍ */}
+                          <div className="flex items-start gap-3">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500 font-semibold">Sobre mí</p>
+                              <p className="text-gray-800 whitespace-pre-line">{user.bio || 'No hay información disponible.'}</p>
+                            </div>
+                          </div>
+
+                          {/* EDUCACIÓN */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Educación</p>
+                              </div>
+                              {user.education && user.education.length > 0 ? (
+                                <div className="space-y-3">
+                                  {user.education.map((edu, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3">
+                                      <h4 className="font-medium text-gray-800">{edu.degree} {edu.fieldOfStudy && `- ${edu.fieldOfStudy}`}</h4>
+                                      <p className="text-sm text-gray-600">{edu.institution}</p>
+                                      <p className="text-sm text-gray-500">{formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Presente'}</p>
+                                      {edu.description && <p className="text-sm text-gray-600 mt-1">{edu.description}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay información educativa registrada.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* REFERENCIAS */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Referencias</p>
+                              </div>
+                              {user.references && user.references.length > 0 ? (
+                                <div className="space-y-3">
+                                  {user.references.map((ref, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3">
+                                      <h4 className="font-medium text-gray-800">{ref.name} <span className="text-xs text-gray-500">({ref.relationship})</span></h4>
+                                      <p className="text-sm text-gray-600">Contacto: {ref.contact}</p>
+                                      {ref.comment && <p className="text-sm text-gray-600 mt-1">{ref.comment}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay referencias registradas.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* REDES SOCIALES */}
+                          <div className="flex items-start gap-3 mt-4">
+                            <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm text-gray-500 font-semibold">Redes</p>
+                              </div>
+                              {user.socialLinks && user.socialLinks.length > 0 ? (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {user.socialLinks.map((link, idx) => (
+                                    <a
+                                      key={idx}
+                                      href={link.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-[#097EEC]/10 text-[#097EEC] rounded-full text-xs font-medium hover:bg-[#097EEC]/20 transition-colors"
+                                    >
+                                      {link.type}
+                                    </a>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-800">No hay redes registradas.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Experiencias */}
+                          {user.experiences && user.experiences.length > 0 && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div className="flex-1">
+                                <div className="flex justify-between items-center mb-2">
+                                  <p className="text-sm text-gray-500">Experiencia</p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddExperience}
+                                    className="text-[#097EEC] hover:text-[#0A6BC7]"
+                                  >
+                                    Agregar experiencia
+                                  </Button>
+                                </div>
+                                <div className="space-y-4">
+                                  {user.experiences.map((exp, idx) => (
+                                    <div key={idx} className="border-l-2 border-[#097EEC]/20 pl-3 relative group">
+                                      <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditExperience(exp)}
+                                          className="text-gray-500 hover:text-[#097EEC]"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDeleteExperience(exp.id)}
+                                          className="text-gray-500 hover:text-red-500"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                      <h4 className="font-medium text-gray-800">{exp.title}</h4>
+                                      <p className="text-sm text-gray-600">{exp.company}</p>
+                                      {exp.location && (
+                                        <p className="text-sm text-gray-500">{exp.location}</p>
+                                      )}
+                                      <p className="text-sm text-gray-500">
+                                        {formatDate(exp.startDate)} - {exp.currentPosition ? 'Presente' : exp.endDate ? formatDate(exp.endDate) : ''}
+                                      </p>
+                                      {exp.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{exp.description}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Si no hay experiencias, mostrar el botón para agregar */}
+                          {(!user.experiences || user.experiences.length === 0) && (
+                            <div className="flex items-start gap-3">
+                              <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div>
+                                <p className="text-sm text-gray-500">Experiencia</p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleAddExperience}
+                                  className="mt-2 text-[#097EEC] hover:text-[#0A6BC7]"
+                                >
+                                  Agregar experiencia
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-start gap-3">
+                            <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500">Miembro desde</p>
+                              <p className="text-gray-800">{user.created_at ? formatDate(user.created_at) : "N/A"}</p>
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC]/10 mb-4"
+                            onClick={exportToPDF}
+                          >
+                            Exportar a PDF
+                          </Button>
                         </div>
                       </div>
 
@@ -451,6 +828,44 @@ const ProfilePage = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de confirmación para eliminar experiencia */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>¿Eliminar experiencia?</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-700 mb-4">¿Estás seguro de que deseas eliminar esta experiencia? Esta acción no se puede deshacer.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white" onClick={confirmDeleteExperience}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de experiencia */}
+      <ExperienceDialog
+        open={experienceDialogOpen}
+        onOpenChange={setExperienceDialogOpen}
+        userId={Number(user?.id)}
+        experience={selectedExperience}
+        onSuccess={() => {
+          setSuccess('Experiencia agregada correctamente')
+          setError(null)
+          // Recargar los datos del usuario
+          const token = Cookies.get("token")
+          if (token) {
+            const decoded = jwtDecode<TokenPayload>(token)
+            UserService.getUserById(decoded.id).then(response => {
+              setUser(response.data)
+            })
+          }
+        }}
+      />
     </>
   )
 }
