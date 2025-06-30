@@ -60,7 +60,6 @@ const FormRegister = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<any>({});
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState({
@@ -108,8 +107,6 @@ const FormRegister = () => {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setConfirmPassword("");
-    setPasswordVisible(passwordVisible); // para mantener el estado
     setPasswordStrength({
       length: value.length >= 8,
       upper: /[A-Z]/.test(value),
@@ -121,47 +118,69 @@ const FormRegister = () => {
 
   const validateForm = (formData: FormData) => {
     const errors: any = {};
-    // Validación nombre
-    if (!formData.get("fullname")) errors.fullname = "El nombre es obligatorio";
-    // Validación email
-    const email = formData.get("email") as string;
-    if (!email) errors.email = "El correo es obligatorio";
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = "Correo inválido";
-    // Validación teléfono
-    if (!formData.get("cellphone")) errors.cellphone = "El teléfono es obligatorio";
-    // Validación fecha de nacimiento y mayor de 18 años
-    const bornAt = formData.get("born_at") as string;
-    if (!bornAt) errors.born_at = "La fecha de nacimiento es obligatoria";
-    else {
-      const birthDate = new Date(bornAt);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        if (age - 1 < 18) errors.born_at = "Debes ser mayor de 18 años";
-      } else {
-        if (age < 18) errors.born_at = "Debes ser mayor de 18 años";
+    
+    if (userType === "PERSON") {
+      // Validación nombre
+      if (!formData.get("fullname")) errors.fullname = "El nombre es obligatorio";
+      
+      // Validación email
+      const email = formData.get("email") as string;
+      if (!email) errors.email = "El correo es obligatorio";
+      else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = "Correo inválido";
+      
+      // Validación teléfono
+      if (!formData.get("cellphone")) errors.cellphone = "El teléfono es obligatorio";
+      
+      // Validación fecha de nacimiento y mayor de 18 años
+      const bornAt = formData.get("born_at") as string;
+      if (!bornAt) errors.born_at = "La fecha de nacimiento es obligatoria";
+      else {
+        const birthDate = new Date(bornAt);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          if (age - 1 < 18) errors.born_at = "Debes ser mayor de 18 años";
+        } else {
+          if (age < 18) errors.born_at = "Debes ser mayor de 18 años";
+        }
       }
+      
+      // Validación género
+      if (!formData.get("genre")) errors.genre = "El sexo es obligatorio";
+      
+      // Validación cédula
+      const cedula = formData.get("cedula") as string;
+      if (!cedula) errors.cedula = "La cédula es obligatoria";
+      else if (!/^[0-9]{6,15}$/.test(cedula)) errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
+      
+    } else if (userType === "BUSINESS") {
+      // Validaciones para empresas
+      if (!formData.get("nit")) errors.nit = "El NIT es obligatorio";
+      if (!formData.get("company_name")) errors.company_name = "El nombre de la empresa es obligatorio";
+      
+      const email = formData.get("company_email") as string;
+      if (!email) errors.company_email = "El correo es obligatorio";
+      else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.company_email = "Correo inválido";
+      
+      if (!formData.get("company_cellphone")) errors.company_cellphone = "El teléfono es obligatorio";
+      if (!formData.get("company_born_at")) errors.company_born_at = "La fecha de fundación es obligatoria";
     }
-    // Validación género
-    if (!formData.get("genre")) errors.genre = "El sexo es obligatorio";
+    
     // Validación contraseña
     const password = formData.get("password") as string;
     if (!password) errors.password = "La contraseña es obligatoria";
     else if (!/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':\"\\|,.<>/?]).*$/.test(password)) {
       errors.password = "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial";
     }
+    
     // Confirmación de contraseña
-    if (userType === "PERSON" || userType === "BUSINESS") {
-      if (!confirmPassword) errors.confirmPassword = "Confirma tu contraseña";
-      else if (password !== confirmPassword) errors.confirmPassword = "Las contraseñas no coinciden";
-    }
-    // Validación cédula
-    const cedula = formData.get("cedula") as string;
-    if (!cedula) errors.cedula = "La cédula es obligatoria";
-    else if (!/^[0-9]{6,15}$/.test(cedula)) errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
+    if (!confirmPassword) errors.confirmPassword = "Confirma tu contraseña";
+    else if (password !== confirmPassword) errors.confirmPassword = "Las contraseñas no coinciden";
+    
     // Validación términos
     if (!acceptedTerms) errors.terms = "Debes aceptar los términos y condiciones";
+    
     return errors;
   };
 
@@ -170,7 +189,11 @@ const FormRegister = () => {
     const formData = new FormData(event.currentTarget);
     const errors = validateForm(formData);
     setFormErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    
+    if (Object.keys(errors).length > 0) {
+      setError("Por favor corrige los errores en el formulario");
+      return;
+    }
     
     setError("");
     setSuccess("");
@@ -189,7 +212,6 @@ const FormRegister = () => {
             cellphone: formData.get("cellphone") as string,
             email: (formData.get("email") as string)?.toLowerCase(),
             born_at: new Date(formData.get("born_at") as string),
-            cv_url: formData.get("cv_url") as string,
             roles: ["PERSON"],
             profession: "Profesional independiente",
             skills: ["Ninguna"],
@@ -237,11 +259,10 @@ const FormRegister = () => {
               cellphone: companyPhone, // Usar el teléfono de la empresa
               email: companyEmail, // Usar el email de la empresa
               born_at: companyBornAtDate, // Usar la fecha de fundación
-              cv_url: "", // CV vacío
               roles: ["BUSINESS"],
               profession: "Profesional independiente",
               skills: ["Ninguna"],
-              cedula: "", // Cedula vacía
+              cedula: "", // Cedula vacía para empresas
             };
             
             userEmail = userData.email;
@@ -462,7 +483,7 @@ const FormRegister = () => {
                         name="password"
                         type={passwordVisible ? "text" : "password"}
                         placeholder="*******"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        className="pl-10 pr-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
                         onChange={handlePasswordChange}
@@ -494,18 +515,23 @@ const FormRegister = () => {
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                       Confirmar contraseña <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={passwordVisible ? "text" : "password"}
-                      placeholder="*******"
-                      className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                      disabled={isPending}
-                      required
-                      value={confirmPassword}
-                      onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
-                      onBlur={() => setConfirmPasswordTouched(true)}
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                        value={confirmPassword}
+                        onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
+                        onBlur={() => setConfirmPasswordTouched(true)}
+                      />
+                    </div>
                     {(showPasswordMismatch || formErrors.confirmPassword) && (
                       <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
                     )}
@@ -516,6 +542,9 @@ const FormRegister = () => {
                       Cédula <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                      </div>
                       <input
                         id="cedula"
                         name="cedula"
@@ -575,31 +604,119 @@ const FormRegister = () => {
                     {formErrors.born_at && <p className="text-red-600 text-sm">{formErrors.born_at}</p>}
                   </div>
 
+                  <div className="space-y-2">
+                    <label htmlFor="profile_image" className="block text-sm font-medium text-gray-700">
+                      Imagen de perfil (opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile_image"
+                        name="profile_image"
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        onChange={handleFileChange}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
               // Campos solo para BUSINESS
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Columna Izquierda */}
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="nit" className="block text-sm font-medium text-gray-700">NIT <span className="text-red-500">*</span></label>
-                    <input id="nit" name="nit" type="text" placeholder="1234567890" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">Nombre de la compañía <span className="text-red-500">*</span></label>
-                    <input id="company_name" name="company_name" type="text" placeholder="Mi Empresa S.A." className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="company_email" className="block text-sm font-medium text-gray-700">Correo electrónico de la compañía <span className="text-red-500">*</span></label>
-                    <input id="company_email" name="company_email" type="email" placeholder="empresa@gmail.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña <span className="text-red-500">*</span></label>
+                    <label htmlFor="nit" className="block text-sm font-medium text-gray-700">
+                      NIT <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
-                      <input id="password" name="password" type={passwordVisible ? "text" : "password"} placeholder="*******" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required onChange={handlePasswordChange} />
-                      <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={togglePasswordVisibility}>
-                        {passwordVisible ? (<EyeOff className="h-5 w-5 text-gray-400" />) : (<Eye className="h-5 w-5 text-gray-400" />)}
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building2 className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="nit"
+                        name="nit"
+                        type="text"
+                        placeholder="1234567890"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.nit && <p className="text-red-600 text-sm">{formErrors.nit}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
+                      Nombre de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building2 className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_name"
+                        name="company_name"
+                        type="text"
+                        placeholder="Mi Empresa S.A."
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.company_name && <p className="text-red-600 text-sm">{formErrors.company_name}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="company_email" className="block text-sm font-medium text-gray-700">
+                      Correo electrónico de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_email"
+                        name="company_email"
+                        type="email"
+                        placeholder="empresa@gmail.com"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.company_email && <p className="text-red-600 text-sm">{formErrors.company_email}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="password"
+                        name="password"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 pr-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                        onChange={handlePasswordChange}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {passwordVisible ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
                       </button>
                     </div>
                     {/* Indicador de fortaleza de contraseña */}
@@ -613,26 +730,90 @@ const FormRegister = () => {
                     {formErrors.password && <p className="text-red-600 text-sm">{formErrors.password}</p>}
                   </div>
                 </div>
-                {/* Columna Derecha */}
+
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="company_cellphone" className="block text-sm font-medium text-gray-700">Teléfono de la compañía <span className="text-red-500">*</span></label>
-                    <input id="company_cellphone" name="company_cellphone" type="tel" placeholder="+57 123456789" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
+                    <label htmlFor="company_cellphone" className="block text-sm font-medium text-gray-700">
+                      Teléfono de la compañía <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_cellphone"
+                        name="company_cellphone"
+                        type="tel"
+                        placeholder="+57 123456789"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.company_cellphone && <p className="text-red-600 text-sm">{formErrors.company_cellphone}</p>}
                   </div>
+
                   <div className="space-y-2">
-                    <label htmlFor="company_born_at" className="block text-sm font-medium text-gray-700">Fecha de fundación <span className="text-red-500">*</span></label>
-                    <input id="company_born_at" name="company_born_at" type="date" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required />
+                    <label htmlFor="company_born_at" className="block text-sm font-medium text-gray-700">
+                      Fecha de fundación <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="company_born_at"
+                        name="company_born_at"
+                        type="date"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.company_born_at && <p className="text-red-600 text-sm">{formErrors.company_born_at}</p>}
                   </div>
+
                   <div className="space-y-2">
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirmar contraseña <span className="text-red-500">*</span></label>
-                    <input id="confirmPassword" name="confirmPassword" type={passwordVisible ? "text" : "password"} placeholder="*******" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none" disabled={isPending} required value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }} onBlur={() => setConfirmPasswordTouched(true)} />
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      Confirmar contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                        value={confirmPassword}
+                        onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
+                        onBlur={() => setConfirmPasswordTouched(true)}
+                      />
+                    </div>
                     {(showPasswordMismatch || formErrors.confirmPassword) && (
                       <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
                     )}
                   </div>
+
                   <div className="space-y-2">
-                    <label htmlFor="company_logo" className="block text-sm font-medium text-gray-700">Logo de la empresa (opcional)</label>
-                    <input id="company_logo" name="company_logo" type="file" accept="image/*" className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none" onChange={handleFileChange} disabled={isPending} />
+                    <label htmlFor="company_logo" className="block text-sm font-medium text-gray-700">
+                      Logo de la empresa (opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="company_logo"
+                        name="company_logo"
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        onChange={handleFileChange}
+                        disabled={isPending}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -707,8 +888,8 @@ const FormRegister = () => {
               </div>
 
               {/* Error message for terms */}
-              {error && error.includes("términos y condiciones") && (
-                <p className="text-sm text-red-600">{error}</p>
+              {formErrors.terms && (
+                <p className="text-sm text-red-600">{formErrors.terms}</p>
               )}
             </div>
 
@@ -716,7 +897,7 @@ const FormRegister = () => {
             <div className="mt-8 space-y-3">
               <button
                 type="submit"
-                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center"
+                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isPending || !acceptedTerms}
               >
                 {isPending ? (

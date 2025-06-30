@@ -16,7 +16,7 @@ const getCompanyApplications = (companyId: string, params?: PaginationParams) =>
 
 // Obtener aplicaciones de un usuario específico
 const getUserApplications = (userId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Application>>(`/users/${userId}/applications`, { params });
+  api.get<PaginationResponse<Application>>(`/suarec/users/${userId}/applications`, { params });
 
 // Obtener aplicaciones de una publicación específica
 const getPublicationApplications = (publicationId: string, params?: PaginationParams) => 
