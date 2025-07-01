@@ -1,4 +1,5 @@
 'use client'
+import SuarecLogo from "@/components/logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,7 +16,8 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       <header className="w-full p-4">
         <div className="container mx-auto">
           <Link href="/" className="inline-block">
-            <h1 className="text-2xl font-extrabold text-white">SUAREC</h1>
+            {/* <h1 className="text-2xl font-extrabold text-white">SUAREC</h1> */}
+            <SuarecLogo width={120} height={50} className="text-white" theme="dark" />
           </Link>
         </div>
       </header>
