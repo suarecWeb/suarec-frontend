@@ -58,7 +58,7 @@ const FormLogin = () => {
 
         // Pequeña pausa para mostrar el mensaje de éxito
         setTimeout(() => {
-          router.push("/")
+          router.push("/feed")
         }, 1000)
       } catch (err: any) {
         // Verificar si es un error de email no verificado
