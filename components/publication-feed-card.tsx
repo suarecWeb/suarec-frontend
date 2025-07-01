@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Publication } from '@/interfaces/publication.interface';
 import { translatePriceUnit } from '@/lib/utils';
+import { formatCurrency } from '@/lib/formatCurrency';
 
 interface PublicationFeedCardProps {
   publication: Publication;
@@ -118,9 +119,11 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           </h2>
           
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-green-600" />
+            {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
             <span className="text-green-700 font-semibold text-base">
-              {publication.price ? `$${publication.price.toLocaleString()} ${translatePriceUnit(publication.priceUnit || '')}` : 'Precio a convenir'}
+              {publication.price ? `${formatCurrency(publication.price.toLocaleString(), {
+                showCurrency: true,
+              })} ${translatePriceUnit(publication.priceUnit || '')}` : 'Precio a convenir'}
             </span>
           </div>
           

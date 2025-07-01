@@ -19,6 +19,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { translatePriceUnit } from '@/lib/utils';
+import { formatCurrency } from '@/lib/formatCurrency';
 
 interface ContractModalProps {
   publication: Publication;
@@ -156,7 +157,9 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
             <p className="text-gray-600 text-sm mb-3 line-clamp-2">{publication.description}</p>
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
-                <span className="text-lg">$ {publication.price.toLocaleString()}</span>
+                <span className="text-lg">{formatCurrency(publication.price.toLocaleString(), {
+                  showCurrency: true,
+                })}</span>
                 <span className="text-sm text-gray-600">por {translatePriceUnit(publication.priceUnit || '')}</span>
               </div>
             )}
@@ -183,7 +186,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                       <span className="font-medium text-gray-800">Aceptar tarifa original</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      ${publication.price?.toLocaleString()} {translatePriceUnit(publication.priceUnit || '')}
+                      {formatCurrency(publication.price?.toLocaleString())} {translatePriceUnit(publication.priceUnit || '')}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Proceso más rápido y directo
@@ -423,16 +426,18 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Precio base:</span>
-                  <span className="font-medium">${basePrice.toLocaleString()}</span>
+                  <span className="font-medium">{formatCurrency(basePrice.toLocaleString())}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">IVA (19%):</span>
-                  <span className="font-medium">${iva.toLocaleString()}</span>
+                  <span className="font-medium">{formatCurrency(iva.toLocaleString())}</span>
                 </div>
                 <hr className="border-gray-300" />
                 <div className="flex justify-between items-center text-lg font-bold text-green-600">
                   <span>Total a pagar:</span>
-                  <span>${totalPrice.toLocaleString()}</span>
+                  <span>{formatCurrency(totalPrice.toLocaleString(), {
+                    showCurrency: true,
+                  })}</span>
                 </div>
               </div>
               

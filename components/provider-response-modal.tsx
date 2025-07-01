@@ -5,6 +5,7 @@ import { X, CheckCircle, XCircle, MessageSquare, DollarSign, Calendar, Clock, Ma
 import { Contract, ContractStatus } from '@/interfaces/contract.interface';
 import { ContractService } from '@/services/ContractService';
 import { translatePriceUnit } from '@/lib/utils';
+import { formatCurrency } from '@/lib/formatCurrency';
 
 interface ProviderResponseModalProps {
   contract: Contract;
@@ -121,7 +122,7 @@ export default function ProviderResponseModal({
               <div>
                 <span className="text-gray-500">Precio solicitado:</span>
                 <p className="font-medium text-gray-800">{getPaymentMethodText(contract.paymentMethod)}</p>
-                <p className="font-medium text-green-600">${contract.initialPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}</p>
+                <p className="font-medium text-green-600">{formatCurrency(contract.initialPrice?.toLocaleString())} {translatePriceUnit(contract.priceUnit)}</p>
               </div>
               {contract.requestedDate && (
                 <div>
