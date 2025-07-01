@@ -328,13 +328,14 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                      Precio (opcional)
+                      Precio <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       id="price"
                       step="0.01"
                       min="0"
+                      required
                       {...register("price", {
                         valueAsNumber: true,
                         min: { value: 0, message: "El precio debe ser mayor a 0" }

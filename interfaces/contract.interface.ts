@@ -27,6 +27,12 @@ export interface Contract {
   publication?: Publication;
   clientId: number;
   client?: User;
+  totalPrice: number;
+  paymentMethod: string;
+  serviceAddress: string;
+  propertyType: string;
+  neighborhood: string;
+  locationDescription?: string; 
   providerId: number;
   provider?: User;
   initialPrice: number;
@@ -47,10 +53,16 @@ export interface Contract {
 export interface CreateContractDto {
   publicationId: string;
   initialPrice: number;
+  totalPrice: number;
   priceUnit: string;
   clientMessage?: string;
-  requestedDate?: Date;
-  requestedTime?: string;
+  requestedDate: Date;
+  requestedTime: string;
+  paymentMethod: string;
+  serviceAddress: string;
+  propertyType: string;
+  neighborhood: string;
+  locationDescription?: string;
 }
 
 export interface CreateBidDto {

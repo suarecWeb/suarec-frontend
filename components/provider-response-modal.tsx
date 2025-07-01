@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, XCircle, MessageSquare, DollarSign, Calendar, Clock } from 'lucide-react';
+import { X, CheckCircle, XCircle, MessageSquare, DollarSign, Calendar, Clock, MapPin, CreditCard, Building, Home } from 'lucide-react';
 import { Contract, ContractStatus } from '@/interfaces/contract.interface';
 import { ContractService } from '@/services/ContractService';
 import { translatePriceUnit } from '@/lib/utils';
@@ -25,6 +25,31 @@ export default function ProviderResponseModal({
   const [proposedDate, setProposedDate] = useState('');
   const [proposedTime, setProposedTime] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const getPaymentMethodText = (method: string) => {
+    const methods: { [key: string]: string } = {
+      'efectivo': 'Efectivo',
+      'transferencia': 'Transferencia bancaria',
+      'pse': 'PSE',
+      'tarjeta': 'Tarjeta de crédito/débito',
+      'nequi': 'Nequi',
+      'daviplata': 'DaviPlata'
+    };
+    return methods[method] || method;
+  };
+
+  const getPropertyTypeText = (type: string) => {
+    const types: { [key: string]: string } = {
+      'casa': 'Casa',
+      'apartamento': 'Apartamento',
+      'local': 'Local comercial',
+      'oficina': 'Oficina',
+      'bodega': 'Bodega',
+      'finca': 'Finca',
+      'otro': 'Otro'
+    };
+    return types[type] || type;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +88,7 @@ export default function ProviderResponseModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto max-h-[90vh] overflow-y-auto modal-scrollbar">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-auto max-h-[90vh] overflow-y-auto modal-scrollbar">
         {/* Header */}
         <div className="bg-[#097EEC] text-white p-4 rounded-t-xl">
           <div className="flex justify-between items-start">
@@ -95,6 +120,7 @@ export default function ProviderResponseModal({
               </div>
               <div>
                 <span className="text-gray-500">Precio solicitado:</span>
+                <p className="font-medium text-gray-800">{getPaymentMethodText(contract.paymentMethod)}</p>
                 <p className="font-medium text-green-600">${contract.initialPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}</p>
               </div>
               {contract.requestedDate && (
@@ -118,6 +144,51 @@ export default function ProviderResponseModal({
               </div>
             )}
           </div>
+
+          {/* Service Location Info */}
+          {(contract.serviceAddress || contract.propertyType || contract.neighborhood) && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-5 w-5 text-gray-600" />
+                <h4 className="font-semibold text-gray-800">Ubicación del Servicio</h4>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                {contract.serviceAddress && (
+                  <div className="flex items-start gap-2">
+                    <Home className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex flex-row gap-2 flex-1 items-center">
+                      <span className="text-gray-600 font-medium">Dirección:</span>
+                      <p className="text-gray-800">{contract.serviceAddress}</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {contract.propertyType && (
+                    <div>
+                      <span className="text-gray-600 font-medium">Tipo de inmueble:</span>
+                      <p className="text-gray-800">{getPropertyTypeText(contract.propertyType)}</p>
+                    </div>
+                  )}
+                  
+                  {contract.neighborhood && (
+                    <div>
+                      <span className="text-gray-600 font-medium">Barrio:</span>
+                      <p className="text-gray-800">{contract.neighborhood}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {contract.locationDescription && (
+                  <div className="mt-3 p-3 bg-gray-100 border border-gray-300 rounded">
+                    <p className="text-sm font-medium text-gray-800 mb-1">Descripción del lugar:</p>
+                    <p className="text-sm text-gray-700">{contract.locationDescription}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Action Selection */}
@@ -204,6 +275,9 @@ export default function ProviderResponseModal({
                     step="0.01"
                   />
                 </div>
+                <p className="text-xs text-blue-600 mt-2">
+                  Se aplicará automáticamente el IVA del 19% al precio final
+                </p>
               </div>
             )}
 
@@ -299,4 +373,4 @@ export default function ProviderResponseModal({
       </div>
     </div>
   );
-} 
+}

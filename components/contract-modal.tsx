@@ -4,7 +4,20 @@ import { useState } from 'react';
 import { Publication } from '../interfaces/publication.interface';
 import { ContractService } from '../services/ContractService';
 import { useRouter } from 'next/navigation';
-import { X, DollarSign, Clock, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
+import { 
+  X, 
+  DollarSign, 
+  Clock, 
+  MessageSquare, 
+  CheckCircle, 
+  AlertCircle,
+  CreditCard,
+  Banknote,
+  Building,
+  Smartphone,
+  Calendar,
+  Receipt
+} from 'lucide-react';
 import { translatePriceUnit } from '@/lib/utils';
 
 interface ContractModalProps {
@@ -13,41 +26,94 @@ interface ContractModalProps {
   onClose: () => void;
 }
 
+type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta';
+
+const paymentMethods = [
+  { id: 'efectivo', name: 'Efectivo', icon: Banknote, description: 'Pago en efectivo al momento del servicio' },
+  { id: 'transferencia', name: 'Transferencia bancaria', icon: Building, description: 'Transferencia a cuenta bancaria' },
+  { id: 'tarjeta', name: 'Tarjeta de crédito/débito', icon: CreditCard, description: 'Visa, Mastercard, etc.' }
+] as const;
+
 export default function ContractModal({ publication, isOpen, onClose }: ContractModalProps) {
   const [contractType, setContractType] = useState<'accept' | 'custom'>('accept');
   const [customPrice, setCustomPrice] = useState(0);
+  const [serviceAddress, setServiceAddress] = useState('');
+  const [propertyType, setPropertyType] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [locationDescription, setLocationDescription] = useState('');
   const [message, setMessage] = useState('');
   const [requestedDate, setRequestedDate] = useState('');
   const [requestedTime, setRequestedTime] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Calcular precios
+  const basePrice = Number(contractType === 'accept' ? publication.price! : customPrice);
+  const iva = Math.round(basePrice * 0.19);
+  const totalPrice = basePrice + iva;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const price = contractType === 'accept' 
-        ? publication.price! 
-        : (customPrice);
-
-      if (isNaN(price) || price <= 0) {
+      if (isNaN(basePrice) || basePrice <= 0) {
         alert('Debes ingresar un precio válido');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!requestedDate) {
+        alert('La fecha de servicio es obligatoria');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!requestedTime) {
+        alert('La hora de servicio es obligatoria');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!serviceAddress.trim()) {
+        alert('La dirección del servicio es obligatoria');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!propertyType) {
+        alert('Debes seleccionar el tipo de inmueble');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!neighborhood.trim()) {
+        alert('El barrio es obligatorio');
         setIsLoading(false);
         return;
       }
 
       const contractData = {
         publicationId: publication.id!,
-        initialPrice: Number(price),
+        initialPrice: Number(basePrice),
+        totalPrice: Number(totalPrice),
         priceUnit: publication.priceUnit || 'project',
         clientMessage: message || undefined,
-        requestedDate: requestedDate ? new Date(requestedDate) : undefined,
-        requestedTime: requestedTime || undefined
+        requestedDate: new Date(requestedDate),
+        requestedTime: requestedTime,
+        paymentMethod: paymentMethod,
+        serviceAddress: serviceAddress.trim(),
+        propertyType: propertyType,
+        neighborhood: neighborhood.trim(),
+        locationDescription: locationDescription.trim() || undefined
       };
 
       console.log('Enviando datos de contratación:', contractData);
-      console.log('Tipo de initialPrice:', typeof contractData.initialPrice);
+      console.log('Desglose de precios:');
+      console.log('- Precio base:', basePrice);
+      console.log('- IVA (19%):', iva);
+      console.log('- Total:', totalPrice);
 
       await ContractService.createContract(contractData);
 
@@ -65,13 +131,13 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto modal-scrollbar">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto modal-scrollbar">
         {/* Header */}
         <div className="bg-[#097EEC] text-white p-4 rounded-t-xl">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">Contratar Servicio</h2>
-              <p className="text-blue-100 text-sm">Inicia el proceso de contratación</p>
+              <p className="text-blue-100 text-sm">Completa los detalles de tu contratación</p>
             </div>
             <button
               onClick={onClose}
@@ -83,21 +149,20 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 space-y-6">
           {/* Publication Info */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <h3 className="font-semibold text-gray-800 mb-2">{publication.title}</h3>
             <p className="text-gray-600 text-sm mb-3 line-clamp-2">{publication.description}</p>
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
-                <DollarSign className="h-4 w-4" />
-                <span className="text-lg">${publication.price.toLocaleString()}</span>
+                <span className="text-lg">$ {publication.price.toLocaleString()}</span>
                 <span className="text-sm text-gray-600">por {translatePriceUnit(publication.priceUnit || '')}</span>
               </div>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Contract Type Selection */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -178,10 +243,163 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               </div>
             )}
 
+            {/* Date and Time Input (Required) */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <Calendar className="inline h-4 w-4 mr-1" />
+                Fecha y hora del servicio <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Fecha:
+                  </label>
+                  <input
+                    type="date"
+                    value={requestedDate}
+                    onChange={(e) => setRequestedDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Hora:
+                  </label>
+                  <input
+                    type="time"
+                    value={requestedTime}
+                    onChange={(e) => setRequestedTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <CreditCard className="inline h-4 w-4 mr-1" />
+                Método de pago <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {paymentMethods.map((method) => {
+                  const Icon = method.icon;
+                  return (
+                    <label
+                      key={method.id}
+                      className={`flex items-start p-3 border-2 rounded-lg hover:border-[#097EEC] transition-colors cursor-pointer ${
+                        paymentMethod === method.id ? 'border-[#097EEC] bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        value={method.id}
+                        checked={paymentMethod === method.id}
+                        onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                        className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
+                        required
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className="h-4 w-4 text-[#097EEC]" />
+                          <span className="font-medium text-gray-800 text-sm">{method.name}</span>
+                        </div>
+                        <p className="text-xs text-gray-600">{method.description}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Service Location */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <Building className="inline h-4 w-4 mr-1" />
+                Información del lugar <span className="text-red-500">*</span>
+              </label>
+              
+              <div className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                {/* Dirección */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Dirección completa:
+                  </label>
+                  <input
+                    type="text"
+                    value={serviceAddress}
+                    onChange={(e) => setServiceAddress(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    placeholder="Ej: Calle 123 #45-67"
+                    required
+                  />
+                </div>
+
+                {/* Tipo de inmueble y Barrio */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Tipo de inmueble:
+                    </label>
+                    <select
+                      value={propertyType}
+                      onChange={(e) => setPropertyType(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                      required
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="casa">Casa</option>
+                      <option value="apartamento">Apartamento</option>
+                      <option value="local">Local comercial</option>
+                      <option value="oficina">Oficina</option>
+                      <option value="bodega">Bodega</option>
+                      <option value="finca">Finca</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Barrio:
+                    </label>
+                    <input
+                      type="text"
+                      value={neighborhood}
+                      onChange={(e) => setNeighborhood(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                      placeholder="Ej: Chapinero, Zona Rosa"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Descripción del lugar */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Descripción del lugar:
+                  </label>
+                  <textarea
+                    value={locationDescription}
+                    onChange={(e) => setLocationDescription(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
+                    rows={3}
+                    placeholder="Describe características importantes del lugar: acceso, pisos, puntos de referencia, instrucciones especiales..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ayuda al proveedor a conocer mejor el lugar de trabajo
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Message Input */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mensaje (opcional):
+                Mensaje adicional (opcional):
               </label>
               <div className="relative">
                 <MessageSquare className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
@@ -190,44 +408,37 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                   onChange={(e) => setMessage(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
                   rows={3}
-                  placeholder="Describe lo que necesitas, especificaciones, fechas importantes..."
+                  placeholder="Describe lo que necesitas, especificaciones, requisitos especiales..."
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Proporciona detalles específicos para obtener mejores resultados
-              </p>
             </div>
 
-            {/* Date and Time Input */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Fecha deseada (opcional):
-                </label>
-                <input
-                  type="date"
-                  value={requestedDate}
-                  onChange={(e) => setRequestedDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  ¿Cuándo necesitas el servicio?
-                </p>
+            {/* Checkout Summary */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Receipt className="h-5 w-5 text-green-600" />
+                <h3 className="font-semibold text-gray-800">Resumen del precio</h3>
               </div>
               
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Hora deseada (opcional):
-                </label>
-                <input
-                  type="time"
-                  value={requestedTime}
-                  onChange={(e) => setRequestedTime(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  ¿A qué hora prefieres el servicio?
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Precio base:</span>
+                  <span className="font-medium">${basePrice.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">IVA (19%):</span>
+                  <span className="font-medium">${iva.toLocaleString()}</span>
+                </div>
+                <hr className="border-gray-300" />
+                <div className="flex justify-between items-center text-lg font-bold text-green-600">
+                  <span>Total a pagar:</span>
+                  <span>${totalPrice.toLocaleString()}</span>
+                </div>
+              </div>
+              
+              <div className="mt-3 p-2 bg-white rounded border border-green-300">
+                <p className="text-xs text-gray-600">
+                  <strong>Método de pago:</strong> {paymentMethods.find(m => m.id === paymentMethod)?.name}
                 </p>
               </div>
             </div>
@@ -237,7 +448,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 disabled={isLoading}
               >
                 Cancelar
@@ -245,17 +456,17 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#097EEC]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-[#097EEC] text-white rounded-lg hover:bg-[#097EEC]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creando...
+                    Procesando...
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Contratar
+                    Contratar por $ {totalPrice.toLocaleString()}
                   </div>
                 )}
               </button>
@@ -265,4 +476,4 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
       </div>
     </div>
   );
-} 
+}
