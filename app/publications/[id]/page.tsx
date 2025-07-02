@@ -44,7 +44,6 @@ import MessageService from "@/services/MessageService";
 import ContractModal from "@/components/contract-modal";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
-import { translatePriceUnit } from '@/lib/utils';
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -459,7 +458,7 @@ const PublicationDetailPage = () => {
                           {publication.price && (
                             <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                               <span className="font-semibold">${publication.price}</span>
-                              <span className="ml-1">{translatePriceUnit(publication.priceUnit || '')}</span>
+                              <span className="ml-1">{publication.priceUnit}</span>
                             </span>
                           )}
                         </div>
@@ -607,7 +606,7 @@ const PublicationDetailPage = () => {
                                     </div>
                                     <div className="text-right">
                                       <p className="font-semibold text-green-600">
-                                        ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
+                                        ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}
                                       </p>
                                       <p className="text-xs text-gray-500">
                                         {contract.status === 'pending' ? 'Pendiente' : 
@@ -758,7 +757,7 @@ const PublicationDetailPage = () => {
                               ${publication.price.toLocaleString()}
                             </div>
                             <div className="text-sm text-gray-600 mb-4">
-                              por {translatePriceUnit(publication.priceUnit || '')}
+                              por {publication.priceUnit}
                             </div>
                             <div className="bg-white rounded-lg p-3 border border-green-200">
                               <p className="text-xs text-gray-600">
