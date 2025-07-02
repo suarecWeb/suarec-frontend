@@ -38,6 +38,7 @@ interface CreateUserDto {
   companyId?: string;
   profession: string;
   skills: string[];
+  cedula: string;
 }
 
 interface CreateCompanyDto {
@@ -59,6 +60,16 @@ const FormRegister = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false,
+  });
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 
   const router = useRouter();
 
@@ -94,15 +105,95 @@ const FormRegister = () => {
     }
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPasswordStrength({
+      length: value.length >= 8,
+      upper: /[A-Z]/.test(value),
+      lower: /[a-z]/.test(value),
+      number: /\d/.test(value),
+      special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value),
+    });
+  };
+
+  const validateForm = (formData: FormData) => {
+    const errors: any = {};
+    
+    if (userType === "PERSON") {
+      // Validación nombre
+      if (!formData.get("fullname")) errors.fullname = "El nombre es obligatorio";
+      
+      // Validación email
+      const email = formData.get("email") as string;
+      if (!email) errors.email = "El correo es obligatorio";
+      else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.email = "Correo inválido";
+      
+      // Validación teléfono
+      if (!formData.get("cellphone")) errors.cellphone = "El teléfono es obligatorio";
+      
+      // Validación fecha de nacimiento y mayor de 18 años
+      const bornAt = formData.get("born_at") as string;
+      if (!bornAt) errors.born_at = "La fecha de nacimiento es obligatoria";
+      else {
+        const birthDate = new Date(bornAt);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          if (age - 1 < 18) errors.born_at = "Debes ser mayor de 18 años";
+        } else {
+          if (age < 18) errors.born_at = "Debes ser mayor de 18 años";
+        }
+      }
+      
+      // Validación género
+      if (!formData.get("genre")) errors.genre = "El sexo es obligatorio";
+      
+      // Validación cédula
+      const cedula = formData.get("cedula") as string;
+      if (!cedula) errors.cedula = "La cédula es obligatoria";
+      else if (!/^[0-9]{6,15}$/.test(cedula)) errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
+      
+    } else if (userType === "BUSINESS") {
+      // Validaciones para empresas
+      if (!formData.get("nit")) errors.nit = "El NIT es obligatorio";
+      if (!formData.get("company_name")) errors.company_name = "El nombre de la empresa es obligatorio";
+      
+      const email = formData.get("company_email") as string;
+      if (!email) errors.company_email = "El correo es obligatorio";
+      else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errors.company_email = "Correo inválido";
+      
+      if (!formData.get("company_cellphone")) errors.company_cellphone = "El teléfono es obligatorio";
+      if (!formData.get("company_born_at")) errors.company_born_at = "La fecha de fundación es obligatoria";
+    }
+    
+    // Validación contraseña
+    const password = formData.get("password") as string;
+    if (!password) errors.password = "La contraseña es obligatoria";
+    else if (!/^.*(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':\"\\|,.<>/?]).*$/.test(password)) {
+      errors.password = "La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial";
+    }
+    
+    // Confirmación de contraseña
+    if (!confirmPassword) errors.confirmPassword = "Confirma tu contraseña";
+    else if (password !== confirmPassword) errors.confirmPassword = "Las contraseñas no coinciden";
+    
+    // Validación términos
+    if (!acceptedTerms) errors.terms = "Debes aceptar los términos y condiciones";
+    
+    return errors;
+  };
+
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const errors = validateForm(formData);
+    setFormErrors(errors);
     
-    if (!acceptedTerms) {
-      setError("Debes aceptar los términos y condiciones para continuar");
+    if (Object.keys(errors).length > 0) {
+      setError("Por favor corrige los errores en el formulario");
       return;
     }
-
-    const formData = new FormData(event.currentTarget);
     
     setError("");
     setSuccess("");
@@ -119,12 +210,12 @@ const FormRegister = () => {
             password: formData.get("password") as string,
             genre: formData.get("genre") as string,
             cellphone: formData.get("cellphone") as string,
-            email: formData.get("email") as string,
+            email: (formData.get("email") as string)?.toLowerCase(),
             born_at: new Date(formData.get("born_at") as string),
-            cv_url: formData.get("cv_url") as string,
             roles: ["PERSON"],
             profession: "Profesional independiente",
             skills: ["Ninguna"],
+            cedula: formData.get("cedula") as string,
           };
           
           userEmail = userData.email;
@@ -140,7 +231,7 @@ const FormRegister = () => {
         } else if (userType === "BUSINESS") {
             // Para empresas, usamos el nombre y email de la empresa para el usuario
             const companyName = formData.get("company_name") as string;
-            const companyEmail = formData.get("company_email") as string;
+            const companyEmail = (formData.get("company_email") as string)?.toLowerCase();
             const companyPhone = formData.get("company_cellphone") as string;
             const companyBornAtDate = new Date(formData.get("company_born_at") as string);
             const companyNit = formData.get("nit") as string;
@@ -168,10 +259,10 @@ const FormRegister = () => {
               cellphone: companyPhone, // Usar el teléfono de la empresa
               email: companyEmail, // Usar el email de la empresa
               born_at: companyBornAtDate, // Usar la fecha de fundación
-              cv_url: "", // CV vacío
               roles: ["BUSINESS"],
               profession: "Profesional independiente",
               skills: ["Ninguna"],
+              cedula: "", // Cedula vacía para empresas
             };
             
             userEmail = userData.email;
@@ -287,6 +378,14 @@ const FormRegister = () => {
     });
   };
 
+  // Validación en tiempo real de coincidencia de contraseñas
+  const showPasswordMismatch = confirmPasswordTouched && confirmPassword && confirmPassword !== (document.getElementById('password') as HTMLInputElement)?.value;
+
+  // Calcular la fecha máxima permitida para ser mayor de 18 años
+  const today = new Date();
+  const maxBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const maxBirthDateStr = maxBirthDate.toISOString().split('T')[0];
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6 w-full">
@@ -328,6 +427,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.fullname && <p className="text-red-600 text-sm">{formErrors.fullname}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -348,6 +448,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.email && <p className="text-red-600 text-sm">{formErrors.email}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -366,6 +467,7 @@ const FormRegister = () => {
                       <option value="F">Femenino</option>
                       <option value="O">Otro</option>
                     </select>
+                    {formErrors.genre && <p className="text-red-600 text-sm">{formErrors.genre}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -381,9 +483,10 @@ const FormRegister = () => {
                         name="password"
                         type={passwordVisible ? "text" : "password"}
                         placeholder="*******"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        className="pl-10 pr-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
+                        onChange={handlePasswordChange}
                       />
                       <button
                         type="button"
@@ -397,6 +500,64 @@ const FormRegister = () => {
                         )}
                       </button>
                     </div>
+                    {/* Indicador de fortaleza de contraseña */}
+                    <ul className="text-xs mt-1 space-y-0.5">
+                      <li className={passwordStrength.length ? "text-green-600" : "text-gray-500"}>• Mínimo 8 caracteres</li>
+                      <li className={passwordStrength.upper ? "text-green-600" : "text-gray-500"}>• Al menos una mayúscula</li>
+                      <li className={passwordStrength.lower ? "text-green-600" : "text-gray-500"}>• Al menos una minúscula</li>
+                      <li className={passwordStrength.number ? "text-green-600" : "text-gray-500"}>• Al menos un número</li>
+                      <li className={passwordStrength.special ? "text-green-600" : "text-gray-500"}>• Al menos un carácter especial</li>
+                    </ul>
+                    {formErrors.password && <p className="text-red-600 text-sm">{formErrors.password}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      Confirmar contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                        value={confirmPassword}
+                        onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
+                        onBlur={() => setConfirmPasswordTouched(true)}
+                      />
+                    </div>
+                    {(showPasswordMismatch || formErrors.confirmPassword) && (
+                      <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="cedula" className="block text-sm font-medium text-gray-700">
+                      Cédula <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="cedula"
+                        name="cedula"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="1234567890"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                      />
+                    </div>
+                    {formErrors.cedula && <p className="text-red-600 text-sm">{formErrors.cedula}</p>}
                   </div>
                 </div>
 
@@ -419,6 +580,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.cellphone && <p className="text-red-600 text-sm">{formErrors.cellphone}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -433,13 +595,31 @@ const FormRegister = () => {
                         id="born_at"
                         name="born_at"
                         type="date"
+                        max={maxBirthDateStr}
                         className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
                       />
                     </div>
+                    {formErrors.born_at && <p className="text-red-600 text-sm">{formErrors.born_at}</p>}
                   </div>
 
+                  <div className="space-y-2">
+                    <label htmlFor="profile_image" className="block text-sm font-medium text-gray-700">
+                      Imagen de perfil (opcional)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile_image"
+                        name="profile_image"
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        onChange={handleFileChange}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -464,6 +644,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.nit && <p className="text-red-600 text-sm">{formErrors.nit}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -484,6 +665,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.company_name && <p className="text-red-600 text-sm">{formErrors.company_name}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -504,6 +686,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.company_email && <p className="text-red-600 text-sm">{formErrors.company_email}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -519,9 +702,10 @@ const FormRegister = () => {
                         name="password"
                         type={passwordVisible ? "text" : "password"}
                         placeholder="*******"
-                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        className="pl-10 pr-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
+                        onChange={handlePasswordChange}
                       />
                       <button
                         type="button"
@@ -535,6 +719,15 @@ const FormRegister = () => {
                         )}
                       </button>
                     </div>
+                    {/* Indicador de fortaleza de contraseña */}
+                    <ul className="text-xs mt-1 space-y-0.5">
+                      <li className={passwordStrength.length ? "text-green-600" : "text-gray-500"}>• Mínimo 8 caracteres</li>
+                      <li className={passwordStrength.upper ? "text-green-600" : "text-gray-500"}>• Al menos una mayúscula</li>
+                      <li className={passwordStrength.lower ? "text-green-600" : "text-gray-500"}>• Al menos una minúscula</li>
+                      <li className={passwordStrength.number ? "text-green-600" : "text-gray-500"}>• Al menos un número</li>
+                      <li className={passwordStrength.special ? "text-green-600" : "text-gray-500"}>• Al menos un carácter especial</li>
+                    </ul>
+                    {formErrors.password && <p className="text-red-600 text-sm">{formErrors.password}</p>}
                   </div>
                 </div>
 
@@ -557,6 +750,7 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.company_cellphone && <p className="text-red-600 text-sm">{formErrors.company_cellphone}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -576,6 +770,33 @@ const FormRegister = () => {
                         required
                       />
                     </div>
+                    {formErrors.company_born_at && <p className="text-red-600 text-sm">{formErrors.company_born_at}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      Confirmar contraseña <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Key className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={passwordVisible ? "text" : "password"}
+                        placeholder="*******"
+                        className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        disabled={isPending}
+                        required
+                        value={confirmPassword}
+                        onChange={e => { setConfirmPassword(e.target.value); setConfirmPasswordTouched(true); }}
+                        onBlur={() => setConfirmPasswordTouched(true)}
+                      />
+                    </div>
+                    {(showPasswordMismatch || formErrors.confirmPassword) && (
+                      <p className="text-red-600 text-sm">{showPasswordMismatch ? "Las contraseñas no coinciden" : formErrors.confirmPassword}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -667,8 +888,8 @@ const FormRegister = () => {
               </div>
 
               {/* Error message for terms */}
-              {error && error.includes("términos y condiciones") && (
-                <p className="text-sm text-red-600">{error}</p>
+              {formErrors.terms && (
+                <p className="text-sm text-red-600">{formErrors.terms}</p>
               )}
             </div>
 
@@ -676,8 +897,8 @@ const FormRegister = () => {
             <div className="mt-8 space-y-3">
               <button
                 type="submit"
-                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center"
-                disabled={isPending}
+                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isPending || !acceptedTerms}
               >
                 {isPending ? (
                   <>

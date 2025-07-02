@@ -24,6 +24,7 @@ import {
   Handshake
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
+import SuarecLogo from "./logo";
 
 interface TokenPayload {
   roles?: { name: string }[];
@@ -58,211 +59,251 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Efecto para controlar el scroll del body cuando el menú móvil está abierto
+  useEffect(() => {
+    if (isMenuOpen) {
+      // Prevenir scroll del body
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${window.scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restaurar scroll del body
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+
+    // Cleanup cuando el componente se desmonta
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+    };
+  }, [isMenuOpen]);
+
   const hasRole = (roles: string[]): boolean => {
     return roles.some(role => userRoles.includes(role));
   };
 
+  const closeMenu = () => setIsMenuOpen(false);
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-white/95 backdrop-blur-md shadow-lg' 
-        : 'bg-[#097EEC]'
-    }`}>
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16 lg:h-20">
-          {/* Logo */}
-          <Link 
-            href="/" 
-            className={`text-2xl lg:text-3xl font-eras-bold-italic tracking-tight transition-all duration-300 hover:scale-105 ${
-              isScrolled ? 'text-[#097EEC]' : 'text-white'
-            }`}
-          >
-            SUAREC
-          </Link>
+    <>
+      <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white/95 backdrop-blur-md shadow-lg' 
+          : 'bg-[#097EEC]'
+      }`}>
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16 lg:h-20">
+            {/* Logo */}
+            <Link 
+              href="/" 
+              className={`transition-all duration-300 hover:scale-105 ${
+                isScrolled ? 'text-[#097EEC]' : 'text-white'
+              }`}
+            >
+              <SuarecLogo 
+                className="w-24 sm:w-28 md:w-32" 
+              />
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-2">
-            {/*<div className="mr-6">
-              <SearchBar isScrolled={isScrolled} />
-            </div>*/}
-            
-            {/* Navigation Links */}
-            <div className="flex items-center space-x-1">
-              {hasRole(['ADMIN']) && (
-                <NavLink href="/users" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Usuarios
-                </NavLink>
-              )}
-              
-              {/*{hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                <NavLink href="/publications" icon={<FileText className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Publicaciones
-                </NavLink>
-              )}*/}
-              
-              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Feed
-                </NavLink>
-              )}
-              
-              {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                <NavLink href="/companies" icon={<Building2 className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Compañías
-                </NavLink>
-              )}
-
-              {hasRole(['BUSINESS', 'ADMIN']) && (
-                <NotificationBadge userRoles={userRoles}>
-                  <NavLink href="/applications" icon={<Briefcase className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Aplicaciones
-                  </NavLink>
-                </NotificationBadge>
-              )}
-
-              {hasRole(['PERSON', 'ADMIN']) && (
-                <NavLink href="/my-applications" icon={<UserCheck className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Mis aplicaciones
-                </NavLink>
-              )}
-
-              {hasRole(['BUSINESS', 'ADMIN']) && (
-                <NavLink href="/my-employees" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Mis empleados
-                </NavLink>
-              )}
-
-              {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                <NavLink href="/chat" icon={<MessageSquare className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Mensajes
-                </NavLink>
-              )}
-
-              {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                <NavLink href="/contracts" icon={<Handshake className="h-4 w-4" />} isScrolled={isScrolled}>
-                  Contrataciones
-                </NavLink>
-              )}
-              
-              {/* User Menu */}
-              <div className="ml-4 pl-4 border-l border-white/20">
-                <NavbarRole isMobile={false} section="logIn" isScrolled={isScrolled} />
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            className={`lg:hidden flex items-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 ${
-              isScrolled 
-                ? 'text-[#097EEC] hover:bg-[#097EEC]/10' 
-                : 'text-white hover:bg-white/10'
-            }`}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto custom-scrollbar">
-          <div className="flex min-h-screen flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#097EEC] rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">S</span>
-                </div>
-                <span className="font-eras-bold text-xl text-gray-900">Suarec</span>
-              </div>
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-6 w-6 text-gray-600" />
-              </button>
-            </div>
-            
-            <div className="flex-1 p-4">
-              <div className="flex flex-col space-y-2 pb-4">
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex lg:items-center lg:space-x-2">
+              {/* Navigation Links */}
+              <div className="flex items-center space-x-1">
                 {hasRole(['ADMIN']) && (
-                  <MobileNavLink href="/users" icon={<Users className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                  <NavLink href="/users" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
                     Usuarios
-                  </MobileNavLink>
+                  </NavLink>
                 )}
-                {/*
-                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                  <MobileNavLink href="/publications" icon={<FileText className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
-                    Publicaciones
-                  </MobileNavLink>
-                )}*/}
                 
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                  <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                  <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
                     Feed
-                  </MobileNavLink>
+                  </NavLink>
                 )}
                 
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                  <MobileNavLink href="/companies" icon={<Building2 className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                  <NavLink href="/companies" icon={<Building2 className="h-4 w-4" />} isScrolled={isScrolled}>
                     Compañías
-                  </MobileNavLink>
+                  </NavLink>
                 )}
 
                 {hasRole(['BUSINESS', 'ADMIN']) && (
-                  <MobileNavLink href="/applications" icon={<Briefcase className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
-                    Aplicaciones
-                  </MobileNavLink>
+                  <NotificationBadge userRoles={userRoles}>
+                    <NavLink href="/applications" icon={<Briefcase className="h-4 w-4" />} isScrolled={isScrolled}>
+                      Aplicaciones
+                    </NavLink>
+                  </NotificationBadge>
                 )}
 
                 {hasRole(['PERSON', 'ADMIN']) && (
-                  <MobileNavLink href="/my-applications" icon={<UserCheck className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                  <NavLink href="/my-applications" icon={<UserCheck className="h-4 w-4" />} isScrolled={isScrolled}>
                     Mis aplicaciones
-                  </MobileNavLink>
+                  </NavLink>
                 )}
 
                 {hasRole(['BUSINESS', 'ADMIN']) && (
-                  <MobileNavLink href="/my-employees" icon={<Users className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                  <NavLink href="/my-employees" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
                     Mis empleados
-                  </MobileNavLink>
+                  </NavLink>
                 )}
 
-                {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
-                  <MobileNavLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                  <NavLink href="/chat" icon={<MessageSquare className="h-4 w-4" />} isScrolled={isScrolled}>
                     Mensajes
-                  </MobileNavLink>
+                  </NavLink>
                 )}
 
-                {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
-                  <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)}>
+                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                  <NavLink href="/contracts" icon={<Handshake className="h-4 w-4" />} isScrolled={isScrolled}>
                     Contrataciones
-                  </MobileNavLink>
+                  </NavLink>
                 )}
+                
+                {/* User Menu */}
+                <div className="ml-4 pl-4 border-l border-white/20">
+                  <NavbarRole isMobile={false} section="logIn" isScrolled={isScrolled} />
+                </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200 pb-8 bg-white">
-              <div className="flex justify-center">
-                <NavbarRole isMobile={true} section="logIn" />
+            {/* Mobile menu button */}
+            <button
+              className={`lg:hidden flex items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 ${
+                isScrolled 
+                  ? 'text-[#097EEC] hover:bg-[#097EEC]/10' 
+                  : 'text-white hover:bg-white/10'
+              }`}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation Overlay */}
+      {isMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl">
+            <div className="flex h-full flex-col">
+              {/* Mobile Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+                <SuarecLogo className="w-24" theme="light" />
+                <button
+                  onClick={closeMenu}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="h-6 w-6 text-gray-600" />
+                </button>
+              </div>
+              
+              {/* Navigation Links */}
+              <div className="flex-1 overflow-y-auto py-4">
+                <div className="flex flex-col space-y-1 px-4">
+                  {hasRole(['ADMIN']) && (
+                    <MobileNavLink href="/users" icon={<Users className="h-5 w-5" />} onClick={closeMenu}>
+                      Usuarios
+                    </MobileNavLink>
+                  )}
+                  
+                  {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                    <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={closeMenu}>
+                      Feed
+                    </MobileNavLink>
+                  )}
+                  
+                  {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                    <MobileNavLink href="/companies" icon={<Building2 className="h-5 w-5" />} onClick={closeMenu}>
+                      Compañías
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/applications" icon={<Briefcase className="h-5 w-5" />} onClick={closeMenu}>
+                      Aplicaciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['PERSON', 'ADMIN']) && (
+                    <MobileNavLink href="/my-applications" icon={<UserCheck className="h-5 w-5" />} onClick={closeMenu}>
+                      Mis aplicaciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/my-employees" icon={<Users className="h-5 w-5" />} onClick={closeMenu}>
+                      Mis empleados
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} onClick={closeMenu}>
+                      Mensajes
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={closeMenu}>
+                      Contrataciones
+                    </MobileNavLink>
+                  )}
+                </div>
+              </div>
+
+              {/* User Profile Section */}
+              <div className="border-t border-gray-200 bg-gray-50 px-4 py-4">
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <NavbarRole isMobile={true} section="logIn" />
+                </div>
               </div>
             </div>
           </div>
+          
+          {/* Backdrop - click to close */}
+          <div 
+            className="absolute inset-0 -z-10" 
+            onClick={closeMenu}
+            aria-hidden="true"
+          />
         </div>
       )}
-    </nav>
+    </>
   );
 };
 
 // Desktop Navigation Link component
-const NavLink = ({ href, children, icon, isScrolled }: { href: string; children: React.ReactNode; icon: React.ReactNode; isScrolled: boolean }) => (
+const NavLink = ({ 
+  href, 
+  children, 
+  icon, 
+  isScrolled 
+}: { 
+  href: string; 
+  children: React.ReactNode; 
+  icon: React.ReactNode; 
+  isScrolled: boolean 
+}) => (
   <Link 
     href={href} 
-    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 ${
       isScrolled 
-        ? 'text-gray-700 hover:text-[#097EEC]' 
-        : 'text-white hover:text-white/90'
+        ? 'text-gray-700 hover:text-[#097EEC] hover:bg-[#097EEC]/5' 
+        : 'text-white hover:text-white/90 hover:bg-white/10'
     }`}
   >
     {icon}
@@ -285,7 +326,7 @@ const MobileNavLink = ({
   <Link 
     href={href} 
     onClick={onClick}
-    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-800 hover:bg-[#097EEC]/10 hover:text-[#097EEC] transition-all duration-300 font-eras-medium"
+    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-800 hover:bg-[#097EEC]/10 hover:text-[#097EEC] transition-all duration-300 font-medium active:bg-[#097EEC]/20"
   >
     {icon}
     <span>{children}</span>

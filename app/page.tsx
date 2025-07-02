@@ -1,13 +1,14 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
 import CountdownTimer from "@/components/countdown-timer"
-import { 
-  ArrowRight, 
-  Briefcase, 
-  Building2, 
-  Users, 
-  CheckCircle, 
+import {
+  ArrowRight,
+  Briefcase,
+  Building2,
+  Users,
+  CheckCircle,
   Star,
   TrendingUp,
   Shield,
@@ -21,8 +22,19 @@ import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
+import TermsModal from "@/components/terms-modal"
+import PrivacyModal from "@/components/privacy-modal"
+import ContactModal from "@/components/contact-modal"
+import CookiesModal from "@/components/cookies-modal"
+import { useState } from "react"
+import SuarecLogo from "@/components/logo"
 
 export default function Home() {
+  const [isTermsOpen, setTermsOpen] = useState(false)
+  const [isPrivacyOpen, setPrivacyOpen] = useState(false)
+  const [isContactOpen, setContactOpen] = useState(false)
+  const [isCookiesOpen, setCookiesOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -35,10 +47,10 @@ export default function Home() {
           <div className="absolute top-20 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/2 rounded-full blur-3xl animate-pulse delay-500"></div>
-          
+
           {/* Grid sutil */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-          
+
           {/* Partículas flotantes */}
           <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-bounce"></div>
           <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-bounce delay-300"></div>
@@ -52,9 +64,11 @@ export default function Home() {
 
           {/* Logo/Título principal */}
           <div className="mb-12">
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-eras-bold-italic tracking-tight text-white mb-6 drop-shadow-2xl">
+            {/* <h1 className="text-6xl md:text-8xl lg:text-9xl font-eras-bold-italic tracking-tight text-white mb-6 drop-shadow-2xl">
               SUAREC
-            </h1>
+            </h1> */}
+            <SuarecLogo width={550} height={100} className="mx-auto mb-6 w-[80%] drop-shadow-2xl"
+              theme="dark" />
             <div className="w-32 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-4"></div>
             <div className="w-16 h-1 bg-white/30 mx-auto"></div>
           </div>
@@ -70,13 +84,13 @@ export default function Home() {
 
           {/* Descripción minimalista */}
           <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-16 font-eras leading-relaxed">
-            La plataforma donde los mejores profesionales encuentran 
+            La plataforma donde los mejores profesionales encuentran
             <br />
             <span className="font-eras-bold">las empresas que transformarán su carrera.</span>
           </p>
 
           {/* Estadísticas */}
-          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-16">
+          {/* <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-16">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">500+</div>
               <div className="text-white/70 text-sm font-eras">Empresas activas</div>
@@ -89,7 +103,7 @@ export default function Home() {
               <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">95%</div>
               <div className="text-white/70 text-sm font-eras">Satisfacción</div>
             </div>
-          </div>
+          </div> */}
 
           {/* Botón de acción */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
@@ -100,7 +114,7 @@ export default function Home() {
               Comenzar ahora
               <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
             </Link>
-            
+
             <Link
               href="/companies"
               className="group border-2 border-white/30 text-white px-8 py-6 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
@@ -243,7 +257,7 @@ export default function Home() {
           <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
           <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/3 rounded-full blur-2xl"></div>
         </div>
-        
+
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-eras-bold text-white mb-8">
@@ -252,7 +266,7 @@ export default function Home() {
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-eras">
               Únete a miles de profesionales que ya han encontrado el trabajo de sus sueños con SUAREC.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
               <Link
                 href="/auth/select-type"
@@ -261,7 +275,7 @@ export default function Home() {
                 Comenzar ahora
                 <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </Link>
-              
+
               <Link
                 href="/publications"
                 className="group border-2 border-white/30 text-white px-8 py-5 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
@@ -279,7 +293,8 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div className="md:col-span-2">
-              <h3 className="text-3xl font-eras-bold mb-6">SUAREC</h3>
+              {/* <h3 className="text-3xl font-eras-bold mb-6">SUAREC</h3> */}
+              <SuarecLogo width={120} height={50} className="mb-6" theme="dark" />
               <p className="text-white/80 max-w-md leading-relaxed mb-6 font-eras">
                 Conectamos talento excepcional con oportunidades extraordinarias para crear un futuro laboral mejor en Colombia.
               </p>
@@ -336,13 +351,17 @@ export default function Home() {
 
           <div className="border-t border-white/20 pt-8 text-center">
             <p className="text-white/60 font-eras">
-              © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. | 
-              <Link href="/privacy" className="hover:text-white transition-colors ml-2">Privacidad</Link> | 
-              <Link href="/terms" className="hover:text-white transition-colors ml-2">Términos</Link>
+              © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. |
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setPrivacyOpen(true); }}>Privacidad</a> |
+              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setTermsOpen(true); }}>Términos</a>
             </p>
           </div>
         </div>
       </footer>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setContactOpen(false)} />
+      <CookiesModal isOpen={isCookiesOpen} onClose={() => setCookiesOpen(false)} />
     </div>
   )
 }

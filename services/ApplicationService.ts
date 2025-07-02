@@ -4,7 +4,7 @@ import { Application, CreateApplicationDto, UpdateApplicationDto } from "@/inter
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 
-const baseURL = "/applications";
+const baseURL = "/suarec/applications";
 
 // Obtener aplicaciones con paginación
 const getApplications = (params?: PaginationParams) => 
@@ -12,11 +12,11 @@ const getApplications = (params?: PaginationParams) =>
 
 // Obtener aplicaciones de una empresa específica
 const getCompanyApplications = (companyId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Application>>(`/companies/${companyId}/applications`, { params });
+  api.get<PaginationResponse<Application>>(`/suarec/companies/${companyId}/applications`, { params });
 
 // Obtener aplicaciones de un usuario específico
 const getUserApplications = (userId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Application>>(`/users/${userId}/applications`, { params });
+  api.get<PaginationResponse<Application>>(`/suarec/users/${userId}/applications`, { params });
 
 // Obtener aplicaciones de una publicación específica
 const getPublicationApplications = (publicationId: string, params?: PaginationParams) => 
