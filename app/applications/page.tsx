@@ -3,6 +3,9 @@
 
 import { useEffect, useState } from "react";
 import ApplicationService from "@/services/ApplicationService";
+import MessageService from "@/services/MessageService";
+import EmailVerificationService from "@/services/EmailVerificationService";
+import { UserService } from "@/services/UsersService";
 import { Application } from "@/interfaces/application.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import Navbar from "@/components/navbar";
@@ -28,6 +31,7 @@ import {
   Briefcase,
   MessageSquare,
   UserCheck,
+  X,
 } from 'lucide-react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -40,8 +44,14 @@ const ApplicationsPageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [processingApplication, setProcessingApplication] = useState<string | null>(null);
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [actionType, setActionType] = useState<'INTERVIEW' | 'ACCEPTED' | 'REJECTED' | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
+  const [useDefaultMessage, setUseDefaultMessage] = useState(true);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -64,6 +74,35 @@ const ApplicationsPageContent = () => {
       }
     }
   }, []);
+
+  // Función para obtener información de la empresa del usuario
+  const fetchCompanyInfo = async (userId: number) => {
+    const token = Cookies.get("token");
+
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await UserService.getUserById(userId);
+      // El usuario contiene la información de la empresa si es de tipo BUSINESS
+      if (response.data && response.data.company) {
+        setCompanyInfo(response.data.company);
+      } else {
+        // Si no tiene empresa asociada, usar el nombre del usuario como fallback
+        setCompanyInfo({ name: response.data.name || 'Usuario' });
+      }
+    } catch (error) {
+      console.error('Error al obtener información del usuario:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchCompanyInfo(currentUserId);
+    }
+  }, [currentUserId]);
 
   // Función para cargar aplicaciones
   const fetchApplications = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
@@ -93,21 +132,113 @@ const ApplicationsPageContent = () => {
     fetchApplications({ page, limit: pagination.limit });
   };
 
+  // Función para obtener mensaje por defecto según el tipo de acción
+  const getDefaultMessage = (application: Application, action: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED'): string => {
+    const candidateName = application.user?.name || 'candidato';
+    const jobTitle = application.publication?.title || 'el trabajo';
+
+    switch (action) {
+      case 'INTERVIEW':
+        return `¡Hola ${candidateName}! 🎉 Tengo buenas noticias. Tu aplicación para "${jobTitle}" ha pasado a la siguiente etapa. Te invitamos a una entrevista. ¡Felicitaciones por llegar hasta aquí! Me pondré en contacto contigo pronto para coordinar los detalles.`;
+      case 'ACCEPTED':
+        return `¡Excelentes noticias ${candidateName}! 🎊 Has sido seleccionado(a) para el puesto de "${jobTitle}". ¡Bienvenido(a) al equipo! Me comunicaré contigo para coordinar los próximos pasos y el proceso de incorporación.`;
+      case 'REJECTED':
+        if (application.status === 'PENDING') {
+          return `Hola ${candidateName}, gracias por tu interés en "${jobTitle}". Aunque tu perfil es interesante, en esta ocasión hemos decidido continuar con otros candidatos que se ajustan más a los requerimientos específicos del puesto. Te animamos a seguir aplicando a futuras oportunidades. ¡Éxito en tu búsqueda laboral!`;
+        } else if (application.status === 'INTERVIEW') {
+          return `Hola ${candidateName}, gracias por participar en el proceso de entrevista para "${jobTitle}". Después de una cuidadosa evaluación, hemos decidido continuar con otro candidato. Apreciamos el tiempo que dedicaste al proceso y te animamos a aplicar a futuras oportunidades. ¡Mucho éxito!`;
+        }
+        return `Hola ${candidateName}, gracias por tu interés en "${jobTitle}". En esta ocasión hemos decidido continuar con otro candidato. ¡Éxito en tu búsqueda laboral!`;
+      default:
+        return '';
+    }
+  };
+
+  // Función para obtener descripción del email según el tipo de acción
+  const getEmailDescription = (action: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED'): string => {
+    switch (action) {
+      case 'INTERVIEW':
+        return 'Tu aplicación ha progresado a la siguiente etapa del proceso de selección. ¡Felicitaciones!';
+      case 'ACCEPTED':
+        return '¡Enhorabuena! Has sido seleccionado para formar parte de nuestro equipo.';
+      case 'REJECTED':
+        return 'Agradecemos tu interés y el tiempo dedicado al proceso de aplicación.';
+      default:
+        return '';
+    }
+  };
+
+  // Función para abrir el modal de confirmación
+  const openActionModal = (application: Application, action: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED') => {
+    setSelectedApplication(application);
+    setActionType(action);
+    setCustomMessage(getDefaultMessage(application, action));
+    setUseDefaultMessage(true);
+    setShowActionModal(true);
+  };
+
+  // Función para cerrar el modal
+  const closeActionModal = () => {
+    setShowActionModal(false);
+    setSelectedApplication(null);
+    setActionType(null);
+    setCustomMessage("");
+    setUseDefaultMessage(true);
+  };
+
   // Función para actualizar el estado de una aplicación
-  const handleApplicationAction = async (applicationId: string, status: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED') => {
+  const handleApplicationAction = async (messageContent?: string) => {
+    if (!selectedApplication || !actionType || !currentUserId) return;
+    
+    const applicationId = selectedApplication.id!;
     setProcessingApplication(applicationId);
 
     try {
-      await ApplicationService.updateApplication(applicationId, { status });
+      // Actualizar el estado de la aplicación
+      await ApplicationService.updateApplication(applicationId, { status: actionType });
+
+      // Usar el mensaje personalizado o por defecto
+      const finalMessage = messageContent || customMessage;
+
+      // Enviar mensaje automático al candidato (chat)
+      if (finalMessage && selectedApplication.user?.id) {
+        try {
+          await MessageService.createMessage({
+            content: finalMessage,
+            senderId: currentUserId,
+            recipientId: parseInt(selectedApplication.user.id),
+          });
+        } catch (messageError) {
+          console.error('Error al enviar mensaje automático:', messageError);
+        }
+      }
+
+      // Enviar notificación por email
+      if (selectedApplication.user?.email && selectedApplication.user?.name && selectedApplication.publication?.title) {
+        try {
+          await EmailVerificationService.sendApplicationStatusEmail({
+            email: selectedApplication.user.email,
+            candidateName: selectedApplication.user.name,
+            companyName: companyInfo?.name || 'La empresa',
+            jobTitle: selectedApplication.publication.title,
+            status: actionType,
+            customMessage: finalMessage,
+            customDescription: getEmailDescription(actionType)
+          });
+        } catch (emailError) {
+          console.error('Error al enviar notificación por email:', emailError);
+        }
+      }
 
       // Actualizar la aplicación en el estado local
       setApplications(applications.map(app =>
         app.id === applicationId
-          ? { ...app, status, updated_at: new Date() }
+          ? { ...app, status: actionType, updated_at: new Date() }
           : app
       ));
 
       setError(null);
+      closeActionModal();
     } catch (err) {
       console.error("Error al actualizar aplicación:", err);
       setError("No se pudo actualizar la aplicación. Inténtalo de nuevo.");
@@ -335,7 +466,7 @@ const ApplicationsPageContent = () => {
           {application.status === 'PENDING' && (
             <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button
-                onClick={() => handleApplicationAction(application.id!, 'INTERVIEW')}
+                onClick={() => openActionModal(application, 'INTERVIEW')}
                 disabled={isProcessing}
                 className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -350,7 +481,7 @@ const ApplicationsPageContent = () => {
               </button>
 
               <button
-                onClick={() => handleApplicationAction(application.id!, 'REJECTED')}
+                onClick={() => openActionModal(application, 'REJECTED')}
                 disabled={isProcessing}
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -369,7 +500,7 @@ const ApplicationsPageContent = () => {
           {application.status === 'INTERVIEW' && (
             <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button
-                onClick={() => handleApplicationAction(application.id!, 'ACCEPTED')}
+                onClick={() => openActionModal(application, 'ACCEPTED')}
                 disabled={isProcessing}
                 className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -384,7 +515,7 @@ const ApplicationsPageContent = () => {
               </button>
 
               <button
-                onClick={() => handleApplicationAction(application.id!, 'REJECTED')}
+                onClick={() => openActionModal(application, 'REJECTED')}
                 disabled={isProcessing}
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -541,6 +672,164 @@ const ApplicationsPageContent = () => {
             </Tabs>
           </div>
         </div>
+
+        {/* Modal de confirmación de acción */}
+        {showActionModal && selectedApplication && actionType && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header del modal */}
+              <div className={`px-6 py-4 border-b border-gray-200 ${
+                actionType === 'ACCEPTED' ? 'bg-green-50' :
+                actionType === 'INTERVIEW' ? 'bg-blue-50' : 'bg-red-50'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <h3 className={`text-lg font-semibold ${
+                    actionType === 'ACCEPTED' ? 'text-green-800' :
+                    actionType === 'INTERVIEW' ? 'text-blue-800' : 'text-red-800'
+                  }`}>
+                    {actionType === 'ACCEPTED' && '🎊 Contratar candidato'}
+                    {actionType === 'INTERVIEW' && '🎉 Invitar a entrevista'}
+                    {actionType === 'REJECTED' && '📝 Rechazar aplicación'}
+                  </h3>
+                  <button
+                    onClick={closeActionModal}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Contenido del modal */}
+              <div className="p-6">
+                {/* Información del candidato */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <User className="h-5 w-5 text-gray-600" />
+                    <span className="font-medium text-gray-800">
+                      {selectedApplication.user?.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <Briefcase className="h-4 w-4" />
+                    <span>Aplicó para: {selectedApplication.publication?.title}</span>
+                  </div>
+                </div>
+
+                {/* Opciones de mensaje */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Mensaje que se enviará al candidato:
+                  </label>
+
+                  {/* Toggle entre mensaje por defecto y personalizado */}
+                  <div className="flex gap-4 mb-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        checked={useDefaultMessage}
+                        onChange={() => {
+                          setUseDefaultMessage(true);
+                          setCustomMessage(getDefaultMessage(selectedApplication, actionType));
+                        }}
+                        className="mr-2 text-[#097EEC] focus:ring-[#097EEC]"
+                      />
+                      <span className="text-sm text-gray-700">Usar mensaje por defecto</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        checked={!useDefaultMessage}
+                        onChange={() => setUseDefaultMessage(false)}
+                        className="mr-2 text-[#097EEC] focus:ring-[#097EEC]"
+                      />
+                      <span className="text-sm text-gray-700">Personalizar mensaje</span>
+                    </label>
+                  </div>
+
+                  {/* Área de texto del mensaje */}
+                  <div className="relative">
+                    <textarea
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                      disabled={useDefaultMessage}
+                      placeholder="Escribe tu mensaje personalizado..."
+                      className={`w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none text-sm ${
+                        useDefaultMessage 
+                          ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      rows={6}
+                      maxLength={1000}
+                    />
+                    <div className="absolute bottom-3 right-3 text-xs text-gray-400 bg-white px-2 py-1 rounded">
+                      {customMessage.length}/1000
+                    </div>
+                  </div>
+
+                  {useDefaultMessage && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Se usará el mensaje por defecto mostrado arriba. Puedes seleccionar "Personalizar mensaje" para editarlo.
+                    </p>
+                  )}
+                </div>
+
+                {/* Vista previa del estado */}
+                <div className="mb-6 p-4 border-l-4 border-gray-300 bg-gray-50">
+                  <p className="text-sm text-gray-600 mb-1">
+                    <strong>Acción:</strong> El estado de la aplicación cambiará a{' '}
+                    <span className={`font-medium ${
+                      actionType === 'ACCEPTED' ? 'text-green-600' :
+                      actionType === 'INTERVIEW' ? 'text-blue-600' : 'text-red-600'
+                    }`}>
+                      {getStatusText(actionType)}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Notificación:</strong> El candidato recibirá el mensaje en su chat.
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer con botones */}
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                <button
+                  onClick={closeActionModal}
+                  disabled={processingApplication !== null}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleApplicationAction()}
+                  disabled={processingApplication !== null || !customMessage.trim()}
+                  className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 ${
+                    actionType === 'ACCEPTED' ? 'bg-green-600 hover:bg-green-700' :
+                    actionType === 'INTERVIEW' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  {processingApplication ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Procesando...</span>
+                    </>
+                  ) : (
+                    <>
+                      {actionType === 'ACCEPTED' && <CheckCircle className="h-4 w-4" />}
+                      {actionType === 'INTERVIEW' && <UserCheck className="h-4 w-4" />}
+                      {actionType === 'REJECTED' && <XCircle className="h-4 w-4" />}
+                      <span>
+                        {actionType === 'ACCEPTED' && 'Contratar y enviar mensaje'}
+                        {actionType === 'INTERVIEW' && 'Invitar a entrevista'}
+                        {actionType === 'REJECTED' && 'Rechazar y enviar mensaje'}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

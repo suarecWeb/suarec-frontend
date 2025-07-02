@@ -11,6 +11,20 @@ export interface EmailVerificationStatus {
   email?: string;
 }
 
+export interface ApplicationStatusEmailRequest {
+  email: string;
+  candidateName: string;
+  companyName: string;
+  jobTitle: string;
+  status: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED';
+  customMessage?: string;
+  customDescription?: string;
+}
+
+export interface ApplicationStatusEmailResponse {
+  message: string;
+}
+
 const baseURL = "/suarec/email-verification";
 
 // Enviar email de verificación
@@ -29,11 +43,16 @@ const resendVerificationEmail = (email: string) =>
 const getUserVerificationStatus = (userId: string) => 
   api.get<EmailVerificationStatus>(`${baseURL}/user/${userId}`);
 
+// Enviar estado de aplicación de verificación de email
+const sendApplicationStatusEmail = (data: ApplicationStatusEmailRequest) => 
+  api.post<ApplicationStatusEmailResponse>(`${baseURL}/send-application-status`, data);
+
 const EmailVerificationService = {
   sendVerificationEmail,
   verifyEmail,
   resendVerificationEmail,
   getUserVerificationStatus,
+  sendApplicationStatusEmail
 };
 
 export default EmailVerificationService;
