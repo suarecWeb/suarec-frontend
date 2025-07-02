@@ -10,13 +10,14 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Search, 
-  Calendar, 
-  Eye, 
+import StartChatButton from "@/components/start-chat-button";
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Search,
+  Calendar,
+  Eye,
   User,
   FileText,
   Clock,
@@ -26,6 +27,7 @@ import {
   Phone,
   Briefcase,
   MessageSquare,
+  UserCheck,
 } from 'lucide-react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -66,7 +68,7 @@ const ApplicationsPageContent = () => {
   // Función para cargar aplicaciones
   const fetchApplications = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
     if (!currentUserId) return;
-    
+
     try {
       setLoading(true);
       // Obtener aplicaciones de la empresa del usuario actual
@@ -92,19 +94,19 @@ const ApplicationsPageContent = () => {
   };
 
   // Función para actualizar el estado de una aplicación
-  const handleApplicationAction = async (applicationId: string, status: 'ACCEPTED' | 'REJECTED') => {
+  const handleApplicationAction = async (applicationId: string, status: 'INTERVIEW' | 'ACCEPTED' | 'REJECTED') => {
     setProcessingApplication(applicationId);
-    
+
     try {
       await ApplicationService.updateApplication(applicationId, { status });
-      
+
       // Actualizar la aplicación en el estado local
-      setApplications(applications.map(app => 
-        app.id === applicationId 
+      setApplications(applications.map(app =>
+        app.id === applicationId
           ? { ...app, status, updated_at: new Date() }
           : app
       ));
-      
+
       setError(null);
     } catch (err) {
       console.error("Error al actualizar aplicación:", err);
@@ -118,13 +120,15 @@ const ApplicationsPageContent = () => {
   // Filtrar aplicaciones según el término de búsqueda y estado
   const getFilteredApplications = () => {
     let filtered = applications;
-    
+
     // Filtrar por estado según la pestaña activa
     if (activeTab !== "all") {
       filtered = filtered.filter(app => {
         switch (activeTab) {
           case "pending":
             return app.status === "PENDING";
+          case "interview":
+            return app.status === "INTERVIEW";
           case "accepted":
             return app.status === "ACCEPTED";
           case "rejected":
@@ -134,24 +138,25 @@ const ApplicationsPageContent = () => {
         }
       });
     }
-    
+
     // Filtrar por término de búsqueda
     if (searchTerm) {
-      filtered = filtered.filter(app => 
+      filtered = filtered.filter(app =>
         app.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.publication?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (app.message && app.message.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
-    
+
     return filtered;
   };
 
   const filteredApplications = getFilteredApplications();
 
   // Formatear fecha
-  const formatDate = (dateString: Date | string) => {
+  const formatDate = (dateString: Date | string | undefined) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',
@@ -160,7 +165,8 @@ const ApplicationsPageContent = () => {
     });
   };
 
-  const formatTime = (dateString: Date | string) => {
+  const formatTime = (dateString: Date | string | undefined) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
@@ -173,6 +179,8 @@ const ApplicationsPageContent = () => {
     switch (status) {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
+      case 'INTERVIEW':
+        return 'bg-blue-100 text-blue-800';
       case 'ACCEPTED':
         return 'bg-green-100 text-green-800';
       case 'REJECTED':
@@ -187,10 +195,12 @@ const ApplicationsPageContent = () => {
     switch (status) {
       case 'PENDING':
         return 'Pendiente';
+      case 'INTERVIEW':
+        return 'En entrevista';
       case 'ACCEPTED':
-        return 'Aceptada';
+        return 'Contratado';
       case 'REJECTED':
-        return 'Rechazada';
+        return 'Rechazado';
       default:
         return status;
     }
@@ -199,28 +209,45 @@ const ApplicationsPageContent = () => {
   // Renderizar tarjeta de aplicación
   const renderApplicationCard = (application: Application) => {
     const isProcessing = processingApplication === application.id;
-    
+
     return (
-      <div 
-        key={application.id} 
+      <div
+        key={application.id}
         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       >
         <div className="p-6">
           {/* Header con información del usuario */}
           <div className="flex items-start justify-between mb-4">
+            <Link
+              href={`/profile/${application.user?.id}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-[#097EEC]/10 rounded-full p-2">
+                  <User className="h-5 w-5 text-[#097EEC]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">{application.user?.name}</h3>
+                  <p className="text-sm text-gray-500">{application.user?.email}</p>
+                </div>
+              </div>
+            </Link>
+
             <div className="flex items-center gap-3">
-              <div className="bg-[#097EEC]/10 rounded-full p-2">
-                <User className="h-5 w-5 text-[#097EEC]" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">{application.user?.name}</h3>
-                <p className="text-sm text-gray-500">{application.user?.email}</p>
-              </div>
+              {/* Botón de chat - arriba a la derecha */}
+              {application.user?.id && (
+                <StartChatButton
+                  recipientId={parseInt(application.user.id)}
+                  recipientName={application.user.name}
+                  recipientType="person"
+                  context="application"
+                  className=""
+                />
+              )}
+              
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+                {getStatusText(application.status)}
+              </span>
             </div>
-            
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-              {getStatusText(application.status)}
-            </span>
           </div>
 
           {/* Información de la publicación */}
@@ -258,7 +285,7 @@ const ApplicationsPageContent = () => {
                 <span>{application.user.cellphone}</span>
               </div>
             )}
-            
+
             {application.user?.profession && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Briefcase className="h-4 w-4" />
@@ -269,9 +296,9 @@ const ApplicationsPageContent = () => {
             {application.user?.cv_url && (
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-gray-500" />
-                <a 
-                  href={application.user.cv_url} 
-                  target="_blank" 
+                <a
+                  href={application.user.cv_url}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#097EEC] hover:underline"
                 >
@@ -287,7 +314,7 @@ const ApplicationsPageContent = () => {
               <p className="text-sm font-medium text-gray-700 mb-2">Habilidades:</p>
               <div className="flex flex-wrap gap-1">
                 {application.user.skills.map((skill, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
                   >
@@ -304,24 +331,24 @@ const ApplicationsPageContent = () => {
             <span>Aplicó el {formatDate(application.created_at)} a las {formatTime(application.created_at)}</span>
           </div>
 
-          {/* Acciones */}
+          {/* Acciones según el estado */}
           {application.status === 'PENDING' && (
             <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button
-                onClick={() => handleApplicationAction(application.id!, 'ACCEPTED')}
+                onClick={() => handleApplicationAction(application.id!, 'INTERVIEW')}
                 disabled={isProcessing}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Aceptar</span>
+                    <UserCheck className="h-4 w-4" />
+                    <span>Invitar a entrevista</span>
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={() => handleApplicationAction(application.id!, 'REJECTED')}
                 disabled={isProcessing}
@@ -339,18 +366,52 @@ const ApplicationsPageContent = () => {
             </div>
           )}
 
-          {/* Botón de contacto para aplicaciones aceptadas */}
-          {application.status === 'ACCEPTED' && (
-            <div className="pt-4 border-t border-gray-100">
+          {application.status === 'INTERVIEW' && (
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button
-                onClick={() => window.location.href = `mailto:${application.user?.email}`}
-                className="w-full bg-[#097EEC] text-white py-2 px-4 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2"
+                onClick={() => handleApplicationAction(application.id!, 'ACCEPTED')}
+                disabled={isProcessing}
+                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <Mail className="h-4 w-4" />
-                <span>Contactar candidato</span>
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Contratar</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleApplicationAction(application.id!, 'REJECTED')}
+                disabled={isProcessing}
+                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <XCircle className="h-4 w-4" />
+                    <span>Rechazar</span>
+                  </>
+                )}
               </button>
             </div>
           )}
+
+          {/* Información adicional para aplicaciones finalizadas */}
+          {(application.status === 'ACCEPTED' || application.status === 'REJECTED') && (
+            <div className="pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Clock className="h-3 w-3" />
+                <span>
+                  Estado actualizado el {formatDate(application.updated_at)} a las {formatTime(application.updated_at)}
+                </span>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     );
@@ -401,21 +462,24 @@ const ApplicationsPageContent = () => {
             )}
 
             {/* Tabs for filtering applications */}
-            <Tabs 
-              defaultValue="pending" 
-              value={activeTab} 
+            <Tabs
+              defaultValue="pending"
+              value={activeTab}
               onValueChange={setActiveTab}
               className="mt-6"
             >
-              <TabsList className="grid grid-cols-4 mb-6 w-full sm:w-auto">
+              <TabsList className="grid grid-cols-5 mb-6 w-full sm:w-auto">
                 <TabsTrigger value="pending" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Pendientes
                 </TabsTrigger>
+                <TabsTrigger value="interview" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                  En entrevista
+                </TabsTrigger>
                 <TabsTrigger value="accepted" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
-                  Aceptadas
+                  Contratados
                 </TabsTrigger>
                 <TabsTrigger value="rejected" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
-                  Rechazadas
+                  Rechazados
                 </TabsTrigger>
                 <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Todas
@@ -440,12 +504,13 @@ const ApplicationsPageContent = () => {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
                           {activeTab === "pending" && "No hay aplicaciones pendientes"}
-                          {activeTab === "accepted" && "No hay aplicaciones aceptadas"}
+                          {activeTab === "interview" && "No hay aplicaciones en entrevista"}
+                          {activeTab === "accepted" && "No hay aplicaciones contratadas"}
                           {activeTab === "rejected" && "No hay aplicaciones rechazadas"}
                           {activeTab === "all" && "No hay aplicaciones disponibles"}
                         </h3>
                         <p className="mt-2 text-gray-500">
-                          {searchTerm 
+                          {searchTerm
                             ? "No se encontraron aplicaciones que coincidan con tu búsqueda."
                             : "Las aplicaciones aparecerán aquí cuando los usuarios apliquen a tus publicaciones."
                           }
@@ -463,7 +528,7 @@ const ApplicationsPageContent = () => {
                         />
                       </div>
                     )}
-                    
+
                     {/* Results Summary */}
                     {!loading && !error && filteredApplications.length > 0 && (
                       <div className="mt-6 text-sm text-gray-500 text-center">

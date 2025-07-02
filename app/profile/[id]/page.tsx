@@ -1,0 +1,767 @@
+"use client"
+import { useEffect, useState } from "react"
+import Navbar from "@/components/navbar"
+import { useRouter, useParams } from "next/navigation"
+import Cookies from "js-cookie"
+import { jwtDecode } from "jwt-decode"
+import {
+    User as UserIcon,
+    Mail,
+    Phone,
+    Calendar,
+    FileText,
+    Building2,
+    Shield,
+    AlertCircle,
+    MessageSquare,
+    FileTextIcon as FileText2,
+    Clock,
+    Eye,
+    CheckCircle,
+    MessageCircle,
+    Download,
+    ExternalLink,
+    Star,
+    MapPin,
+    Briefcase,
+    GraduationCap,
+    Award,
+    Globe,
+    ArrowLeft,
+    Send
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
+import { UserService } from "@/services/UsersService"
+import { User } from "@/interfaces/user.interface";
+import { TokenPayload } from "@/interfaces/auth.interface"
+import jsPDF from 'jspdf'
+import StartChatButton from "@/components/start-chat-button"
+
+interface PublicProfilePageProps {
+    params: {
+        id: string;
+    }
+}
+
+const PublicProfilePage = () => {
+    const params = useParams();
+    const userId = params?.id as string;
+    const [user, setUser] = useState<User | null>(null)
+    const [currentUser, setCurrentUser] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                if (!userId) {
+                    setError("ID de usuario no válido")
+                    setLoading(false)
+                    return
+                }
+
+                // Obtener información del usuario actual (si está logueado)
+                const token = Cookies.get("token")
+                if (token) {
+                    try {
+                        const decoded = jwtDecode<TokenPayload>(token)
+                        setCurrentUser(decoded)
+                    } catch (err) {
+                        console.log("Token inválido o expirado")
+                    }
+                }
+
+                // Obtener los datos del usuario que se está viendo
+                const response = await UserService.getUserById(parseInt(userId))
+                const userData = response.data
+
+                setUser(userData)
+                setLoading(false)
+            } catch (err: any) {
+                console.error("Error al obtener perfil:", err)
+                if (err.response?.status === 404) {
+                    setError("Usuario no encontrado")
+                } else {
+                    setError("No se pudo cargar la información del perfil")
+                }
+                setLoading(false)
+            }
+        }
+
+        fetchUserProfile()
+    }, [userId, router])
+
+    const formatDate = (dateString: Date | string) => {
+        const date = new Date(dateString)
+        return date.toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        })
+    }
+
+    const calculateAge = (birthDate: Date | string) => {
+        const today = new Date()
+        const birth = new Date(birthDate)
+        let age = today.getFullYear() - birth.getFullYear()
+        const monthDiff = today.getMonth() - birth.getMonth()
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--
+        }
+
+        return age
+    }
+
+    const calculateExperience = (experiences: any[]) => {
+        if (!experiences || experiences.length === 0) return 0
+
+        let totalMonths = 0
+        experiences.forEach(exp => {
+            const startDate = new Date(exp.startDate)
+            const endDate = exp.currentPosition ? new Date() : new Date(exp.endDate)
+            const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth())
+            totalMonths += months
+        })
+
+        return Math.floor(totalMonths / 12)
+    }
+
+    const getRoleNames = (roles: any[] | undefined): string[] => {
+        if (!roles) return []
+        return roles.map((role) => {
+            if (typeof role === "string") return role
+            if (typeof role === "object" && role.name) return role.name
+            return "Unknown"
+        })
+    }
+
+    const handleContactUser = () => {
+        if (user?.email) {
+            window.location.href = `mailto:${user.email}`
+        }
+    }
+
+    const handleSendMessage = () => {
+        if (currentUser) {
+            router.push(`/chat?userId=${userId}`)
+        } else {
+            router.push('/auth/login')
+        }
+    }
+
+    const exportToPDF = () => {
+        if (!user) return;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // Encabezado SUAREC
+        const headerHeight = 22;
+        doc.setFillColor(9, 126, 236);
+        doc.rect(0, 0, 210, headerHeight, 'F');
+        doc.setFont('helvetica', 'bolditalic');
+        doc.setFontSize(30);
+        doc.setTextColor(255, 255, 255);
+        const suarecText = 'Perfil de candidato - SUAREC';
+        const suarecWidth = doc.getTextWidth(suarecText);
+        doc.text(suarecText, (210 - suarecWidth) / 2, headerHeight - 7);
+
+        // Dimensiones de columnas
+        const leftColWidth = 90;
+        const rightColStart = 110;
+        const rightColWidth = 210 - rightColStart - 15;
+
+        // Línea divisoria vertical
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.5);
+        doc.line(100, headerHeight + 5, 100, 290);
+
+        // Columna izquierda: Contacto, Referencias, Redes
+        let yLeft = headerHeight + 15;
+        const xLeft = 15;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(33, 37, 41);
+        doc.text('Contacto', xLeft, yLeft);
+        yLeft += 7;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        if (user.cellphone) {
+            doc.text('Teléfono:', xLeft, yLeft);
+            doc.text(user.cellphone, xLeft + 25, yLeft);
+            yLeft += 6;
+        }
+        if (user.email) {
+            doc.text('Email:', xLeft, yLeft);
+            doc.text(user.email, xLeft + 25, yLeft);
+            yLeft += 6;
+        }
+
+        // Referencias
+        if (user.references && user.references.length > 0) {
+            yLeft += 3;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Referencias', xLeft, yLeft);
+            yLeft += 6;
+            doc.setFont('helvetica', 'normal');
+            user.references.forEach((ref) => {
+                let refLine = '';
+                if (ref.name) refLine += ref.name;
+                if (ref.comment) refLine += ' — ' + ref.comment;
+                doc.text(refLine, xLeft, yLeft);
+                yLeft += 5.5;
+                if (ref.contact) {
+                    doc.text('Teléfono: ' + ref.contact, xLeft + 3, yLeft);
+                    yLeft += 5.5;
+                }
+            });
+        }
+
+        // Columna derecha: Perfil
+        let yRight = headerHeight + 25;
+        let xRight = rightColStart;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(33, 37, 41);
+        doc.text(user.name || '', xRight, yRight);
+        yRight += 9.5;
+        if (user.profession) {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(13);
+            doc.text(user.profession, xRight, yRight);
+            yRight += 7.5;
+        }
+
+        // Sobre mí
+        if (user.bio) {
+            yRight += 5;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('Sobre mí', xRight, yRight);
+            yRight += 5.5;
+            doc.setFont('helvetica', 'normal');
+            const bioLines = doc.splitTextToSize(user.bio, rightColWidth);
+            doc.text(bioLines, xRight, yRight);
+            yRight += bioLines.length * 5.5;
+        }
+
+        // Experiencia
+        if (user.experiences && user.experiences.length > 0) {
+            yRight += 5;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Experiencia', xRight, yRight);
+            yRight += 5.5;
+            doc.setFont('helvetica', 'normal');
+            user.experiences.forEach((exp) => {
+                let expLine = '';
+                if (exp.startDate) expLine += new Date(exp.startDate).getFullYear() + ' ';
+                if (exp.title) expLine += exp.title;
+                if (exp.company) expLine += ' en ' + exp.company;
+                doc.text(expLine, xRight, yRight);
+                yRight += 5.5;
+                if (exp.description) {
+                    const descLines = doc.splitTextToSize(exp.description, rightColWidth - 8);
+                    doc.text(descLines, xRight + 4, yRight);
+                    yRight += descLines.length * 5.5;
+                }
+            });
+        }
+
+        // Habilidades
+        if (user.skills && user.skills.length > 0) {
+            yRight += 5;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Habilidades', xRight, yRight);
+            yRight += 5.5;
+            doc.setFont('helvetica', 'normal');
+            doc.text(user.skills.join(', '), xRight, yRight);
+        }
+
+        doc.save(`Candidato_${user.name || 'usuario'}.pdf`);
+    }
+
+    if (loading) {
+        return (
+            <>
+                <Navbar />
+                <div className="bg-gray-50 min-h-screen pb-12">
+                    <div className="bg-[#097EEC] text-white py-8">
+                        <div className="container mx-auto px-4">
+                            <Skeleton className="h-8 w-48 bg-white/20" />
+                            <Skeleton className="h-4 w-64 bg-white/20 mt-2" />
+                        </div>
+                    </div>
+
+                    <div className="container mx-auto px-4 -mt-6">
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <div className="flex flex-col md:flex-row gap-8">
+                                <div className="md:w-1/3">
+                                    <Skeleton className="h-40 w-40 rounded-full mx-auto" />
+                                    <Skeleton className="h-8 w-3/4 mx-auto mt-4" />
+                                    <Skeleton className="h-6 w-1/2 mx-auto mt-2" />
+                                    <div className="mt-6 space-y-3">
+                                        <Skeleton className="h-6 w-full" />
+                                        <Skeleton className="h-6 w-full" />
+                                        <Skeleton className="h-6 w-full" />
+                                    </div>
+                                </div>
+                                <div className="md:w-2/3">
+                                    <Skeleton className="h-10 w-full mb-6" />
+                                    <div className="space-y-6">
+                                        <Skeleton className="h-32 w-full" />
+                                        <Skeleton className="h-32 w-full" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    if (error) {
+        return (
+            <>
+                <Navbar />
+                <div className="bg-gray-50 min-h-screen pb-12">
+                    <div className="bg-[#097EEC] text-white py-8">
+                        <div className="container mx-auto px-4">
+                            <h1 className="text-3xl font-bold">Perfil de usuario</h1>
+                            <p className="mt-2 text-blue-100">Información del candidato</p>
+                        </div>
+                    </div>
+
+                    <div className="container mx-auto px-4 -mt-6">
+                        <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-md flex items-start gap-3">
+                            <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="text-red-800 font-medium">Error</h3>
+                                <p className="text-red-700">{error}</p>
+                                <div className="mt-4">
+                                    <Button
+                                        onClick={() => router.back()}
+                                        variant="outline"
+                                        className="border-red-300 text-red-700 hover:bg-red-50"
+                                    >
+                                        <ArrowLeft className="h-4 w-4 mr-2" />
+                                        Volver
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    if (!user) return null
+
+    return (
+        <>
+            <Navbar />
+            <div className="bg-gray-50 min-h-screen pb-12">
+                {/* Header */}
+                <div className="bg-[#097EEC] text-white py-8 mt-12">
+                    <div className="container mx-auto px-4">
+                        <div className="flex items-center gap-4 mb-4">
+                            <Button
+                                onClick={() => router.back()}
+                                variant="ghost"
+                                className="text-white px-2 py-1"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                            <p className="text-blue-100">Información profesional de {user.name}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="container mx-auto px-4 -mt-6">
+                    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                        {/* Profile Header */}
+                        <div className="bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-6 text-white">
+                            <div className="flex flex-col md:flex-row items-center gap-6">
+                                <div className="relative">
+                                    <div className="h-32 w-32 bg-white/20 rounded-full flex items-center justify-center text-white">
+                                        <UserIcon className="h-16 w-16" />
+                                    </div>
+                                </div>
+
+                                <div className="text-center md:text-left flex-1">
+                                    <h2 className="text-2xl font-bold">{user.name}</h2>
+                                    {user.profession && (
+                                        <p className="text-blue-100 text-lg mt-1">{user.profession}</p>
+                                    )}
+
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                                        {getRoleNames(user.roles).map((roleName, index) => (
+                                            <span
+                                                key={index}
+                                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20"
+                                            >
+                                                <Shield className="h-3 w-3 mr-1" />
+                                                {roleName}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    {/* Stats rápidas */}
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm">
+                                        {user.born_at && (
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-4 w-4" />
+                                                <span>{calculateAge(user.born_at)} años</span>
+                                            </div>
+                                        )}
+                                        {user.experiences && user.experiences.length > 0 && (
+                                            <div className="flex items-center gap-1">
+                                                <Briefcase className="h-4 w-4" />
+                                                <span>{calculateExperience(user.experiences)} años exp.</span>
+                                            </div>
+                                        )}
+                                        {user.created_at && (
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="h-4 w-4" />
+                                                <span>Desde {formatDate(user.created_at)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Action buttons */}
+                                <div className="flex flex-col gap-3 min-w-0">
+                                    {currentUser && (
+                                        <StartChatButton
+                                            recipientId={parseInt(userId)}
+                                            recipientName={user.name}
+                                            recipientType={
+                                                user.company ? "business" : "person"
+                                            }
+                                            context={
+                                                !user.company ? "profile" : undefined
+                                            }
+                                        />
+                                    )}
+
+                                    {!user.company && (
+                                        <Button
+                                            onClick={exportToPDF}
+                                            variant="outline"
+                                            className="bg-white text-black hover:text-[#097EEC] hover:bg-gray-100 flex items-center gap-2"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Descargar CV
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Profile Content */}
+                        <div className="p-6">
+                            <div className="flex flex-col lg:flex-row gap-8">
+                                {/* Left Column - Personal Info */}
+                                <div className="lg:w-1/3">
+                                    {/* Información personal */}
+                                    <div className="bg-gray-50 rounded-lg px-6 mb-6">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de contacto</h3>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">Email</p>
+                                                    <p className="text-gray-800">{user.email}</p>
+                                                </div>
+                                            </div>
+
+                                            {user.cellphone && (
+                                                <div className="flex items-start gap-3">
+                                                    <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">Teléfono</p>
+                                                        <p className="text-gray-800">{user.cellphone}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {user.born_at && (
+                                                <div className="flex items-start gap-3">
+                                                    <Calendar className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">Edad</p>
+                                                        <p className="text-gray-800">{calculateAge(user.born_at)} años</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {user.genre && (
+                                                <div className="flex items-start gap-3">
+                                                    <UserIcon className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">Género</p>
+                                                        <p className="text-gray-800">{
+                                                            user.genre === "M" ? "Masculino" :
+                                                                user.genre === "F" ? "Femenino" :
+                                                                    user.genre === "O" ? "Otro" :
+                                                                        "No especificado"
+                                                        }</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Habilidades */}
+                                    {user.skills && user.skills.length > 0 && (
+                                        <div className="bg-gray-50 rounded-lg px-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Habilidades</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {user.skills.map((skill, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-[#097EEC]/10 text-[#097EEC] px-3 py-1.5 rounded-full text-sm font-medium border border-[#097EEC]/20"
+                                                    >
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Referencias */}
+                                    {user.references && user.references.length > 0 && (
+                                        <div className="bg-gray-50 rounded-lg px-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Referencias</h3>
+                                            <div className="space-y-4">
+                                                {user.references.map((ref, idx) => (
+                                                    <div key={idx} className="border-l-4 border-[#097EEC] pl-4 bg-white p-3 rounded">
+                                                        <h4 className="font-medium text-gray-800">{ref.name}</h4>
+                                                        <p className="text-sm text-gray-600">{ref.relationship}</p>
+                                                        <p className="text-sm text-gray-600">📞 {ref.contact}</p>
+                                                        {ref.comment && (
+                                                            <p className="text-sm text-gray-600 mt-1 italic">"{ref.comment}"</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Redes sociales */}
+                                    {user.socialLinks && user.socialLinks.length > 0 && (
+                                        <div className="bg-gray-50 rounded-lg px-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Redes sociales</h3>
+                                            <div className="space-y-2">
+                                                {user.socialLinks.map((link, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 text-[#097EEC] hover:underline"
+                                                    >
+                                                        <Globe className="h-4 w-4" />
+                                                        <span>{link.type}</span>
+                                                        <ExternalLink className="h-3 w-3" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right Column - Professional Info */}
+                                <div className="lg:w-2/3">
+                                    {/* Sobre mí */}
+                                    {user.bio && (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                                <FileText2 className="h-5 w-5 text-[#097EEC]" />
+                                                Sobre mí
+                                            </h3>
+                                            <p className="text-gray-700 leading-relaxed whitespace-pre-line">{user.bio}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Experiencia profesional */}
+                                    {user.experiences && user.experiences.length > 0 && (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                                <Briefcase className="h-5 w-5 text-[#097EEC]" />
+                                                Experiencia profesional
+                                            </h3>
+                                            <div className="space-y-6">
+                                                {user.experiences.map((exp, idx) => (
+                                                    <div key={idx} className="relative pl-6 border-l-2 border-[#097EEC]/20 last:border-l-0">
+                                                        <div className="absolute -left-2 top-0 w-4 h-4 bg-[#097EEC] rounded-full"></div>
+                                                        <div className="bg-gray-50 rounded-lg p-4">
+                                                            <h4 className="font-semibold text-gray-800 text-lg">{exp.title}</h4>
+                                                            <p className="text-[#097EEC] font-medium">{exp.company}</p>
+                                                            {exp.location && (
+                                                                <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                                                    <MapPin className="h-3 w-3" />
+                                                                    {exp.location}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-sm text-gray-500 mt-1">
+                                                                {formatDate(exp.startDate)} - {exp.currentPosition ? 'Presente' : exp.endDate ? formatDate(exp.endDate) : ''}
+                                                            </p>
+                                                            {exp.description && (
+                                                                <p className="text-gray-600 mt-3 leading-relaxed">{exp.description}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Educación */}
+                                    {user.education && user.education.length > 0 && (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                                <GraduationCap className="h-5 w-5 text-[#097EEC]" />
+                                                Educación
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {user.education.map((edu, idx) => (
+                                                    <div key={idx} className="bg-gray-50 rounded-lg p-4">
+                                                        <h4 className="font-semibold text-gray-800">
+                                                            {edu.degree} {edu.fieldOfStudy && `en ${edu.fieldOfStudy}`}
+                                                        </h4>
+                                                        <p className="text-[#097EEC] font-medium">{edu.institution}</p>
+                                                        <p className="text-sm text-gray-500">
+                                                            {formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Presente'}
+                                                        </p>
+                                                        {edu.description && (
+                                                            <p className="text-gray-600 mt-2">{edu.description}</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Publicaciones del usuario */}
+                                    {user.publications && user.publications.length > 0 && (
+                                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                                <FileText className="h-5 w-5 text-[#097EEC]" />
+                                                Publicaciones
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {user.publications.slice(0, 3).map((pub: any) => (
+                                                    <div key={pub.id} className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex justify-between items-start">
+                                                            <h4 className="font-medium text-gray-800">{pub.title}</h4>
+                                                            <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                                                                {pub.category}
+                                                            </span>
+                                                        </div>
+                                                        {pub.description && (
+                                                            <p className="text-gray-600 mt-2 text-sm line-clamp-2">{pub.description}</p>
+                                                        )}
+                                                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                                                            <div className="flex items-center gap-1">
+                                                                <Calendar className="h-3 w-3" />
+                                                                <span>{formatDate(pub.created_at)}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <Eye className="h-3 w-3" />
+                                                                <span>{pub.visitors || 0} visitas</span>
+                                                            </div>
+                                                            <Link href={`/publications/${pub.id}`}>
+                                                                <button className="text-[#097EEC] hover:text-[#0A6BC7] text-xs flex items-center gap-1">
+                                                                    Ver más <ExternalLink className="h-3 w-3" />
+                                                                </button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {user.publications.length > 3 && (
+                                                    <div className="text-center mt-4">
+                                                        <p className="text-sm text-gray-500">
+                                                            y {user.publications.length - 3} publicación(es) más
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Información de empresa (si es BUSINESS) */}
+                            {user.company && (
+                                <div className="mt-8 bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        Información de empresa
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <Building2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">Nombre de la empresa</p>
+                                                    <p className="text-gray-800 font-medium">{user.company.name}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">NIT</p>
+                                                    <p className="text-gray-800">{user.company.nit}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">Email corporativo</p>
+                                                    <p className="text-gray-800">{user.company.email}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">Teléfono corporativo</p>
+                                                    <p className="text-gray-800">{user.company.cellphone}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {user.company.born_at && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex items-center gap-3">
+                                                <Calendar className="h-5 w-5 text-[#097EEC]" />
+                                                <div>
+                                                    <p className="text-sm text-gray-500">Fundada en</p>
+                                                    <p className="text-gray-800">{formatDate(user.company.born_at)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default PublicProfilePage;
