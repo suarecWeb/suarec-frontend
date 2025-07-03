@@ -45,7 +45,7 @@ const updateApplication = async (id: string, applicationData: UpdateApplicationD
       if (application.user?.id) {
         try {
           // Agregar el usuario como empleado de la empresa
-          await api.post(`/companies/${application.publication?.user?.company?.id}/employees/${application.user.id}`);
+          await api.post(`suarec/companies/${application.publication?.user?.company?.id}/employees/${application.user.id}`);
           console.log(`Usuario ${application.user.id} agregado como empleado de la empresa ${application.publication?.user?.company?.id}`);
         } catch (employeeError) {
           console.warn('Error al agregar empleado automáticamente:', employeeError);
