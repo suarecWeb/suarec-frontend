@@ -189,7 +189,7 @@ const ApplicationsPageContent = () => {
   // Función para actualizar el estado de una aplicación
   const handleApplicationAction = async (messageContent?: string) => {
     if (!selectedApplication || !actionType || !currentUserId) return;
-    
+
     const applicationId = selectedApplication.id!;
     setProcessingApplication(applicationId);
 
@@ -347,37 +347,38 @@ const ApplicationsPageContent = () => {
         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       >
         <div className="p-6">
-          {/* Header con información del usuario */}
-          <div className="flex items-start justify-between mb-4">
+          {/* Header con información del usuario - Responsive */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4 gap-3 lg:gap-0">
             <Link
               href={`/profile/${application.user?.id}`}
+              className="flex-shrink-0"
             >
               <div className="flex items-center gap-3">
                 <div className="bg-[#097EEC]/10 rounded-full p-2">
                   <User className="h-5 w-5 text-[#097EEC]" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">{application.user?.name}</h3>
-                  <p className="text-sm text-gray-500">{application.user?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-800 truncate">{application.user?.name}</h3>
+                  <p className="text-sm text-gray-500 truncate">{application.user?.email}</p>
                 </div>
               </div>
             </Link>
 
-            <div className="flex items-center gap-3">
-              {/* Botón de chat - arriba a la derecha */}
+            <div className="flex items-center flex-col justify-between mt-2 lg:mt-0 lg:justify-end gap-3 lg:flex-shrink-0">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(application.status)}`}>
+                {getStatusText(application.status)}
+              </span>
+              
+              {/* Botón de chat */}
               {application.user?.id && (
                 <StartChatButton
                   recipientId={parseInt(application.user.id)}
                   recipientName={application.user.name}
                   recipientType="person"
                   context="application"
-                  className=""
+                  className="flex-shrink-0"
                 />
               )}
-              
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                {getStatusText(application.status)}
-              </span>
             </div>
           </div>
 
@@ -475,7 +476,7 @@ const ApplicationsPageContent = () => {
                 ) : (
                   <>
                     <UserCheck className="h-4 w-4" />
-                    <span>Invitar a entrevista</span>
+                    <span>Aceptar</span>
                   </>
                 )}
               </button>
@@ -599,20 +600,35 @@ const ApplicationsPageContent = () => {
               onValueChange={setActiveTab}
               className="mt-6"
             >
-              <TabsList className="grid grid-cols-5 mb-6 w-full sm:w-auto">
-                <TabsTrigger value="pending" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+              <TabsList className="grid grid-cols-2 h-auto sm:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 mb-6 w-full sm:w-auto p-1">
+                <TabsTrigger
+                  value="pending"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 h-auto whitespace-nowrap"
+                >
                   Pendientes
                 </TabsTrigger>
-                <TabsTrigger value="interview" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="interview"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 h-auto whitespace-nowrap"
+                >
                   En entrevista
                 </TabsTrigger>
-                <TabsTrigger value="accepted" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="accepted"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 h-auto whitespace-nowrap col-span-2 sm:col-span-1"
+                >
                   Contratados
                 </TabsTrigger>
-                <TabsTrigger value="rejected" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="rejected"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 h-auto whitespace-nowrap"
+                >
                   Rechazados
                 </TabsTrigger>
-                <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 h-auto whitespace-nowrap"
+                >
                   Todas
                 </TabsTrigger>
               </TabsList>
@@ -678,15 +694,13 @@ const ApplicationsPageContent = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header del modal */}
-              <div className={`px-6 py-4 border-b border-gray-200 ${
-                actionType === 'ACCEPTED' ? 'bg-green-50' :
+              <div className={`px-6 py-4 border-b border-gray-200 ${actionType === 'ACCEPTED' ? 'bg-green-50' :
                 actionType === 'INTERVIEW' ? 'bg-blue-50' : 'bg-red-50'
-              }`}>
+                }`}>
                 <div className="flex items-center justify-between">
-                  <h3 className={`text-lg font-semibold ${
-                    actionType === 'ACCEPTED' ? 'text-green-800' :
+                  <h3 className={`text-lg font-semibold ${actionType === 'ACCEPTED' ? 'text-green-800' :
                     actionType === 'INTERVIEW' ? 'text-blue-800' : 'text-red-800'
-                  }`}>
+                    }`}>
                     {actionType === 'ACCEPTED' && '🎊 Contratar candidato'}
                     {actionType === 'INTERVIEW' && '🎉 Invitar a entrevista'}
                     {actionType === 'REJECTED' && '📝 Rechazar aplicación'}
@@ -754,11 +768,10 @@ const ApplicationsPageContent = () => {
                       onChange={(e) => setCustomMessage(e.target.value)}
                       disabled={useDefaultMessage}
                       placeholder="Escribe tu mensaje personalizado..."
-                      className={`w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none text-sm ${
-                        useDefaultMessage 
-                          ? 'bg-gray-50 border-gray-200 text-gray-600' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none text-sm ${useDefaultMessage
+                        ? 'bg-gray-50 border-gray-200 text-gray-600'
+                        : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                       rows={6}
                       maxLength={1000}
                     />
@@ -778,10 +791,9 @@ const ApplicationsPageContent = () => {
                 <div className="mb-6 p-4 border-l-4 border-gray-300 bg-gray-50">
                   <p className="text-sm text-gray-600 mb-1">
                     <strong>Acción:</strong> El estado de la aplicación cambiará a{' '}
-                    <span className={`font-medium ${
-                      actionType === 'ACCEPTED' ? 'text-green-600' :
+                    <span className={`font-medium ${actionType === 'ACCEPTED' ? 'text-green-600' :
                       actionType === 'INTERVIEW' ? 'text-blue-600' : 'text-red-600'
-                    }`}>
+                      }`}>
                       {getStatusText(actionType)}
                     </span>
                   </p>
@@ -803,10 +815,9 @@ const ApplicationsPageContent = () => {
                 <button
                   onClick={() => handleApplicationAction()}
                   disabled={processingApplication !== null || !customMessage.trim()}
-                  className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 ${
-                    actionType === 'ACCEPTED' ? 'bg-green-600 hover:bg-green-700' :
+                  className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 ${actionType === 'ACCEPTED' ? 'bg-green-600 hover:bg-green-700' :
                     actionType === 'INTERVIEW' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
-                  }`}
+                    }`}
                 >
                   {processingApplication ? (
                     <>

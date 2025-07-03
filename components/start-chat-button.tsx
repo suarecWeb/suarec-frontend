@@ -24,6 +24,7 @@ interface StartChatButtonProps {
   recipientType?: 'person' | 'business'; // Para personalizar los mensajes
   context?: 'profile' | 'job' | 'application' | 'general'; // Contexto de donde se usa
   className?: string;
+  variant?: 'primary' | 'outline'; // Para estilos adicionales si es necesario
 }
 
 interface MessageTemplate {
@@ -39,7 +40,8 @@ const StartChatButton = ({
   recipientName, 
   recipientType = 'person',
   context = 'general',
-  className = "" 
+  className = "",
+  variant = "primary"
 }: StartChatButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,13 +76,6 @@ const StartChatButton = ({
           message: `¡Hola ${recipientName}! Me parece muy interesante tu perfil profesional. Me gustaría conectar contigo para posibles colaboraciones futuras.`,
           icon: <User className="h-4 w-4" />,
           description: 'Establecer contacto profesional'
-        },
-        {
-          id: 'consultation',
-          title: 'Consulta profesional',
-          message: `Hola ${recipientName}, necesito una consulta sobre tu área de expertise. ¿Estarías disponible para una asesoría?`,
-          icon: <MessageSquare className="h-4 w-4" />,
-          description: 'Solicitar asesoría o consulta'
         }
       );
     } else if (context === 'application') {
@@ -122,13 +117,6 @@ const StartChatButton = ({
           message: `¡Hola ${recipientName}! Ofrezco servicios que podrían ser de interés para su empresa. Me gustaría presentarles mi propuesta.`,
           icon: <FileText className="h-4 w-4" />,
           description: 'Ofrecer servicios profesionales'
-        },
-        {
-          id: 'business_partnership',
-          title: 'Alianza estratégica',
-          message: `Hola ${recipientName}, me interesa explorar oportunidades de colaboración comercial entre nuestras organizaciones.`,
-          icon: <User className="h-4 w-4" />,
-          description: 'Propuesta de alianza empresarial'
         }
       );
     }
@@ -137,7 +125,7 @@ const StartChatButton = ({
     baseTemplates.push({
       id: 'general',
       title: 'Saludo profesional',
-      message: `¡Hola ${recipientName}! Me interesa conocer más sobre tu trabajo y explorar posibles oportunidades de colaboración.`,
+      message: `¡Hola ${recipientName}! ¿Cómo estás? Me gustaría conversar contigo cuando tengas un momento libre. ¿Te parece bien?`,
       icon: <MessageSquare className="h-4 w-4" />,
       description: 'Mensaje de presentación general'
     });
@@ -210,7 +198,11 @@ const StartChatButton = ({
         <button
           onClick={() => setShowOptions(!showOptions)}
           disabled={loading}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={
+            `flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-sm font-medium
+            ${variant === 'primary' ? 'bg-[#097EEC] text-white hover:bg-[#0A6BC7]' : 'border border-gray-300 bg-white text-black hover:bg-gray-50'} 
+            disabled:opacity-50 disabled:cursor-not-allowed ${loading ? 'cursor-not-allowed' : ''}`
+          }
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -218,9 +210,6 @@ const StartChatButton = ({
             <MessageSquare className="h-4 w-4" />
           )}
           <span>{loading ? "Enviando..." : "Enviar mensaje"}</span>
-          {!loading && (
-            <ChevronDown className={`h-4 w-4 transition-transform ${showOptions ? 'rotate-180' : ''}`} />
-          )}
         </button>
       </div>
 

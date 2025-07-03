@@ -439,6 +439,7 @@ const PublicProfilePage = () => {
                                         <StartChatButton
                                             recipientId={parseInt(userId)}
                                             recipientName={user.name}
+                                            variant="outline"
                                             recipientType={
                                                 user.company ? "business" : "person"
                                             }
