@@ -4,6 +4,8 @@
 export interface CommentUser {
   id: string | number;
   name: string;
+  profile_image?: string;
+  email?: string;
 }
 
 export interface Comment {

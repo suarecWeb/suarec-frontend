@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { UserService } from "@/services/UsersService";
 import CompanyService from "@/services/CompanyService";
 import EmailVerificationService from "@/services/EmailVerificationService";
+import SupabaseService from "@/services/supabase.service";
 import {
   AlertCircle,
   Check,
@@ -30,6 +31,7 @@ interface CreateUserDto {
   name: string;
   password: string;
   cv_url?: string;
+  profile_image?: string;
   genre: string;
   cellphone: string;
   email: string;
@@ -57,6 +59,8 @@ const FormRegister = () => {
   const [isPending, startTransition] = useTransition();
   const [userType, setUserType] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | ArrayBuffer | null>("");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -80,13 +84,35 @@ const FormRegister = () => {
     setUserType(storedUserType);
   }, []);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     const file = event.target.files?.[0];
     if (file) {
+      // Crear preview
       const reader = new FileReader();
       reader.onload = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
+
+      // Subir a Supabase
+      try {
+        setIsUploadingImage(true);
+        const folder = userType === "PERSON" ? "profile-images" : "company-logos";
+        const result = await SupabaseService.uploadImage(file, folder);
+        
+        if (result.error) {
+          console.error('Error uploading image:', result.error);
+          setError('Error al subir la imagen. Inténtalo de nuevo.');
+          return;
+        }
+
+        setUploadedImageUrl(result.url);
+        console.log('Image uploaded successfully:', result.url);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setError('Error al subir la imagen. Inténtalo de nuevo.');
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -96,6 +122,7 @@ const FormRegister = () => {
 
   const clearImagePreview = () => {
     setImagePreview(null);
+    setUploadedImageUrl("");
     // También resetear el input de archivo
     const fileInput = document.getElementById(
       userType === "PERSON" ? "profile_image" : "company_logo"
@@ -216,6 +243,7 @@ const FormRegister = () => {
             profession: "Profesional independiente",
             skills: ["Ninguna"],
             cedula: formData.get("cedula") as string,
+            profile_image: uploadedImageUrl, // Agregar la URL de la imagen subida
           };
           
           userEmail = userData.email;
@@ -263,6 +291,7 @@ const FormRegister = () => {
               profession: "Profesional independiente",
               skills: ["Ninguna"],
               cedula: "", // Cedula vacía para empresas
+              profile_image: uploadedImageUrl, // Agregar la URL de la imagen subida
             };
             
             userEmail = userData.email;
@@ -616,9 +645,22 @@ const FormRegister = () => {
                         accept="image/*"
                         className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         onChange={handleFileChange}
-                        disabled={isPending}
+                        disabled={isPending || isUploadingImage}
                       />
+                      {isUploadingImage && (
+                        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span className="text-sm">Subiendo imagen...</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    {uploadedImageUrl && (
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-700">✅ Imagen subida correctamente</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -811,9 +853,22 @@ const FormRegister = () => {
                         accept="image/*"
                         className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         onChange={handleFileChange}
-                        disabled={isPending}
+                        disabled={isPending || isUploadingImage}
                       />
+                      {isUploadingImage && (
+                        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span className="text-sm">Subiendo imagen...</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    {uploadedImageUrl && (
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-700">✅ Imagen subida correctamente</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

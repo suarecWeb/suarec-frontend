@@ -231,7 +231,19 @@ const ChatPageContent = () => {
                       >
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <div className="w-12 h-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
+                            {conversation.user.profile_image ? (
+                              <img
+                                src={conversation.user.profile_image}
+                                alt={conversation.user.name}
+                                className="w-12 h-12 rounded-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-12 h-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${conversation.user.profile_image ? 'hidden' : ''}`}>
                               <UserIcon className="h-6 w-6 text-[#097EEC]" />
                             </div>
                             {conversation.unreadCount > 0 && (
@@ -270,7 +282,19 @@ const ChatPageContent = () => {
                     {/* Chat Header */}
                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
+                        {selectedConversation.user.profile_image ? (
+                          <img
+                            src={selectedConversation.user.profile_image}
+                            alt={selectedConversation.user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-10 h-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${selectedConversation.user.profile_image ? 'hidden' : ''}`}>
                           <UserIcon className="h-5 w-5 text-[#097EEC]" />
                         </div>
                         <div>
@@ -291,8 +315,27 @@ const ChatPageContent = () => {
                         messages.map((message) => (
                           <div
                             key={message.id}
-                            className={`flex ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
+                            className={`flex items-end gap-2 ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
                           >
+                            {message.sender?.id !== currentUserId && (
+                              <div className="flex-shrink-0">
+                                {message.sender?.profile_image ? (
+                                  <img
+                                    src={message.sender.profile_image}
+                                    alt={message.sender.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-8 h-8 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${message.sender?.profile_image ? 'hidden' : ''}`}>
+                                  <UserIcon className="h-4 w-4 text-[#097EEC]" />
+                                </div>
+                              </div>
+                            )}
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                 message.sender?.id === currentUserId
@@ -318,6 +361,25 @@ const ChatPageContent = () => {
                                 )}
                               </div>
                             </div>
+                            {message.sender?.id === currentUserId && (
+                              <div className="flex-shrink-0">
+                                {message.sender?.profile_image ? (
+                                  <img
+                                    src={message.sender.profile_image}
+                                    alt={message.sender.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-8 h-8 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${message.sender?.profile_image ? 'hidden' : ''}`}>
+                                  <UserIcon className="h-4 w-4 text-[#097EEC]" />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (

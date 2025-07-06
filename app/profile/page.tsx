@@ -34,6 +34,8 @@ import { ExperienceService } from "@/services/ExperienceService"
 import { Experience } from "@/interfaces/user.interface"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import jsPDF from 'jspdf'
+import { UserAvatarEditable } from "@/components/ui/UserAvatar"
+import { UserGallery } from "@/components/ui/UserGallery"
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null)
@@ -372,12 +374,34 @@ const ProfilePage = () => {
                 <div className="bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-6 text-white">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">
-                      <div className="h-32 w-32 bg-white/20 rounded-full flex items-center justify-center text-white">
-                        <UserIcon className="h-16 w-16" />
-                      </div>
-                      <button className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md text-[#097EEC] hover:bg-gray-100 transition-colors">
-                        <Edit className="h-4 w-4" />
-                      </button>
+                      <UserAvatarEditable
+                        user={{
+                          id: user.id ? (typeof user.id === 'string' ? parseInt(user.id) : user.id) : 0,
+                          name: user.name,
+                          profile_image: user.profile_image,
+                          email: user.email
+                        }}
+                        size="xl"
+                        onImageUploaded={async (imageUrl) => {
+                          try {
+                            // Actualizar el perfil del usuario con la nueva imagen
+                            await UserService.updateUser(user.id as string, {
+                              profile_image: imageUrl
+                            });
+                            // Recargar los datos del usuario
+                            const token = Cookies.get("token");
+                            if (token) {
+                              const decoded = jwtDecode<TokenPayload>(token);
+                              const response = await UserService.getUserById(decoded.id);
+                              setUser(response.data);
+                            }
+                            setSuccess('Imagen de perfil actualizada correctamente');
+                          } catch (error) {
+                            console.error('Error updating profile image:', error);
+                            setError('Error al actualizar la imagen de perfil');
+                          }
+                        }}
+                      />
                     </div>
                     <div className="text-center md:text-left">
                       <h2 className="text-2xl font-bold">{user.name}</h2>
@@ -416,8 +440,16 @@ const ProfilePage = () => {
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-8">
-                    {/* Left Column - Personal Info */}
+                    {/* Left Column - Gallery and Personal Info */}
                     <div className="md:w-1/3">
+                      {/* User Gallery - Now at the top */}
+                      <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                        <UserGallery
+                          userId={user.id ? (typeof user.id === 'string' ? parseInt(user.id) : user.id) : 0}
+                        />
+                      </div>
+
+                      {/* Personal Information - Now below gallery */}
                       <div className="bg-gray-50 rounded-lg p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">Información personal</h3>
 
@@ -655,6 +687,8 @@ const ProfilePage = () => {
                           </Button>
                         </div>
                       </div>
+
+
 
                       {/* Company Info (if BUSINESS role) */}
                       {user.company && (
