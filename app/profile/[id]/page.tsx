@@ -546,7 +546,7 @@ const PublicProfilePage = () => {
                                                         <p className="text-sm text-gray-600">{ref.relationship}</p>
                                                         <p className="text-sm text-gray-600">📞 {ref.contact}</p>
                                                         {ref.comment && (
-                                                            <p className="text-sm text-gray-600 mt-1 italic">"{ref.comment}"</p>
+                                                            <p className="text-sm text-gray-600 mt-1 italic">{ref.comment}</p>
                                                         )}
                                                     </div>
                                                 ))}

@@ -254,7 +254,7 @@ const StartChatButton = ({
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-gray-800 text-sm mb-1">{template.title}</h4>
                         <p className="text-xs text-gray-500 mb-2">{template.description}</p>
-                        <p className="text-sm text-gray-600 italic leading-relaxed">"{template.message}"</p>
+                        <p className="text-sm text-gray-600 italic leading-relaxed">{template.message}</p>
                       </div>
                     </div>
                   </button>
