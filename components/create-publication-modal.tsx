@@ -7,7 +7,8 @@ import PublicationService from '../services/PublicationsService';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../interfaces/auth.interface';
-import { X, FileImage, Loader2, CheckCircle, Info, AlertCircle } from 'lucide-react';
+import { X, FileImage, Loader2, CheckCircle, Info, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { UserGallery } from './ui/UserGallery';
 
 interface CreatePublicationModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface FormData {
   description: string;
   category: string;
   image_url?: string;
+  gallery_images?: string[];
   price?: number;
   priceUnit?: string;
 }
@@ -57,6 +59,9 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedGalleryImages, setSelectedGalleryImages] = useState<string[]>([]);
+  const [showGallerySelector, setShowGallerySelector] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const router = useRouter();
 
   const {
@@ -83,6 +88,9 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
       if (!token) {
         router.push("/auth/login");
         onClose();
+      } else {
+        const decoded = jwtDecode<TokenPayload>(token);
+        setCurrentUserId(decoded.id);
       }
     }
   }, [isOpen, router, onClose]);
@@ -143,6 +151,7 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
         description: data.description || "",
         category: data.category.toUpperCase(),
         image_url: imageUrl || undefined,
+        gallery_images: selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
         price: data.price ? Number(data.price) : undefined, // Convertir explícitamente a número
         priceUnit: data.priceUnit || undefined,
         created_at: new Date(), 
@@ -181,6 +190,8 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
       reset();
       setSelectedFile(null);
       setPreviewUrl(null);
+      setSelectedGalleryImages([]);
+      setShowGallerySelector(false);
       setError(null);
       setSuccess(null);
       onClose();
@@ -424,6 +435,63 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     </div>
                   )}
                 </div>
+
+                {/* Gallery Selection */}
+                {currentUserId && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Imágenes de mi galería (opcional)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowGallerySelector(!showGallerySelector)}
+                        className="text-sm text-[#097EEC] hover:text-[#0A6BC7] flex items-center gap-1"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        {showGallerySelector ? 'Ocultar' : 'Seleccionar'} ({selectedGalleryImages.length}/5)
+                      </button>
+                    </div>
+                    
+                    {showGallerySelector && (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <UserGallery
+                          userId={currentUserId}
+                          showSelection={true}
+                          maxSelection={5}
+                          onImagesSelected={setSelectedGalleryImages}
+                        />
+                      </div>
+                    )}
+
+                    {/* Selected Gallery Images Preview */}
+                    {selectedGalleryImages.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">
+                          Imágenes seleccionadas: {selectedGalleryImages.length}/5
+                        </p>
+                        <div className="grid grid-cols-5 gap-2">
+                          {selectedGalleryImages.map((imageUrl, index) => (
+                            <div key={index} className="relative aspect-square">
+                              <img
+                                src={imageUrl}
+                                alt={`Seleccionada ${index + 1}`}
+                                className="w-full h-full object-cover rounded border-2 border-blue-300"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setSelectedGalleryImages(prev => prev.filter((_, i) => i !== index))}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

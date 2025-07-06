@@ -17,7 +17,8 @@ export const RegisterSchema = z.object({
     }),
     born_at: z.date(),
     role: z.string(),
-    cv_url: z.string()
+    cv_url: z.string(),
+    profile_image: z.string().optional()
 })
 
 export const LoginSchema = z.object({
@@ -53,7 +54,8 @@ export const UserSchema = z.object({
         message: 'Password must be at least 6 characters long'
     }),
     photo_url: z.string(),
-    status: z.string()
+    status: z.string(),
+    profile_image: z.string().optional()
     
 })
 

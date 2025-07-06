@@ -28,6 +28,7 @@ import ContactModal from "@/components/contact-modal"
 import CookiesModal from "@/components/cookies-modal"
 import { useState } from "react"
 import SuarecLogo from "@/components/logo"
+import { CompaniesCarousel } from "@/components/CompaniesCarousel"
 
 export default function Home() {
   const [isTermsOpen, setTermsOpen] = useState(false)
@@ -58,24 +59,21 @@ export default function Home() {
         </div>
 
         {/* Contenido principal */}
-        <div className="relative z-10 container mx-auto px-4 text-center mt-8">
+        <div className="relative z-10 container mx-auto px-4 text-center mt-4">
           {/* Contador regresivo */}
           <CountdownTimer />
 
           {/* Logo/Título principal */}
-          <div className="mb-12">
-            {/* <h1 className="text-6xl md:text-8xl lg:text-9xl font-eras-bold-italic tracking-tight text-white mb-6 drop-shadow-2xl">
-              SUAREC
-            </h1> */}
-            <SuarecLogo width={550} height={100} className="mx-auto mb-6 w-[80%] drop-shadow-2xl"
+          <div className="mb-8">
+            <SuarecLogo width={550} height={100} className="mx-auto mb-4 w-[70%] drop-shadow-2xl"
               theme="dark" />
-            <div className="w-32 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-4"></div>
-            <div className="w-16 h-1 bg-white/30 mx-auto"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-3"></div>
+            <div className="w-12 h-1 bg-white/30 mx-auto"></div>
           </div>
 
           {/* Subtítulo elegante */}
-          <div className="max-w-5xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-eras text-white/95 leading-relaxed">
+          <div className="max-w-4xl mx-auto mb-8">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-eras text-white/95 leading-relaxed">
               Conectamos <span className="font-eras-bold-italic text-[#97CBFF]">talento excepcional</span>
               <br />
               <span className="text-[#97CBFF] font-eras-bold-italic">con oportunidades extraordinarias</span>
@@ -83,7 +81,7 @@ export default function Home() {
           </div>
 
           {/* Descripción minimalista */}
-          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-16 font-eras leading-relaxed">
+          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 font-eras leading-relaxed">
             La plataforma donde los mejores profesionales encuentran
             <br />
             <span className="font-eras-bold">las empresas que transformarán su carrera.</span>
@@ -106,21 +104,21 @@ export default function Home() {
           </div> */}
 
           {/* Botón de acción */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
             <Link
               href="/auth/select-type"
-              className="group bg-white text-[#097EEC] px-12 py-6 rounded-full text-xl font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
+              className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-lg font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
             >
               Comenzar ahora
-              <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
 
             <Link
               href="/companies"
-              className="group border-2 border-white/30 text-white px-8 py-6 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
+              className="group border-2 border-white/30 text-white px-6 py-5 rounded-full text-base font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
             >
               Ver empresas
-              <Building2 className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <Building2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
             </Link>
           </div>
         </div>
@@ -136,7 +134,7 @@ export default function Home() {
       </section>
 
       {/* Beneficios */}
-      <section className="py-24 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">
@@ -203,42 +201,22 @@ export default function Home() {
         </div>
       </section>
 
+      
+
       {/* Sección de Alianzas */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">Nuestras alianzas estratégicas</h2>
+          <div className="text-center mb-8">
+            <h2 className="text-4xl md:text-5xl font-eras-bold mb-4 text-gray-800">Nuestras alianzas estratégicas</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
               Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales del mercado.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-            {[
-              { logo: logoImage, name: "Café y Fogón" },
-              { logo: logoImageDos, name: "Veens" },
-              { logo: logoImageTres, name: "Enfacol" },
-              { logo: logoImageCuatro, name: "Olimpo Cocktail" },
-            ].map((company, index) => (
-              <div
-                key={index}
-                className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20 flex flex-col items-center justify-center transform hover:scale-105"
-              >
-                <div className="h-24 flex items-center justify-center mb-4">
-                  <Image
-                    src={company.logo || "/placeholder.svg"}
-                    alt={company.name}
-                    width={120}
-                    height={120}
-                    className="object-contain group-hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
-                <p className="text-lg font-eras-bold text-gray-700 group-hover:text-[#097EEC] transition-colors">{company.name}</p>
-              </div>
-            ))}
-          </div>
+          {/* Carousel de Empresas Aliadas */}
+          <CompaniesCarousel />
 
-          <div className="text-center">
+          <div className="text-center mt-8">
             <Link
               href="/companies"
               className="inline-flex items-center gap-3 bg-[#097EEC] text-white px-8 py-4 rounded-full text-lg font-eras-bold hover:bg-[#097EEC]/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
