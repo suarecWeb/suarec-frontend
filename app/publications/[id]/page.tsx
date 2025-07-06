@@ -44,7 +44,8 @@ import MessageService from "@/services/MessageService";
 import ContractModal from "@/components/contract-modal";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
-import { translatePriceUnit } from '@/lib/utils';
+import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
+import { translatePriceUnit } from "@/lib/utils";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -458,7 +459,7 @@ const PublicationDetailPage = () => {
                           </span>
                           {publication.price && (
                             <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                              <span className="font-semibold">${publication.price}</span>
+                              <span className="font-semibold">${publication.price.toLocaleString()}</span>
                               <span className="ml-1">{translatePriceUnit(publication.priceUnit || '')}</span>
                             </span>
                           )}
@@ -544,14 +545,46 @@ const PublicationDetailPage = () => {
                   <div className="grid md:grid-cols-3 gap-6 p-6">
                     {/* Left column - Publication details */}
                     <div className="md:col-span-2 space-y-6">
-                      {/* Publication image */}
-                      {publication.image_url && (
-                        <div className="rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-gray-50">
-                          <img
-                            src={publication.image_url}
-                            alt={publication.title}
-                            className="w-full h-auto object-cover"
-                          />
+                      {/* Publication images */}
+                      {(publication.gallery_images && publication.gallery_images.length > 0) || publication.image_url ? (
+                        <div className="space-y-4">
+                          {publication.gallery_images && publication.gallery_images.length > 0 ? (
+                            // Mostrar galería de imágenes
+                            <div className="space-y-4">
+                              <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
+                                Galería de Imágenes
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {publication.gallery_images.map((imageUrl, index) => (
+                                  <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                    <img
+                                      src={imageUrl}
+                                      alt={`${publication.title} - Imagen ${index + 1}`}
+                                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : publication.image_url ? (
+                            // Mostrar imagen principal si no hay galería
+                            <div className="rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-gray-50">
+                              <img
+                                src={publication.image_url}
+                                alt={publication.title}
+                                className="w-full h-auto object-cover"
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        // Placeholder cuando no hay imágenes
+                        <div className="aspect-video bg-gray-200 rounded-xl flex items-center justify-center border border-gray-200">
+                          <div className="text-gray-400 text-center">
+                            <Building2 className="h-16 w-16 mx-auto mb-3" />
+                            <p className="text-lg">Sin imágenes</p>
+                          </div>
                         </div>
                       )}
 
@@ -607,7 +640,7 @@ const PublicationDetailPage = () => {
                                     </div>
                                     <div className="text-right">
                                       <p className="font-semibold text-green-600">
-                                        ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}
+                                        ${contract.currentPrice?.toLocaleString()} {contract.priceUnit}
                                       </p>
                                       <p className="text-xs text-gray-500">
                                         {contract.status === 'pending' ? 'Pendiente' : 
@@ -779,9 +812,15 @@ const PublicationDetailPage = () => {
                         {author ? (
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <div className="bg-[#097EEC] rounded-full p-3 text-white">
-                                <UserIcon className="h-6 w-6" />
-                              </div>
+                              <UserAvatarDisplay
+                                user={{
+                                  id: author.id ? (typeof author.id === 'string' ? parseInt(author.id) : author.id) : 0,
+                                  name: author.name,
+                                  profile_image: author.profile_image,
+                                  email: author.email
+                                }}
+                                size="lg"
+                              />
                               <div>
                                 <p className="font-semibold text-gray-800">{author.name}</p>
                                 {author.profession && (
@@ -871,10 +910,6 @@ const PublicationDetailPage = () => {
                           Estadísticas
                         </h3>
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Visitas:</span>
-                            <span className="font-semibold text-gray-800">{publication.visitors || 0}</span>
-                          </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-600">Comentarios:</span>
                             <span className="font-semibold text-gray-800">{comments.length}</span>

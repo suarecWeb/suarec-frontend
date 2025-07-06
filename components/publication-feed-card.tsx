@@ -24,6 +24,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Publication } from '@/interfaces/publication.interface';
 import { translatePriceUnit } from '@/lib/utils';
+import { UserAvatarDisplay } from '@/components/ui/UserAvatar';
+import GalleryPreview from '@/components/ui/GalleryPreview';
+import { usePublicationLikes } from '@/hooks/usePublicationLikes';
 
 interface PublicationFeedCardProps {
   publication: Publication;
@@ -32,14 +35,13 @@ interface PublicationFeedCardProps {
 }
 
 const PublicationFeedCard = ({ publication, userRole, publicationBids }: PublicationFeedCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
-  };
+  
+  const { likesCount, hasLiked, isLoading: isLikeLoading, toggleLike } = usePublicationLikes({
+    publicationId: publication.id!,
+    initialLikesCount: publication.likesCount || 0,
+    initialHasLiked: publication.hasLiked || false
+  });
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
@@ -57,21 +59,15 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            {publication.user?.cv_url ? (
-              <Image
-                src={publication.user.cv_url}
-                alt={publication.user.name}
-                width={40}
-                height={40}
-                className="rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-[#097EEC] rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
-              </div>
-            )}
-          </div>
+          <UserAvatarDisplay
+            user={{
+              id: publication.userId,
+              name: publication.user?.name || 'Usuario',
+              profile_image: publication.user?.profile_image,
+              email: publication.user?.email
+            }}
+            size="md"
+          />
           <div>
             <h3 className="font-bold text-gray-900 text-sm">
               {publication.user?.name || 'Usuario'}
@@ -89,30 +85,18 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
         </button>
       </div>
 
-      {/* NUEVO LAYOUT: Imagen a la izquierda, contenido a la derecha */}
-      <div className="flex gap-4">
-        {/* Imagen cuadrada a la izquierda */}
-        <div className="flex-shrink-0">
-          {publication.image_url ? (
-            <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-              <img
-                src={publication.image_url}
-                alt={publication.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-              <div className="text-gray-400 text-center">
-                <Building2 className="h-8 w-8 mx-auto mb-1" />
-                <p className="text-xs">Sin imagen</p>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
+      <div className="space-y-4">
+        {/* Galería de imágenes */}
+        <GalleryPreview
+          images={publication.gallery_images || []}
+          title={publication.title}
+          maxDisplay={4}
+          className="mb-3"
+        />
 
-        {/* Contenido principal a la derecha */}
-        <div className="flex-1 min-w-0">
+        {/* Contenido principal */}
+        <div className="w-full">
           <h2 className="text-lg font-bold text-gray-900 mb-2">
             {publication.title}
           </h2>
@@ -168,12 +152,13 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
       {/* Action Buttons */}
       <div className="flex items-center gap-6 mt-4 pt-3 border-t border-gray-100">
         <button
-          onClick={handleLike}
+          onClick={toggleLike}
+          disabled={isLikeLoading}
           className={`flex items-center gap-2 text-sm transition-colors ${
-            isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-          }`}
+            hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+          } ${isLikeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+          <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
           <span>{likesCount}</span>
         </button>
         <button
@@ -196,9 +181,15 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
             {publication.comments && publication.comments.length > 0 ? (
               publication.comments.map((comment, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-500" />
-                  </div>
+                  <UserAvatarDisplay
+                    user={{
+                      id: typeof comment.user?.id === 'string' ? parseInt(comment.user.id) : (comment.user?.id as number) || 0,
+                      name: comment.user?.name || 'Usuario',
+                      profile_image: comment.user?.profile_image,
+                      email: comment.user?.email
+                    }}
+                    size="sm"
+                  />
                   <div className="flex-1">
                     <div className="bg-gray-50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">

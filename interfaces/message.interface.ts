@@ -12,10 +12,12 @@ export interface Message {
     sender?: {
       id: number;
       name: string;
+      profile_image?: string;
     };
     recipient?: {
       id: number;
       name: string;
+      profile_image?: string;
     };
   }
   
@@ -30,6 +32,7 @@ export interface Message {
       id: number;
       name: string;
       email: string;
+      profile_image?: string;
     };
     lastMessage: Message;
     unreadCount: number;

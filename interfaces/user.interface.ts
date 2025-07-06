@@ -49,6 +49,7 @@ export interface User {
   genre: string
   born_at: Date
   cv_url?: string
+  profile_image?: string
   created_at?: Date
   roles?: string[] | { id: string; name: string }[] | undefined
   profession?: string

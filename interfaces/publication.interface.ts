@@ -12,6 +12,10 @@ export interface Publication {
   visitors?: number;
   price?: number;
   priceUnit?: string;
+  gallery_images?: string[];
+  likes?: any[];
+  likesCount?: number;
+  hasLiked?: boolean;
   userId: number;
   user?: User;
   comments?: Comment[];
