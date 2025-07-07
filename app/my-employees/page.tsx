@@ -11,6 +11,7 @@ import RoleGuard from "@/components/role-guard";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Search,
@@ -28,8 +29,11 @@ import {
   Star,
   Award,
   Briefcase,
-  MapPin
+  MapPin,
+  MoreVertical,
+  Download
 } from "lucide-react";
+import DownloadCVButton from "@/components/download-cv-button";
 
 const MyEmployeesPageContent = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -42,6 +46,8 @@ const MyEmployeesPageContent = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [removingEmployee, setRemovingEmployee] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const router = useRouter();
   
   const [pagination, setPagination] = useState({
     total: 0,
@@ -119,6 +125,18 @@ const MyEmployeesPageContent = () => {
     }
   }, [companyId]);
 
+  // Cerrar menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenMenuId(null);
+    };
+
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [openMenuId]);
+
   const handlePageChange = (page: number) => {
     fetchEmployees({ page, limit: pagination.limit });
   };
@@ -185,7 +203,7 @@ const MyEmployeesPageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12 pt-20">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-16">
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
@@ -257,17 +275,17 @@ const MyEmployeesPageContent = () => {
               </div>
               
               {/* Attendance Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <a
                   href="/attendance"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
+                  className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
                 >
                   <Calendar className="h-4 w-4" />
                   Control de Asistencia
                 </a>
                 <a
                   href="/attendance/register"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                 >
                   <Calendar className="h-4 w-4" />
                   Registrar Asistencia
@@ -307,15 +325,100 @@ const MyEmployeesPageContent = () => {
                 {filteredEmployees.length > 0 ? (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredEmployees.map((employee) => (
-                      <div key={employee.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                      <div key={employee.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                        {/* Menú de opciones */}
+                        <div className="absolute top-2 right-2 z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === employee.id ? null : employee.id!);
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          
+                          {/* Dropdown Menu */}
+                          {openMenuId === employee.id && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/profile/${employee.id}`);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                              >
+                                <UserIcon className="h-4 w-4" />
+                                Ver perfil
+                              </button>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `mailto:${employee.email}`;
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                              >
+                                <Mail className="h-4 w-4" />
+                                Contactar
+                              </button>
+                              
+                              {!employee.company && (
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="px-4 py-2 hover:bg-gray-50"
+                                >
+                                  <DownloadCVButton
+                                    user={employee}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-700 hover:text-gray-900 p-0 h-auto text-sm w-full justify-start"
+                                    isPublicProfile={true}
+                                  />
+                                </div>
+                              )}
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveEmployee(employee.id!, employee.name);
+                                  setOpenMenuId(null);
+                                }}
+                                disabled={removingEmployee === employee.id}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left disabled:opacity-50"
+                              >
+                                {removingEmployee === employee.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                                Remover
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="p-6">
                           {/* Employee Header */}
-                          <div className="flex items-start gap-4 mb-4">
+                          <div className="flex items-start gap-4 mb-4 pr-10">
                             <div className="w-16 h-16 bg-[#097EEC]/10 rounded-full flex items-center justify-center flex-shrink-0">
                               <UserIcon className="h-8 w-8 text-[#097EEC]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-800 truncate">{employee.name}</h3>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/profile/${employee.id}`);
+                                }}
+                                className="font-semibold text-gray-800 hover:text-[#097EEC] transition-colors text-left cursor-pointer block w-full text-base md:text-lg"
+                              >
+                                {employee.name}
+                              </button>
                               {employee.profession && (
                                 <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                                   <Briefcase className="h-3 w-3" />
@@ -396,32 +499,6 @@ const MyEmployeesPageContent = () => {
                                 </a>
                               </div>
                             )}
-                          </div>
-
-                          {/* Actions */}
-                          <div className="mt-6 pt-4 border-t border-gray-100">
-                            <div className="flex justify-between items-center">
-                              <button
-                                onClick={() => window.location.href = `mailto:${employee.email}`}
-                                className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm"
-                              >
-                                <Mail className="h-4 w-4" />
-                                Contactar
-                              </button>
-                              
-                              <button
-                                onClick={() => handleRemoveEmployee(employee.id!, employee.name)}
-                                disabled={removingEmployee === employee.id}
-                                className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm disabled:opacity-50"
-                              >
-                                {removingEmployee === employee.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
-                                Remover
-                              </button>
-                            </div>
                           </div>
                         </div>
                       </div>

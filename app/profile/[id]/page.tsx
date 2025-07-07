@@ -36,8 +36,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { UserService } from "@/services/UsersService"
 import { User } from "@/interfaces/user.interface";
 import { TokenPayload } from "@/interfaces/auth.interface"
-import jsPDF from 'jspdf'
 import StartChatButton from "@/components/start-chat-button"
+import DownloadCVButton from "@/components/download-cv-button"
 
 interface PublicProfilePageProps {
     params: {
@@ -151,135 +151,6 @@ const PublicProfilePage = () => {
         } else {
             router.push('/auth/login')
         }
-    }
-
-    const exportToPDF = () => {
-        if (!user) return;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-        // Encabezado SUAREC
-        const headerHeight = 22;
-        doc.setFillColor(9, 126, 236);
-        doc.rect(0, 0, 210, headerHeight, 'F');
-        doc.setFont('helvetica', 'bolditalic');
-        doc.setFontSize(30);
-        doc.setTextColor(255, 255, 255);
-        const suarecText = 'Perfil de candidato - SUAREC';
-        const suarecWidth = doc.getTextWidth(suarecText);
-        doc.text(suarecText, (210 - suarecWidth) / 2, headerHeight - 7);
-
-        // Dimensiones de columnas
-        const leftColWidth = 90;
-        const rightColStart = 110;
-        const rightColWidth = 210 - rightColStart - 15;
-
-        // Línea divisoria vertical
-        doc.setDrawColor(200);
-        doc.setLineWidth(0.5);
-        doc.line(100, headerHeight + 5, 100, 290);
-
-        // Columna izquierda: Contacto, Referencias, Redes
-        let yLeft = headerHeight + 15;
-        const xLeft = 15;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(13);
-        doc.setTextColor(33, 37, 41);
-        doc.text('Contacto', xLeft, yLeft);
-        yLeft += 7;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(11);
-        if (user.cellphone) {
-            doc.text('Teléfono:', xLeft, yLeft);
-            doc.text(user.cellphone, xLeft + 25, yLeft);
-            yLeft += 6;
-        }
-        if (user.email) {
-            doc.text('Email:', xLeft, yLeft);
-            doc.text(user.email, xLeft + 25, yLeft);
-            yLeft += 6;
-        }
-
-        // Referencias
-        if (user.references && user.references.length > 0) {
-            yLeft += 3;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Referencias', xLeft, yLeft);
-            yLeft += 6;
-            doc.setFont('helvetica', 'normal');
-            user.references.forEach((ref) => {
-                let refLine = '';
-                if (ref.name) refLine += ref.name;
-                if (ref.comment) refLine += ' — ' + ref.comment;
-                doc.text(refLine, xLeft, yLeft);
-                yLeft += 5.5;
-                if (ref.contact) {
-                    doc.text('Teléfono: ' + ref.contact, xLeft + 3, yLeft);
-                    yLeft += 5.5;
-                }
-            });
-        }
-
-        // Columna derecha: Perfil
-        let yRight = headerHeight + 25;
-        let xRight = rightColStart;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.setTextColor(33, 37, 41);
-        doc.text(user.name || '', xRight, yRight);
-        yRight += 9.5;
-        if (user.profession) {
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(13);
-            doc.text(user.profession, xRight, yRight);
-            yRight += 7.5;
-        }
-
-        // Sobre mí
-        if (user.bio) {
-            yRight += 5;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.text('Sobre mí', xRight, yRight);
-            yRight += 5.5;
-            doc.setFont('helvetica', 'normal');
-            const bioLines = doc.splitTextToSize(user.bio, rightColWidth);
-            doc.text(bioLines, xRight, yRight);
-            yRight += bioLines.length * 5.5;
-        }
-
-        // Experiencia
-        if (user.experiences && user.experiences.length > 0) {
-            yRight += 5;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Experiencia', xRight, yRight);
-            yRight += 5.5;
-            doc.setFont('helvetica', 'normal');
-            user.experiences.forEach((exp) => {
-                let expLine = '';
-                if (exp.startDate) expLine += new Date(exp.startDate).getFullYear() + ' ';
-                if (exp.title) expLine += exp.title;
-                if (exp.company) expLine += ' en ' + exp.company;
-                doc.text(expLine, xRight, yRight);
-                yRight += 5.5;
-                if (exp.description) {
-                    const descLines = doc.splitTextToSize(exp.description, rightColWidth - 8);
-                    doc.text(descLines, xRight + 4, yRight);
-                    yRight += descLines.length * 5.5;
-                }
-            });
-        }
-
-        // Habilidades
-        if (user.skills && user.skills.length > 0) {
-            yRight += 5;
-            doc.setFont('helvetica', 'bold');
-            doc.text('Habilidades', xRight, yRight);
-            yRight += 5.5;
-            doc.setFont('helvetica', 'normal');
-            doc.text(user.skills.join(', '), xRight, yRight);
-        }
-
-        doc.save(`Candidato_${user.name || 'usuario'}.pdf`);
     }
 
     if (loading) {
@@ -450,14 +321,12 @@ const PublicProfilePage = () => {
                                     )}
 
                                     {!user.company && (
-                                        <Button
-                                            onClick={exportToPDF}
+                                        <DownloadCVButton
+                                            user={user}
                                             variant="outline"
-                                            className="bg-white text-black hover:text-[#097EEC] hover:bg-gray-100 flex items-center gap-2"
-                                        >
-                                            <Download className="h-4 w-4" />
-                                            Descargar CV
-                                        </Button>
+                                            className="bg-white text-black hover:text-[#097EEC] hover:bg-gray-100"
+                                            isPublicProfile={true}
+                                        />
                                     )}
                                 </div>
                             </div>
