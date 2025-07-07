@@ -136,7 +136,7 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           )}
 
           <div className="flex gap-2">
-            <Link href={`/publications/${publication.id}`}>
+            <Link href={`/feed/${publication.id}`}>
               <Button size="sm" className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1">
                 Ver más
               </Button>

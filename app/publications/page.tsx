@@ -285,7 +285,7 @@ const PublicationsPageContent = () => {
                 {currentUserId && publication.userId !== currentUserId && (
                   <StartChatButton
                     recipientType="business"
-                    recipientId={publication.userId}
+                    recipientId={parseInt(publication.user?.id || '0')}
                     recipientName="Autor"
                     className="text-xs px-2 py-1"
                   />
