@@ -1,5 +1,7 @@
+import { TokenPayload } from '@/interfaces/auth.interface';
 import api from './axios_config';
 import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 import { useRouter } from "next/navigation";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec`;
@@ -88,6 +90,42 @@ class AttendanceService {
     });
     return response.data;
   }
+
+  async getCompanyCheckinTime() {
+    const token = Cookies.get('token');
+    const response = await api.get('/suarec/companies/me/checkin-time', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+
+  async updateCompanyCheckinTime(checkInTime: string) {
+    const token = Cookies.get('token');
+    const response = await api.patch('/suarec/companies/me/checkin-time', {
+      checkInTime,
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+
+  async getCompanyAttendanceStats(startDate: Date, endDate: Date) {
+    const token = Cookies.get('token');
+    const response = await api.get('/suarec/companies/me/attendance-stats', {
+      params: {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
 }
 
-export default new AttendanceService(); 
+export default new AttendanceService();

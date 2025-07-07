@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Trash2,
   ExternalLink,
+  Users,
 } from 'lucide-react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -114,6 +115,8 @@ const MyApplicationsPageContent = () => {
         switch (activeTab) {
           case "pending":
             return app.status === "PENDING";
+          case "interview":
+            return app.status === "INTERVIEW";
           case "accepted":
             return app.status === "ACCEPTED";
           case "rejected":
@@ -161,6 +164,8 @@ const MyApplicationsPageContent = () => {
     switch (status) {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
+      case 'INTERVIEW':
+        return 'bg-blue-100 text-blue-800';
       case 'ACCEPTED':
         return 'bg-green-100 text-green-800';
       case 'REJECTED':
@@ -175,6 +180,8 @@ const MyApplicationsPageContent = () => {
     switch (status) {
       case 'PENDING':
         return 'Pendiente';
+      case 'INTERVIEW':
+        return 'En entrevista';
       case 'ACCEPTED':
         return 'Aceptada';
       case 'REJECTED':
@@ -189,6 +196,8 @@ const MyApplicationsPageContent = () => {
     switch (status) {
       case 'PENDING':
         return <Clock className="h-4 w-4" />;
+      case 'INTERVIEW':
+        return <Users className="h-4 w-4" />;
       case 'ACCEPTED':
         return <CheckCircle className="h-4 w-4" />;
       case 'REJECTED':
@@ -263,6 +272,18 @@ const MyApplicationsPageContent = () => {
           )}
 
           {/* Información adicional según el estado */}
+          {application.status === 'INTERVIEW' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-800">¡Invitado a entrevista!</span>
+              </div>
+              <p className="text-blue-700 text-sm">
+                ¡Felicitaciones! Has pasado a la etapa de entrevista. La empresa se pondrá en contacto contigo pronto para coordinar los detalles.
+              </p>
+            </div>
+          )}
+
           {application.status === 'ACCEPTED' && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -367,12 +388,15 @@ const MyApplicationsPageContent = () => {
               onValueChange={setActiveTab}
               className="mt-6"
             >
-              <TabsList className="grid grid-cols-4 mb-6 w-full sm:w-auto">
+              <TabsList className="grid grid-cols-5 mb-6 w-full sm:w-auto">
                 <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Todas
                 </TabsTrigger>
                 <TabsTrigger value="pending" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Pendientes
+                </TabsTrigger>
+                <TabsTrigger value="interview" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                  En entrevista
                 </TabsTrigger>
                 <TabsTrigger value="accepted" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
                   Aceptadas
@@ -400,6 +424,7 @@ const MyApplicationsPageContent = () => {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
                           {activeTab === "pending" && "No tienes aplicaciones pendientes"}
+                          {activeTab === "interview" && "No tienes aplicaciones en entrevista"}
                           {activeTab === "accepted" && "No tienes aplicaciones aceptadas"}
                           {activeTab === "rejected" && "No tienes aplicaciones rechazadas"}
                           {activeTab === "all" && "No has hecho aplicaciones aún"}

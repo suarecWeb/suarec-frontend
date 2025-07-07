@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Heart, 
-  MessageSquare, 
-  Share2, 
-  MoreHorizontal, 
-  MapPin, 
-  Clock, 
-  DollarSign, 
+import {
+  Heart,
+  MessageSquare,
+  Share2,
+  MoreHorizontal,
+  MapPin,
+  Clock,
+  DollarSign,
   User,
   Building2,
   Star,
@@ -27,6 +27,8 @@ import { translatePriceUnit } from '@/lib/utils';
 import { UserAvatarDisplay } from '@/components/ui/UserAvatar';
 import GalleryPreview from '@/components/ui/GalleryPreview';
 import { usePublicationLikes } from '@/hooks/usePublicationLikes';
+import { formatCurrency } from '@/lib/formatCurrency';
+import StartChatButton from './start-chat-button';
 
 interface PublicationFeedCardProps {
   publication: Publication;
@@ -47,7 +49,7 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Hace unos minutos';
     if (diffInHours < 24) return `Hace ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`;
     if (diffInHours < 48) return 'Ayer';
@@ -100,16 +102,18 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           <h2 className="text-lg font-bold text-gray-900 mb-2">
             {publication.title}
           </h2>
-          
+
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-green-600" />
+            {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
             <span className="text-green-700 font-semibold text-base">
-              {publication.price ? `$${publication.price.toLocaleString()} ${translatePriceUnit(publication.priceUnit || '')}` : 'Precio a convenir'}
+              {publication.price ? `${formatCurrency(publication.price.toLocaleString(), {
+                showCurrency: true,
+              })} ${translatePriceUnit(publication.priceUnit || '')}` : 'Precio a convenir'}
             </span>
           </div>
-          
+
           {publication.description && (
-            <p className="text-gray-700 text-sm mb-3" style={{ 
+            <p className="text-gray-700 text-sm mb-3" style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
@@ -118,7 +122,7 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
               {publication.description}
             </p>
           )}
-          
+
           {/* Información de ofertas activas */}
           {publicationBids && publicationBids.totalBids > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
@@ -130,21 +134,27 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
               </div>
             </div>
           )}
-          
+
           <div className="flex gap-2">
             <Link href={`/publications/${publication.id}`}>
               <Button size="sm" className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1">
                 Ver más
               </Button>
             </Link>
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white text-xs px-3 py-1"
             >
               <Send className="h-3 w-3 mr-1" />
               Mensaje
-            </Button>
+            </Button> */}
+            <StartChatButton
+              recipientId={parseInt(publication.user?.id || '0')}
+              recipientName={publication.user?.name || ''}
+              className="flex-shrink-0 text-sm"
+              variant='outline'
+            />
           </div>
         </div>
       </div>

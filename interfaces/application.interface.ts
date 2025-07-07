@@ -4,7 +4,7 @@ import { User } from "./user.interface";
 // interfaces/application.interface.ts
 export interface Application {
     id?: string;
-    status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'INTERVIEW';
     created_at: Date;
     updated_at?: Date;
     message?: string;
@@ -23,6 +23,6 @@ export interface Application {
   }
   
   export interface UpdateApplicationDto {
-    status: 'ACCEPTED' | 'REJECTED';
+    status: 'ACCEPTED' | 'REJECTED' | 'INTERVIEW';
     message?: string;
   }

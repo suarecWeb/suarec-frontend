@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +21,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        {children}
+        <NotificationProvider>
+          <WebSocketProvider>
+            {children}
+          </WebSocketProvider>
+        </NotificationProvider>
       </body>
     </html>
   );

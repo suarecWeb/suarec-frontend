@@ -5,7 +5,7 @@ export interface Publication {
   id?: string;
   title: string;
   description?: string;
-  created_at: Date;
+  created_at: string | Date;
   modified_at: Date;
   category: string;
   image_url?: string;

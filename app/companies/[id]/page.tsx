@@ -350,15 +350,7 @@ export default function CompanyDetailsPage({ params }: { params: { id: string } 
                       companyId={company.id!}
                       companyName={company.name}
                       companyUserId={parseInt(company.id)}
-                      className="w-full"
-                    />
-                  )}
-
-                  {canChat() && company.user && (
-                    <StartChatButton
-                      recipientId={parseInt(company.user.id || '2')}
-                      recipientName={company.user.name || company.name}
-                      className="w-full"
+                      className="w-full mb-4"
                     />
                   )}
 

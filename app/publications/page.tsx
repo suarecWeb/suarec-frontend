@@ -284,6 +284,7 @@ const PublicationsPageContent = () => {
                 {/* Botón de chat si no es el autor */}
                 {currentUserId && publication.userId !== currentUserId && (
                   <StartChatButton
+                    recipientType="business"
                     recipientId={publication.userId}
                     recipientName="Autor"
                     className="text-xs px-2 py-1"

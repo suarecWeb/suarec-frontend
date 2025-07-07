@@ -29,9 +29,12 @@ import {
   Trash2,
   Save,
   X,
+  ArrowLeft,
+  Settings,
 } from "lucide-react";
 import CompanyService from "@/services/CompanyService";
 import { useRouter } from "next/navigation";
+import { CompanyCheckinTime, CompanyAttendanceStats } from "@/interfaces/attendance.interface";
 
 interface AttendanceStats {
   totalDays: number;
@@ -76,6 +79,14 @@ const AttendancePageContent = () => {
   const [editCheckInTime, setEditCheckInTime] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [deletingRecordId, setDeletingRecordId] = useState<number | null>(null);
+  
+  // Estados para configuración de hora de check-in
+  const [companyCheckinTime, setCompanyCheckinTime] = useState<CompanyCheckinTime | null>(null);
+  const [showCheckinConfig, setShowCheckinConfig] = useState(false);
+  const [newCheckinTime, setNewCheckinTime] = useState("");
+  const [updatingCheckinTime, setUpdatingCheckinTime] = useState(false);
+  const [companyAttendanceStats, setCompanyAttendanceStats] = useState<CompanyAttendanceStats | null>(null);
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -106,6 +117,8 @@ const AttendancePageContent = () => {
       if (userCompany) {
         setCompanyInfo(userCompany);
         fetchEmployees(userCompany.id);
+        fetchCompanyCheckinTime();
+        fetchCompanyAttendanceStats();
       } else {
         setError("No se encontró una empresa asociada a tu usuario");
       }
@@ -135,6 +148,7 @@ const AttendancePageContent = () => {
         AttendanceService.getEmployeeAttendance(parseInt(employeeId), startDate, endDate),
         AttendanceService.getEmployeeAttendanceStats(parseInt(employeeId)),
       ]);
+      console.log("Registros de asistencia del empleado:", attendanceResponse);
       setAttendanceRecords(attendanceResponse);
       setAttendanceStats(statsResponse);
     } catch (err) {
@@ -164,6 +178,10 @@ const AttendancePageContent = () => {
     if (selectedEmployee?.id) {
       fetchEmployeeAttendance(selectedEmployee.id.toString());
     }
+    // Actualizar estadísticas de la empresa cuando cambie el rango de fechas
+    setTimeout(() => {
+      fetchCompanyAttendanceStats();
+    }, 100);
   };
 
   const formatDate = (dateString: Date | string) => {
@@ -183,6 +201,50 @@ const AttendancePageContent = () => {
     employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Funciones para manejo de configuración de hora de check-in
+  const fetchCompanyCheckinTime = async () => {
+    try {
+      const response = await AttendanceService.getCompanyCheckinTime();
+      setCompanyCheckinTime(response);
+      setNewCheckinTime(response.checkInTime || "07:00");
+    } catch (err) {
+      console.error("Error al obtener hora de check-in:", err);
+      // No mostrar error si no existe configuración
+    }
+  };
+
+  const fetchCompanyAttendanceStats = async () => {
+    try {
+      const response = await AttendanceService.getCompanyAttendanceStats(startDate, endDate);
+      console.log("Estadísticas de asistencia de la empresa:", response);
+      setCompanyAttendanceStats(response);
+    } catch (err) {
+      console.error("Error al obtener estadísticas de la empresa:", err);
+    }
+  };
+
+  const handleUpdateCheckinTime = async () => {
+    if (!newCheckinTime) {
+      setError("Por favor ingresa una hora válida");
+      return;
+    }
+
+    try {
+      setUpdatingCheckinTime(true);
+      const response = await AttendanceService.updateCompanyCheckinTime(newCheckinTime);
+      setCompanyCheckinTime(response);
+      setSuccess("Hora de check-in actualizada correctamente");
+      setShowCheckinConfig(false);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("Error al actualizar hora de check-in:", err);
+      setError("Error al actualizar la hora de check-in");
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setUpdatingCheckinTime(false);
+    }
+  };
 
   const startEditRecord = (record: AttendanceRecord) => {
     setEditingRecordId(record.id);
@@ -269,19 +331,46 @@ const AttendancePageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12 pt-20">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-16">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-6 sm:py-8">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Building2 className="h-8 w-8" />
-              <div>
-                <h1 className="text-3xl font-bold">Control de asistencia</h1>
-                {companyInfo && (
-                  <p className="mt-2 text-blue-100">
-                    {companyInfo.name}
-                  </p>
-                )}
+            <div className="flex items-center justify-between mb-4 flex-col sm:flex-row gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <Building2 className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">Control de asistencia</h1>
+                  {companyInfo && (
+                    <p className="mt-1 sm:mt-2 text-blue-100 text-sm sm:text-base truncate">
+                      {companyInfo.name}
+                    </p>
+                  )}
+                  {companyCheckinTime && (
+                    <p className="mt-1 text-blue-200 text-xs sm:text-sm flex items-center gap-1">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Hora límite: {companyCheckinTime.checkInTime}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Botones de acción */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <button
+                  onClick={() => setShowCheckinConfig(true)}
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-medium text-sm sm:text-base"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Configurar</span>
+                </button>
+                <button
+                  onClick={() => router.push('/my-employees')}
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-medium text-sm sm:text-base"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mis Empleados</span>
+                  <span className="sm:hidden">Empleados</span>
+                </button>
               </div>
             </div>
           </div>
@@ -289,10 +378,24 @@ const AttendancePageContent = () => {
 
         {/* Content */}
         <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Breadcrumb */}
+          <div className="bg-white rounded-t-lg px-4 sm:px-6 py-3 border-b border-gray-200">
+            <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 overflow-x-auto">
+              <button
+                onClick={() => router.push('/my-employees')}
+                className="hover:text-[#097EEC] transition-colors whitespace-nowrap"
+              >
+                Mis Empleados
+              </button>
+              <span>/</span>
+              <span className="text-gray-900 font-medium whitespace-nowrap">Control de Asistencia</span>
+            </nav>
+          </div>
+          
+          <div className="bg-white rounded-b-lg shadow-lg p-4 sm:p-6">
             {/* Search Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
@@ -306,12 +409,12 @@ const AttendancePageContent = () => {
               </div>
 
               {/* Date Range Selector */}
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 flex-1">
+                  <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <input
                     type="date"
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none flex-1 min-w-0"
                     value={startDate.toISOString().split('T')[0]}
                     onChange={(e) => {
                       const newDate = new Date(e.target.value);
@@ -319,11 +422,11 @@ const AttendancePageContent = () => {
                     }}
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                <div className="flex items-center gap-2 flex-1">
+                  <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <input
                     type="date"
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none flex-1 min-w-0"
                     value={endDate.toISOString().split('T')[0]}
                     onChange={(e) => {
                       const newDate = new Date(e.target.value);
@@ -338,9 +441,9 @@ const AttendancePageContent = () => {
             {error && (
               <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start gap-3">
                 <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-red-800 font-medium">Error</h3>
-                  <p className="text-red-700">{error}</p>
+                  <p className="text-red-700 break-words">{error}</p>
                 </div>
               </div>
             )}
@@ -348,9 +451,9 @@ const AttendancePageContent = () => {
             {success && (
               <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-green-800 font-medium">Éxito</h3>
-                  <p className="text-green-700">{success}</p>
+                  <p className="text-green-700 break-words">{success}</p>
                 </div>
               </div>
             )}
@@ -363,29 +466,29 @@ const AttendancePageContent = () => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Employees List */}
-                <div className="lg:col-span-1 border-r border-gray-100 pr-4">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <Users className="h-6 w-6 text-[#097EEC]" />
+                <div className="lg:col-span-1 lg:border-r lg:border-gray-100 lg:pr-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-[#097EEC]" />
                     Empleados
                   </h2>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-96 lg:max-h-none overflow-y-auto">
                     {filteredEmployees.map((employee) => (
                       <button
                         key={employee.id}
                         onClick={() => handleEmployeeSelect(employee)}
-                        className={`w-full text-left p-4 rounded-lg transition-colors border ${
+                        className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors border ${
                           selectedEmployee?.id === employee.id
                             ? "bg-[#097EEC] text-white border-[#097EEC] shadow-lg"
                             : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
-                            <UserIcon className="h-5 w-5" />
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           </div>
-                          <div>
-                            <h3 className="font-medium">{employee.name}</h3>
-                            <p className="text-sm opacity-80">{employee.email}</p>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium text-sm sm:text-base truncate">{employee.name}</h3>
+                            <p className="text-xs sm:text-sm opacity-80 truncate">{employee.email}</p>
                           </div>
                         </div>
                       </button>
@@ -398,60 +501,61 @@ const AttendancePageContent = () => {
                   {selectedEmployee ? (
                     <>
                       {/* Header con datos del empleado y acción rápida */}
-                      <div className="flex items-center justify-between mb-6 border-b pb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                            <UserIcon className="h-8 w-8 text-[#097EEC]" />
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b pb-4">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#097EEC]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-[#097EEC]" />
                           </div>
-                          <div>
-                            <h2 className="text-2xl font-bold text-gray-900">{selectedEmployee.name}</h2>
-                            <p className="text-gray-500">{selectedEmployee.email}</p>
+                          <div className="min-w-0 flex-1">
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedEmployee.name}</h2>
+                            <p className="text-gray-500 text-sm sm:text-base truncate">{selectedEmployee.email}</p>
                           </div>
                         </div>
                         <button
-                          className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow transition-colors"
+                          className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow transition-colors text-sm sm:text-base flex-shrink-0"
                           onClick={() => router.push(`/attendance/register?employeeId=${selectedEmployee.id}`)}
                         >
-                          <Save className="h-5 w-5" /> Registrar asistencia
+                          <Save className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <span>Registrar asistencia</span>
                         </button>
                       </div>
 
                       {/* Employee Stats */}
                       {attendanceStats && (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <CalendarCheck className="h-8 w-8 text-[#097EEC]" />
-                              <div>
-                                <p className="text-2xl font-bold">{attendanceStats.totalDays}</p>
-                                <p className="text-sm text-gray-600">Días Asistidos</p>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <CalendarCheck className="h-6 w-6 sm:h-8 sm:w-8 text-[#097EEC] flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.totalDays}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Días Asistidos</p>
                               </div>
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <Clock4 className="h-8 w-8 text-yellow-500" />
-                              <div>
-                                <p className="text-2xl font-bold">{attendanceStats.lateDays}</p>
-                                <p className="text-sm text-gray-600">Días Tardanza</p>
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <Clock4 className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.lateDays}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Días Tardanza</p>
                               </div>
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <CalendarX className="h-8 w-8 text-red-500" />
-                              <div>
-                                <p className="text-2xl font-bold">{attendanceStats.absentDays}</p>
-                                <p className="text-sm text-gray-600">Días Ausente</p>
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <CalendarX className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.absentDays}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Días Ausente</p>
                               </div>
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <Timer className="h-8 w-8 text-green-500" />
-                              <div>
-                                <p className="text-2xl font-bold">{attendanceStats.timeInCompany}</p>
-                                <p className="text-sm text-gray-600">Años en la Empresa</p>
+                          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.timeInCompany}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Años en la Empresa</p>
                               </div>
                             </div>
                           </div>
@@ -460,7 +564,7 @@ const AttendancePageContent = () => {
 
                       {/* Attendance Records */}
                       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                           <h3 className="text-lg font-semibold text-gray-800">Registro de Asistencia</h3>
                           <button
                             onClick={() => {
@@ -475,10 +579,11 @@ const AttendancePageContent = () => {
                               }
                               handleRegisterAttendance(true, "Ausencia manual");
                             }}
-                            className="text-red-600 hover:text-red-800 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                            className="text-red-600 hover:text-red-800 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base"
                           >
-                            <CalendarX className="h-5 w-5" />
-                            Marcar Ausente
+                            <CalendarX className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="hidden sm:inline">Marcar Ausente</span>
+                            <span className="sm:hidden">Ausente</span>
                           </button>
                         </div>
                         {loadingAttendance ? (
@@ -486,30 +591,30 @@ const AttendancePageContent = () => {
                             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#097EEC]"></div>
                           </div>
                         ) : attendanceRecords.length === 0 ? (
-                          <div className="py-12 text-center text-gray-500">
+                          <div className="py-12 text-center text-gray-500 px-4">
                             <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                            <p>No hay asistencias registradas para este empleado en el rango seleccionado.</p>
+                            <p className="text-sm sm:text-base">No hay asistencias registradas para este empleado en el rango seleccionado.</p>
                           </div>
                         ) : (
                           <div className="divide-y divide-gray-200">
                             {attendanceRecords.map((record) => (
                               <div key={record.id} className={`p-4 hover:bg-gray-50 transition-colors ${record.isAbsent ? (record.notes === 'Ausencia automática' ? 'bg-red-50' : 'bg-yellow-50') : ''}`}>
                                 <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                                       record.isLate ? "bg-yellow-100" : record.isAbsent ? (record.notes === 'Ausencia automática' ? "bg-red-200" : "bg-yellow-200") : "bg-green-100"
                                     }`}>
                                       {record.isLate ? (
-                                        <Clock4 className="h-5 w-5 text-yellow-600" />
+                                        <Clock4 className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                                       ) : record.isAbsent ? (
-                                        <CalendarX className={`h-5 w-5 ${record.notes === 'Ausencia automática' ? 'text-red-600' : 'text-yellow-600'}`} />
+                                        <CalendarX className={`h-4 w-4 sm:h-5 sm:w-5 ${record.notes === 'Ausencia automática' ? 'text-red-600' : 'text-yellow-600'}`} />
                                       ) : (
-                                        <CalendarCheck className="h-5 w-5 text-green-600" />
+                                        <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                                       )}
                                     </div>
-                                    <div>
-                                      <p className="font-medium text-gray-900">{formatDate(record.date)}</p>
-                                      <p className="text-sm text-gray-500">
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-gray-900 text-sm sm:text-base">{formatDate(record.date)}</p>
+                                      <p className="text-xs sm:text-sm text-gray-500">
                                         {record.isAbsent ? (
                                           <>
                                             Ausente
@@ -526,25 +631,25 @@ const AttendancePageContent = () => {
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                                     <button
-                                      className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                      className="text-blue-600 hover:text-blue-800 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 transition-colors"
                                       onClick={() => startEditRecord(record)}
                                       disabled={editingRecordId === record.id}
                                     >
-                                      <Pencil className="h-5 w-5" />
+                                      <Pencil className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </button>
                                     <button
-                                      className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                      className="text-red-600 hover:text-red-800 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 transition-colors"
                                       onClick={() => confirmDeleteRecord(record)}
                                     >
-                                      <Trash2 className="h-5 w-5" />
+                                      <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </button>
                                   </div>
                                 </div>
                                 {editingRecordId === record.id && (
-                                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="grid grid-cols-1 gap-4">
                                       <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                           Hora de llegada
@@ -569,37 +674,37 @@ const AttendancePageContent = () => {
                                         />
                                       </div>
                                     </div>
-                                    <div className="flex gap-2 mt-4">
+                                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
                                       <button
-                                        className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                        className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={() => saveEditRecord(record)}
                                       >
-                                        <Save className="h-5 w-5" /> Guardar
+                                        <Save className="h-4 w-4 sm:h-5 sm:w-5" /> Guardar
                                       </button>
                                       <button
-                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={cancelEditRecord}
                                       >
-                                        <X className="h-5 w-5" /> Cancelar
+                                        <X className="h-4 w-4 sm:h-5 sm:w-5" /> Cancelar
                                       </button>
                                     </div>
                                   </div>
                                 )}
                                 {deletingRecordId === record.id && (
-                                  <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                                    <p className="text-red-800 mb-4">¿Estás seguro de que deseas eliminar este registro?</p>
-                                    <div className="flex gap-2">
+                                  <div className="mt-4 p-3 sm:p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <p className="text-red-800 mb-4 text-sm sm:text-base">¿Estás seguro de que deseas eliminar este registro?</p>
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                       <button
-                                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                        className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={() => deleteRecord(record)}
                                       >
-                                        <Trash2 className="h-5 w-5" /> Sí, eliminar
+                                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" /> Sí, eliminar
                                       </button>
                                       <button
-                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={() => setDeletingRecordId(null)}
                                       >
-                                        <X className="h-5 w-5" /> Cancelar
+                                        <X className="h-4 w-4 sm:h-5 sm:w-5" /> Cancelar
                                       </button>
                                     </div>
                                   </div>
@@ -611,10 +716,10 @@ const AttendancePageContent = () => {
                       </div>
                     </>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full py-24 text-center text-gray-500 transition-all duration-300">
-                      <FileText className="h-16 w-16 mx-auto mb-6 text-gray-300" />
-                      <h3 className="text-2xl font-semibold mb-2">Selecciona un empleado</h3>
-                      <p className="mb-4">Haz clic en un empleado de la lista para ver su registro de asistencia.</p>
+                    <div className="flex flex-col items-center justify-center h-full py-16 sm:py-24 text-center text-gray-500 transition-all duration-300 px-4">
+                      <FileText className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 sm:mb-6 text-gray-300" />
+                      <h3 className="text-xl sm:text-2xl font-semibold mb-2">Selecciona un empleado</h3>
+                      <p className="mb-4 text-sm sm:text-base">Haz clic en un empleado de la lista para ver su registro de asistencia.</p>
                     </div>
                   )}
                 </div>
@@ -623,6 +728,69 @@ const AttendancePageContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de configuración de hora de check-in */}
+      {showCheckinConfig && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Settings className="h-6 w-6 text-[#097EEC]" />
+                Configurar Hora de Check-in
+              </h2>
+              <button
+                onClick={() => setShowCheckinConfig(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Hora límite para las llegadas
+                </label>
+                <p className="text-sm text-gray-500 mb-3">
+                  Los empleados que registren su llegada después de esta hora serán marcados como tarde. El valor predeterminado es 07:00 AM.
+                </p>
+                <input
+                  type="time"
+                  value={newCheckinTime}
+                  onChange={(e) => setNewCheckinTime(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleUpdateCheckinTime}
+                disabled={updatingCheckinTime}
+                className="flex-1 bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {updatingCheckinTime ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Guardar
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setShowCheckinConfig(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -635,4 +803,4 @@ const AttendancePage = () => {
   );
 };
 
-export default AttendancePage; 
+export default AttendancePage;

@@ -46,6 +46,7 @@ import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import { translatePriceUnit } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -459,7 +460,7 @@ const PublicationDetailPage = () => {
                           </span>
                           {publication.price && (
                             <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                              <span className="font-semibold">${publication.price.toLocaleString()}</span>
+                              <span className="font-semibold">{formatCurrency(publication.price)}</span>
                               <span className="ml-1">{translatePriceUnit(publication.priceUnit || '')}</span>
                             </span>
                           )}
@@ -788,7 +789,9 @@ const PublicationDetailPage = () => {
                           </h3>
                           <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
-                              ${publication.price.toLocaleString()}
+                              {formatCurrency(publication.price.toLocaleString(), {
+                                showCurrency: true,
+                              })}
                             </div>
                             <div className="text-sm text-gray-600 mb-4">
                               por {translatePriceUnit(publication.priceUnit || '')}
