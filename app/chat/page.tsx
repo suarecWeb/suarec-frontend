@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import MessageService from "@/services/MessageService";
 import { Conversation, Message } from "@/interfaces/message.interface";
@@ -9,6 +9,12 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import RoleGuard from "@/components/role-guard";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
+
+// import MessageNotification from "@/components/MessageNotification";
+import UserSearch from "@/components/UserSearch";
+import ConnectionStatus from "@/components/ConnectionStatus";
+import { useNotification } from "@/contexts/NotificationContext";
 import {
   MessageSquare,
   Users,
@@ -20,6 +26,7 @@ import {
   Loader2,
   AlertCircle,
   User as UserIcon,
+  Plus,
 } from "lucide-react";
 
 const ChatPageContent = () => {
@@ -33,22 +40,46 @@ const ChatPageContent = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+
+
+  const [showUserSearch, setShowUserSearch] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Notifications hook
+  const { showMessageNotification } = useNotification();
+
+      // WebSocket setup
+  const {
+    isConnected,
+    isConnecting,
+    sendMessage: sendWebSocketMessage,
+    markAsRead: markAsReadWebSocket,
+    joinConversation,
+    leaveConversation,
+  } = useWebSocketContext();
 
   useEffect(() => {
     const token = Cookies.get("token");
+    console.log('Token encontrado:', !!token);
+    
     if (!token) {
+      console.log('No hay token, redirigiendo a login');
       router.push("/auth/login");
       return;
     }
 
     try {
       const decoded = jwtDecode<TokenPayload>(token);
+      console.log('Token decodificado, userId:', decoded.id);
       setCurrentUserId(decoded.id);
     } catch (error) {
       console.error("Error al decodificar token:", error);
       router.push("/auth/login");
     }
+
 
   }, [router]);
 
@@ -57,6 +88,41 @@ const ChatPageContent = () => {
       fetchConversations();
     }
   }, [currentUserId]);
+
+  // Abrir conversación específica si se recibe parámetro sender
+  useEffect(() => {
+    const senderId = searchParams.get('sender');
+    if (senderId && conversations.length > 0 && currentUserId && !selectedConversation) {
+      const senderIdNum = parseInt(senderId);
+      const conversation = conversations.find(conv => conv.user.id === senderIdNum);
+      
+      if (conversation) {
+        console.log('🔍 Abriendo conversación específica para sender:', senderIdNum);
+        loadMessages(conversation);
+      } else {
+        console.log('❌ No se encontró conversación para sender:', senderIdNum);
+      }
+    }
+  }, [conversations, currentUserId, searchParams, selectedConversation]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Escuchar confirmaciones de mensajes enviados
+  useEffect(() => {
+    const handleMessageSent = (event: CustomEvent) => {
+      console.log('✅ Mensaje enviado confirmado en chat:', event.detail);
+      setSendingMessage(false);
+    };
+
+    window.addEventListener('message_sent_confirmation', handleMessageSent as EventListener);
+
+    return () => {
+      window.removeEventListener('message_sent_confirmation', handleMessageSent as EventListener);
+    };
+  }, []);
 
   const fetchConversations = async () => {
     if (!currentUserId) return;
@@ -86,6 +152,10 @@ const ChatPageContent = () => {
       setMessages(response.data.data.reverse()); // Mostrar mensajes más antiguos primero
       setSelectedConversation(conversation);
 
+      // Unirse a la conversación en WebSocket
+      const conversationId = `${Math.min(currentUserId, conversation.user.id)}_${Math.max(currentUserId, conversation.user.id)}`;
+      // joinConversation(conversationId); // Comentado temporalmente
+
       // Marcar mensajes como leídos
       const unreadMessages = response.data.data.filter(
         msg => !msg.read && msg.recipientId === currentUserId
@@ -98,7 +168,29 @@ const ChatPageContent = () => {
       }
 
       // Actualizar el conteo de no leídos en la conversación
-      conversation.unreadCount = 0;
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.user.id === conversation.user.id
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
+
+      // También actualizar los mensajes para marcarlos como leídos localmente
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.recipientId === currentUserId
+            ? { ...msg, read: true, read_at: new Date() }
+            : msg
+        )
+      );
+
+      // Enviar eventos de "marcado como leído" para todos los mensajes no leídos
+      for (const msg of unreadMessages) {
+        if (msg.id && markAsReadWebSocket) {
+          markAsReadWebSocket(msg.id);
+        }
+      }
     } catch (err) {
       console.error("Error al cargar mensajes:", err);
       setError("Error al cargar los mensajes");
@@ -118,24 +210,43 @@ const ChatPageContent = () => {
         recipientId: selectedConversation.user.id,
       };
 
-      const response = await MessageService.createMessage(messageData);
+      // Enviar mensaje a través de WebSocket
+      sendWebSocketMessage(messageData);
       
-      // Agregar el mensaje a la lista local
-      setMessages(prev => [...prev, response.data]);
+      // Agregar el mensaje localmente (se actualizará cuando llegue la confirmación)
+      const tempMessage: Message = {
+        id: `temp_${Date.now()}`,
+        content: newMessage,
+        senderId: currentUserId,
+        recipientId: selectedConversation.user.id,
+        sent_at: new Date(),
+        read: false,
+        sender: {
+          id: currentUserId,
+          name: "Tú",
+          profile_image: undefined, // No usar foto para mensajes temporales
+        },
+      };
+      
+      setMessages(prev => [...prev, tempMessage]);
       setNewMessage("");
 
       // Actualizar la conversación con el nuevo mensaje
       setConversations(prev =>
         prev.map(conv =>
           conv.user.id === selectedConversation.user.id
-            ? { ...conv, lastMessage: response.data }
+            ? { ...conv, lastMessage: tempMessage }
             : conv
         )
       );
+
+      // Resetear el estado de envío después de un breve delay
+      setTimeout(() => {
+        setSendingMessage(false);
+      }, 1000);
     } catch (err) {
       console.error("Error al enviar mensaje:", err);
       setError("Error al enviar el mensaje");
-    } finally {
       setSendingMessage(false);
     }
   };
@@ -145,6 +256,10 @@ const ChatPageContent = () => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleTypingChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
   };
 
   const formatTime = (dateString: Date | string) => {
@@ -174,6 +289,38 @@ const ChatPageContent = () => {
     }
   };
 
+
+
+  const handleSelectUser = (user: any) => {
+    // Crear una nueva conversación con el usuario seleccionado
+    const newConversation: Conversation = {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profile_image: user.profile_image,
+      },
+      lastMessage: {
+        id: '',
+        content: '',
+        senderId: 0,
+        recipientId: 0,
+        sent_at: new Date(),
+        read: false,
+      },
+      unreadCount: 0,
+    };
+
+    // Agregar la conversación a la lista si no existe
+    const existingConversation = conversations.find(conv => conv.user.id === user.id);
+    if (!existingConversation) {
+      setConversations(prev => [newConversation, ...prev]);
+    }
+
+    // Cargar los mensajes (puede estar vacío si es nueva)
+    loadMessages(existingConversation || newConversation);
+  };
+
   const filteredConversations = conversations.filter(conv =>
     conv.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     conv.user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -184,10 +331,16 @@ const ChatPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-8 mt-16">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Mensajes</h1>
-            <p className="mt-2 text-blue-100">Comunícate con otros usuarios de la plataforma</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Mensajes</h1>
+                <p className="mt-2 text-blue-100">Comunícate con otros usuarios de la plataforma</p>
+              </div>
+              <ConnectionStatus isConnected={isConnected} isConnecting={isConnecting} />
+
+            </div>
           </div>
         </div>
 
@@ -199,17 +352,26 @@ const ChatPageContent = () => {
               <div className="w-1/3 border-r border-gray-200 flex flex-col">
                 {/* Search */}
                 <div className="p-4 border-b border-gray-200">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Buscar conversaciones..."
+                        className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Buscar conversaciones..."
-                      className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <button
+                      onClick={() => setShowUserSearch(true)}
+                      className="px-3 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2"
+                      title="Nuevo mensaje"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -246,11 +408,8 @@ const ChatPageContent = () => {
                             <div className={`w-12 h-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${conversation.user.profile_image ? 'hidden' : ''}`}>
                               <UserIcon className="h-6 w-6 text-[#097EEC]" />
                             </div>
-                            {conversation.unreadCount > 0 && (
-                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                {conversation.unreadCount}
-                              </div>
-                            )}
+                            {/* Removed unread count badge */}
+
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
@@ -262,6 +421,7 @@ const ChatPageContent = () => {
                             <p className="text-sm text-gray-600 truncate mt-1">
                               {conversation.lastMessage.content}
                             </p>
+
                           </div>
                         </div>
                       </div>
@@ -282,22 +442,7 @@ const ChatPageContent = () => {
                     {/* Chat Header */}
                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center gap-3">
-                        {selectedConversation.user.profile_image ? (
-                          <img
-                            src={selectedConversation.user.profile_image}
-                            alt={selectedConversation.user.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-10 h-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${selectedConversation.user.profile_image ? 'hidden' : ''}`}>
-                          <UserIcon className="h-5 w-5 text-[#097EEC]" />
-                        </div>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{selectedConversation.user.name}</h3>
                           <p className="text-sm text-gray-500">{selectedConversation.user.email}</p>
                         </div>
@@ -313,29 +458,11 @@ const ChatPageContent = () => {
                         </div>
                       ) : messages.length > 0 ? (
                         messages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex items-end gap-2 ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
-                          >
-                            {message.sender?.id !== currentUserId && (
-                              <div className="flex-shrink-0">
-                                {message.sender?.profile_image ? (
-                                  <img
-                                    src={message.sender.profile_image}
-                                    alt={message.sender.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
-                                      target.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-8 h-8 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${message.sender?.profile_image ? 'hidden' : ''}`}>
-                                  <UserIcon className="h-4 w-4 text-[#097EEC]" />
-                                </div>
-                              </div>
-                            )}
+                            <div
+                              key={message.id}
+                              className={`flex items-end gap-2 ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
+                            >
+                            {/* Removed profile images for sender */}
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                 message.sender?.id === currentUserId
@@ -361,25 +488,7 @@ const ChatPageContent = () => {
                                 )}
                               </div>
                             </div>
-                            {message.sender?.id === currentUserId && (
-                              <div className="flex-shrink-0">
-                                {message.sender?.profile_image ? (
-                                  <img
-                                    src={message.sender.profile_image}
-                                    alt={message.sender.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
-                                      target.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-8 h-8 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${message.sender?.profile_image ? 'hidden' : ''}`}>
-                                  <UserIcon className="h-4 w-4 text-[#097EEC]" />
-                                </div>
-                              </div>
-                            )}
+                            {/* Removed profile images for receiver */}
                           </div>
                         ))
                       ) : (
@@ -388,6 +497,7 @@ const ChatPageContent = () => {
                           <p className="text-gray-500">No hay mensajes en esta conversación</p>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
 
                     {/* Message Input */}
@@ -395,7 +505,7 @@ const ChatPageContent = () => {
                       <div className="flex gap-2">
                         <textarea
                           value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
+                          onChange={handleTypingChange}
                           onKeyPress={handleKeyPress}
                           placeholder="Escribe un mensaje..."
                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
@@ -440,6 +550,15 @@ const ChatPageContent = () => {
             </div>
           )}
         </div>
+
+
+
+        {/* User Search Modal */}
+        <UserSearch
+          isOpen={showUserSearch}
+          onClose={() => setShowUserSearch(false)}
+          onSelectUser={handleSelectUser}
+        />
       </div>
     </>
   );
@@ -447,7 +566,7 @@ const ChatPageContent = () => {
 
 const ChatPage = () => {
   return (
-    <RoleGuard allowedRoles={["ADMIN", "BUSINESS", "PERSON"]}>
+    <RoleGuard allowedRoles={['ADMIN', 'PERSON', 'BUSINESS']}>
       <ChatPageContent />
     </RoleGuard>
   );
