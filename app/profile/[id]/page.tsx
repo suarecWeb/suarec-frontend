@@ -28,7 +28,9 @@ import {
     Award,
     Globe,
     ArrowLeft,
-    Send
+    Send,
+    Edit,
+    Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -38,6 +40,7 @@ import { User } from "@/interfaces/user.interface";
 import { TokenPayload } from "@/interfaces/auth.interface"
 import StartChatButton from "@/components/start-chat-button"
 import DownloadCVButton from "@/components/download-cv-button"
+import PublicationService from "@/services/PublicationsService"
 
 interface PublicProfilePageProps {
     params: {
@@ -526,34 +529,69 @@ const PublicProfilePage = () => {
                                                 Publicaciones
                                             </h3>
                                             <div className="space-y-4">
-                                                {user.publications.slice(0, 3).map((pub: any) => (
-                                                    <div key={pub.id} className="bg-gray-50 rounded-lg p-4">
-                                                        <div className="flex justify-between items-start">
-                                                            <h4 className="font-medium text-gray-800">{pub.title}</h4>
-                                                            <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
-                                                                {pub.category}
-                                                            </span>
-                                                        </div>
-                                                        {pub.description && (
-                                                            <p className="text-gray-600 mt-2 text-sm line-clamp-2">{pub.description}</p>
-                                                        )}
-                                                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-                                                            <div className="flex items-center gap-1">
-                                                                <Calendar className="h-3 w-3" />
-                                                                <span>{formatDate(pub.created_at)}</span>
+                                                {user.publications.slice(0, 3).map((pub: any) => {
+                                                    const isOwnPublication = currentUser && currentUser.id === parseInt(userId);
+                                                    const canEdit = isOwnPublication || (currentUser && currentUser.roles?.some((role: any) => role.name === 'ADMIN'));
+                                                    
+                                                    return (
+                                                        <div key={pub.id} className="bg-gray-50 rounded-lg p-4">
+                                                            <div className="flex justify-between items-start">
+                                                                <h4 className="font-medium text-gray-800">{pub.title}</h4>
+                                                                <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                                                                    {pub.category}
+                                                                </span>
                                                             </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <Eye className="h-3 w-3" />
-                                                                <span>{pub.visitors || 0} visitas</span>
+                                                            {pub.description && (
+                                                                <p className="text-gray-600 mt-2 text-sm line-clamp-2">{pub.description}</p>
+                                                            )}
+                                                            <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    <span>{formatDate(pub.created_at)}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Eye className="h-3 w-3" />
+                                                                    <span>{pub.visitors || 0} visitas</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Link href={`/feed/${pub.id}`}>
+                                                                        <button className="text-[#097EEC] hover:text-[#0A6BC7] text-xs flex items-center gap-1">
+                                                                            Ver más <ExternalLink className="h-3 w-3" />
+                                                                        </button>
+                                                                    </Link>
+                                                                    {canEdit && (
+                                                                        <>
+                                                                            <Link href={`/publications/${pub.id}/edit`}>
+                                                                                <button className="text-amber-600 hover:text-amber-700 text-xs flex items-center gap-1">
+                                                                                    <Edit className="h-3 w-3" />
+                                                                                    Editar
+                                                                                </button>
+                                                                            </Link>
+                                                                            <button 
+                                                                                onClick={async () => {
+                                                                                    if (confirm('¿Estás seguro de que deseas eliminar esta publicación?')) {
+                                                                                        try {
+                                                                                            await PublicationService.deletePublication(pub.id);
+                                                                                            // Recargar la página para actualizar la lista
+                                                                                            window.location.reload();
+                                                                                        } catch (error) {
+                                                                                            console.error('Error al eliminar publicación:', error);
+                                                                                            alert('Error al eliminar la publicación');
+                                                                                        }
+                                                                                    }
+                                                                                }}
+                                                                                className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
+                                                                            >
+                                                                                <Trash2 className="h-3 w-3" />
+                                                                                Eliminar
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                            <Link href={`/publications/${pub.id}`}>
-                                                                <button className="text-[#097EEC] hover:text-[#0A6BC7] text-xs flex items-center gap-1">
-                                                                    Ver más <ExternalLink className="h-3 w-3" />
-                                                                </button>
-                                                            </Link>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                                 {user.publications.length > 3 && (
                                                     <div className="text-center mt-4">
                                                         <p className="text-sm text-gray-500">

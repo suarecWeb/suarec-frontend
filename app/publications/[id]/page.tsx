@@ -158,7 +158,7 @@ const PublicationDetailPage = () => {
     
     try {
       await PublicationService.deletePublication(publication.id);
-      router.push("/publications");
+      router.push("/feed");
     } catch (err) {
       console.error("Error al eliminar la publicación:", err);
       setError("No se pudo eliminar la publicación");

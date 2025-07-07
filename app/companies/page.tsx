@@ -187,9 +187,19 @@ const CompaniesPageContent = () => {
                       >
                         <div className="p-6">
                           <div className="flex items-start gap-4">
-                            <div className="flex-shrink-0 h-12 w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                              <Building2 className="h-6 w-6 text-[#097EEC]" />
-                            </div>
+                            {company.user?.profile_image ? (
+                              <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden">
+                                <img 
+                                  src={company.user.profile_image} 
+                                  alt={company.name} 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 h-12 w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
+                                <Building2 className="h-6 w-6 text-[#097EEC]" />
+                              </div>
+                            )}
                             <div className="flex-1">
                               <h3 className="text-lg font-semibold text-gray-800 mb-1">{company.name}</h3>
                               <p className="text-sm text-gray-500 font-medium">NIT: {company.nit}</p>
