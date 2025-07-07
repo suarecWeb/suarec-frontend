@@ -46,6 +46,7 @@ import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import { translatePriceUnit } from '@/lib/utils';
 import { formatCurrency } from "@/lib/formatCurrency";
+import { Application } from "@/interfaces/application.interface";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -67,6 +68,7 @@ const PublicationDetailPage = () => {
   const [isApplying, setIsApplying] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState("");
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [applicationSuggestedPrice, setApplicationSuggestedPrice] = useState("");
 
   // Estados para contratación
   const [showContractModal, setShowContractModal] = useState(false);
@@ -74,6 +76,17 @@ const PublicationDetailPage = () => {
   // Estados para ofertas
   const [publicationBids, setPublicationBids] = useState<{ contracts: Contract[], totalBids: number }>({ contracts: [], totalBids: 0 });
   const [isLoadingBids, setIsLoadingBids] = useState(false);
+
+  // Estado para aplicaciones recibidas
+  const [receivedApplications, setReceivedApplications] = useState<Application[]>([]);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+
+  // Estado para controlar el ContractModal contextual a la postulación seleccionada
+  const [contractModalForApplication, setContractModalForApplication] = useState<Application | null>(null);
+
+  // Agrega estado para controlar la contraoferta
+  const [negotiatingAppId, setNegotiatingAppId] = useState<string | null>(null);
+  const [counterOfferPrice, setCounterOfferPrice] = useState<string>("");
 
   useEffect(() => {
     const fetchPublicationDetails = async () => {
@@ -152,6 +165,36 @@ const PublicationDetailPage = () => {
     }
   }, [publication?.id]);
 
+  // Agregar logs de depuración
+  useEffect(() => {
+    console.log("publication.userId:", publication?.user?.id, typeof publication?.user?.id);
+    console.log("currentUserId:", currentUserId, typeof currentUserId);
+    console.log("publication.publicationType:", publication?.publicationType);
+  }, [publication, currentUserId]);
+
+  // Cargar aplicaciones recibidas si es dueño y SERVICE_REQUEST
+  useEffect(() => {
+    if (
+      publication &&
+      currentUserId &&
+      String(publication.user?.id) === String(currentUserId) &&
+      publication.publicationType === 'SERVICE_REQUEST'
+    ) {
+      console.log("Cargando aplicaciones recibidas para esta publicación");
+      setIsLoadingApplications(true);
+      ApplicationService.getPublicationApplications(publication.id || "")
+        .then((res) => {
+          console.log("Aplicaciones recibidas:", res.data.data);
+          setReceivedApplications(res.data.data);
+        })
+        .catch((e) => {
+          console.log("Error al obtener aplicaciones:", e);
+          setReceivedApplications([]);
+        })
+        .finally(() => setIsLoadingApplications(false));
+    }
+  }, [publication, currentUserId]);
+
   const handleDeletePublication = async () => {
     if (!publication?.id) return;
     
@@ -189,8 +232,14 @@ const PublicationDetailPage = () => {
 
   // Función para determinar si la publicación es de una empresa
   const isCompanyPublication = () => {
-    console.log(author + " autoroorrr")
-    return author?.company !== undefined && author?.company !== null;
+    // Verificar si el autor tiene empresa
+    const hasCompany = author?.company !== undefined && author?.company !== null;
+    
+    // Verificar si es un tipo de publicación de empresa
+    const isCompanyType = publication?.publicationType === 'COMPANY_SERVICE_OFFER' || 
+                         publication?.publicationType === 'COMPANY_JOB_OFFER';
+    
+    return hasCompany || isCompanyType;
   };
 
   // Función para manejar la aplicación a una publicación
@@ -204,6 +253,7 @@ const PublicationDetailPage = () => {
         userId: currentUserId,
         publicationId: publication.id,
         message: applicationMessage.trim() || undefined,
+        suggestedPrice: applicationSuggestedPrice ? Number(applicationSuggestedPrice) : undefined,
       };
       
       const response = await ApplicationService.createApplication(applicationData);
@@ -212,6 +262,7 @@ const PublicationDetailPage = () => {
       setApplicationId(response.data.id || null);
       setShowApplicationModal(false);
       setApplicationMessage("");
+      setApplicationSuggestedPrice("");
       
       // Mostrar mensaje de éxito
       setError(null);
@@ -332,25 +383,32 @@ const PublicationDetailPage = () => {
           {showApplicationModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Aplicar a esta publicación</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Ofrecer mi servicio</h3>
                 <p className="text-gray-600 mb-4">
-                  ¿Estás interesado en esta oportunidad? Puedes enviar un mensaje opcional junto con tu aplicación.
+                  ¿Quieres postularte para realizar este servicio? Puedes dejar un mensaje y una tarifa sugerida.
                 </p>
-                
+                <input
+                  type="number"
+                  placeholder="Tarifa sugerida (opcional)"
+                  className="w-full px-4 py-2 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  value={applicationSuggestedPrice || ''}
+                  onChange={e => setApplicationSuggestedPrice(e.target.value)}
+                  min="1"
+                />
                 <textarea
-                  placeholder="Escribe un mensaje opcional..."
+                  placeholder="Mensaje opcional..."
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                   rows={4}
                   value={applicationMessage}
-                  onChange={(e) => setApplicationMessage(e.target.value)}
+                  onChange={e => setApplicationMessage(e.target.value)}
                   disabled={isApplying}
-                />
-                
+                ></textarea>
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => {
                       setShowApplicationModal(false);
                       setApplicationMessage("");
+                      setApplicationSuggestedPrice("");
                     }}
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
                     disabled={isApplying}
@@ -497,7 +555,7 @@ const PublicationDetailPage = () => {
                     </div>
 
                     {/* Botones de Aplicar/Contratar */}
-                    {currentUserId && publication.userId !== currentUserId && (
+                    {currentUserId && publication.user?.id !== String(currentUserId) && (
                       <div className="mt-6 pt-4 border-t border-gray-200">
                         {isCompanyPublication() ? (
                           // Botón para aplicar a empresa
@@ -514,9 +572,20 @@ const PublicationDetailPage = () => {
                                 disabled={isApplying}
                               >
                                 <Briefcase className="h-5 w-5" />
-                                Aplicar a esta oportunidad
+                                {publication?.publicationType === 'COMPANY_JOB_OFFER' ? 'Aplicar a esta vacante' : 'Aplicar a esta oportunidad'}
                               </button>
                             )}
+                          </div>
+                        ) : publication?.publicationType === 'SERVICE_REQUEST' ? (
+                          // Botón para ofrecer servicio a quien lo necesita (abre modal de postulación)
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <button
+                              onClick={() => setShowApplicationModal(true)}
+                              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg transform hover:scale-105"
+                            >
+                              <HandHeart className="h-5 w-5" />
+                              Ofrecer mi servicio
+                            </button>
                           </div>
                         ) : (
                           // Botón para contratar persona
@@ -526,15 +595,21 @@ const PublicationDetailPage = () => {
                               className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg transform hover:scale-105"
                             >
                               <HandHeart className="h-5 w-5" />
-                              Contratar este servicio
+                              {publication?.publicationType === 'INFORMAL_JOB_OFFER' ? 'Aplicar a este trabajo' : 'Contratar este servicio'}
                             </button>
                           </div>
                         )}
                         
                         <p className="text-sm text-gray-500 mt-3">
                           {isCompanyPublication() 
-                            ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
-                            : "Inicia el proceso de contratación con negociación de precios."
+                            ? publication?.publicationType === 'COMPANY_JOB_OFFER'
+                              ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte para la vacante."
+                              : "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
+                            : publication?.publicationType === 'SERVICE_REQUEST'
+                              ? "Ofrece tu servicio para ayudar con esta necesidad."
+                              : publication?.publicationType === 'INFORMAL_JOB_OFFER'
+                                ? "Aplica a este trabajo informal por prestación de servicios."
+                                : "Inicia el proceso de contratación con negociación de precios."
                           }
                         </p>
                       </div>
@@ -569,8 +644,102 @@ const PublicationDetailPage = () => {
                         </div>
                       </div>
 
+                      {/* Aplicaciones recibidas - solo dueño y SERVICE_REQUEST */}
+                      {currentUserId && String(publication.user?.id) === String(currentUserId) && publication.publicationType === 'SERVICE_REQUEST' && (
+                        <div className="border-t border-gray-200 pt-6 mt-8">
+                          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                            <span className="w-1 h-6 bg-green-500 rounded-full"></span>
+                            <Briefcase className="h-5 w-5 text-green-600" />
+                            Aplicaciones recibidas
+                          </h3>
+                          {isLoadingApplications ? (
+                            <div className="text-gray-500">Cargando aplicaciones...</div>
+                          ) : receivedApplications.length > 0 ? (
+                            <div className="space-y-4">
+                              {receivedApplications.map((app) => (
+                                <div key={app.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-start gap-4">
+                                  <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                    <UserIcon className="h-5 w-5" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-semibold text-gray-800">{app.user?.name || `Usuario #${app.userId}`}</p>
+                                    <p className="text-sm text-gray-500 mb-1">{formatDate(app.created_at)}</p>
+                                    {app.message && <p className="text-gray-700 mb-2">{app.message}</p>}
+                                    {app.suggestedPrice && <p className="text-blue-700 text-sm mb-2">Tarifa sugerida: ${app.suggestedPrice.toLocaleString()}</p>}
+                                    {app.status === 'NEGOTIATING' && app.counterOfferPrice && (
+                                      <p className="text-orange-700 text-sm mb-2">Contraoferta: ${app.counterOfferPrice.toLocaleString()}</p>
+                                    )}
+                                    <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">{app.status === 'PENDING' ? 'Pendiente' : app.status === 'ACCEPTED' ? 'Aceptada' : app.status === 'REJECTED' ? 'Rechazada' : 'En negociación'}</span>
+                                    {app.status === 'PENDING' && (
+                                      <div className="flex gap-2 mt-2">
+                                        <button
+                                          className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                          onClick={() => setContractModalForApplication(app)}
+                                        >
+                                          Aceptar
+                                        </button>
+                                        <button
+                                          className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                          onClick={async () => {
+                                            await ApplicationService.updateApplication(app.id!, { status: 'REJECTED' });
+                                            const res = await ApplicationService.getPublicationApplications(publication.id || "");
+                                            setReceivedApplications(res.data.data);
+                                          }}
+                                        >
+                                          Rechazar
+                                        </button>
+                                        <button
+                                          className="px-3 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition-colors"
+                                          onClick={() => setNegotiatingAppId(app.id!)}
+                                        >
+                                          Proponer contraoferta
+                                        </button>
+                                      </div>
+                                    )}
+                                    {/* Formulario de contraoferta */}
+                                    {negotiatingAppId === app.id && (
+                                      <div className="mt-3 flex gap-2 items-center">
+                                        <input
+                                          type="number"
+                                          placeholder="Tarifa de contraoferta"
+                                          className="px-2 py-1 border border-gray-300 rounded"
+                                          value={counterOfferPrice}
+                                          onChange={e => setCounterOfferPrice(e.target.value)}
+                                          min="1"
+                                        />
+                                        <button
+                                          className="px-3 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition-colors"
+                                          onClick={async () => {
+                                            await ApplicationService.updateApplication(app.id!, { status: 'NEGOTIATING', counterOfferPrice: Number(counterOfferPrice) });
+                                            setNegotiatingAppId(null);
+                                            setCounterOfferPrice("");
+                                            const res = await ApplicationService.getPublicationApplications(publication.id || "");
+                                            setReceivedApplications(res.data.data);
+                                          }}
+                                          disabled={!counterOfferPrice}
+                                        >
+                                          Enviar contraoferta
+                                        </button>
+                                        <button
+                                          className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition-colors"
+                                          onClick={() => { setNegotiatingAppId(null); setCounterOfferPrice(""); }}
+                                        >
+                                          Cancelar
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-gray-500">No hay aplicaciones recibidas aún.</div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Ofertas recibidas - Solo mostrar si es el autor de la publicación */}
-                      {currentUserId && publication.userId === currentUserId && !isCompanyPublication() && (
+                      {currentUserId && publication.user?.id === String(currentUserId) && !isCompanyPublication() && (
                         <div className="border-t border-gray-200 pt-6 mt-8">
                           <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
                             <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
@@ -907,6 +1076,17 @@ const PublicationDetailPage = () => {
               publication={publication}
               isOpen={showContractModal}
               onClose={() => setShowContractModal(false)}
+            />
+          )}
+
+          {/* Renderiza el ContractModal contextual si hay una postulación seleccionada */}
+          {contractModalForApplication && publication && (
+            <ContractModal
+              publication={publication}
+              isOpen={!!contractModalForApplication}
+              onClose={() => setContractModalForApplication(null)}
+              application={contractModalForApplication}
+              lockPrice={true}
             />
           )}
         </div>

@@ -29,6 +29,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import ContractModal from "@/components/contract-modal";
 
 const MyApplicationsPageContent = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -45,6 +46,9 @@ const MyApplicationsPageContent = () => {
     hasNextPage: false,
     hasPrevPage: false,
   });
+  const [negotiatingAppId, setNegotiatingAppId] = useState<string | null>(null);
+  const [counterOfferPrice, setCounterOfferPrice] = useState<string>("");
+  const [contractModalForNegotiation, setContractModalForNegotiation] = useState<Application | null>(null);
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -209,6 +213,7 @@ const MyApplicationsPageContent = () => {
 
   // Renderizar tarjeta de aplicación
   const renderApplicationCard = (application: Application) => {
+    const isServiceRequest = application.publication?.publicationType === 'SERVICE_REQUEST';
     return (
       <div 
         key={application.id} 
@@ -242,7 +247,7 @@ const MyApplicationsPageContent = () => {
           {/* Información de la publicación */}
           <div className="mb-4">
             <Link 
-              href={`/publications/${application.publicationId}`}
+              href={`/publications/${application.publication?.id}`}
               className="group"
             >
               <h3 className="font-semibold text-gray-800 group-hover:text-[#097EEC] transition-colors flex items-center gap-2">
@@ -317,6 +322,62 @@ const MyApplicationsPageContent = () => {
               <p className="text-yellow-700 text-sm">
                 Tu aplicación está siendo revisada por la empresa. Te notificaremos cuando haya una respuesta.
               </p>
+            </div>
+          )}
+
+          {application.status === 'NEGOTIATING' && isServiceRequest && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                <span className="font-medium text-orange-800">¡Negociación en curso!</span>
+              </div>
+              <p className="text-orange-700 text-sm mb-2">
+                Última tarifa propuesta: ${application.counterOfferPrice?.toLocaleString() || application.suggestedPrice?.toLocaleString()}
+              </p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                  onClick={() => setContractModalForNegotiation(application)}
+                >
+                  Aceptar tarifa y formalizar contrato
+                </button>
+                <button
+                  className="px-3 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition-colors"
+                  onClick={() => setNegotiatingAppId(application.id!)}
+                >
+                  Proponer nueva tarifa
+                </button>
+              </div>
+              {negotiatingAppId === application.id && (
+                <div className="mt-3 flex gap-2 items-center">
+                  <input
+                    type="number"
+                    placeholder="Tu nueva tarifa"
+                    className="px-2 py-1 border border-gray-300 rounded"
+                    value={counterOfferPrice}
+                    onChange={e => setCounterOfferPrice(e.target.value)}
+                    min="1"
+                  />
+                  <button
+                    className="px-3 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition-colors"
+                    onClick={async () => {
+                      await ApplicationService.updateApplication(application.id!, { status: 'NEGOTIATING', counterOfferPrice: Number(counterOfferPrice) });
+                      setNegotiatingAppId(null);
+                      setCounterOfferPrice("");
+                      fetchApplications();
+                    }}
+                    disabled={!counterOfferPrice}
+                  >
+                    Enviar contraoferta
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition-colors"
+                    onClick={() => { setNegotiatingAppId(null); setCounterOfferPrice(""); }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -471,6 +532,15 @@ const MyApplicationsPageContent = () => {
           </div>
         </div>
       </div>
+      {contractModalForNegotiation && contractModalForNegotiation.publication && (
+        <ContractModal
+          publication={contractModalForNegotiation.publication}
+          isOpen={!!contractModalForNegotiation}
+          onClose={() => setContractModalForNegotiation(null)}
+          application={contractModalForNegotiation}
+          lockPrice={true}
+        />
+      )}
     </>
   );
 };

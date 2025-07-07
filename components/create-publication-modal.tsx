@@ -7,6 +7,7 @@ import PublicationService from '../services/PublicationsService';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../interfaces/auth.interface';
+import { PUBLICATION_TYPES, PUBLICATION_TYPE_LABELS, PUBLICATION_TYPE_DESCRIPTIONS, PUBLICATION_TYPES_BY_ROLE } from '../constants/publicationTypes';
 import { X, FileImage, Loader2, CheckCircle, Info, AlertCircle } from 'lucide-react';
 
 interface CreatePublicationModalProps {
@@ -19,9 +20,13 @@ interface FormData {
   title: string;
   description: string;
   category: string;
+  publicationType: string;
   image_url?: string;
   price?: number;
   priceUnit?: string;
+  serviceAddress?: string;
+  paymentMethod?: string;
+  serviceDetails?: string;
 }
 
 // Categorías disponibles
@@ -57,6 +62,7 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const router = useRouter();
 
   const {
@@ -76,13 +82,21 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
     },
   });
 
-  // Validar que el usuario esté autenticado
+  // Validar que el usuario esté autenticado y obtener roles
   useEffect(() => {
     if (isOpen) {
       const token = Cookies.get("token");
       if (!token) {
         router.push("/auth/login");
         onClose();
+        return;
+      }
+      
+      try {
+        const decoded = jwtDecode<TokenPayload>(token);
+        setUserRoles(decoded.roles.map(role => role.name));
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
       }
     }
   }, [isOpen, router, onClose]);
@@ -142,13 +156,19 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
+        publicationType: data.publicationType,
         image_url: imageUrl || undefined,
-        price: data.price ? Number(data.price) : undefined, // Convertir explícitamente a número
+        price: data.price ? Number(data.price) : undefined,
         priceUnit: data.priceUnit || undefined,
-        created_at: new Date(), 
+        created_at: new Date(),
         modified_at: new Date(),
         userId: Number(decoded.id),
-        visitors: 0
+        visitors: 0,
+        ...(data.publicationType === 'SERVICE_REQUEST' ? {
+          serviceAddress: data.serviceAddress,
+          paymentMethod: data.paymentMethod,
+          serviceDetails: data.serviceDetails
+        } : {})
       };
             
       const response = await PublicationService.createPublication(publicationData);
@@ -290,6 +310,41 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                   )}
                 </div>
 
+                {/* Publication Type field */}
+                <div className="space-y-2">
+                  <label htmlFor="publicationType" className="block text-sm font-medium text-gray-700">
+                    Tipo de publicación <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="publicationType"
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                      errors.publicationType ? "border-red-500" : "border-gray-200"
+                    }`}
+                    {...register("publicationType", {
+                      required: "El tipo de publicación es obligatorio",
+                    })}
+                    disabled={isLoading}
+                  >
+                    <option value="">Selecciona el tipo de publicación</option>
+                    {userRoles.map(role => {
+                      const availableTypes = PUBLICATION_TYPES_BY_ROLE[role as keyof typeof PUBLICATION_TYPES_BY_ROLE] || [];
+                      return availableTypes.map(type => (
+                        <option key={type} value={type}>
+                          {PUBLICATION_TYPE_LABELS[type as keyof typeof PUBLICATION_TYPE_LABELS]}
+                        </option>
+                      ));
+                    }).flat()}
+                  </select>
+                  {errors.publicationType && (
+                    <p className="text-red-500 text-xs mt-1">{errors.publicationType.message}</p>
+                  )}
+                  {watch("publicationType") && (
+                    <p className="text-gray-500 text-xs">
+                      {PUBLICATION_TYPE_DESCRIPTIONS[watch("publicationType") as keyof typeof PUBLICATION_TYPE_DESCRIPTIONS]}
+                    </p>
+                  )}
+                </div>
+
                 {/* Description field */}
                 <div className="space-y-2">
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700">
@@ -381,6 +436,64 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     </div>
                   </div>
                 </div>
+
+                {/* SOLO para SERVICE_REQUEST: dirección, método de pago, detalles */}
+                {watch("publicationType") === 'SERVICE_REQUEST' && (
+                  <>
+                    <div className="space-y-2">
+                      <label htmlFor="serviceAddress" className="block text-sm font-medium text-gray-700">
+                        Dirección del servicio <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="serviceAddress"
+                        type="text"
+                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${errors.serviceAddress ? "border-red-500" : "border-gray-200"}`}
+                        placeholder="Ej. Calle 123 #45-67, Barrio, Ciudad"
+                        {...register("serviceAddress", {
+                          required: "La dirección es obligatoria para este tipo de publicación"
+                        })}
+                        disabled={isLoading}
+                      />
+                      {errors.serviceAddress && (
+                        <p className="text-red-500 text-xs mt-1">{errors.serviceAddress.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700">
+                        Método de pago preferido <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="paymentMethod"
+                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${errors.paymentMethod ? "border-red-500" : "border-gray-200"}`}
+                        {...register("paymentMethod", {
+                          required: "El método de pago es obligatorio para este tipo de publicación"
+                        })}
+                        disabled={isLoading}
+                      >
+                        <option value="">Selecciona un método de pago</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia bancaria</option>
+                        <option value="tarjeta">Tarjeta de crédito/débito</option>
+                      </select>
+                      {errors.paymentMethod && (
+                        <p className="text-red-500 text-xs mt-1">{errors.paymentMethod.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="serviceDetails" className="block text-sm font-medium text-gray-700">
+                        Detalles logísticos (opcional)
+                      </label>
+                      <textarea
+                        id="serviceDetails"
+                        rows={2}
+                        className="w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                        placeholder="Ej. Piso 2, acceso por portería, horario preferido, etc."
+                        {...register("serviceDetails")}
+                        disabled={isLoading}
+                      ></textarea>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Right column - Image upload and preview */}

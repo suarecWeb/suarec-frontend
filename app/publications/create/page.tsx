@@ -18,12 +18,14 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { PUBLICATION_TYPES, PUBLICATION_TYPE_LABELS, PUBLICATION_TYPE_DESCRIPTIONS, PUBLICATION_TYPES_BY_ROLE } from "@/constants/publicationTypes";
 
 // Interfaces
 interface FormData {
   title: string;
   description: string;
   category: string;
+  publicationType: string;
   image_url?: string;
   price?: number;
   priceUnit?: string;
@@ -63,6 +65,7 @@ const CreatePublicationPage = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const router = useRouter();
 
   const {
@@ -82,11 +85,19 @@ const CreatePublicationPage = () => {
     },
   });
 
-  // Validar que el usuario esté autenticado
+  // Validar que el usuario esté autenticado y obtener roles
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) {
       router.push("/auth/login");
+      return;
+    }
+    
+    try {
+      const decoded = jwtDecode<TokenPayload>(token);
+      setUserRoles(decoded.roles.map(role => role.name));
+    } catch (error) {
+      console.error('Error al decodificar token:', error);
     }
   }, [router]);
 
@@ -150,6 +161,7 @@ const CreatePublicationPage = () => {
         title: data.title,
         description: data.description || "", // Asegurar que no sea undefined
         category: data.category.toUpperCase(),
+        publicationType: data.publicationType, // Nuevo campo
         image_url: imageUrl || undefined, // Opcional
         price: data.price || 0, // Precio opcional
         priceUnit: data.priceUnit || undefined, // Unidad de precio opcional
@@ -293,6 +305,46 @@ const CreatePublicationPage = () => {
                     {errors.category && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.category.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Publication Type field */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="publicationType"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Tipo de publicación <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="publicationType"
+                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                        errors.publicationType ? "border-red-500" : "border-gray-200"
+                      }`}
+                      {...register("publicationType", {
+                        required: "El tipo de publicación es obligatorio",
+                      })}
+                      disabled={isLoading}
+                    >
+                      <option value="">Selecciona el tipo de publicación</option>
+                      {userRoles.map(role => {
+                        const availableTypes = PUBLICATION_TYPES_BY_ROLE[role as keyof typeof PUBLICATION_TYPES_BY_ROLE] || [];
+                        return availableTypes.map(type => (
+                          <option key={type} value={type}>
+                            {PUBLICATION_TYPE_LABELS[type as keyof typeof PUBLICATION_TYPE_LABELS]}
+                          </option>
+                        ));
+                      }).flat()}
+                    </select>
+                    {errors.publicationType && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.publicationType.message}
+                      </p>
+                    )}
+                    {watch("publicationType") && (
+                      <p className="text-gray-500 text-xs">
+                        {PUBLICATION_TYPE_DESCRIPTIONS[watch("publicationType") as keyof typeof PUBLICATION_TYPE_DESCRIPTIONS]}
                       </p>
                     )}
                   </div>

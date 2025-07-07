@@ -27,6 +27,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { PUBLICATION_TYPE_LABELS } from "@/constants/publicationTypes";
 
 const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -227,6 +228,11 @@ const PublicationsPageContent = () => {
               <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
                 {publication.category}
               </span>
+              {publication.publicationType && (
+                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  {PUBLICATION_TYPE_LABELS[publication.publicationType as keyof typeof PUBLICATION_TYPE_LABELS] || publication.publicationType}
+                </span>
+              )}
             </div>
             
             <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">{publication.title}</h3>

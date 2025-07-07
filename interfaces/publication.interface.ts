@@ -8,6 +8,7 @@ export interface Publication {
   created_at: string | Date;
   modified_at: Date;
   category: string;
+  publicationType: string; // SERVICE_OFFER, SERVICE_REQUEST, COMPANY_SERVICE_OFFER, COMPANY_JOB_OFFER, INFORMAL_JOB_OFFER
   image_url?: string;
   visitors?: number;
   price?: number;

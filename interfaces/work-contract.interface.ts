@@ -92,6 +92,7 @@ export interface WorkContract {
   export interface Publication {
     id: string;
     title: string;
+    publicationType?: string;
   }
   
   export interface Rating {

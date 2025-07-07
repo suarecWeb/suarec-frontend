@@ -20,7 +20,7 @@ const getUserApplications = (userId: string, params?: PaginationParams) =>
 
 // Obtener aplicaciones de una publicación específica
 const getPublicationApplications = (publicationId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Application>>(`/publications/${publicationId}/applications`, { params });
+  api.get<PaginationResponse<Application>>(`suarec/publications/${publicationId}/applications`, { params });
 
 // Obtener una aplicación por ID
 const getApplicationById = (id: string) => 

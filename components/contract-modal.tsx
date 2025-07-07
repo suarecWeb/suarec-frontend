@@ -20,11 +20,14 @@ import {
 } from 'lucide-react';
 import { translatePriceUnit } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { Application } from '../interfaces/application.interface';
 
 interface ContractModalProps {
   publication: Publication;
   isOpen: boolean;
   onClose: () => void;
+  application?: Application;
+  lockPrice?: boolean;
 }
 
 type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta';
@@ -35,7 +38,7 @@ const paymentMethods = [
   { id: 'tarjeta', name: 'Tarjeta de crédito/débito', icon: CreditCard, description: 'Visa, Mastercard, etc.' }
 ] as const;
 
-export default function ContractModal({ publication, isOpen, onClose }: ContractModalProps) {
+export default function ContractModal({ publication, isOpen, onClose, application, lockPrice }: ContractModalProps) {
   const [contractType, setContractType] = useState<'accept' | 'custom'>('accept');
   const [customPrice, setCustomPrice] = useState(0);
   const [serviceAddress, setServiceAddress] = useState('');
@@ -50,16 +53,16 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
   const router = useRouter();
 
   // Calcular precios
-  const basePrice = Number(contractType === 'accept' ? publication.price! : customPrice);
-  const iva = Math.round(basePrice * 0.19);
-  const totalPrice = basePrice + iva;
+  const initialBasePrice = application?.suggestedPrice ? Number(application.suggestedPrice) : (publication.price || 0);
+  const iva = Math.round(initialBasePrice * 0.19);
+  const totalPrice = initialBasePrice + iva;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (isNaN(basePrice) || basePrice <= 0) {
+      if (isNaN(initialBasePrice) || initialBasePrice <= 0) {
         alert('Debes ingresar un precio válido');
         setIsLoading(false);
         return;
@@ -97,7 +100,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
       const contractData = {
         publicationId: publication.id!,
-        initialPrice: Number(basePrice),
+        initialPrice: Number(initialBasePrice),
         totalPrice: Number(totalPrice),
         priceUnit: publication.priceUnit || 'project',
         clientMessage: message || undefined,
@@ -112,7 +115,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
       console.log('Enviando datos de contratación:', contractData);
       console.log('Desglose de precios:');
-      console.log('- Precio base:', basePrice);
+      console.log('- Precio base:', initialBasePrice);
       console.log('- IVA (19%):', iva);
       console.log('- Total:', totalPrice);
 
@@ -177,8 +180,9 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                     type="radio"
                     value="accept"
                     checked={contractType === 'accept'}
-                    onChange={(e) => setContractType(e.target.value as 'accept')}
+                    onChange={e => !lockPrice && setContractType(e.target.value as 'accept')}
                     className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
+                    disabled={lockPrice}
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -186,7 +190,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                       <span className="font-medium text-gray-800">Aceptar tarifa original</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {formatCurrency(publication.price?.toLocaleString())} {translatePriceUnit(publication.priceUnit || '')}
+                      {formatCurrency(initialBasePrice.toLocaleString())} {translatePriceUnit(publication.priceUnit || '')}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Proceso más rápido y directo
@@ -194,32 +198,34 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                   </div>
                 </label>
                 
-                <label className="flex items-start p-3 border-2 border-gray-200 rounded-lg hover:border-[#097EEC] transition-colors cursor-pointer">
-                  <input
-                    type="radio"
-                    value="custom"
-                    checked={contractType === 'custom'}
-                    onChange={(e) => setContractType(e.target.value as 'custom')}
-                    className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertCircle className="h-4 w-4 text-[#097EEC]" />
-                      <span className="font-medium text-gray-800">Ofrecer tarifa personalizada</span>
+                {!lockPrice && (
+                  <label className="flex items-start p-3 border-2 border-gray-200 rounded-lg hover:border-[#097EEC] transition-colors cursor-pointer">
+                    <input
+                      type="radio"
+                      value="custom"
+                      checked={contractType === 'custom'}
+                      onChange={e => setContractType(e.target.value as 'custom')}
+                      className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertCircle className="h-4 w-4 text-[#097EEC]" />
+                        <span className="font-medium text-gray-800">Ofrecer tarifa personalizada</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Negocia el precio que mejor se ajuste
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Puede tomar más tiempo en ser aceptada
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Negocia el precio que mejor se ajuste
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Puede tomar más tiempo en ser aceptada
-                    </p>
-                  </div>
-                </label>
+                  </label>
+                )}
               </div>
             </div>
 
             {/* Custom Price Input */}
-            {contractType === 'custom' && (
+            {contractType === 'custom' && !lockPrice && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Tu oferta (${translatePriceUnit(publication.priceUnit || '')}):
@@ -229,7 +235,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                   <input
                     type="number"
                     value={customPrice}
-                    onChange={(e) => setCustomPrice(Number(e.target.value))}
+                    onChange={e => setCustomPrice(Number(e.target.value))}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                     placeholder={`Ej: ${publication.price}`}
                     required
@@ -426,7 +432,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Precio base:</span>
-                  <span className="font-medium">{formatCurrency(basePrice.toLocaleString())}</span>
+                  <span className="font-medium">{formatCurrency(initialBasePrice.toLocaleString())}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">IVA (19%):</span>
