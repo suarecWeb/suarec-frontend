@@ -64,6 +64,17 @@ export interface User {
   education?: Education[]
   references?: Reference[]
   socialLinks?: SocialLink[]
+  currentEmployment?: {
+    startDate: Date;
+    endDate?: Date;
+    isActive: boolean;
+    duration?: {
+      days: number;
+      months: number;
+      years: number;
+      displayText: string;
+    }
+  }
 }
 
 export // Interfaces para los DTOs
