@@ -633,12 +633,8 @@ const ProfilePage = () => {
                             <div className="bg-gray-50 rounded-lg p-8 text-center">
                               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                               <h4 className="text-lg font-medium text-gray-800">No hay publicaciones</h4>
-                              <p className="text-gray-500 mt-2">Aún no has creado ninguna publicación</p>
-                              <Link href="/publications/create">
-                                <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors">
-                                  Crear publicación
-                                </button>
-                              </Link>
+                              <p className="text-gray-500 mt-2">Aún no has creado ninguna publicación. Puedes crear una desde el feed.</p>
+                              
                             </div>
                           )}
                         </TabsContent>
