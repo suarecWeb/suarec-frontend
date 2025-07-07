@@ -31,9 +31,85 @@ import {
   Briefcase,
   MapPin,
   MoreVertical,
-  Download
+  Download,
+  X
 } from "lucide-react";
 import DownloadCVButton from "@/components/download-cv-button";
+
+// Modal de confirmación
+const RemoveEmployeeModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  employeeName, 
+  isLoading 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  employeeName: string;
+  isLoading: boolean;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-lg border border-gray-200 shadow-xl max-w-lg w-full mx-auto transform transition-all">
+        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="sm:flex sm:items-start">
+        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+          <Trash2 className="h-6 w-6 text-red-600" />
+        </div>
+        <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            Remover empleado
+          </h3>
+          <div className="mt-2">
+            <p className="text-sm text-gray-500">
+          ¿Estás seguro de que deseas remover a <strong>{employeeName}</strong> de la empresa? 
+          Esta acción no se puede deshacer.
+            </p>
+          </div>
+        </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Removiendo...
+              </>
+            ) : (
+              'Remover'
+            )}
+          </button>
+          <button
+            type="button"
+            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MyEmployeesPageContent = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -47,8 +123,13 @@ const MyEmployeesPageContent = () => {
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [removingEmployee, setRemovingEmployee] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const router = useRouter();
   
+  // Estados para la modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [employeeToRemove, setEmployeeToRemove] = useState<{ id: string; name: string } | null>(null);
+  
+  const router = useRouter();
+
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -76,14 +157,14 @@ const MyEmployeesPageContent = () => {
   useEffect(() => {
     const fetchCompanyInfo = async () => {
       if (!currentUserId) return;
-      
+
       try {
         // Obtener la empresa del usuario actual
         const response = await CompanyService.getCompanies({ page: 1, limit: 100 });
-        const userCompany = response.data.data.find(company => 
+        const userCompany = response.data.data.find(company =>
           company.user && parseInt(company.user.id || '0') === currentUserId
         );
-        
+
         if (userCompany) {
           setCompanyId(userCompany.id);
           setCompanyInfo(userCompany);
@@ -108,7 +189,7 @@ const MyEmployeesPageContent = () => {
     try {
       setLoading(true);
       const response = await CompanyService.getEmployees(companyId, params);
-      console.log('empleados: ' + response.data.data)
+      console.log('empleados: ' + JSON.stringify(response.data.data));
       setEmployees(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
@@ -141,23 +222,26 @@ const MyEmployeesPageContent = () => {
     fetchEmployees({ page, limit: pagination.limit });
   };
 
-  // Función para remover empleado
-  const handleRemoveEmployee = async (employeeId: string, employeeName: string) => {
-    if (!confirm(`¿Estás seguro de que deseas remover a ${employeeName} de la empresa?`)) {
-      return;
-    }
+  // Función para abrir la modal de confirmación
+  const handleRemoveEmployeeClick = (employeeId: string, employeeName: string) => {
+    setEmployeeToRemove({ id: employeeId, name: employeeName });
+    setIsModalOpen(true);
+    setOpenMenuId(null);
+  };
 
-    if (!companyId) return;
+  // Función para confirmar la eliminación
+  const handleConfirmRemove = async () => {
+    if (!employeeToRemove || !companyId) return;
 
-    setRemovingEmployee(employeeId);
-    
+    setRemovingEmployee(employeeToRemove.id);
+
     try {
-      await CompanyService.removeEmployee(companyId, employeeId);
-      setSuccess(`${employeeName} ha sido removido de la empresa`);
-      
+      await CompanyService.removeEmployee(companyId, employeeToRemove.id);
+      setSuccess(`${employeeToRemove.name} ha sido removido de la empresa`);
+
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });
-      
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error al remover empleado:", err);
@@ -165,16 +249,24 @@ const MyEmployeesPageContent = () => {
       setTimeout(() => setError(null), 3000);
     } finally {
       setRemovingEmployee(null);
+      setIsModalOpen(false);
+      setEmployeeToRemove(null);
     }
+  };
+
+  // Función para cancelar la eliminación
+  const handleCancelRemove = () => {
+    setIsModalOpen(false);
+    setEmployeeToRemove(null);
   };
 
   // Filtrar empleados según el término de búsqueda
   const filteredEmployees = searchTerm
     ? employees.filter(employee =>
-        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (employee.profession && employee.profession.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (employee.profession && employee.profession.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
     : employees;
 
   const formatDate = (dateString: Date | string) => {
@@ -218,7 +310,7 @@ const MyEmployeesPageContent = () => {
                 )}
               </div>
             </div>
-            
+
             {/* Company Stats */}
             {companyInfo && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
@@ -231,7 +323,7 @@ const MyEmployeesPageContent = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <Calendar className="h-8 w-8 text-white/80" />
@@ -241,7 +333,7 @@ const MyEmployeesPageContent = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <Building2 className="h-8 w-8 text-white/80" />
@@ -273,7 +365,7 @@ const MyEmployeesPageContent = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               {/* Attendance Actions */}
               <div className="flex gap-3 flex-wrap">
                 <a
@@ -337,7 +429,7 @@ const MyEmployeesPageContent = () => {
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
-                          
+
                           {/* Dropdown Menu */}
                           {openMenuId === employee.id && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
@@ -352,7 +444,7 @@ const MyEmployeesPageContent = () => {
                                 <UserIcon className="h-4 w-4" />
                                 Ver perfil
                               </button>
-                              
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -364,7 +456,7 @@ const MyEmployeesPageContent = () => {
                                 <Mail className="h-4 w-4" />
                                 Contactar
                               </button>
-                              
+
                               {!employee.company && (
                                 <div
                                   onClick={(e) => {
@@ -382,23 +474,20 @@ const MyEmployeesPageContent = () => {
                                   />
                                 </div>
                               )}
-                              
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveEmployee(employee.id!, employee.name);
-                                  setOpenMenuId(null);
-                                }}
-                                disabled={removingEmployee === employee.id}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left disabled:opacity-50"
-                              >
-                                {removingEmployee === employee.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
+
+                              {/* Solo mostrar botón remover si el empleado está activo en la empresa */}
+                              {employee?.currentEmployment?.isActive && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveEmployeeClick(employee.id!, employee.name);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                                >
                                   <Trash2 className="h-4 w-4" />
-                                )}
-                                Remover
-                              </button>
+                                  Remover
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -425,7 +514,7 @@ const MyEmployeesPageContent = () => {
                                   {employee.profession}
                                 </p>
                               )}
-                              
+
                               {/* Roles */}
                               {employee.roles && employee.roles.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
@@ -449,16 +538,39 @@ const MyEmployeesPageContent = () => {
                               <Mail className="h-4 w-4 text-gray-400" />
                               <span className="truncate">{employee.email}</span>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Phone className="h-4 w-4 text-gray-400" />
                               <span>{employee.cellphone}</span>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Calendar className="h-4 w-4 text-gray-400" />
                               <span>Miembro desde: {employee.created_at ? formatDate(employee.created_at) : "N/A"}</span>
                             </div>
+
+                            {employee?.currentEmployment && (
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    employee.currentEmployment.isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {employee.currentEmployment.isActive ? "Activo" : "Inactivo"}
+                                </span>
+                                <span className="text-xs text-gray-600">
+                                  {employee.currentEmployment.isActive
+                                    ? `Desde ${formatDate(employee.currentEmployment.startDate)}`
+                                    : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${
+                                        employee.currentEmployment.endDate
+                                          ? formatDate(employee.currentEmployment.endDate)
+                                          : "presente"
+                                      }`}
+                                </span>
+                              </div>
+                            )}
 
                             {/* Skills */}
                             {employee.skills && employee.skills.length > 0 && (
@@ -469,7 +581,7 @@ const MyEmployeesPageContent = () => {
                                 </p>
                                 <div className="flex flex-wrap gap-1">
                                   {employee.skills.slice(0, 3).map((skill, index) => (
-                                    <span 
+                                    <span
                                       key={index}
                                       className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
                                     >
@@ -488,9 +600,9 @@ const MyEmployeesPageContent = () => {
                             {/* CV Link */}
                             {employee.cv_url && (
                               <div className="pt-2">
-                                <a 
-                                  href={employee.cv_url} 
-                                  target="_blank" 
+                                <a
+                                  href={employee.cv_url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-sm text-[#097EEC] hover:text-[#0A6BC7] transition-colors"
                                 >
@@ -511,7 +623,7 @@ const MyEmployeesPageContent = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900">No hay empleados</h3>
                     <p className="mt-2 text-gray-500">
-                      {searchTerm 
+                      {searchTerm
                         ? "No se encontraron empleados que coincidan con tu búsqueda."
                         : "Tu empresa aún no tiene empleados registrados. Los empleados se agregarán automáticamente cuando aceptes aplicaciones."
                       }
@@ -529,7 +641,7 @@ const MyEmployeesPageContent = () => {
                     />
                   </div>
                 )}
-                
+
                 {/* Results Summary */}
                 {!loading && !error && filteredEmployees.length > 0 && (
                   <div className="mt-6 text-sm text-gray-500 text-center">
@@ -541,6 +653,15 @@ const MyEmployeesPageContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación */}
+      <RemoveEmployeeModal
+        isOpen={isModalOpen}
+        onClose={handleCancelRemove}
+        onConfirm={handleConfirmRemove}
+        employeeName={employeeToRemove?.name || ''}
+        isLoading={removingEmployee === employeeToRemove?.id}
+      />
     </>
   );
 };
