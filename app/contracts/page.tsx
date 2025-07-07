@@ -27,6 +27,8 @@ import {
 import ProviderResponseModal from '@/components/provider-response-modal';
 import { translatePriceUnit } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { PaymentService } from '../../services/PaymentService';
+import { WompiService } from '../../services/WompiService';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{ asClient: Contract[], asProvider: Contract[] }>({
@@ -38,9 +40,16 @@ export default function ContractsPage() {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] = useState(false);
   const router = useRouter();
+  const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
+  const [acceptPolicy, setAcceptPolicy] = useState(false);
+  const [acceptPersonal, setAcceptPersonal] = useState(false);
 
   useEffect(() => {
     loadContracts();
+    const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || '';
+    if (publicKey) {
+      WompiService.getAcceptanceTokens(publicKey).then(setAcceptanceTokens);
+    }
   }, []);
 
   const loadContracts = async () => {
@@ -64,9 +73,35 @@ export default function ContractsPage() {
     }
   };
 
-  const handleGoToPayment = (contract: Contract) => {
-    // Redirigir a la página de pago con los datos del contrato
-    router.push(`/payment?contractId=${contract.id}&amount=${contract.totalPrice}&method=${contract.paymentMethod}`);
+  const handleGoToPayment = async (contract: Contract) => {
+    try {
+      if (!contract.provider || !contract.provider.id) {
+        alert('No se encontró el proveedor para este contrato.');
+        return;
+      }
+      if (!acceptanceTokens) {
+        alert('No se pudieron obtener los contratos de Wompi.');
+        return;
+      }
+      const paymentData = {
+        amount: Math.round(Number(contract.totalPrice)),
+        currency: 'COP',
+        payment_method: 'WOMPI',
+        contract_id: contract.id,
+        payee_id: contract.provider.id,
+        description: contract.publication?.title,
+        acceptance_token: acceptanceTokens.presigned_acceptance.acceptance_token,
+        accept_personal_auth: acceptanceTokens.presigned_personal_data_auth.acceptance_token,
+      };
+      const payment = await PaymentService.createPayment(paymentData);
+      if (payment && payment.wompi_payment_link) {
+        window.location.href = payment.wompi_payment_link;
+      } else {
+        alert('No se pudo obtener la URL de pago.');
+      }
+    } catch (err) {
+      alert('Error al iniciar el pago.');
+    }
   };
 
   const getPaymentMethodText = (method: string) => {
@@ -363,6 +398,32 @@ export default function ContractsPage() {
                       </div>
                     )}
 
+                    {/* Acceptance Tokens */}
+                    {acceptanceTokens && (
+                      <div className="mb-4">
+                        <div>
+                          <input
+                            type="checkbox"
+                            checked={acceptPolicy}
+                            onChange={e => setAcceptPolicy(e.target.checked)}
+                          />
+                          <label>
+                            He leído y acepto los <a href={acceptanceTokens.presigned_acceptance.permalink} target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+                          </label>
+                        </div>
+                        <div>
+                          <input
+                            type="checkbox"
+                            checked={acceptPersonal}
+                            onChange={e => setAcceptPersonal(e.target.checked)}
+                          />
+                          <label>
+                            Autorizo el tratamiento de mis datos personales según la <a href={acceptanceTokens.presigned_personal_data_auth.permalink} target="_blank" rel="noopener noreferrer">Política de Datos Personales</a>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {contract.bids.length > 0 && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -419,6 +480,7 @@ export default function ContractsPage() {
                       {shouldShowPaymentButton(contract) && (
                         <button
                           onClick={() => handleGoToPayment(contract)}
+                          disabled={!acceptPolicy || !acceptPersonal}
                           className="px-6 py-3 ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
                         >
                           <CreditCard className="h-4 w-4" />
