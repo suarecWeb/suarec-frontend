@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { UserService } from "@/services/UsersService";
 import CompanyService from "@/services/CompanyService";
 import EmailVerificationService from "@/services/EmailVerificationService";
-import SupabaseService from "@/services/supabase.service";
+import SupabaseService from "@/services/Supabase.service";
 import {
   AlertCircle,
   Check,
