@@ -35,7 +35,7 @@ const CountdownTimer = () => {
     <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
       <Clock className="h-4 w-4 text-yellow-300" />
       <div className="text-white/90 text-sm font-eras-medium">
-        <span className="font-eras-bold">Beta</span> - Versión completa el 7 de julio
+        <span className="font-eras-bold">Beta</span> - Versión completa el 20 de julio
       </div>
       <div className="flex items-center gap-2 text-white/80 text-xs font-eras">
         <span className="font-mono font-eras-bold">{timeLeft.days}d</span>
