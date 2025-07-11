@@ -131,7 +131,7 @@ const AttendancePageContent = () => {
   const fetchEmployees = async (companyId: string) => {
     try {
       setLoading(true);
-      const response = await CompanyService.getEmployees(companyId);
+      const response = await CompanyService.getEmployees(companyId, { status: "active" });
       setEmployees(response.data.data);
     } catch (err) {
       console.error("Error al cargar empleados:", err);

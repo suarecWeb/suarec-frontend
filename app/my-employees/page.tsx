@@ -183,7 +183,7 @@ const MyEmployeesPageContent = () => {
   }, [currentUserId, userRoles]);
 
   // Función para cargar empleados
-  const fetchEmployees = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+  const fetchEmployees = async (params: PaginationParams = { page: 1, limit: pagination.limit, status: "all" }) => {
     if (!companyId) return;
 
     try {
@@ -271,7 +271,8 @@ const MyEmployeesPageContent = () => {
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
+    const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    return adjustedDate.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -318,8 +319,10 @@ const MyEmployeesPageContent = () => {
                   <div className="flex items-center gap-3">
                     <Users className="h-8 w-8 text-white/80" />
                     <div>
-                      <p className="text-2xl font-bold">{pagination.total}</p>
-                      <p className="text-blue-100 text-sm">Total Empleados</p>
+                      <p className="text-2xl font-bold">
+                        {employees.filter(emp => emp?.currentEmployment?.isActive).length}
+                      </p>
+                      <p className="text-blue-100 text-sm">Empleados Activos</p>
                     </div>
                   </div>
                 </div>

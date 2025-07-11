@@ -326,7 +326,7 @@ export default function CompanyDetailsPage({ params }: { params: { id: string } 
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
                 <h3 className="text-lg font-eras-bold text-gray-900 mb-4">Acciones</h3>
                 
-                <div className="space-y-3">
+                <div className="flex flex-col space-y-3">
                   {isOwnerOrAdmin() && (
                     <>
                       <Link href={`/companies/${company.id}/employees`}>
@@ -354,7 +354,7 @@ export default function CompanyDetailsPage({ params }: { params: { id: string } 
                     />
                   )}
 
-                  {currentUserId && (
+                  {isOwnerOrAdmin() && (
                     <Link href={`/companies/${company.id}/employees`}>
                       <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-eras">
                         <Users className="h-4 w-4 mr-2" />
