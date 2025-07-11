@@ -5,7 +5,7 @@ import Link from "next/link"
 import toast from "react-hot-toast"
 import { logOut } from "@/actions/log-out"
 import Cookies from "js-cookie"
-import { LogIn, LogOut, User, ChevronDown, Settings } from "lucide-react"
+import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 
@@ -74,6 +74,14 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             <span>Configuración</span>
           </Link>
 
+          <Link
+            href="/payments/history"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
+          >
+            <CreditCard className="h-5 w-5" />
+            <span>Historial de Pagos</span>
+          </Link>
+
           <button
             onClick={handleLogOutClick}
             className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-300 font-eras-medium"
@@ -118,6 +126,15 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             >
               <Settings className="h-4 w-4" />
               <span className="text-sm">Configuración</span>
+            </Link>
+            
+            <Link
+              href="/payments/history"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="text-sm">Historial de Pagos</span>
             </Link>
             
             <div className="border-t border-gray-100 my-1"></div>
