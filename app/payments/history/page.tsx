@@ -85,21 +85,7 @@ const PaymentHistoryPage = () => {
                 page,
                 limit: pagination.limit,
                 ...filters,
-            };
-
-            const response: PaginationResponse<PaymentTransaction> = await PaymentService.getMyPaymentHistory(params);
-            console.log("Historial de pagos:", response.data);
-            console.log("Current user ID:", currentUserId);
-
-            // Debug cada pago
-            response.data.forEach((payment, index) => {
-                console.log(`Payment ${index}:`, {
-                    id: payment.id,
-                    payer: payment.payer,
-                    payee: payment.payee,
-                    amount: payment.amount
-                });
-            });
+            };            const response: PaginationResponse<PaymentTransaction> = await PaymentService.getMyPaymentHistory(params);
 
             setPayments(response.data);
             setPagination(response.meta);

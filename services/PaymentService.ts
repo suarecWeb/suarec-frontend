@@ -8,9 +8,18 @@ export enum PaymentHistoryType {
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  PENDING = 'PENDING',
+  FINISHED = 'FINISHED',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED'
+}
+
+export enum PaymentMethod {
+  CREDIT_CARD = 'credit_card',
+  DEBIT_CARD = 'debit_card',
+  BANK_TRANSFER = 'bank_transfer',
+  DIGITAL_WALLET = 'digital_wallet',
+  CASH = 'cash',
 }
 
 export interface PaymentHistoryDto {
@@ -20,6 +29,20 @@ export interface PaymentHistoryDto {
   status?: PaymentStatus;
   startDate?: string;
   endDate?: string;
+}
+
+export interface AdminPaymentFilterDto {
+  page?: number;
+  limit?: number;
+  status?: PaymentStatus;
+  paymentMethod?: PaymentMethod;
+  payerId?: number;
+  payeeId?: number;
+  startDate?: string;
+  endDate?: string;
+  contractId?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export class PaymentService {
@@ -37,6 +60,28 @@ export class PaymentService {
     const token = Cookies.get('token');
     const response = await api.get('suarec/payments/my-history', {
       params,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+
+  static async getAllPaymentsForAdmin(params: AdminPaymentFilterDto = {}) {
+    const token = Cookies.get('token');
+    
+    // Limpiar parámetros undefined
+    const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+
+    console.log('Enviando parámetros limpios:', cleanParams); // Debug
+
+    const response = await api.get('suarec/payments', {
+      params: cleanParams,
       headers: {
         Authorization: `Bearer ${token}`,
       },
