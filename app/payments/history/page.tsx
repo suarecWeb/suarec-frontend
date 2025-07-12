@@ -122,6 +122,8 @@ const PaymentHistoryPage = () => {
                 return <Clock className="h-5 w-5 text-yellow-500" />;
             case "FAILED":
                 return <XCircle className="h-5 w-5 text-red-500" />;
+            case "FINISHED":
+                return <CheckCircle className="h-5 w-5 text-green-500" />; // FINISHED usa el mismo icono verde que COMPLETED
             default:
                 return <Clock className="h-5 w-5 text-gray-500" />;
         }
@@ -135,6 +137,8 @@ const PaymentHistoryPage = () => {
                 return "Pendiente";
             case "FAILED":
                 return "Fallido";
+            case "FINISHED":
+                return "Completado"; // FINISHED también se muestra como "Completado" para usuarios
             default:
                 return "Desconocido";
         }
@@ -148,9 +152,50 @@ const PaymentHistoryPage = () => {
                 return "bg-yellow-100 text-yellow-800";
             case "FAILED":
                 return "bg-red-100 text-red-800";
+            case "FINISHED":
+                return "bg-green-100 text-green-800"; // FINISHED usa los mismos colores que COMPLETED
             default:
                 return "bg-gray-100 text-gray-800";
         }
+    };
+
+    // Nuevas funciones para mostrar estado según rol (pagador/receptor)
+    const getDisplayStatusForUser = (payment: PaymentTransaction, currentUserId: string) => {
+        const isPayerUser = payment.payer.id.toString() === currentUserId;
+        const isPayeeUser = payment.payee.id.toString() === currentUserId;
+
+        if (isPayerUser) {
+            // Si el usuario es quien paga: COMPLETED o FINISHED = "Completado"
+            if (payment.status === "COMPLETED" || payment.status === "FINISHED") {
+                return "COMPLETED";
+            }
+            return payment.status;
+        } else if (isPayeeUser) {
+            // Si el usuario es quien recibe el dinero
+            if (payment.status === "COMPLETED") {
+                return "PENDING"; // SUAREC aún no le ha pagado
+            } else if (payment.status === "FINISHED") {
+                return "COMPLETED"; // SUAREC ya le pagó
+            }
+            return payment.status;
+        }
+        
+        return payment.status;
+    };
+
+    const getDisplayStatusIcon = (payment: PaymentTransaction, currentUserId: string) => {
+        const displayStatus = getDisplayStatusForUser(payment, currentUserId);
+        return getStatusIcon(displayStatus);
+    };
+
+    const getDisplayStatusText = (payment: PaymentTransaction, currentUserId: string) => {
+        const displayStatus = getDisplayStatusForUser(payment, currentUserId);
+        return getStatusText(displayStatus);
+    };
+
+    const getDisplayStatusColor = (payment: PaymentTransaction, currentUserId: string) => {
+        const displayStatus = getDisplayStatusForUser(payment, currentUserId);
+        return getStatusColor(displayStatus);
     };
 
     const formatDate = (dateString: Date | string) => {
@@ -369,12 +414,12 @@ const PaymentHistoryPage = () => {
                                                                 : `Pago de ${payment.payer.name}`}
                                                         </h3>
                                                         <span
-                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium w-fit ${getStatusColor(
-                                                                payment.status
+                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium w-fit ${getDisplayStatusColor(
+                                                                payment, currentUserId || ''
                                                             )}`}
                                                         >
-                                                            {getStatusIcon(payment.status)}
-                                                            <span className="ml-1">{getStatusText(payment.status)}</span>
+                                                            {getDisplayStatusIcon(payment, currentUserId || '')}
+                                                            <span className="ml-1">{getDisplayStatusText(payment, currentUserId || '')}</span>
                                                         </span>
                                                     </div>
 
@@ -414,12 +459,12 @@ const PaymentHistoryPage = () => {
                                                                     : `Pago de ${payment.payer.name}`}
                                                             </h3>
                                                             <span
-                                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                                                    payment.status
+                                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDisplayStatusColor(
+                                                                    payment, currentUserId || ''
                                                                 )} sm:ml-2`}
                                                             >
-                                                                {getStatusIcon(payment.status)}
-                                                                <span className="ml-1">{getStatusText(payment.status)}</span>
+                                                                {getDisplayStatusIcon(payment, currentUserId || '')}
+                                                                <span className="ml-1">{getDisplayStatusText(payment, currentUserId || '')}</span>
                                                             </span>
                                                         </div>
 

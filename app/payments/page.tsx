@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
-import { PaymentService, PaymentStatus, PaymentMethod, AdminPaymentFilterDto } from "@/services/PaymentService";
+import { PaymentService, PaymentStatus, PaymentMethod, AdminPaymentFilterDto, UpdatePaymentStatusDto } from "@/services/PaymentService";
 import { PaymentTransaction } from "@/interfaces/payment.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import { Pagination } from "@/components/ui/pagination";
@@ -41,6 +41,10 @@ const AdminPaymentsPage = () => {
     page: 1,
     limit: 10,
   });
+
+  // Estados temporales para los montos (con delay)
+  const [tempMinAmount, setTempMinAmount] = useState<string>('');
+  const [tempMaxAmount, setTempMaxAmount] = useState<string>('');
   
   // Estados de paginación
   const [pagination, setPagination] = useState({
@@ -90,6 +94,25 @@ const AdminPaymentsPage = () => {
     }
   }, [filters]);
 
+  // Effect para delay en filtros de monto
+  useEffect(() => {
+    const delayTimer = setTimeout(() => {
+      const minAmount = tempMinAmount ? Number(tempMinAmount) : undefined;
+      const maxAmount = tempMaxAmount ? Number(tempMaxAmount) : undefined;
+      
+      if (filters.minAmount !== minAmount || filters.maxAmount !== maxAmount) {
+        setFilters(prev => ({ 
+          ...prev, 
+          minAmount, 
+          maxAmount,
+          page: 1 
+        }));
+      }
+    }, 1000);
+
+    return () => clearTimeout(delayTimer);
+  }, [tempMinAmount, tempMaxAmount]);
+
   const handleFilterChange = (newFilters: Partial<AdminPaymentFilterDto>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   };
@@ -97,6 +120,25 @@ const AdminPaymentsPage = () => {
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
     fetchPayments(page);
+  };
+
+  const handleUpdatePaymentStatus = async (paymentId: string, newStatus: PaymentStatus) => {
+    try {
+      await PaymentService.updatePaymentStatus(paymentId, { 
+        status: newStatus      
+      });
+      
+      // Actualizar el pago en la lista local
+      setPayments(prev => prev.map(payment => 
+        payment.id === paymentId 
+          ? { ...payment, status: newStatus }
+          : payment
+      ));
+      
+    } catch (error) {
+      console.error('Error al actualizar estado del pago:', error);
+      setError('Error al actualizar el estado del pago');
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -263,27 +305,7 @@ const AdminPaymentsPage = () => {
 
               {/* Panel de filtros expandido */}
               {showFilters && (
-                <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Método de Pago
-                    </label>
-                    <select
-                      value={filters.paymentMethod || ""}
-                      onChange={(e) => handleFilterChange({ 
-                        paymentMethod: e.target.value as PaymentMethod || undefined 
-                      })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
-                    >
-                      <option value="">Todos los métodos</option>
-                      <option value={PaymentMethod.CREDIT_CARD}>Tarjeta de Crédito</option>
-                      <option value={PaymentMethod.DEBIT_CARD}>Tarjeta de Débito</option>
-                      <option value={PaymentMethod.BANK_TRANSFER}>Transferencia Bancaria</option>
-                      <option value={PaymentMethod.DIGITAL_WALLET}>Billetera Digital</option>
-                      <option value={PaymentMethod.CASH}>Efectivo</option>
-                    </select>
-                  </div>
-
+                <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       ID Usuario Pagador
@@ -344,10 +366,8 @@ const AdminPaymentsPage = () => {
                     </label>
                     <input
                       type="number"
-                      value={filters.minAmount || ""}
-                      onChange={(e) => handleFilterChange({ 
-                        minAmount: e.target.value ? Number(e.target.value) : undefined 
-                      })}
+                      value={tempMinAmount}
+                      onChange={(e) => setTempMinAmount(e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                       placeholder="Monto mínimo"
                     />
@@ -359,10 +379,8 @@ const AdminPaymentsPage = () => {
                     </label>
                     <input
                       type="number"
-                      value={filters.maxAmount || ""}
-                      onChange={(e) => handleFilterChange({ 
-                        maxAmount: e.target.value ? Number(e.target.value) : undefined 
-                      })}
+                      value={tempMaxAmount}
+                      onChange={(e) => setTempMaxAmount(e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                       placeholder="Monto máximo"
                     />
@@ -370,12 +388,14 @@ const AdminPaymentsPage = () => {
 
                   <div className="sm:col-span-2 lg:col-span-1 flex items-end">
                     <button
-                      onClick={() =>
+                      onClick={() => {
                         setFilters({
                           page: 1,
                           limit: 10,
-                        })
-                      }
+                        });
+                        setTempMinAmount('');
+                        setTempMaxAmount('');
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       Limpiar filtros
@@ -477,6 +497,28 @@ const AdminPaymentsPage = () => {
                               })}
                             </p>
                           </div>
+
+                          {/* Checkbox para marcar como FINISHED (solo si es COMPLETED) */}
+                          {payment.status === PaymentStatus.COMPLETED && (
+                            <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
+                              <input
+                                type="checkbox"
+                                id={`finished-${payment.id}`}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    handleUpdatePaymentStatus(payment.id, PaymentStatus.FINISHED);
+                                  }
+                                }}
+                                className="h-4 w-4 text-[#097EEC] focus:ring-[#097EEC] border-gray-300 rounded"
+                              />
+                              <label 
+                                htmlFor={`finished-${payment.id}`}
+                                className="text-sm font-medium text-green-700 cursor-pointer"
+                              >
+                                Marcar como pagado por SUAREC
+                              </label>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

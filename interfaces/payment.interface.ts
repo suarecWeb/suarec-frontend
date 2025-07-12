@@ -21,10 +21,10 @@ export interface PaymentTransaction {
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled'
+  PENDING = 'PENDING',
+  FINISHED = 'FINISHED',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED'
 }
 
 export enum PaymentHistoryType {

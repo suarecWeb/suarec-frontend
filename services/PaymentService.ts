@@ -45,6 +45,10 @@ export interface AdminPaymentFilterDto {
   maxAmount?: number;
 }
 
+export interface UpdatePaymentStatusDto {
+  status: PaymentStatus;
+}
+
 export class PaymentService {
   static async createPayment(data: any) {
     const response = await api.post('suarec/payments', data);
@@ -82,6 +86,16 @@ export class PaymentService {
 
     const response = await api.get('suarec/payments', {
       params: cleanParams,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+
+  static async updatePaymentStatus(paymentId: string, updateData: UpdatePaymentStatusDto) {
+    const token = Cookies.get('token');
+    const response = await api.post(`suarec/payments/${paymentId}/update`, updateData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
