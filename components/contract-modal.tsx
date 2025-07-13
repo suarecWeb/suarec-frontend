@@ -27,7 +27,7 @@ interface ContractModalProps {
   onClose: () => void;
 }
 
-type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta';
+type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'WOMPI';
 
 const paymentMethods = [
   { id: 'efectivo', name: 'Efectivo', icon: Banknote, description: 'Pago en efectivo al momento del servicio' },
@@ -95,6 +95,11 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         return;
       }
 
+      let newPaymentMethod = paymentMethod;
+      if (paymentMethod === 'tarjeta' || paymentMethod === 'transferencia' ) {
+        newPaymentMethod = 'WOMPI';
+      }
+
       const contractData = {
         publicationId: publication.id!,
         initialPrice: Number(basePrice),
@@ -103,7 +108,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         clientMessage: message || undefined,
         requestedDate: new Date(requestedDate),
         requestedTime: requestedTime,
-        paymentMethod: paymentMethod,
+        paymentMethod: newPaymentMethod,
         serviceAddress: serviceAddress.trim(),
         propertyType: propertyType,
         neighborhood: neighborhood.trim(),
