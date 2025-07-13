@@ -49,6 +49,14 @@ export interface UpdatePaymentStatusDto {
   status: PaymentStatus;
 }
 
+export interface PaymentStatusByContractDto {
+  contractId: string;
+  hasPendingPayments: boolean;
+  hasCompletedPayments: boolean;
+  hasActivePayments: boolean;
+  latestStatus?: PaymentStatus;
+}
+
 export class PaymentService {
   static async createPayment(data: any) {
     const response = await api.post('suarec/payments', data);
@@ -96,6 +104,16 @@ export class PaymentService {
   static async updatePaymentStatus(paymentId: string, updateData: UpdatePaymentStatusDto) {
     const token = Cookies.get('token');
     const response = await api.post(`suarec/payments/${paymentId}/update`, updateData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+
+  static async getPaymentStatusByContract(contractId: string): Promise<PaymentStatusByContractDto> {
+    const token = Cookies.get('token');
+    const response = await api.get(`suarec/payments/contract/${contractId}/status`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

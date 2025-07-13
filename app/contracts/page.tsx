@@ -27,8 +27,9 @@ import {
 import ProviderResponseModal from '@/components/provider-response-modal';
 import { translatePriceUnit } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatCurrency';
-import { PaymentService } from '../../services/PaymentService';
+import { PaymentService, PaymentStatusByContractDto } from '../../services/PaymentService';
 import { WompiService } from '../../services/WompiService';
+import StartChatButton from '@/components/start-chat-button';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{ asClient: Contract[], asProvider: Contract[] }>({
@@ -43,6 +44,7 @@ export default function ContractsPage() {
   const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
   const [acceptPolicy, setAcceptPolicy] = useState(false);
   const [acceptPersonal, setAcceptPersonal] = useState(false);
+  const [contractPaymentStatus, setContractPaymentStatus] = useState<{ [contractId: string]: PaymentStatusByContractDto }>({});
 
   useEffect(() => {
     loadContracts();
@@ -56,6 +58,28 @@ export default function ContractsPage() {
     try {
       const data = await ContractService.getMyContracts();
       setContracts(data);
+      
+      // Cargar estado de pagos para contratos como cliente
+      const paymentStatusPromises = data.asClient.map(async (contract) => {
+        try {
+          const paymentStatus = await PaymentService.getPaymentStatusByContract(contract.id);
+          return { contractId: contract.id, status: paymentStatus };
+        } catch (error) {
+          console.error(`Error loading payment status for contract ${contract.id}:`, error);
+          return null;
+        }
+      });
+
+      const paymentStatuses = await Promise.all(paymentStatusPromises);
+      const paymentStatusMap: { [contractId: string]: PaymentStatusByContractDto } = {};
+      
+      paymentStatuses.forEach((result) => {
+        if (result) {
+          paymentStatusMap[result.contractId] = result.status;
+        }
+      });
+
+      setContractPaymentStatus(paymentStatusMap);
     } catch (error) {
       console.error('Error loading contracts:', error);
     } finally {
@@ -104,6 +128,39 @@ export default function ContractsPage() {
     }
   };
 
+  const getPaymentStatusDisplay = (contract: Contract) => {
+    const paymentStatus = contractPaymentStatus[contract.id];
+    if (!paymentStatus) return null;
+
+    if (paymentStatus.hasCompletedPayments) {
+      return (
+        <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-green-800">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              ✅ Pago completado
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    if (paymentStatus.hasPendingPayments) {
+      return (
+        <div className="px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-yellow-800">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              ⏳ Pago en proceso
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const getPaymentMethodText = (method: string) => {
     const methods: { [key: string]: string } = {
       'efectivo': 'Efectivo',
@@ -117,6 +174,13 @@ export default function ContractsPage() {
   };
 
   const shouldShowPaymentButton = (contract: Contract) => {
+    const paymentStatus = contractPaymentStatus[contract.id];
+    
+    // No mostrar si ya tiene pagos completados o finalizados
+    if (paymentStatus?.hasCompletedPayments) {
+      return false;
+    }
+    
     return contract.status === ContractStatus.ACCEPTED && 
            contract.paymentMethod && 
            contract.paymentMethod !== 'efectivo' &&
@@ -398,10 +462,10 @@ export default function ContractsPage() {
                       </div>
                     )}
 
-                    {/* Acceptance Tokens */}
-                    {acceptanceTokens && (
+                    {/* Acceptance Tokens - Only show when payment is needed */}
+                    {shouldShowPaymentButton(contract) && acceptanceTokens && (
                       <div className="mb-4">
-                        <div>
+                        <div className="flex gap-3 flex-row items-center">
                           <input
                             type="checkbox"
                             checked={acceptPolicy}
@@ -411,7 +475,7 @@ export default function ContractsPage() {
                             He leído y acepto los <a href={acceptanceTokens.presigned_acceptance.permalink} target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
                           </label>
                         </div>
-                        <div>
+                        <div className="flex gap-3 flex-row items-center">
                           <input
                             type="checkbox"
                             checked={acceptPersonal}
@@ -462,7 +526,7 @@ export default function ContractsPage() {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
                       {contract.status === ContractStatus.NEGOTIATING && (
                         <button
                           onClick={() => {
@@ -476,17 +540,61 @@ export default function ContractsPage() {
                         </button>
                       )}
 
-                      {/* Payment Button */}
-                      {shouldShowPaymentButton(contract) && (
+                      {/* Chat Button - Only for contracted services */}
+                      {contract.provider && contract.provider.id && (
+                        <StartChatButton
+                          recipientId={Number(contract.provider.id)}
+                          recipientName={contract.provider.name}
+                          recipientType="person"
+                          context="job"
+                          className="px-6 py-3"
+                          variant="outline"
+                        />
+                      )}
+
+                      {/* Payment Button or Payment Status */}
+                      {shouldShowPaymentButton(contract) ? (
                         <button
                           onClick={() => handleGoToPayment(contract)}
                           disabled={!acceptPolicy || !acceptPersonal}
-                          className="px-6 py-3 ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
+                          className="px-3 py-2 h-fit ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
                         >
                           <CreditCard className="h-4 w-4" />
-                          Ir a Pagar ${contract.totalPrice?.toLocaleString()}
+                          Ir a Pagar {formatCurrency(contract.totalPrice?.toLocaleString(), {
+                            showCurrency: true,
+                          })}
                           <ArrowRight className="h-4 w-4" />
                         </button>
+                      ) : (
+                        // Mostrar estado de pago donde estaría el botón
+                        (() => {
+                          const paymentStatus = contractPaymentStatus[contract.id];
+                          if (paymentStatus?.hasCompletedPayments && contract.status === ContractStatus.ACCEPTED && contract.paymentMethod !== 'efectivo') {
+                            return (
+                              <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-green-800">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ✅ Pago completado
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          if (paymentStatus?.hasPendingPayments && contract.status === ContractStatus.ACCEPTED && contract.paymentMethod !== 'efectivo') {
+                            return (
+                              <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-yellow-800">
+                                  <Clock className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ⏳ Pago en proceso
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()
                       )}
 
                       {/* Cash Payment Info */}
