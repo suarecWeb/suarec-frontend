@@ -54,6 +54,14 @@ export default function ContractsPage() {
     }
   }, []);
 
+  // Reiniciar checkboxes cuando se cargan los acceptance tokens
+  useEffect(() => {
+    if (acceptanceTokens) {
+      setAcceptPolicy(false);
+      setAcceptPersonal(false);
+    }
+  }, [acceptanceTokens]);
+
   const loadContracts = async () => {
     try {
       const data = await ContractService.getMyContracts();
@@ -99,6 +107,12 @@ export default function ContractsPage() {
 
   const handleGoToPayment = async (contract: Contract) => {
     try {
+      // Validar que los checkboxes estén marcados
+      if (!acceptPolicy || !acceptPersonal) {
+        alert('Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.');
+        return;
+      }
+      
       if (!contract.provider || !contract.provider.id) {
         alert('No se encontró el proveedor para este contrato.');
         return;
@@ -465,26 +479,38 @@ export default function ContractsPage() {
                     {/* Acceptance Tokens - Only show when payment is needed */}
                     {shouldShowPaymentButton(contract) && acceptanceTokens && (
                       <div className="mb-4">
-                        <div className="flex gap-3 flex-row items-center">
+                        <div className="flex gap-3 flex-row items-start mb-3">
                           <input
                             type="checkbox"
+                            id={`terms-${contract.id}`}
                             checked={acceptPolicy}
                             onChange={e => setAcceptPolicy(e.target.checked)}
+                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <label>
-                            He leído y acepto los <a href={acceptanceTokens.presigned_acceptance.permalink} target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+                          <label htmlFor={`terms-${contract.id}`} className="text-sm text-gray-700 cursor-pointer">
+                            He leído y acepto los <a href={acceptanceTokens.presigned_acceptance.permalink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Términos y Condiciones</a>
                           </label>
                         </div>
-                        <div className="flex gap-3 flex-row items-center">
+                        <div className="flex gap-3 flex-row items-start mb-3">
                           <input
                             type="checkbox"
+                            id={`privacy-${contract.id}`}
                             checked={acceptPersonal}
                             onChange={e => setAcceptPersonal(e.target.checked)}
+                            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <label>
-                            Autorizo el tratamiento de mis datos personales según la <a href={acceptanceTokens.presigned_personal_data_auth.permalink} target="_blank" rel="noopener noreferrer">Política de Datos Personales</a>
+                          <label htmlFor={`privacy-${contract.id}`} className="text-sm text-gray-700 cursor-pointer">
+                            Autorizo el tratamiento de mis datos personales según la <a href={acceptanceTokens.presigned_personal_data_auth.permalink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Política de Datos Personales</a>
                           </label>
                         </div>
+                        {(!acceptPolicy || !acceptPersonal) && (
+                          <div className="text-sm text-red-600 mt-2 flex items-center gap-1">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            Debes aceptar ambos términos para continuar con el pago
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -557,7 +583,11 @@ export default function ContractsPage() {
                         <button
                           onClick={() => handleGoToPayment(contract)}
                           disabled={!acceptPolicy || !acceptPersonal}
-                          className="px-3 py-2 h-fit ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
+                          className={`px-3 py-2 h-fit ml-auto rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
+                            !acceptPolicy || !acceptPersonal
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
+                          }`}
                         >
                           <CreditCard className="h-4 w-4" />
                           Ir a Pagar {formatCurrency(contract.totalPrice?.toLocaleString(), {
