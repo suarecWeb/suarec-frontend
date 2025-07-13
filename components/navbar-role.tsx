@@ -5,7 +5,7 @@ import Link from "next/link"
 import toast from "react-hot-toast"
 import { logOut } from "@/actions/log-out"
 import Cookies from "js-cookie"
-import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard } from "lucide-react"
+import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard, BarChart3 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { jwtDecode } from "jwt-decode"
@@ -88,6 +88,14 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             <span>Configuración</span>
           </Link>
 
+          <Link
+            href="/stats"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span>Mis Estadísticas</span>
+          </Link>
+
           {userRole === 'ADMIN' ? (
             <Link
               href="/payments"
@@ -150,6 +158,15 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             >
               <Settings className="h-4 w-4" />
               <span className="text-sm">Configuración</span>
+            </Link>
+            
+            <Link
+              href="/stats"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="text-sm">Mis Estadísticas</span>
             </Link>
             
             {userRole === 'ADMIN' ? (
