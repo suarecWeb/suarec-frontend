@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import ConditionalFooter from "@/components/conditional-footer";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
@@ -20,10 +21,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <NotificationProvider>
           <WebSocketProvider>
-            {children}
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+            <ConditionalFooter />
           </WebSocketProvider>
         </NotificationProvider>
       </body>

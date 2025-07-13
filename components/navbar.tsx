@@ -21,7 +21,8 @@ import {
   Search,
   Home,
   TrendingUp,
-  Handshake
+  Handshake,
+  CreditCard
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
@@ -115,8 +116,8 @@ const Navbar = () => {
               />
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-2">
+            {/* Desktop Navigation - Oculto para ADMIN */}
+            <div className={`lg:items-center lg:space-x-2 ${hasRole(['ADMIN']) ? 'hidden' : 'hidden lg:flex'}`}>
               {/* Navigation Links */}
               <div className="flex items-center space-x-1">
                 {hasRole(['ADMIN']) && (
@@ -168,6 +169,19 @@ const Navbar = () => {
                     Contrataciones
                   </NavLink>
                 )}
+
+                {/* Enlaces de pagos según el rol */}
+                {hasRole(['ADMIN']) && (
+                  <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
+                    Pagos
+                  </NavLink>
+                )}
+
+                {hasRole(['PERSON', 'BUSINESS']) && (
+                  <NavLink href="/payments/history" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
+                    Historial de Pagos
+                  </NavLink>
+                )}
                 
                 {/* User Menu */}
                 <div className="ml-4 pl-4 border-l border-white/20">
@@ -176,9 +190,11 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Mobile menu button */}
+            {/* Mobile menu button - Siempre visible para ADMIN */}
             <button
-              className={`lg:hidden flex items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 ${
+              className={`flex items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 ${
+                hasRole(['ADMIN']) ? '' : 'lg:hidden'
+              } ${
                 isScrolled 
                   ? 'text-[#097EEC] hover:bg-[#097EEC]/10' 
                   : 'text-white hover:bg-white/10'
@@ -196,9 +212,9 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Navigation Overlay */}
+      {/* Mobile Navigation Overlay - Siempre disponible para ADMIN */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+        <div className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm ${hasRole(['ADMIN']) ? '' : 'lg:hidden'}`}>
           <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl">
             <div className="flex h-full flex-col">
               {/* Mobile Header */}

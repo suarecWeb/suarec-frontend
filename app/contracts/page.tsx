@@ -27,6 +27,9 @@ import {
 import ProviderResponseModal from '@/components/provider-response-modal';
 import { translatePriceUnit } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { PaymentService, PaymentStatusByContractDto } from '../../services/PaymentService';
+import { WompiService } from '../../services/WompiService';
+import StartChatButton from '@/components/start-chat-button';
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{ asClient: Contract[], asProvider: Contract[] }>({
@@ -38,15 +41,45 @@ export default function ContractsPage() {
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] = useState(false);
   const router = useRouter();
+  const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
+  const [acceptPolicy, setAcceptPolicy] = useState(false);
+  const [acceptPersonal, setAcceptPersonal] = useState(false);
+  const [contractPaymentStatus, setContractPaymentStatus] = useState<{ [contractId: string]: PaymentStatusByContractDto }>({});
 
   useEffect(() => {
     loadContracts();
+    const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || '';
+    if (publicKey) {
+      WompiService.getAcceptanceTokens(publicKey).then(setAcceptanceTokens);
+    }
   }, []);
 
   const loadContracts = async () => {
     try {
       const data = await ContractService.getMyContracts();
       setContracts(data);
+      
+      // Cargar estado de pagos para contratos como cliente
+      const paymentStatusPromises = data.asClient.map(async (contract) => {
+        try {
+          const paymentStatus = await PaymentService.getPaymentStatusByContract(contract.id);
+          return { contractId: contract.id, status: paymentStatus };
+        } catch (error) {
+          console.error(`Error loading payment status for contract ${contract.id}:`, error);
+          return null;
+        }
+      });
+
+      const paymentStatuses = await Promise.all(paymentStatusPromises);
+      const paymentStatusMap: { [contractId: string]: PaymentStatusByContractDto } = {};
+      
+      paymentStatuses.forEach((result) => {
+        if (result) {
+          paymentStatusMap[result.contractId] = result.status;
+        }
+      });
+
+      setContractPaymentStatus(paymentStatusMap);
     } catch (error) {
       console.error('Error loading contracts:', error);
     } finally {
@@ -64,9 +97,68 @@ export default function ContractsPage() {
     }
   };
 
-  const handleGoToPayment = (contract: Contract) => {
-    // Redirigir a la página de pago con los datos del contrato
-    router.push(`/payment?contractId=${contract.id}&amount=${contract.totalPrice}&method=${contract.paymentMethod}`);
+  const handleGoToPayment = async (contract: Contract) => {
+    try {
+      if (!contract.provider || !contract.provider.id) {
+        alert('No se encontró el proveedor para este contrato.');
+        return;
+      }
+      if (!acceptanceTokens) {
+        alert('No se pudieron obtener los contratos de Wompi.');
+        return;
+      }
+      const paymentData = {
+        amount: Math.round(Number(contract.totalPrice)),
+        currency: 'COP',
+        payment_method: 'WOMPI',
+        contract_id: contract.id,
+        payee_id: contract.provider.id,
+        description: contract.publication?.title,
+        acceptance_token: acceptanceTokens.presigned_acceptance.acceptance_token,
+        accept_personal_auth: acceptanceTokens.presigned_personal_data_auth.acceptance_token,
+      };
+      const payment = await PaymentService.createPayment(paymentData);
+      if (payment && payment.wompi_payment_link) {
+        window.location.href = payment.wompi_payment_link;
+      } else {
+        alert('No se pudo obtener la URL de pago.');
+      }
+    } catch (err) {
+      alert('Error al iniciar el pago.');
+    }
+  };
+
+  const getPaymentStatusDisplay = (contract: Contract) => {
+    const paymentStatus = contractPaymentStatus[contract.id];
+    if (!paymentStatus) return null;
+
+    if (paymentStatus.hasCompletedPayments) {
+      return (
+        <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-green-800">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              ✅ Pago completado
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    if (paymentStatus.hasPendingPayments) {
+      return (
+        <div className="px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-yellow-800">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              ⏳ Pago en proceso
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   const getPaymentMethodText = (method: string) => {
@@ -82,6 +174,13 @@ export default function ContractsPage() {
   };
 
   const shouldShowPaymentButton = (contract: Contract) => {
+    const paymentStatus = contractPaymentStatus[contract.id];
+    
+    // No mostrar si ya tiene pagos completados o finalizados
+    if (paymentStatus?.hasCompletedPayments) {
+      return false;
+    }
+    
     return contract.status === ContractStatus.ACCEPTED && 
            contract.paymentMethod && 
            contract.paymentMethod !== 'efectivo' &&
@@ -363,6 +462,32 @@ export default function ContractsPage() {
                       </div>
                     )}
 
+                    {/* Acceptance Tokens - Only show when payment is needed */}
+                    {shouldShowPaymentButton(contract) && acceptanceTokens && (
+                      <div className="mb-4">
+                        <div className="flex gap-3 flex-row items-center">
+                          <input
+                            type="checkbox"
+                            checked={acceptPolicy}
+                            onChange={e => setAcceptPolicy(e.target.checked)}
+                          />
+                          <label>
+                            He leído y acepto los <a href={acceptanceTokens.presigned_acceptance.permalink} target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+                          </label>
+                        </div>
+                        <div className="flex gap-3 flex-row items-center">
+                          <input
+                            type="checkbox"
+                            checked={acceptPersonal}
+                            onChange={e => setAcceptPersonal(e.target.checked)}
+                          />
+                          <label>
+                            Autorizo el tratamiento de mis datos personales según la <a href={acceptanceTokens.presigned_personal_data_auth.permalink} target="_blank" rel="noopener noreferrer">Política de Datos Personales</a>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {contract.bids.length > 0 && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -401,7 +526,7 @@ export default function ContractsPage() {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
                       {contract.status === ContractStatus.NEGOTIATING && (
                         <button
                           onClick={() => {
@@ -415,16 +540,61 @@ export default function ContractsPage() {
                         </button>
                       )}
 
-                      {/* Payment Button */}
-                      {shouldShowPaymentButton(contract) && (
+                      {/* Chat Button - Only for contracted services */}
+                      {contract.provider && contract.provider.id && (
+                        <StartChatButton
+                          recipientId={Number(contract.provider.id)}
+                          recipientName={contract.provider.name}
+                          recipientType="person"
+                          context="job"
+                          className="px-6 py-3"
+                          variant="outline"
+                        />
+                      )}
+
+                      {/* Payment Button or Payment Status */}
+                      {shouldShowPaymentButton(contract) ? (
                         <button
                           onClick={() => handleGoToPayment(contract)}
-                          className="px-6 py-3 ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
+                          disabled={!acceptPolicy || !acceptPersonal}
+                          className="px-3 py-2 h-fit ml-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
                         >
                           <CreditCard className="h-4 w-4" />
-                          Ir a Pagar ${contract.totalPrice?.toLocaleString()}
+                          Ir a Pagar {formatCurrency(contract.totalPrice?.toLocaleString(), {
+                            showCurrency: true,
+                          })}
                           <ArrowRight className="h-4 w-4" />
                         </button>
+                      ) : (
+                        // Mostrar estado de pago donde estaría el botón
+                        (() => {
+                          const paymentStatus = contractPaymentStatus[contract.id];
+                          if (paymentStatus?.hasCompletedPayments && contract.status === ContractStatus.ACCEPTED && contract.paymentMethod !== 'efectivo') {
+                            return (
+                              <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-green-800">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ✅ Pago completado
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          if (paymentStatus?.hasPendingPayments && contract.status === ContractStatus.ACCEPTED && contract.paymentMethod !== 'efectivo') {
+                            return (
+                              <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-yellow-800">
+                                  <Clock className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ⏳ Pago en proceso
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()
                       )}
 
                       {/* Cash Payment Info */}

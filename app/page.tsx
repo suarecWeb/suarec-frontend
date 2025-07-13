@@ -14,16 +14,12 @@ import {
   Shield,
   Zap,
   Globe,
-  Award,
-  Heart,
-  FileText
+  Award
 } from "lucide-react"
 import logoImage from "@/public/CafeYFogon.png"
 import logoImageDos from "@/public/veens.png"
 import logoImageTres from "@/public/enfacol.png"
 import logoImageCuatro from "@/public/OlimpoCocktail.png"
-import TermsModal from "@/components/terms-modal"
-import PrivacyModal from "@/components/privacy-modal"
 import ContactModal from "@/components/contact-modal"
 import CookiesModal from "@/components/cookies-modal"
 import { useState } from "react"
@@ -31,8 +27,6 @@ import SuarecLogo from "@/components/logo"
 import { CompaniesCarousel } from "@/components/CompaniesCarousel"
 
 export default function Home() {
-  const [isTermsOpen, setTermsOpen] = useState(false)
-  const [isPrivacyOpen, setPrivacyOpen] = useState(false)
   const [isContactOpen, setContactOpen] = useState(false)
   const [isCookiesOpen, setCookiesOpen] = useState(false)
 
@@ -266,78 +260,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#097EEC] text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div className="md:col-span-2">
-              {/* <h3 className="text-3xl font-eras-bold mb-6">SUAREC</h3> */}
-              <SuarecLogo width={120} height={50} className="mb-6" theme="dark" />
-              <p className="text-white/80 max-w-md leading-relaxed mb-6 font-eras">
-                Conectamos talento excepcional con oportunidades extraordinarias para crear un futuro laboral mejor en Colombia.
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-white/80 font-eras">
-                  <Heart className="h-5 w-5 text-white-300" />
-                  <span>Hecho en Colombia, para Colombianos</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-eras-bold mb-6">Enlaces rápidos</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link href="/publications" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
-                    <FileText className="h-4 w-4" />
-                    Publicaciones
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/companies" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
-                    <Building2 className="h-4 w-4" />
-                    Empresas
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/auth/select-type" className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras">
-                    <Users className="h-4 w-4" />
-                    Registrarse
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-eras-bold mb-6">Contacto</h3>
-              <ul className="space-y-3">
-                <li className="text-white/80 font-eras">
-                  <span className="block text-sm">Email</span>
-                  <span className="text-white">soportesuarec@gmail.com</span>
-                </li>
-                <li className="text-white/80 font-eras">
-                  <span className="block text-sm">Teléfono</span>
-                  <span className="text-white">+57 314 6373088</span>
-                </li>
-                <li className="text-white/80 font-eras">
-                  <span className="block text-sm">Ubicación</span>
-                  <span className="text-white">Colombia</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-white/20 pt-8 text-center">
-            <p className="text-white/60 font-eras">
-              © {new Date().getFullYear()} SUAREC. Todos los derechos reservados. |
-              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setPrivacyOpen(true); }}>Privacidad</a> |
-              <a href="#" className="hover:text-white transition-colors ml-2" onClick={e => { e.preventDefault(); setTermsOpen(true); }}>Términos</a>
-            </p>
-          </div>
-        </div>
-      </footer>
-      <TermsModal isOpen={isTermsOpen} onClose={() => setTermsOpen(false)} />
-      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setPrivacyOpen(false)} />
       <ContactModal isOpen={isContactOpen} onClose={() => setContactOpen(false)} />
       <CookiesModal isOpen={isCookiesOpen} onClose={() => setCookiesOpen(false)} />
     </div>
