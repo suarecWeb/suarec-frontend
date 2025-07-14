@@ -85,20 +85,17 @@ const UserRatingsPageContent = () => {
   const fetchRatings = async () => {
     try {
       setLoading(true);
-      const response = await RatingService.getUserRatings(userId, {
-        page: pagination.page,
-        limit: pagination.limit,
-      });
+      const response = await RatingService.getUserRatings(userId, pagination.page, pagination.limit);
       
-      let filteredRatings = response.data.data;
+      let filteredRatings = response.data;
       if (selectedCategory !== "all") {
-        filteredRatings = response.data.data.filter(
-          rating => rating.category === selectedCategory
+        filteredRatings = response.data.filter(
+          (rating: Rating) => rating.category === selectedCategory
         );
       }
       
       setRatings(filteredRatings);
-      setPagination(response.data.meta);
+      setPagination(response.meta);
     } catch (err) {
       console.error("Error al cargar calificaciones:", err);
       setError("Error al cargar las calificaciones");
@@ -110,7 +107,7 @@ const UserRatingsPageContent = () => {
   const fetchStats = async () => {
     try {
       const response = await RatingService.getUserRatingStats(userId);
-      setStats(response.data);
+      setStats(response);
     } catch (err) {
       console.error("Error al cargar estadísticas:", err);
     }

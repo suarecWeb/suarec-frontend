@@ -46,6 +46,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const { showMessageNotification } = useNotification();
 
   const connect = useCallback(() => {
+    // Verificar si estamos en una ruta de autenticación
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot', '/auth/verify-email', '/auth/check-email', '/auth/change'];
+      const isAuthRoute = authRoutes.some(route => currentPath.startsWith(route));
+      
+      if (isAuthRoute) {
+        console.log('🔒 En ruta de autenticación, saltando conexión WebSocket');
+        return;
+      }
+    }
+
     // Evitar múltiples conexiones
     if (socketRef.current?.connected || isConnecting) {
       console.log('🔌 WebSocket ya conectado o conectando, saltando...');
