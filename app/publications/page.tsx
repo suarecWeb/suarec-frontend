@@ -22,7 +22,8 @@ import {
   Tag, 
   User,
   FileText,
-  User2Icon
+  User2Icon,
+  Building2
 } from 'lucide-react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -214,8 +215,11 @@ const PublicationsPageContent = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                <span>Sin imagen</span>
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-600">
+                <div className="text-center">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-60" />
+                  <span className="text-sm font-medium">Sin imagen</span>
+                </div>
               </div>
             )}
           </div>

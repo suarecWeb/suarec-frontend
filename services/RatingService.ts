@@ -1,30 +1,30 @@
 // services/RatingService.ts
-import api from "./axios_config";
-import { PaginationParams } from "@/interfaces/pagination-params.interface";
-import { PaginationResponse } from "@/interfaces/pagination-response.interface";
+import api from './axios_config';
 
-export enum RatingCategory {
-  SERVICE = 'SERVICE',
-  EMPLOYER = 'EMPLOYER',
-  EMPLOYEE = 'EMPLOYEE'
+export interface CreateRatingDto {
+  reviewerId: number;
+  revieweeId: number;
+  workContractId?: string;
+  stars: number;
+  comment?: string;
+  category: string;
 }
 
 export interface Rating {
-  id?: string;
+  id: string;
   stars: number;
   comment?: string;
-  category: RatingCategory;
+  category: string;
   created_at: Date;
-  updated_at?: Date;
   reviewer: {
     id: number;
     name: string;
-    email: string;
+    profile_image?: string;
   };
   reviewee: {
     id: number;
     name: string;
-    email: string;
+    profile_image?: string;
   };
   workContract?: {
     id: string;
@@ -32,18 +32,18 @@ export interface Rating {
   };
 }
 
-export interface CreateRatingDto {
-  reviewerId: number;
-  revieweeId: number;
-  stars: number;
-  comment?: string;
-  category: RatingCategory;
-  workContractId?: string;
-}
-
-export interface UpdateRatingDto {
-  stars?: number;
-  comment?: string;
+export interface ContractReadyForRating {
+  contractId: string;
+  contractTitle: string;
+  otherUser: {
+    id: number;
+    name: string;
+    profile_image?: string;
+  };
+  userRole: 'CLIENT' | 'PROVIDER';
+  canRate: boolean;
+  alreadyRated: boolean;
+  completedAt: Date;
 }
 
 export interface RatingStats {
@@ -53,44 +53,58 @@ export interface RatingStats {
   categoryStats: { [category: string]: { average: number; count: number } };
 }
 
-const baseURL = "/suarec/ratings";
+export enum RatingCategory {
+  SERVICE = 'SERVICE',
+  EMPLOYER = 'EMPLOYER',
+  EMPLOYEE = 'EMPLOYEE'
+}
 
-// Crear una nueva calificación
-const createRating = (ratingData: CreateRatingDto) => 
-  api.post<Rating>(baseURL, ratingData);
+class RatingService {
+  // Crear una nueva calificación
+  async createRating(ratingData: CreateRatingDto): Promise<Rating> {
+    const response = await api.post('/suarec/ratings', ratingData);
+    return response.data;
+  }
 
-// Obtener todas las calificaciones (admin)
-const getAllRatings = (params?: PaginationParams) => 
-  api.get<PaginationResponse<Rating>>(baseURL, { params });
+  // Obtener calificaciones de un usuario
+  async getUserRatings(userId: number, page: number = 1, limit: number = 10): Promise<{
+    data: Rating[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> {
+    const response = await api.get(`/suarec/ratings/user/${userId}?page=${page}&limit=${limit}`);
+    return response.data;
+  }
 
-// Obtener calificaciones de un usuario específico
-const getUserRatings = (userId: number, params?: PaginationParams) => 
-  api.get<PaginationResponse<Rating>>(`${baseURL}/user/${userId}`, { params });
+  // Obtener estadísticas de calificación de un usuario
+  async getUserRatingStats(userId: number): Promise<RatingStats> {
+    const response = await api.get(`/suarec/ratings/user/${userId}/stats`);
+    return response.data;
+  }
 
-// Obtener estadísticas de calificaciones de un usuario
-const getUserRatingStats = (userId: number) => 
-  api.get<RatingStats>(`${baseURL}/user/${userId}/stats`);
+  // Obtener contratos listos para calificar
+  async getContractsReadyForRating(): Promise<ContractReadyForRating[]> {
+    const response = await api.get('/suarec/ratings/ready-to-rate');
+    return response.data;
+  }
 
-// Obtener una calificación por ID
-const getRatingById = (id: string) => 
-  api.get<Rating>(`${baseURL}/${id}`);
+  // Actualizar una calificación
+  async updateRating(ratingId: string, updateData: Partial<CreateRatingDto>): Promise<Rating> {
+    const response = await api.put(`/suarec/ratings/${ratingId}`, updateData);
+    return response.data;
+  }
 
-// Actualizar una calificación
-const updateRating = (id: string, ratingData: UpdateRatingDto) => 
-  api.put<Rating>(`${baseURL}/${id}`, ratingData);
+  // Eliminar una calificación
+  async deleteRating(ratingId: string): Promise<{ message: string }> {
+    const response = await api.delete(`/suarec/ratings/${ratingId}`);
+    return response.data;
+  }
+}
 
-// Eliminar una calificación
-const deleteRating = (id: string) => 
-  api.delete(`${baseURL}/${id}`);
-
-const RatingService = {
-  createRating,
-  getAllRatings,
-  getUserRatings,
-  getUserRatingStats,
-  getRatingById,
-  updateRating,
-  deleteRating,
-};
-
-export default RatingService;
+export default new RatingService();
