@@ -48,7 +48,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         </div>
         <div className="flex-1">
           <p className="font-medium text-sm text-gray-900">Nuevo mensaje de {senderName}</p>
-          <p className="text-xs text-gray-600 truncate">{message}</p>
+          <p className="text-xs text-gray-600">Te envió un mensaje</p>
         </div>
         <button
           onClick={() => {
