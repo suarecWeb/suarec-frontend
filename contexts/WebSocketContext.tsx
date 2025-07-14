@@ -40,10 +40,29 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isManualDisconnect, setIsManualDisconnect] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const eventListenersRef = useRef<Map<string, Function[]>>(new Map());
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { showMessageNotification } = useNotification();
+
+  // Función para obtener el ID del usuario actual
+  const getCurrentUserId = useCallback(() => {
+    if (currentUserId) return currentUserId;
+    
+    const token = Cookies.get('token');
+    if (!token) return null;
+    
+    try {
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const userId = decoded.id || decoded.sub;
+      setCurrentUserId(userId);
+      return userId;
+    } catch (error) {
+      console.error('Error al decodificar token:', error);
+      return null;
+    }
+  }, [currentUserId]);
 
   const connect = useCallback(() => {
     // Evitar múltiples conexiones
@@ -57,6 +76,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       console.log('🔑 No hay token de autenticación');
       return;
     }
+
+    // Inicializar el ID del usuario actual
+    getCurrentUserId();
 
     setIsConnecting(true);
 
@@ -112,18 +134,25 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       socket.on('new_message', (data) => {
         console.log('📨 Nuevo mensaje recibido GLOBAL:', data);
         
-        // SIEMPRE mostrar notificación global para cualquier mensaje
+        // Solo mostrar notificación si NO soy yo quien envió el mensaje
         if (data.message?.sender) {
-          console.log('🔔 Mostrando notificación global para:', data.message.sender.name);
-          showMessageNotification(data.message.content, data.message.sender.name, data.message.sender.id);
+          const userId = getCurrentUserId();
+          
+          // Solo mostrar notificación si el mensaje no es mío
+          if (userId && data.message.senderId !== userId) {
+            console.log('🔔 Mostrando notificación global para:', data.message.sender.name);
+            showMessageNotification(data.message.content, data.message.sender.name, data.message.sender.id);
+          } else {
+            console.log('🔕 No mostrando notificación - mensaje propio');
+          }
         }
         
         // Distribuir a listeners específicos
         const listeners = eventListenersRef.current.get('new_message') || [];
-        console.log('Distribuyendo a', listeners.length, 'listeners de new_message');
+        console.log('🎯 Distribuyendo a', listeners.length, 'listeners de new_message');
         listeners.forEach((callback, index) => {
           try {
-            console.log(`Ejecutando listener ${index + 1} de new_message`);
+            console.log(`📡 Ejecutando listener ${index + 1} de new_message`);
             callback(data);
           } catch (error) {
             console.error('Error en listener new_message:', error);
@@ -223,7 +252,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       console.error('❌ Error al crear conexión WebSocket global:', error);
       setIsConnecting(false);
     }
-  }, [showMessageNotification]);
+  }, [showMessageNotification, getCurrentUserId]);
 
   const disconnect = useCallback(() => {
     setIsManualDisconnect(true);
