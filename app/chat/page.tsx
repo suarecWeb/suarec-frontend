@@ -45,6 +45,7 @@ const ChatPageContent = () => {
 
   const [showUserSearch, setShowUserSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -59,6 +60,9 @@ const ChatPageContent = () => {
     markAsRead: markAsReadWebSocket,
     joinConversation,
     leaveConversation,
+    onNewMessage,
+    onMessageRead,
+    onConversationUpdated,
   } = useWebSocketContext();
 
   useEffect(() => {
@@ -105,10 +109,18 @@ const ChatPageContent = () => {
     }
   }, [conversations, currentUserId, searchParams, selectedConversation]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom only within the messages container
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Solo hacer scroll automático al cargar una conversación por primera vez
+    if (selectedConversation && messages.length > 0 && loadingMessages === false) {
+      // Usar scrollTop en lugar de scrollIntoView para evitar el scroll de toda la página
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [selectedConversation?.user.id]); // Solo cuando cambia la conversación seleccionada
 
   // Escuchar confirmaciones de mensajes enviados
   useEffect(() => {
@@ -123,6 +135,158 @@ const ChatPageContent = () => {
       window.removeEventListener('message_sent_confirmation', handleMessageSent as EventListener);
     };
   }, []);
+
+  // Escuchar nuevos mensajes del WebSocket
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const handleNewMessage = (data: { message: Message; conversationId: string }) => {
+      console.log('Nuevo mensaje recibido en chat:', data);
+      console.log('Current user ID:', currentUserId);
+      console.log('Selected conversation:', selectedConversation?.user.id);
+      console.log('Debug datos del mensaje:', {
+        messageId: data.message.id,
+        senderId: data.message.senderId,
+        senderIdType: typeof data.message.senderId,
+        recipientId: data.message.recipientId,
+        recipientIdType: typeof data.message.recipientId,
+        senderObject: data.message.sender,
+        content: data.message.content,
+        currentUserId: currentUserId,
+        currentUserIdType: typeof currentUserId
+      });
+      
+      const { message } = data;
+      
+      // Solo procesar el mensaje si es relevante para el usuario actual
+      if (message.recipientId === currentUserId || message.senderId === currentUserId) {
+        console.log('Mensaje relevante para el usuario actual');
+        
+        // Actualizar mensajes si estamos en la conversación correcta
+        if (selectedConversation && 
+            (message.senderId === selectedConversation.user.id || 
+             message.recipientId === selectedConversation.user.id)) {
+          
+          console.log('Actualizando mensajes en conversación activa');
+          
+          setMessages(prev => {
+            // Evitar duplicados
+            const existingMessage = prev.find(msg => msg.id === message.id);
+            if (existingMessage) {
+              console.log('Mensaje duplicado, saltando');
+              return prev;
+            }
+            
+            // Solo remover el mensaje temporal específico si este mensaje es la confirmación
+            // Buscar un mensaje temporal que coincida con el contenido y el sender
+            const tempMessageIndex = prev.findIndex(msg => 
+              msg.id?.startsWith('temp_') && 
+              msg.content === message.content && 
+              msg.senderId === message.senderId
+            );
+            
+            let filteredMessages = prev;
+            if (tempMessageIndex !== -1) {
+              // Remover solo el mensaje temporal específico
+              filteredMessages = prev.filter((_, index) => index !== tempMessageIndex);
+              console.log('Reemplazando mensaje temporal específico');
+            } else {
+              console.log('Agregando nuevo mensaje sin remover temporales');
+            }
+            
+            // Hacer scroll automático solo si estamos cerca del final del contenedor
+            setTimeout(() => {
+              if (messagesContainerRef.current) {
+                const container = messagesContainerRef.current;
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                
+                // Solo hacer scroll si estamos cerca del final
+                if (isNearBottom) {
+                  container.scrollTop = container.scrollHeight;
+                }
+              }
+            }, 100);
+            
+            return [...filteredMessages, message];
+          });
+          
+          // Marcar como leído automáticamente si soy el destinatario y estoy viendo la conversación
+          if (message.recipientId === currentUserId && message.id && !message.read) {
+            console.log('📖 Marcando mensaje como leído automáticamente');
+            setTimeout(() => {
+              if (message.id) {
+                markAsReadWebSocket?.(message.id);
+              }
+            }, 500); // Pequeño delay para simular que el usuario "vio" el mensaje
+          }
+        } else {
+          console.log('Mensaje no es para la conversación activa');
+        }
+        
+        // Actualizar lista de conversaciones
+        setConversations(prev => {
+          const otherUserId = message.senderId === currentUserId ? message.recipientId : message.senderId;
+          const existingConvIndex = prev.findIndex(conv => conv.user.id === otherUserId);
+          
+          if (existingConvIndex !== -1) {
+            // Actualizar conversación existente
+            const updatedConversations = [...prev];
+            updatedConversations[existingConvIndex] = {
+              ...updatedConversations[existingConvIndex],
+              lastMessage: message,
+              unreadCount: message.recipientId === currentUserId ? 
+                (updatedConversations[existingConvIndex].unreadCount || 0) + 1 : 
+                updatedConversations[existingConvIndex].unreadCount || 0
+            };
+            return updatedConversations;
+          } else {
+            // Crear nueva conversación (esto requeriría más lógica para obtener datos del usuario)
+            console.log('Nueva conversación necesaria para usuario:', otherUserId);
+            return prev;
+          }
+        });
+      }
+    };
+
+    const handleMessageRead = (data: { messageId: string; readAt: Date }) => {
+      console.log('👁️ Mensaje marcado como leído:', data);
+      
+      // Actualizar el estado de leído del mensaje
+      setMessages(prev => prev.map(msg => 
+        msg.id === data.messageId 
+          ? { ...msg, read: true, read_at: data.readAt }
+          : msg
+      ));
+      
+      console.log('✅ Estado de lectura actualizado para mensaje:', data.messageId);
+    };
+
+    const handleConversationUpdated = (data: { conversationId: string; lastMessage: Message }) => {
+      console.log('Conversación actualizada:', data);
+      // La lógica ya está manejada en handleNewMessage
+    };
+
+    // Obtener el contexto WebSocket y configurar listeners
+    // Los hooks ya están disponibles en el scope superior
+    
+    console.log('Registrando listeners de WebSocket en chat');
+    console.log('Estado conexión:', isConnected);
+    
+    // Configurar los listeners y obtener funciones de limpieza
+    const removeNewMessageListener = onNewMessage(handleNewMessage);
+    const removeMessageReadListener = onMessageRead(handleMessageRead);
+    const removeConversationUpdatedListener = onConversationUpdated(handleConversationUpdated);
+
+    console.log('Listeners registrados exitosamente');
+
+    return () => {
+      console.log('🧹 Limpiando listeners de WebSocket en chat');
+      // Limpiar listeners cuando el componente se desmonte
+      removeNewMessageListener();
+      removeMessageReadListener();
+      removeConversationUpdatedListener();
+    };
+  }, [currentUserId, selectedConversation, markAsReadWebSocket, onNewMessage, onMessageRead, onConversationUpdated]);
 
   const fetchConversations = async () => {
     if (!currentUserId) return;
@@ -210,6 +374,9 @@ const ChatPageContent = () => {
         recipientId: selectedConversation.user.id,
       };
 
+      console.log('📤 Enviando mensaje a través de WebSocket:', messageData);
+      console.log('🔌 WebSocket conectado:', isConnected);
+
       // Enviar mensaje a través de WebSocket
       sendWebSocketMessage(messageData);
       
@@ -230,6 +397,13 @@ const ChatPageContent = () => {
       
       setMessages(prev => [...prev, tempMessage]);
       setNewMessage("");
+      
+      // Hacer scroll automático solo dentro del contenedor de mensajes
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
 
       // Actualizar la conversación con el nuevo mensaje
       setConversations(prev =>
@@ -446,11 +620,20 @@ const ChatPageContent = () => {
                           <h3 className="font-medium text-gray-900">{selectedConversation.user.name}</h3>
                           <p className="text-sm text-gray-500">{selectedConversation.user.email}</p>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                          <span className={`text-xs ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                            {isConnected ? 'En línea' : 'Desconectado'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    <div 
+                      ref={messagesContainerRef}
+                      className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+                    >
                       {loadingMessages ? (
                         <div className="text-center py-8">
                           <Loader2 className="h-8 w-8 text-[#097EEC] animate-spin mx-auto mb-4" />
@@ -478,11 +661,11 @@ const ChatPageContent = () => {
                                   {formatTime(message.sent_at)}
                                 </span>
                                 {message.sender?.id === currentUserId && (
-                                  <div className="w-4 h-4 flex items-center justify-center">
+                                  <div className="w-4 h-4 flex items-center justify-center ml-1">
                                     {message.read ? (
-                                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                      <div className="w-3 h-3 rounded-full bg-green-400 border border-green-500" title="Leído"></div>
                                     ) : (
-                                      <Circle className="w-3 h-3 text-blue-100" />
+                                      <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-200" title="Enviado"></div>
                                     )}
                                   </div>
                                 )}
