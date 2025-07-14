@@ -1,8 +1,4 @@
 import ForgotForm from "@/components/forgot-form"
-import CheckForm from "@/components/check-form"
-import { Container } from "@mui/material"
-import Image from "next/image"
-import Link from "next/link"
 
 // Configuración para evitar prerenderización estática
 export const dynamic = 'force-dynamic';
@@ -11,26 +7,16 @@ interface Props{
     params: {id:string}
 }
 
-const ForgotPage  = ({params}:Props) =>{
-    return(
-        <>
-            <Container className="flex flex-col justify-center items-center w-full">
-                <Link href="/" passHref>
-                <Image
-                src="/images/logo-no-slogan.png"
-                alt="DMajorStore Logo"
-                width={96}
-                height={96}
-                className="w-20 h-24 mx-auto"
-                />
-                </Link>
-            </Container>
-
-            <h1 className="text-4xl text-center w-full font-bold">Cambie su contraseña</h1>
+const ForgotPage = ({params}:Props) => {
+    return (
+        <div className="space-y-8">
+            <div className="text-center space-y-2">
+                <h1 className="text-3xl font-bold text-gray-800">Cambiar contraseña</h1>
+                <p className="text-gray-500">Ingresa tu nueva contraseña para restablecer tu cuenta</p>
+            </div>
+            
             <ForgotForm id={params.id}/>
-        </>
-        
-
+        </div>
     )
 }
 

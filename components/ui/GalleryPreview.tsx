@@ -18,10 +18,11 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
 }) => {
   if (!images || images.length === 0) {
     return (
-      <div className={`aspect-video bg-gray-200 rounded-lg flex items-center justify-center ${className}`}>
-        <div className="text-gray-400 text-center">
-          <Building2 className="h-12 w-12 mx-auto mb-2" />
-          <p className="text-sm">Sin imágenes</p>
+      <div className={`aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center border border-blue-200 ${className}`}>
+        <div className="text-blue-600 text-center">
+          <Building2 className="h-16 w-16 mx-auto mb-3 opacity-60" />
+          <p className="text-sm font-medium">Sin imágenes</p>
+          <p className="text-xs text-blue-500 mt-1">Esta publicación no incluye imágenes</p>
         </div>
       </div>
     );

@@ -22,7 +22,8 @@ import {
   Home,
   TrendingUp,
   Handshake,
-  CreditCard
+  CreditCard,
+  Star
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
@@ -170,6 +171,12 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
+                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                  <NavLink href="/ratings" icon={<Star className="h-4 w-4" />} isScrolled={isScrolled}>
+                    Calificaciones
+                  </NavLink>
+                )}
+
                 {/* Enlaces de pagos según el rol */}
                 {hasRole(['ADMIN']) && (
                   <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
@@ -276,6 +283,12 @@ const Navbar = () => {
                   {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
                     <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={closeMenu}>
                       Contrataciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/ratings" icon={<Star className="h-5 w-5" />} onClick={closeMenu}>
+                      Calificaciones
                     </MobileNavLink>
                   )}
                 </div>
