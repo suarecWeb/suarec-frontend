@@ -339,3 +339,87 @@
 .animate-scroll {
   animation: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
 }
+
+/* Estilos para chat responsivo */
+.chat-message {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+.chat-message p {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Auto resize textarea */
+.auto-resize-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 40px;
+  max-height: 120px;
+}
+
+/* Smooth transitions for mobile chat */
+.chat-mobile-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Better scrolling for messages */
+.messages-container {
+  scroll-behavior: smooth;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.7);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}
+
+/* Responsive chat container */
+@media (max-width: 768px) {
+  .chat-container {
+    height: calc(100vh - 140px);
+  }
+  
+  .chat-header {
+    padding: 12px 16px;
+  }
+  
+  .chat-messages {
+    padding: 12px;
+  }
+  
+  .chat-input {
+    padding: 12px 16px;
+  }
+}
+
+/* Fix for long URLs and text in messages */
+.message-content {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.message-content a {
+  color: inherit;
+  text-decoration: underline;
+  word-break: break-all;
+}

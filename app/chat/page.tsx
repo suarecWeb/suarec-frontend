@@ -40,11 +40,12 @@ const ChatPageContent = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showMobileConversations, setShowMobileConversations] = useState(true);
 
   const [showUserSearch, setShowUserSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -59,7 +60,29 @@ const ChatPageContent = () => {
     markAsRead: markAsReadWebSocket,
     joinConversation,
     leaveConversation,
+    onNewMessage,
+    onMessageRead,
+    onConversationUpdated,
   } = useWebSocketContext();
+
+  // Detectar vista móvil
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+
+  // En móvil, mostrar conversaciones por defecto
+  useEffect(() => {
+    if (isMobileView && !selectedConversation) {
+      setShowMobileConversations(true);
+    }
+  }, [isMobileView, selectedConversation]);
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -105,10 +128,18 @@ const ChatPageContent = () => {
     }
   }, [conversations, currentUserId, searchParams, selectedConversation]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom only within the messages container
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Solo hacer scroll automático al cargar una conversación por primera vez
+    if (selectedConversation && messages.length > 0 && loadingMessages === false) {
+      // Usar scrollTop en lugar de scrollIntoView para evitar el scroll de toda la página
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [selectedConversation?.user.id]); // Solo cuando cambia la conversación seleccionada
 
   // Escuchar confirmaciones de mensajes enviados
   useEffect(() => {
@@ -124,13 +155,176 @@ const ChatPageContent = () => {
     };
   }, []);
 
+  // Escuchar nuevos mensajes del WebSocket
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const handleNewMessage = (data: { message: Message; conversationId: string }) => {
+      console.log('Nuevo mensaje recibido en chat:', data);
+      console.log('Current user ID:', currentUserId);
+      console.log('Selected conversation:', selectedConversation?.user.id);
+      console.log('Debug datos del mensaje:', {
+        messageId: data.message.id,
+        senderId: data.message.senderId,
+        senderIdType: typeof data.message.senderId,
+        recipientId: data.message.recipientId,
+        recipientIdType: typeof data.message.recipientId,
+        senderObject: data.message.sender,
+        content: data.message.content,
+        currentUserId: currentUserId,
+        currentUserIdType: typeof currentUserId
+      });
+      
+      const { message } = data;
+      
+      // Solo procesar el mensaje si es relevante para el usuario actual
+      if (message.recipientId === currentUserId || message.senderId === currentUserId) {
+        console.log('Mensaje relevante para el usuario actual');
+        
+        // Actualizar mensajes si estamos en la conversación correcta
+        if (selectedConversation && 
+            (message.senderId === selectedConversation.user.id || 
+             message.recipientId === selectedConversation.user.id)) {
+          
+          console.log('Actualizando mensajes en conversación activa');
+          
+          setMessages(prev => {
+            // Evitar duplicados
+            const existingMessage = prev.find(msg => msg.id === message.id);
+            if (existingMessage) {
+              console.log('Mensaje duplicado, saltando');
+              return prev;
+            }
+            
+            // Solo remover el mensaje temporal específico si este mensaje es la confirmación
+            // Buscar un mensaje temporal que coincida con el contenido y el sender
+            const tempMessageIndex = prev.findIndex(msg => 
+              msg.id?.startsWith('temp_') && 
+              msg.content === message.content && 
+              msg.senderId === message.senderId
+            );
+            
+            let filteredMessages = prev;
+            if (tempMessageIndex !== -1) {
+              // Remover solo el mensaje temporal específico
+              filteredMessages = prev.filter((_, index) => index !== tempMessageIndex);
+              console.log('Reemplazando mensaje temporal específico');
+            } else {
+              console.log('Agregando nuevo mensaje sin remover temporales');
+            }
+            
+            // Hacer scroll automático solo si estamos cerca del final del contenedor
+            setTimeout(() => {
+              if (messagesContainerRef.current) {
+                const container = messagesContainerRef.current;
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                
+                // Solo hacer scroll si estamos cerca del final
+                if (isNearBottom) {
+                  container.scrollTop = container.scrollHeight;
+                }
+              }
+            }, 100);
+            
+            return [...filteredMessages, message];
+          });
+          
+          // Marcar como leído automáticamente si soy el destinatario y estoy viendo la conversación
+          if (message.recipientId === currentUserId && message.id && !message.read) {
+            console.log('📖 Marcando mensaje como leído automáticamente');
+            setTimeout(() => {
+              if (message.id) {
+                markAsReadWebSocket?.(message.id);
+              }
+            }, 500); // Pequeño delay para simular que el usuario "vio" el mensaje
+          }
+        } else {
+          console.log('Mensaje no es para la conversación activa');
+        }
+        
+        // Actualizar lista de conversaciones
+        setConversations(prev => {
+          const otherUserId = message.senderId === currentUserId ? message.recipientId : message.senderId;
+          const existingConvIndex = prev.findIndex(conv => conv.user.id === otherUserId);
+          
+          if (existingConvIndex !== -1) {
+            // Actualizar conversación existente
+            const updatedConversations = [...prev];
+            updatedConversations[existingConvIndex] = {
+              ...updatedConversations[existingConvIndex],
+              lastMessage: message,
+              unreadCount: message.recipientId === currentUserId ? 
+                (updatedConversations[existingConvIndex].unreadCount || 0) + 1 : 
+                updatedConversations[existingConvIndex].unreadCount || 0
+            };
+            // Reordenar conversaciones por último mensaje
+            return sortConversationsByLastMessage(updatedConversations);
+          } else {
+            // Crear nueva conversación (esto requeriría más lógica para obtener datos del usuario)
+            console.log('Nueva conversación necesaria para usuario:', otherUserId);
+            return prev;
+          }
+        });
+      }
+    };
+
+    const handleMessageRead = (data: { messageId: string; readAt: Date }) => {
+      console.log('👁️ Mensaje marcado como leído:', data);
+      
+      // Actualizar el estado de leído del mensaje
+      setMessages(prev => prev.map(msg => 
+        msg.id === data.messageId 
+          ? { ...msg, read: true, read_at: data.readAt }
+          : msg
+      ));
+      
+      console.log('✅ Estado de lectura actualizado para mensaje:', data.messageId);
+    };
+
+    const handleConversationUpdated = (data: { conversationId: string; lastMessage: Message }) => {
+      console.log('Conversación actualizada:', data);
+      // La lógica ya está manejada en handleNewMessage
+    };
+
+    // Obtener el contexto WebSocket y configurar listeners
+    // Los hooks ya están disponibles en el scope superior
+    
+    console.log('Registrando listeners de WebSocket en chat');
+    console.log('Estado conexión:', isConnected);
+    
+    // Configurar los listeners y obtener funciones de limpieza
+    const removeNewMessageListener = onNewMessage(handleNewMessage);
+    const removeMessageReadListener = onMessageRead(handleMessageRead);
+    const removeConversationUpdatedListener = onConversationUpdated(handleConversationUpdated);
+
+    console.log('Listeners registrados exitosamente');
+
+    return () => {
+      console.log('🧹 Limpiando listeners de WebSocket en chat');
+      // Limpiar listeners cuando el componente se desmonte
+      removeNewMessageListener();
+      removeMessageReadListener();
+      removeConversationUpdatedListener();
+    };
+  }, [currentUserId, selectedConversation, markAsReadWebSocket, onNewMessage, onMessageRead, onConversationUpdated]);
+
+  // Función para ordenar conversaciones por último mensaje (más reciente primero)
+  const sortConversationsByLastMessage = (conversations: Conversation[]) => {
+    return [...conversations].sort((a, b) => {
+      const dateA = new Date(a.lastMessage.sent_at).getTime();
+      const dateB = new Date(b.lastMessage.sent_at).getTime();
+      return dateB - dateA; // Más reciente primero
+    });
+  };
+
   const fetchConversations = async () => {
     if (!currentUserId) return;
 
     try {
       setLoading(true);
       const response = await MessageService.getConversations(currentUserId);
-      setConversations(response.data);
+      const sortedConversations = sortConversationsByLastMessage(response.data);
+      setConversations(sortedConversations);
     } catch (err) {
       console.error("Error al cargar conversaciones:", err);
       setError("Error al cargar las conversaciones");
@@ -151,6 +345,11 @@ const ChatPageContent = () => {
       );
       setMessages(response.data.data.reverse()); // Mostrar mensajes más antiguos primero
       setSelectedConversation(conversation);
+
+      // En móvil, ocultar la lista de conversaciones cuando se selecciona una
+      if (isMobileView) {
+        setShowMobileConversations(false);
+      }
 
       // Unirse a la conversación en WebSocket
       const conversationId = `${Math.min(currentUserId, conversation.user.id)}_${Math.max(currentUserId, conversation.user.id)}`;
@@ -210,6 +409,9 @@ const ChatPageContent = () => {
         recipientId: selectedConversation.user.id,
       };
 
+      console.log('📤 Enviando mensaje a través de WebSocket:', messageData);
+      console.log('🔌 WebSocket conectado:', isConnected);
+
       // Enviar mensaje a través de WebSocket
       sendWebSocketMessage(messageData);
       
@@ -230,15 +432,24 @@ const ChatPageContent = () => {
       
       setMessages(prev => [...prev, tempMessage]);
       setNewMessage("");
+      
+      // Hacer scroll automático solo dentro del contenedor de mensajes
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
 
       // Actualizar la conversación con el nuevo mensaje
-      setConversations(prev =>
-        prev.map(conv =>
+      setConversations(prev => {
+        const updatedConversations = prev.map(conv =>
           conv.user.id === selectedConversation.user.id
             ? { ...conv, lastMessage: tempMessage }
             : conv
-        )
-      );
+        );
+        // Reordenar conversaciones por último mensaje
+        return sortConversationsByLastMessage(updatedConversations);
+      });
 
       // Resetear el estado de envío después de un breve delay
       setTimeout(() => {
@@ -260,6 +471,11 @@ const ChatPageContent = () => {
 
   const handleTypingChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
+    
+    // Auto resize textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
   const formatTime = (dateString: Date | string) => {
@@ -314,7 +530,10 @@ const ChatPageContent = () => {
     // Agregar la conversación a la lista si no existe
     const existingConversation = conversations.find(conv => conv.user.id === user.id);
     if (!existingConversation) {
-      setConversations(prev => [newConversation, ...prev]);
+      setConversations(prev => {
+        const updatedConversations = [newConversation, ...prev];
+        return sortConversationsByLastMessage(updatedConversations);
+      });
     }
 
     // Cargar los mensajes (puede estar vacío si es nueva)
@@ -346,10 +565,14 @@ const ChatPageContent = () => {
 
         {/* Content */}
         <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[calc(100vh-200px)]">
-            <div className="flex h-full">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden chat-container h-[calc(100vh-200px)]">
+            <div className="flex h-full relative">
               {/* Sidebar - Lista de conversaciones */}
-              <div className="w-1/3 border-r border-gray-200 flex flex-col">
+              <div className={`${
+                isMobileView 
+                  ? `absolute inset-0 z-10 ${showMobileConversations ? 'block' : 'hidden'}` 
+                  : 'w-1/3'
+              } border-r border-gray-200 flex flex-col bg-white`}>
                 {/* Search */}
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex gap-2">
@@ -436,21 +659,42 @@ const ChatPageContent = () => {
               </div>
 
               {/* Chat Area */}
-              <div className="flex-1 flex flex-col">
+              <div className={`${
+                isMobileView 
+                  ? `absolute inset-0 z-20 ${showMobileConversations ? 'hidden' : 'block'}` 
+                  : 'flex-1'
+              } flex flex-col bg-white`}>
                 {selectedConversation ? (
                   <>
                     {/* Chat Header */}
-                    <div className="p-4 border-b border-gray-200 bg-gray-50">
+                    <div className="chat-header p-4 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center gap-3">
+                        {isMobileView && (
+                          <button
+                            onClick={() => setShowMobileConversations(true)}
+                            className="text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            <ArrowLeft className="h-5 w-5" />
+                          </button>
+                        )}
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{selectedConversation.user.name}</h3>
                           <p className="text-sm text-gray-500">{selectedConversation.user.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                          <span className={`text-xs ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                            {isConnected ? 'En línea' : 'Desconectado'}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    <div 
+                      ref={messagesContainerRef}
+                      className="flex-1 overflow-y-auto chat-messages messages-container p-4 space-y-4"
+                    >
                       {loadingMessages ? (
                         <div className="text-center py-8">
                           <Loader2 className="h-8 w-8 text-[#097EEC] animate-spin mx-auto mb-4" />
@@ -464,13 +708,15 @@ const ChatPageContent = () => {
                             >
                             {/* Removed profile images for sender */}
                             <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              className={`chat-message max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg break-words ${
                                 message.sender?.id === currentUserId
                                   ? "bg-[#097EEC] text-white"
                                   : "bg-gray-200 text-gray-900"
                               }`}
                             >
-                              <p className="text-sm">{message.content}</p>
+                              <div className="message-content">
+                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                              </div>
                               <div className="flex items-center justify-end gap-1 mt-1">
                                 <span className={`text-xs ${
                                   message.sender?.id === currentUserId ? "text-blue-100" : "text-gray-500"
@@ -478,11 +724,11 @@ const ChatPageContent = () => {
                                   {formatTime(message.sent_at)}
                                 </span>
                                 {message.sender?.id === currentUserId && (
-                                  <div className="w-4 h-4 flex items-center justify-center">
+                                  <div className="w-4 h-4 flex items-center justify-center ml-1">
                                     {message.read ? (
-                                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                      <div className="w-3 h-3 rounded-full bg-green-400 border border-green-500" title="Leído"></div>
                                     ) : (
-                                      <Circle className="w-3 h-3 text-blue-100" />
+                                      <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-200" title="Enviado"></div>
                                     )}
                                   </div>
                                 )}
@@ -501,21 +747,21 @@ const ChatPageContent = () => {
                     </div>
 
                     {/* Message Input */}
-                    <div className="p-4 border-t border-gray-200">
+                    <div className="chat-input p-4 border-t border-gray-200">
                       <div className="flex gap-2">
                         <textarea
                           value={newMessage}
                           onChange={handleTypingChange}
                           onKeyPress={handleKeyPress}
                           placeholder="Escribe un mensaje..."
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
+                          className="auto-resize-textarea flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none min-h-[40px] max-h-32"
                           rows={1}
                           disabled={sendingMessage}
                         />
                         <button
                           onClick={sendMessage}
                           disabled={!newMessage.trim() || sendingMessage}
-                          className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                          className="px-3 py-2 sm:px-4 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]"
                         >
                           {sendingMessage ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -527,11 +773,26 @@ const ChatPageContent = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center">
+                  <div className="flex-1 flex items-center justify-center p-4">
                     <div className="text-center">
                       <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Selecciona una conversación</h3>
-                      <p className="text-gray-500">Elige una conversación para comenzar a chatear</p>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {isMobileView ? 'Selecciona una conversación' : 'Selecciona una conversación'}
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {isMobileView 
+                          ? 'Elige una conversación de la lista para comenzar a chatear' 
+                          : 'Elige una conversación para comenzar a chatear'
+                        }
+                      </p>
+                      {isMobileView && (
+                        <button
+                          onClick={() => setShowMobileConversations(true)}
+                          className="mt-4 px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors"
+                        >
+                          Ver conversaciones
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
