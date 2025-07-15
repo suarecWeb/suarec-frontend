@@ -9,6 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../interfaces/auth.interface';
 import { X, FileImage, Loader2, CheckCircle, Info, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { UserGallery } from './ui/UserGallery';
+import SupabaseService from '../services/supabase.service';
 
 interface CreatePublicationModalProps {
   isOpen: boolean;
@@ -111,16 +112,13 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
     }
   };
 
-  // Función para subir imágenes (simulada)
+  // Función para subir imágenes (real)
   const uploadImage = async (file: File): Promise<string> => {
     setUploading(true);
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setUploading(false);
-        resolve(`https://example.com/images/${file.name}`);
-      }, 1500);
-    });
+    const result = await SupabaseService.uploadImage(file, "publication-images");
+    setUploading(false);
+    if (result.error) throw new Error(result.error);
+    return result.url;
   };
 
   const onSubmit = async (data: FormData) => {
