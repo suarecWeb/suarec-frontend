@@ -6,12 +6,13 @@ import { useState, useTransition, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Cookies from "js-cookie"
 import Link from "next/link"
-import { AlertCircle, CheckCircle, ArrowLeft, Loader2 } from "lucide-react"
+import { AlertCircle, CheckCircle, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 
 const FormLogin = () => {
   const [error, setError] = useState<string | undefined>("")
   const [success, setSuccess] = useState<string | undefined>("")
   const [isPending, startTransition] = useTransition()
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -114,12 +115,24 @@ const FormLogin = () => {
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="••••••••"
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+            className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
             disabled={isPending}
             required
           />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 transition-colors"
+            onClick={() => setShowPassword(!showPassword)}
+            disabled={isPending}
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
         </div>
       </div>
 
