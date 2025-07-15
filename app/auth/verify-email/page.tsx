@@ -74,7 +74,7 @@ const EmailVerificationContent = () => {
 
     setIsResending(true);
     try {
-      await EmailVerificationService.resendVerificationEmail(userEmail);
+      await EmailVerificationService.resendVerificationEmail(userEmail.toLowerCase());
       setMessage("Correo de verificación reenviado. Revisa tu bandeja de entrada.");
       setVerificationStatus('registered');
     } catch (error: any) {
