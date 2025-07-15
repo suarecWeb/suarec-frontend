@@ -50,7 +50,7 @@ const EmailVerificationContent = () => {
       }
     } catch (error: any) {
       setVerificationStatus('error');
-      setMessage(error.response?.data?.message || "Error al verificar el email. Inténtalo de nuevo.");
+      setMessage(error.response?.data?.message || "Error al verificar el correo electrónico. Inténtalo de nuevo.");
     } finally {
       setIsVerifying(false);
     }
@@ -68,17 +68,17 @@ const EmailVerificationContent = () => {
 
   const handleResendEmail = async () => {
     if (!userEmail.trim()) {
-      setMessage("Por favor ingresa tu email para reenviar la verificación.");
+      setMessage("Por favor ingresa tu correo electrónico para reenviar la verificación.");
       return;
     }
 
     setIsResending(true);
     try {
       await EmailVerificationService.resendVerificationEmail(userEmail);
-      setMessage("Email de verificación reenviado. Revisa tu bandeja de entrada.");
+      setMessage("Correo de verificación reenviado. Revisa tu bandeja de entrada.");
       setVerificationStatus('registered');
     } catch (error: any) {
-      setMessage(error.response?.data?.message || "Error al reenviar el email.");
+      setMessage(error.response?.data?.message || "Error al reenviar el correo electrónico.");
       setVerificationStatus('error');
     } finally {
       setIsResending(false);
@@ -92,8 +92,8 @@ const EmailVerificationContent = () => {
           <div className="bg-blue-50 inline-flex rounded-full p-6 mb-6 lg:mb-8">
             <Loader2 className="h-12 w-12 lg:h-16 lg:w-16 text-[#097EEC] animate-spin" />
           </div>
-          <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Verificando tu email...</h2>
-          <p className="text-gray-600 text-lg">Por favor espera mientras verificamos tu dirección de email.</p>
+          <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Verificando tu correo electrónico...</h2>
+          <p className="text-gray-600 text-lg">Por favor espera mientras verificamos tu dirección de correo electrónico.</p>
         </div>
       );
     }
@@ -104,7 +104,7 @@ const EmailVerificationContent = () => {
           <div className="bg-green-50 inline-flex rounded-full p-6 mb-6 lg:mb-8">
             <CheckCircle className="h-12 w-12 lg:h-16 lg:w-16 text-green-500" />
           </div>
-          <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">¡Email verificado exitosamente!</h2>
+          <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">¡Correo electrónico verificado exitosamente!</h2>
           <p className="text-gray-600 mb-6 lg:mb-8 text-lg">{message}</p>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 lg:p-6 mb-6 lg:mb-8 max-w-2xl mx-auto">
             <p className="text-green-800 text-base lg:text-lg">
@@ -113,7 +113,7 @@ const EmailVerificationContent = () => {
           </div>
           <Link href="/auth/login">
             <button className="bg-[#097EEC] text-white px-6 py-3 lg:px-8 lg:py-4 rounded-lg hover:bg-[#0A6BC7] transition-colors text-base lg:text-lg font-medium">
-              Ir al Login
+              Ir al inicio de sesión
             </button>
           </Link>
         </div>
@@ -158,7 +158,7 @@ const EmailVerificationContent = () => {
 
             <div className="space-y-4 lg:space-y-6">
               <p className="text-sm lg:text-base text-gray-500">
-                ¿No recibiste el email? Revisa tu carpeta de spam o solicita un nuevo enlace.
+                ¿No recibiste el email? Revisa tu carpeta de correo no deseado o solicita un nuevo enlace.
               </p>
               
               <div className="bg-gray-50 rounded-lg p-6 lg:p-8 max-w-2xl lg:max-w-3xl mx-auto">
@@ -166,7 +166,7 @@ const EmailVerificationContent = () => {
                 <div className="space-y-4 lg:space-y-6">
                   <div>
                     <label htmlFor="email" className="block text-sm lg:text-base font-medium text-gray-700 mb-2 lg:mb-3">
-                      Tu email
+                      Tu correo electrónico
                     </label>
                     <input
                       type="email"
@@ -200,7 +200,7 @@ const EmailVerificationContent = () => {
               <div className="pt-4 lg:pt-6">
                 <Link href="/auth/login">
                   <button className="text-[#097EEC] hover:underline text-base lg:text-lg">
-                    ¿Ya verificaste tu email? Ir al login
+                    ¿Ya verificaste tu correo electrónico? Ir al inicio
                   </button>
                 </Link>
               </div>
@@ -225,7 +225,7 @@ const EmailVerificationContent = () => {
             <div className="space-y-4 lg:space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm lg:text-base font-medium text-gray-700 mb-2 lg:mb-3">
-                  Tu email
+                  Tu correo electrónico
                 </label>
                 <input
                   type="email"
@@ -265,18 +265,18 @@ const EmailVerificationContent = () => {
         <div className="bg-yellow-50 inline-flex rounded-full p-6 mb-6 lg:mb-8">
           <Mail className="h-12 w-12 lg:h-16 lg:w-16 text-yellow-500" />
         </div>
-        <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Verificación de Email</h2>
+        <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Verificación de correo electrónico</h2>
         <p className="text-gray-600 mb-6 lg:mb-8 text-lg">
-          Para verificar tu email, necesitas hacer clic en el enlace que enviamos a tu correo.
+          Para verificar tu correo electrónico, necesitas hacer clic en el enlace que enviamos a tu bandeja de entrada.
         </p>
         
-        {/* Formulario para reenviar email */}
+        {/* Formulario para reenviar correo electrónico */}
         <div className="bg-gray-50 rounded-lg p-6 lg:p-8 max-w-2xl lg:max-w-3xl mx-auto">
-          <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 lg:mb-6">¿No recibiste el email?</h3>
+          <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 lg:mb-6">¿No recibiste el correo electrónico?</h3>
           <div className="space-y-4 lg:space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm lg:text-base font-medium text-gray-700 mb-2 lg:mb-3">
-                Tu email
+                Tu correo electrónico
               </label>
               <input
                 type="email"

@@ -56,6 +56,8 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
 
+  // Mostrar todas las publicaciones, con o sin imágenes
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 hover:shadow-md transition-shadow duration-300">
       {/* Header */}
@@ -90,12 +92,14 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
       {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
       <div className="space-y-4">
         {/* Galería de imágenes */}
-        <GalleryPreview
-          images={publication.gallery_images || []}
-          title={publication.title}
-          maxDisplay={4}
-          className="mb-3"
-        />
+        {(publication.image_url || (publication.gallery_images && publication.gallery_images.length > 0)) ? (
+          <GalleryPreview
+            images={publication.image_url ? [publication.image_url] : (publication.gallery_images || [])}
+            title={publication.title}
+            maxDisplay={4}
+            className="mb-3"
+          />
+        ) : null}
 
         {/* Contenido principal */}
         <div className="w-full">

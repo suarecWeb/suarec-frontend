@@ -144,7 +144,7 @@ const Navbar = () => {
                 
                 {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                   <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Feed
+                    Publicaciones
                   </NavLink>
                 )}
                 
@@ -261,7 +261,7 @@ const Navbar = () => {
                   
                   {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
                     <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={closeMenu}>
-                      Feed
+                      Publicaciones
                     </MobileNavLink>
                   )}
                   
