@@ -214,7 +214,7 @@ const MyApplicationsPageContent = () => {
         key={application.id} 
         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Header con estado y fecha */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -335,20 +335,20 @@ const MyApplicationsPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-6 sm:py-8 pt-20 sm:pt-24">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Mis aplicaciones</h1>
-            <p className="mt-2 text-blue-100">
+            <h1 className="text-2xl sm:text-3xl font-bold">Mis aplicaciones</h1>
+            <p className="mt-2 text-blue-100 text-sm sm:text-base">
               Revisa el estado de todas tus aplicaciones laborales
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="container mx-auto px-4 -mt-4 sm:-mt-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
             {/* Actions Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
@@ -356,15 +356,15 @@ const MyApplicationsPageContent = () => {
                 <input
                   type="text"
                   placeholder="Buscar aplicaciones..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm sm:text-base"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <Link href="/publications">
-                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
+              <Link href="/publications" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2 text-sm sm:text-base">
+                  <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Ver oportunidades</span>
                 </button>
               </Link>
@@ -388,20 +388,35 @@ const MyApplicationsPageContent = () => {
               onValueChange={setActiveTab}
               className="mt-6"
             >
-              <TabsList className="grid grid-cols-5 mb-6 w-full sm:w-auto">
-                <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6 w-full gap-1 sm:gap-0 h-auto p-1">
+                <TabsTrigger 
+                  value="all" 
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Todas
                 </TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger 
+                  value="pending" 
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Pendientes
                 </TabsTrigger>
-                <TabsTrigger value="interview" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
-                  En entrevista
+                <TabsTrigger 
+                  value="interview" 
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 col-span-2 sm:col-span-1"
+                >
+                  Entrevista
                 </TabsTrigger>
-                <TabsTrigger value="accepted" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger 
+                  value="accepted" 
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Aceptadas
                 </TabsTrigger>
-                <TabsTrigger value="rejected" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger 
+                  value="rejected" 
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Rechazadas
                 </TabsTrigger>
               </TabsList>
@@ -414,7 +429,7 @@ const MyApplicationsPageContent = () => {
                 ) : (
                   <>
                     {filteredApplications.length > 0 ? (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {filteredApplications.map(application => renderApplicationCard(application))}
                       </div>
                     ) : (

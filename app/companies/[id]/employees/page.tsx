@@ -376,7 +376,7 @@ const EmployeesPageContent = () => {
                             <Calendar className="h-4 w-4" />
                             <span>Miembro desde: {user.created_at ? formatDate(user.created_at) : "N/A"}</span>
                           </div>
-                          {user.roles && (
+                          {/* {user.roles && (
                             <div className="flex flex-wrap gap-1">
                               {user.roles.map((role, index) => (
                                 <span
@@ -388,7 +388,7 @@ const EmployeesPageContent = () => {
                                 </span>
                               ))}
                             </div>
-                          )}
+                          )} */}
                         </div>
 
                         <button

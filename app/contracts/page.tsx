@@ -45,6 +45,7 @@ export default function ContractsPage() {
   const [acceptPolicy, setAcceptPolicy] = useState(false);
   const [acceptPersonal, setAcceptPersonal] = useState(false);
   const [contractPaymentStatus, setContractPaymentStatus] = useState<{ [contractId: string]: PaymentStatusByContractDto }>({});
+  const [activeTab, setActiveTab] = useState<'client' | 'provider' | 'all'>('all');
 
   useEffect(() => {
     loadContracts();
@@ -302,11 +303,20 @@ export default function ContractsPage() {
         </div>
 
         <div className="container mx-auto px-4 -mt-6 pb-12">
-          {/* Stats Cards */}
+          {/* Stats Cards as Tabs */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <button
+              onClick={() => setActiveTab('client')}
+              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+                activeTab === 'client' 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-3 rounded-lg">
+                <div className={`p-3 rounded-lg ${
+                  activeTab === 'client' ? 'bg-blue-200' : 'bg-blue-100'
+                }`}>
                   <Briefcase className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
@@ -314,11 +324,25 @@ export default function ContractsPage() {
                   <p className="text-2xl font-bold text-gray-800">{contracts.asClient.length}</p>
                 </div>
               </div>
-            </div>
+              {activeTab === 'client' && (
+                <div className="mt-2 text-xs text-blue-600 font-medium">
+                  ← Sección activa
+                </div>
+              )}
+            </button>
             
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <button
+              onClick={() => setActiveTab('provider')}
+              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+                activeTab === 'provider' 
+                  ? 'border-green-500 bg-green-50' 
+                  : 'border-gray-200 hover:border-green-300'
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <div className="bg-green-100 p-3 rounded-lg">
+                <div className={`p-3 rounded-lg ${
+                  activeTab === 'provider' ? 'bg-green-200' : 'bg-green-100'
+                }`}>
                   <Users className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
@@ -326,11 +350,25 @@ export default function ContractsPage() {
                   <p className="text-2xl font-bold text-gray-800">{contracts.asProvider.length}</p>
                 </div>
               </div>
-            </div>
+              {activeTab === 'provider' && (
+                <div className="mt-2 text-xs text-green-600 font-medium">
+                  ← Sección activa
+                </div>
+              )}
+            </button>
             
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+                activeTab === 'all' 
+                  ? 'border-purple-500 bg-purple-50' 
+                  : 'border-gray-200 hover:border-purple-300'
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-3 rounded-lg">
+                <div className={`p-3 rounded-lg ${
+                  activeTab === 'all' ? 'bg-purple-200' : 'bg-purple-100'
+                }`}>
                   <FileText className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
@@ -338,16 +376,22 @@ export default function ContractsPage() {
                   <p className="text-2xl font-bold text-gray-800">{contracts.asClient.length + contracts.asProvider.length}</p>
                 </div>
               </div>
-            </div>
+              {activeTab === 'all' && (
+                <div className="mt-2 text-xs text-purple-600 font-medium">
+                  ← Sección activa
+                </div>
+              )}
+            </button>
           </div>
 
           {/* Contrataciones como Cliente */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <span className="w-1 h-8 bg-blue-500 rounded-full"></span>
-              <Briefcase className="h-6 w-6 text-blue-600" />
-              Contrataciones Solicitadas
-            </h2>
+          {(activeTab === 'client' || activeTab === 'all') && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span className="w-1 h-8 bg-blue-500 rounded-full"></span>
+                <Briefcase className="h-6 w-6 text-blue-600" />
+                Contrataciones Solicitadas
+              </h2>
             
             {contracts.asClient.length === 0 ? (
               <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
@@ -658,15 +702,17 @@ export default function ContractsPage() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Contrataciones como Proveedor */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <span className="w-1 h-8 bg-green-500 rounded-full"></span>
-              <Users className="h-6 w-6 text-green-600" />
-              Servicios Ofrecidos
-            </h2>
+          {(activeTab === 'provider' || activeTab === 'all') && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span className="w-1 h-8 bg-green-500 rounded-full"></span>
+                <Users className="h-6 w-6 text-green-600" />
+                Servicios Ofrecidos
+              </h2>
             
             {contracts.asProvider.length === 0 ? (
               <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
@@ -819,7 +865,8 @@ export default function ContractsPage() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Bid Modal */}
