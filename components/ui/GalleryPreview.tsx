@@ -17,15 +17,7 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
   showTitle = false
 }) => {
   if (!images || images.length === 0) {
-    return (
-      <div className={`aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center border border-blue-200 ${className}`}>
-        <div className="text-blue-600 text-center">
-          <Building2 className="h-16 w-16 mx-auto mb-3 opacity-60" />
-          <p className="text-sm font-medium">Sin imágenes</p>
-          <p className="text-xs text-blue-500 mt-1">Esta publicación no incluye imágenes</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const displayImages = images.slice(0, maxDisplay);

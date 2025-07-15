@@ -199,6 +199,11 @@ const PublicationsPageContent = () => {
   const renderPublicationCard = (publication: Publication) => {
     const isEditable = canEditPublication(publication);
     
+    // NO mostrar publicaciones sin imágenes
+    if (!publication.image_url && (!publication.gallery_images || publication.gallery_images.length === 0)) {
+      return null;
+    }
+    
     return (
       <div 
         key={publication.id} 
@@ -211,6 +216,12 @@ const PublicationsPageContent = () => {
             {publication.image_url ? (
               <img 
                 src={publication.image_url} 
+                alt={publication.title} 
+                className="w-full h-full object-cover"
+              />
+            ) : publication.gallery_images && publication.gallery_images.length > 0 ? (
+              <img 
+                src={publication.gallery_images[0]} 
                 alt={publication.title} 
                 className="w-full h-full object-cover"
               />

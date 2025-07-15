@@ -95,7 +95,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     setIsConnecting(true);
 
     try {
-      const socket = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/messages`, {
+      const socket = io(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.suarec.com'}/messages`, {
         auth: { token },
         transports: ['websocket', 'polling'],
         autoConnect: true,

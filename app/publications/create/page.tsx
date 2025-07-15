@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import PublicationService from "@/services/PublicationsService";
+import SupabaseService from "@/services/supabase.service";
 import {
   AlertCircle,
   ArrowLeft,
@@ -106,19 +107,13 @@ const CreatePublicationPage = () => {
     }
   };
 
-  // Función para subir imágenes (simulada)
+  // Función para subir imágenes (real)
   const uploadImage = async (file: File): Promise<string> => {
-    // Esta función debería conectarse con tu servicio real de almacenamiento de imágenes
-    // Por ahora, simularemos un retraso y devolveremos una URL falsa
     setUploading(true);
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setUploading(false);
-        // En un caso real, aquí obtendrías la URL de la imagen subida
-        resolve(`https://example.com/images/${file.name}`);
-      }, 1500);
-    });
+    const result = await SupabaseService.uploadImage(file, "publication-images");
+    setUploading(false);
+    if (result.error) throw new Error(result.error);
+    return result.url;
   };
 
   const onSubmit = async (data: FormData) => {
