@@ -17,10 +17,10 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="bg-[#097EEC] text-white py-16 mt-auto">
+      <footer className="bg-[#097EEC] text-white py-16 mt-auto overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div className="md:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <div className="sm:col-span-2 lg:col-span-2">
               <SuarecLogo width={120} height={50} className="mb-6" theme="dark" />
               <p className="text-white/80 max-w-md leading-relaxed mb-6 font-eras">
                 Conectamos talento excepcional con oportunidades extraordinarias para crear un futuro laboral mejor en Colombia.
@@ -62,7 +62,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 <li className="text-white/80 font-eras">
                   <span className="block text-sm">Email</span>
-                  <span className="text-white">soportesuarec@gmail.com</span>
+                  <span className="text-white break-all sm:break-normal">soportesuarec@gmail.com</span>
                 </li>
                 <li className="text-white/80 font-eras">
                   <span className="block text-sm">Teléfono</span>
