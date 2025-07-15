@@ -19,7 +19,7 @@ const FormLogin = () => {
   useEffect(() => {
     const verified = searchParams.get("verified")
     if (verified === "true") {
-      setSuccess("¡Email verificado exitosamente! Ya puedes iniciar sesión.")
+      setSuccess("¡Correo electrónico verificado exitosamente! Ya puedes iniciar sesión.")
     }
   }, [searchParams])
 
@@ -67,9 +67,9 @@ const FormLogin = () => {
         if (errorMessage.toLowerCase().includes("verify your email") || 
             errorMessage.toLowerCase().includes("verificar") ||
             errorMessage.toLowerCase().includes("verification")) {
-          
-          setError("Tu email no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.")
-          
+
+          setError("Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.")
+
           // Redirigir a la página de verificación después de 3 segundos
           setTimeout(() => {
             router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}`)
