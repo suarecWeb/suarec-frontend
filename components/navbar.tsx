@@ -37,7 +37,7 @@ const Navbar = () => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
+  const updateUserRoles = () => {
     const token = Cookies.get('token');
     if (token) {
       try {
@@ -51,14 +51,29 @@ const Navbar = () => {
     } else {
       setUserRoles([]);
     }
+  }
 
+  useEffect(() => {
+    updateUserRoles()
+    
+    // Escuchar cambios en el estado de autenticación
+    const handleAuthChange = () => {
+      updateUserRoles()
+    }
+    
+    window.addEventListener('authStateChanged', handleAuthChange)
+    
     // Detectar scroll para cambiar el estilo de la navbar
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthChange)
+      window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   // Efecto para controlar el scroll del body cuando el menú móvil está abierto
