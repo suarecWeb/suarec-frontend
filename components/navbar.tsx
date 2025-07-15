@@ -181,12 +181,6 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/ratings" icon={<Star className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Calificaciones
-                  </NavLink>
-                )}
-
                 {/* Enlaces de pagos según el rol */}
                 {hasRole(['ADMIN']) && (
                   <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
