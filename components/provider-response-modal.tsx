@@ -303,8 +303,8 @@ export default function ProviderResponseModal({
               </div>
             </div>
 
-            {/* Proposed Date and Time (only for accept/negotiate) */}
-            {(action === ContractStatus.ACCEPTED || action === ContractStatus.NEGOTIATING) && (
+            {/* Proposed Date and Time (only for negotiate) */}
+            {action === ContractStatus.NEGOTIATING && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">

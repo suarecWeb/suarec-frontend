@@ -23,7 +23,8 @@ import {
   TrendingUp,
   Handshake,
   CreditCard,
-  Star
+  Star,
+  BarChart3
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
@@ -148,7 +149,7 @@ const Navbar = () => {
                   </NavLink>
                 )}
                 
-                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                {hasRole(['ADMIN', 'PERSON']) && (
                   <NavLink href="/companies" icon={<Building2 className="h-4 w-4" />} isScrolled={isScrolled}>
                     Compañías
                   </NavLink>
@@ -160,12 +161,6 @@ const Navbar = () => {
                       Aplicaciones
                     </NavLink>
                   </NotificationBadge>
-                )}
-
-                {hasRole(['PERSON', 'ADMIN']) && (
-                  <NavLink href="/my-applications" icon={<UserCheck className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Mis aplicaciones
-                  </NavLink>
                 )}
 
                 {hasRole(['BUSINESS', 'ADMIN']) && (
@@ -180,15 +175,9 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                {hasRole(['PERSON', 'ADMIN']) && (
                   <NavLink href="/contracts" icon={<Handshake className="h-4 w-4" />} isScrolled={isScrolled}>
                     Contrataciones
-                  </NavLink>
-                )}
-
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/ratings" icon={<Star className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Calificaciones
                   </NavLink>
                 )}
 
@@ -196,12 +185,6 @@ const Navbar = () => {
                 {hasRole(['ADMIN']) && (
                   <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
                     Pagos
-                  </NavLink>
-                )}
-
-                {hasRole(['PERSON', 'BUSINESS']) && (
-                  <NavLink href="/payments/history" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Historial de Pagos
                   </NavLink>
                 )}
                 
@@ -304,6 +287,24 @@ const Navbar = () => {
                   {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
                     <MobileNavLink href="/ratings" icon={<Star className="h-5 w-5" />} onClick={closeMenu}>
                       Calificaciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
+                    <MobileNavLink href="/stats" icon={<BarChart3 className="h-5 w-5" />} onClick={closeMenu}>
+                      Estadísticas
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['ADMIN']) && (
+                    <MobileNavLink href="/payments" icon={<CreditCard className="h-5 w-5" />} onClick={closeMenu}>
+                      Pagos
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['BUSINESS', 'PERSON']) && (
+                    <MobileNavLink href="/payments/history" icon={<CreditCard className="h-5 w-5" />} onClick={closeMenu}>
+                      Historial de Pagos
                     </MobileNavLink>
                   )}
                 </div>

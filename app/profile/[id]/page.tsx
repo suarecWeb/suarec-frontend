@@ -272,7 +272,7 @@ const PublicProfilePage = () => {
                                         <p className="text-blue-100 text-lg mt-1">{user.profession}</p>
                                     )}
 
-                                    <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                                    {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
                                         {getRoleNames(user.roles).map((roleName, index) => (
                                             <span
                                                 key={index}
@@ -282,7 +282,7 @@ const PublicProfilePage = () => {
                                                 {roleName}
                                             </span>
                                         ))}
-                                    </div>
+                                    </div> */}
 
                                     {/* Stats rápidas */}
                                     <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm">

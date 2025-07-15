@@ -244,7 +244,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="text-center md:text-left">
                       <h2 className="text-2xl font-bold">{user.name}</h2>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
+                      {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
                         {getRoleNames(user.roles).map((roleName, index) => (
                           <span
                             key={index}
@@ -254,7 +254,7 @@ const ProfilePage = () => {
                             {roleName}
                           </span>
                         ))}
-                      </div>
+                      </div> */}
                     </div>
                     <div className="ml-auto hidden md:block">
                       <Link href="/profile/edit">
