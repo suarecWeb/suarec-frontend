@@ -12,7 +12,7 @@ const CheckForm = () =>{
     const [email, setEmail] = useState<string>('')
 
     const handleForgot = async() =>{
-        await AuthService.forgotPassword(email)
+        await AuthService.forgotPassword(email.toLowerCase())
         toast.success('Revisa tu correo.')
     }
 

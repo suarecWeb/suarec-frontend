@@ -32,7 +32,7 @@ const FormLogin = () => {
     event.preventDefault()
 
     const values = {
-      email: event.currentTarget.email.value,
+      email: event.currentTarget.email.value.toLowerCase(),
       password: event.currentTarget.password.value,
     }
 

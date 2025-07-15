@@ -109,7 +109,15 @@ export default function FeedPage() {
     try {
       setLoading(true);
       const response = await PublicationService.getPublications(params);
-      setPublications(response.data.data);
+      
+      // Ordenar publicaciones por fecha (más recientes primero)
+      const sortedPublications = response.data.data.sort((a: Publication, b: Publication) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB.getTime() - dateA.getTime(); // Orden descendente (más reciente primero)
+      });
+      
+      setPublications(sortedPublications);
       setPagination(response.data.meta);
       
       // Cargar ofertas para las publicaciones

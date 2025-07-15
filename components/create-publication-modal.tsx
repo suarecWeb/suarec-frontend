@@ -370,12 +370,9 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>
-                      <option value="project">Por proyecto</option>
-                      <option value="event">Por evento</option>
                       <option value="monthly">Mensual</option>
                       <option value="daily">Diario</option>
                       <option value="weekly">Semanal</option>
-                      <option value="piece">Por pieza</option>
                       <option value="service">Por servicio</option>
                     </select>
                   </div>
