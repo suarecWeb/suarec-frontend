@@ -35,7 +35,7 @@ const isPublicRoute = (url: string | undefined) => {
 // Interceptor para adjuntar el token en cada solicitud
 api.interceptors.request.use(
   (config) => {
-    // Verificar si es una ruta pública
+    // Verificar si es una ruta pública - NO hacer nada con tokens en rutas públicas
     if (isPublicRoute(config.url)) {
       return config;
     }
@@ -88,16 +88,41 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Si el error es 401 (Unauthorized), el token puede haber expirado
+    // IMPORTANTE: NO manejar errores 401 en rutas de autenticación
+    // Esto permite que los errores de login se manejen correctamente
+    const isAuthRoute = error.config?.url?.includes('/suarec/auth/');
+    
+    // Debug: Log para entender qué está pasando
     if (error.response?.status === 401) {
-      // Limpiar cookies
-      Cookies.remove("token");
-      Cookies.remove("email");
-      Cookies.remove("role");
+      console.log('🔍 Error 401 detectado:', {
+        url: error.config?.url,
+        isAuthRoute,
+        message: error.response?.data?.message,
+        shouldHandle: !isAuthRoute
+      });
+    }
+    
+    // TEMPORAL: Desactivar completamente el manejo de 401 en rutas de auth
+    if (error.response?.status === 401 && !isAuthRoute) {
+      // Solo manejar errores 401 en rutas protegidas (que requieren token)
+      const errorMessage = error.response?.data?.message || "";
       
-      // Solo redirigir si estamos en el cliente
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth/login?expired=true";
+      // Solo considerar como token expirado si el mensaje es específico
+      if (errorMessage.toLowerCase().includes("expired") || 
+          errorMessage.toLowerCase().includes("invalid token") ||
+          errorMessage.toLowerCase().includes("token expired")) {
+        
+        console.log('🔑 Token expirado detectado, limpiando cookies...');
+        
+        // Limpiar cookies
+        Cookies.remove("token");
+        Cookies.remove("email");
+        Cookies.remove("role");
+        
+        // Solo redirigir si estamos en el cliente
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login?expired=true";
+        }
       }
     }
     

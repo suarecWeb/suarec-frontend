@@ -8,8 +8,7 @@ import Cookies from "js-cookie"
 import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard, BarChart3 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { jwtDecode } from "jwt-decode"
-import { TokenPayload } from "@/interfaces/auth.interface"
+import { useAuth } from "@/hooks/useAuth"
 
 
 
@@ -24,27 +23,10 @@ const handleNoLogin = () => {
 }
 
 export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScrolled = false }: NavbarRoleProps) => {
-  const [token, setToken] = useState<string | undefined>(undefined)
-  const [userRole, setUserRole] = useState<string | null>(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-
   const router = useRouter()
-
-  useEffect(() => {
-    const tokenValue = Cookies.get("token")
-    setToken(tokenValue)
-    
-    if (tokenValue) {
-      try {
-        const decoded = jwtDecode<TokenPayload>(tokenValue)
-        setUserRole(decoded.roles?.[0]?.name || null) // Tomar el nombre del primer rol
-      } catch (error) {
-        console.error("Error al decodificar token:", error)
-        setUserRole(null)
-      }
-    }
-  }, [])
+  const { isAuthenticated, user, userRoles } = useAuth()
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -68,7 +50,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
     return null
   }
 
-  if (token) {
+  if (isAuthenticated) {
     if (isMobile) {
       return (
         <div className="flex flex-col space-y-3">
@@ -96,7 +78,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             <span>Mis Estadísticas</span>
           </Link>
 
-          {userRole === 'ADMIN' ? (
+          {userRoles.includes('ADMIN') ? (
             <Link
               href="/payments"
               className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
@@ -169,7 +151,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <span className="text-sm">Mis Estadísticas</span>
             </Link>
             
-            {userRole === 'ADMIN' ? (
+            {userRoles.includes('ADMIN') ? (
               <Link
                 href="/payments"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
