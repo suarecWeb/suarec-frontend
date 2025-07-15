@@ -65,7 +65,22 @@ export default function ContractsPage() {
   const loadContracts = async () => {
     try {
       const data = await ContractService.getMyContracts();
-      setContracts(data);
+      
+      // Ordenar contratos por fecha (más recientes primero)
+      const sortContractsByDate = (contracts: Contract[]) => {
+        return contracts.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime(); // Orden descendente (más reciente primero)
+        });
+      };
+
+      const sortedData = {
+        asClient: sortContractsByDate([...data.asClient]),
+        asProvider: sortContractsByDate([...data.asProvider])
+      };
+
+      setContracts(sortedData);
       
       // Cargar estado de pagos para contratos como cliente
       const paymentStatusPromises = data.asClient.map(async (contract) => {
