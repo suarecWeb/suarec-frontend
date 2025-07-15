@@ -47,6 +47,8 @@ import { Contract } from "@/interfaces/contract.interface";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import { translatePriceUnit } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import RatingService from "@/services/RatingService";
+import { Star } from "lucide-react";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -75,6 +77,15 @@ const PublicationDetailPage = () => {
   // Estados para ofertas
   const [publicationBids, setPublicationBids] = useState<{ contracts: Contract[], totalBids: number }>({ contracts: [], totalBids: 0 });
   const [isLoadingBids, setIsLoadingBids] = useState(false);
+
+  // Estados para calificaciones del usuario
+  const [userRatingStats, setUserRatingStats] = useState<{
+    averageRating: number;
+    totalRatings: number;
+    ratingDistribution: { [key: number]: number };
+    categoryStats: { [category: string]: { average: number; count: number } };
+  } | null>(null);
+  const [isLoadingRatings, setIsLoadingRatings] = useState(false);
 
   useEffect(() => {
     const fetchPublicationDetails = async () => {
@@ -109,6 +120,9 @@ const PublicationDetailPage = () => {
           const authorResponse = await UserService.getUserById(parseInt(publicationData.user.id));
           console.log(authorResponse + " obtener user by id")
           setAuthor(authorResponse.data);
+          
+          // Cargar estadísticas de calificaciones del autor
+          await loadUserRatingStats(parseInt(publicationData.user.id));
         }
         
         // Obtener comentarios
@@ -296,6 +310,18 @@ const PublicationDetailPage = () => {
       console.error('Error loading publication bids:', error);
     } finally {
       setIsLoadingBids(false);
+    }
+  };
+
+  const loadUserRatingStats = async (userId: number) => {
+    try {
+      setIsLoadingRatings(true);
+      const stats = await RatingService.getUserRatingStats(userId);
+      setUserRatingStats(stats);
+    } catch (error) {
+      console.error('Error loading user rating stats:', error);
+    } finally {
+      setIsLoadingRatings(false);
     }
   };
 
@@ -581,10 +607,11 @@ const PublicationDetailPage = () => {
                         </div>
                       ) : (
                         // Placeholder cuando no hay imágenes
-                        <div className="aspect-video bg-gray-200 rounded-xl flex items-center justify-center border border-gray-200">
-                          <div className="text-gray-400 text-center">
-                            <Building2 className="h-16 w-16 mx-auto mb-3" />
-                            <p className="text-lg">Sin imágenes</p>
+                        <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl flex items-center justify-center border border-blue-200">
+                          <div className="text-blue-600 text-center">
+                            <Building2 className="h-20 w-20 mx-auto mb-4 opacity-60" />
+                            <p className="text-lg font-medium">Sin imágenes</p>
+                            <p className="text-sm text-blue-500 mt-2">Esta publicación no incluye imágenes</p>
                           </div>
                         </div>
                       )}
@@ -868,35 +895,31 @@ const PublicationDetailPage = () => {
                               )}
                             </div>
 
-                            {/* Rating section - solo mostrar si las propiedades existen */}
-                            {/* 
-                            {(author as any).average_rating > 0 && (
+                            {/* Rating section */}
+                            {userRatingStats && userRatingStats.totalRatings > 0 && (
                               <div className="pt-3 border-t border-gray-200">
                                 <div className="flex items-center gap-2">
                                   <div className="flex items-center">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                      <span
+                                      <Star
                                         key={star}
-                                        className={`text-lg ${
-                                          star <= (author as any).average_rating
-                                            ? 'text-yellow-400'
+                                        className={`h-4 w-4 ${
+                                          star <= userRatingStats.averageRating
+                                            ? 'text-yellow-400 fill-current'
                                             : 'text-gray-300'
                                         }`}
-                                      >
-                                        ★
-                                      </span>
+                                      />
                                     ))}
                                   </div>
                                   <span className="text-sm text-gray-600">
-                                    ({(author as any).average_rating.toFixed(1)})
+                                    ({userRatingStats.averageRating.toFixed(1)})
                                   </span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {(author as any).total_ratings} calificaciones
+                                  {userRatingStats.totalRatings} calificación{userRatingStats.totalRatings !== 1 ? 'es' : ''}
                                 </p>
                               </div>
                             )}
-                            */}
                           </div>
                         ) : (
                           <div className="text-center py-4 text-gray-500">
@@ -925,6 +948,17 @@ const PublicationDetailPage = () => {
                             <div className="flex justify-between items-center">
                               <span className="text-sm text-gray-600">Ofertas activas:</span>
                               <span className="font-semibold text-[#097EEC]">{publicationBids.totalBids}</span>
+                            </div>
+                          )}
+                          {userRatingStats && userRatingStats.totalRatings > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Calificación del proveedor:</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-semibold text-yellow-600">
+                                  {userRatingStats.averageRating.toFixed(1)}
+                                </span>
+                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              </div>
                             </div>
                           )}
                         </div>

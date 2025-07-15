@@ -17,14 +17,7 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
   showTitle = false
 }) => {
   if (!images || images.length === 0) {
-    return (
-      <div className={`aspect-video bg-gray-200 rounded-lg flex items-center justify-center ${className}`}>
-        <div className="text-gray-400 text-center">
-          <Building2 className="h-12 w-12 mx-auto mb-2" />
-          <p className="text-sm">Sin imágenes</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const displayImages = images.slice(0, maxDisplay);

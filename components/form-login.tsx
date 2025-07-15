@@ -16,11 +16,17 @@ const FormLogin = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Verificar si viene de la verificación de email
+  // Verificar si viene de la verificación de email o token expirado
   useEffect(() => {
     const verified = searchParams.get("verified")
+    const expired = searchParams.get("expired")
+    
     if (verified === "true") {
       setSuccess("¡Correo electrónico verificado exitosamente! Ya puedes iniciar sesión.")
+    }
+    
+    if (expired === "true") {
+      setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.")
     }
   }, [searchParams])
 
@@ -107,7 +113,7 @@ const FormLogin = () => {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700">
             Contraseña
           </label>
-          <Link href="/auth/checkEmail" className="text-sm text-[#097EEC] hover:text-[#082D50] transition-colors">
+          <Link href="/auth/forgot" className="text-sm text-[#097EEC] hover:text-[#082D50] transition-colors">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>

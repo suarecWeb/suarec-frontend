@@ -65,6 +65,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   }, [currentUserId]);
 
   const connect = useCallback(() => {
+    // Verificar si estamos en una ruta de autenticación
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot', '/auth/verify-email', '/auth/check-email', '/auth/change'];
+      const isAuthRoute = authRoutes.some(route => currentPath.startsWith(route));
+      
+      if (isAuthRoute) {
+        console.log('🔒 En ruta de autenticación, saltando conexión WebSocket');
+        return;
+      }
+    }
+
     // Evitar múltiples conexiones
     if (socketRef.current?.connected || isConnecting) {
       console.log('🔌 WebSocket ya conectado o conectando, saltando...');
@@ -83,7 +95,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     setIsConnecting(true);
 
     try {
-      const socket = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/messages`, {
+      const socket = io(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.suarec.com'}/messages`, {
         auth: { token },
         transports: ['websocket', 'polling'],
         autoConnect: true,

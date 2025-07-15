@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Handshake,
   CreditCard,
+  Star,
   BarChart3
 } from 'lucide-react';
 import NotificationBadge from "./notification-badge";
@@ -37,7 +38,7 @@ const Navbar = () => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
+  const updateUserRoles = () => {
     const token = Cookies.get('token');
     if (token) {
       try {
@@ -51,14 +52,29 @@ const Navbar = () => {
     } else {
       setUserRoles([]);
     }
+  }
 
+  useEffect(() => {
+    updateUserRoles()
+    
+    // Escuchar cambios en el estado de autenticación
+    const handleAuthChange = () => {
+      updateUserRoles()
+    }
+    
+    window.addEventListener('authStateChanged', handleAuthChange)
+    
     // Detectar scroll para cambiar el estilo de la navbar
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthChange)
+      window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   // Efecto para controlar el scroll del body cuando el menú móvil está abierto
@@ -165,6 +181,12 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
+                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
+                  <NavLink href="/ratings" icon={<Star className="h-4 w-4" />} isScrolled={isScrolled}>
+                    Calificaciones
+                  </NavLink>
+                )}
+
                 {/* Enlaces de pagos según el rol */}
                 {hasRole(['ADMIN']) && (
                   <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
@@ -265,6 +287,12 @@ const Navbar = () => {
                   {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
                     <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={closeMenu}>
                       Contrataciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
+                    <MobileNavLink href="/ratings" icon={<Star className="h-5 w-5" />} onClick={closeMenu}>
+                      Calificaciones
                     </MobileNavLink>
                   )}
 

@@ -8,6 +8,7 @@ import Cookies from "js-cookie"
 import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard, BarChart3, Users, UserCheck, Handshake, FileText, Building2 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 import { jwtDecode } from "jwt-decode"
 import { TokenPayload } from "@/interfaces/auth.interface"
 
@@ -29,7 +30,6 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
   const [userName, setUserName] = useState<string | null>(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-
   const router = useRouter()
 
   // Función para extraer el nombre del email (parte antes del @)
@@ -53,7 +53,6 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
     if (tokenValue) {
       try {
         const decoded = jwtDecode<TokenPayload>(tokenValue)
-        console.log("Token decodificado:", decoded)
         setUserRole(decoded.roles?.[0]?.name || null) // Tomar el nombre del primer rol
         setUserName(decoded.email || null) // Obtener el email del usuario
       } catch (error) {
@@ -63,6 +62,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
       }
     }
   }, [])
+  const { isAuthenticated, user, userRoles } = useAuth()
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -86,7 +86,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
     return null
   }
 
-  if (token) {
+  if (isAuthenticated) {
     if (isMobile) {
       return (
         <div className="flex flex-col space-y-3">
@@ -105,6 +105,32 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             <Settings className="h-5 w-5" />
             <span>Configuración</span>
           </Link>
+
+          <Link
+            href="/stats"
+            className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span>Mis Estadísticas</span>
+          </Link>
+
+          {userRole === 'ADMIN' ? (
+            <Link
+              href="/payments"
+              className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
+            >
+              <CreditCard className="h-5 w-5" />
+              <span>Pagos</span>
+            </Link>
+          ) : (
+            <Link
+              href="/payments/history"
+              className="flex items-center gap-3 py-3 px-4 text-lg justify-start rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-800 transition-all duration-300 font-eras-medium"
+            >
+              <CreditCard className="h-5 w-5" />
+              <span>Historial de Pagos</span>
+            </Link>
+          )}
 
           <button
             onClick={handleLogOutClick}
@@ -200,7 +226,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <span className="text-sm">Mis Estadísticas</span>
             </Link>
             
-            {userRole === 'ADMIN' ? (
+            {userRoles.includes('ADMIN') ? (
               <Link
                 href="/payments"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
