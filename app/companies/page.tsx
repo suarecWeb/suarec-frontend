@@ -25,6 +25,7 @@ import Link from "next/link"
 import Cookies from "js-cookie"
 import { jwtDecode } from "jwt-decode"
 import { TokenPayload } from "@/interfaces/auth.interface"
+import Image from "next/image"
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([])
@@ -189,9 +190,11 @@ const CompaniesPageContent = () => {
                           <div className="flex items-start gap-4">
                             {company.user?.profile_image ? (
                               <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden">
-                                <img 
+                                <Image 
                                   src={company.user.profile_image} 
                                   alt={company.name} 
+                                  width={48}
+                                  height={48}
                                   className="w-full h-full object-cover"
                                 />
                               </div>

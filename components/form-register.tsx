@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import TermsModal from "./terms-modal";
+import Image from 'next/image';
 
 // Interfaces para los DTOs
 interface CreateUserDto {
@@ -878,9 +879,11 @@ const FormRegister = () => {
             {imagePreview && (
               <div className="mt-4 flex justify-center">
                 <div className="w-32 h-32 relative rounded-lg overflow-hidden border-2 border-[#097EEC]">
-                  <img
+                  <Image
                     src={imagePreview.toString()}
                     alt="Vista previa"
+                    width={128}
+                    height={128}
                     className="w-full h-full object-cover"
                   />
                   <button

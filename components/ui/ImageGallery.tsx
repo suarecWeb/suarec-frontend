@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button } from './button';
 import { X, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
 import { getPublicUrl } from '@/lib/utils';
@@ -139,9 +140,11 @@ export function ImageGallery({
             }`}
           >
             <div className="aspect-square">
-              <img
+              <Image
                 src={getPublicUrl(image.image_path)}
                 alt={image.description || `Imagen ${image.id}`}
+                width={300}
+                height={300}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Building2 } from 'lucide-react';
 
 interface GalleryPreviewProps {
@@ -31,9 +32,11 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
       <div className="grid grid-cols-3 md:grid-cols-4 gap-1.5">
         {displayImages.map((imageUrl, index) => (
           <div key={index} className="aspect-square bg-gray-100 rounded-md overflow-hidden border border-gray-200">
-            <img
+            <Image
               src={imageUrl}
               alt={`${title || 'Imagen'} ${index + 1}`}
+              width={200}
+              height={200}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
             />
           </div>

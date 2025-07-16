@@ -2,6 +2,8 @@
 
 import React from "react";
 import { InfiniteMovingCards } from "./ui/infinite-moving-cards";
+import { ImageWithFallback } from "./ui/ImageWithFallback";
+import { Building2 } from "lucide-react";
 
 export function CompaniesCarousel() {
   const companies = [

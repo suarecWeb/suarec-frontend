@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from './button';
 import { Input } from './input';
 import { Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
@@ -203,9 +204,11 @@ export function ImageUpload({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {previewUrls.map((url, index) => (
               <div key={index} className="relative group">
-                <img
+                <Image
                   src={url}
                   alt={`Preview ${index + 1}`}
+                  width={96}
+                  height={96}
                   className="w-full h-24 object-cover rounded-lg"
                 />
                 <button

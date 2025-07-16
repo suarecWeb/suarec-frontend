@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { X, MessageSquare, User } from 'lucide-react';
 
 interface MessageNotificationProps {
@@ -44,9 +45,11 @@ const MessageNotification: React.FC<MessageNotificationProps> = ({
         {/* Avatar */}
         <div className="flex-shrink-0">
           {sender.profile_image ? (
-            <img
+            <Image
               src={sender.profile_image}
               alt={sender.name}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
