@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
   Heart,
   MessageSquare,
@@ -19,41 +19,53 @@ import {
   Calendar,
   Eye,
   Tag,
-  TrendingUp
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Publication } from '@/interfaces/publication.interface';
-import { translatePriceUnit } from '@/lib/utils';
-import { UserAvatarDisplay } from '@/components/ui/UserAvatar';
-import GalleryPreview from '@/components/ui/GalleryPreview';
-import { usePublicationLikes } from '@/hooks/usePublicationLikes';
-import { formatCurrency } from '@/lib/formatCurrency';
-import StartChatButton from './start-chat-button';
+  TrendingUp,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Publication } from "@/interfaces/publication.interface";
+import { translatePriceUnit } from "@/lib/utils";
+import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
+import GalleryPreview from "@/components/ui/GalleryPreview";
+import { usePublicationLikes } from "@/hooks/usePublicationLikes";
+import { formatCurrency } from "@/lib/formatCurrency";
+import StartChatButton from "./start-chat-button";
 
 interface PublicationFeedCardProps {
   publication: Publication;
   userRole?: string;
-  publicationBids?: { contracts: any[], totalBids: number };
+  publicationBids?: { contracts: any[]; totalBids: number };
 }
 
-const PublicationFeedCard = ({ publication, userRole, publicationBids }: PublicationFeedCardProps) => {
+const PublicationFeedCard = ({
+  publication,
+  userRole,
+  publicationBids,
+}: PublicationFeedCardProps) => {
   const [showComments, setShowComments] = useState(false);
-  
-  const { likesCount, hasLiked, isLoading: isLikeLoading, toggleLike } = usePublicationLikes({
+
+  const {
+    likesCount,
+    hasLiked,
+    isLoading: isLikeLoading,
+    toggleLike,
+  } = usePublicationLikes({
     publicationId: publication.id!,
     initialLikesCount: publication.likesCount || 0,
-    initialHasLiked: publication.hasLiked || false
+    initialHasLiked: publication.hasLiked || false,
   });
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
 
-    if (diffInHours < 1) return 'Hace unos minutos';
-    if (diffInHours < 24) return `Hace ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`;
-    if (diffInHours < 48) return 'Ayer';
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    if (diffInHours < 1) return "Hace unos minutos";
+    if (diffInHours < 24)
+      return `Hace ${diffInHours} hora${diffInHours > 1 ? "s" : ""}`;
+    if (diffInHours < 48) return "Ayer";
+    return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   };
 
   // Mostrar todas las publicaciones, con o sin imágenes
@@ -66,15 +78,15 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           <UserAvatarDisplay
             user={{
               id: publication.userId,
-              name: publication.user?.name || 'Usuario',
+              name: publication.user?.name || "Usuario",
               profile_image: publication.user?.profile_image,
-              email: publication.user?.email
+              email: publication.user?.email,
             }}
             size="md"
           />
           <div>
             <h3 className="font-bold text-gray-900 text-sm">
-              {publication.user?.name || 'Usuario'}
+              {publication.user?.name || "Usuario"}
             </h3>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Tag className="h-3 w-3" />
@@ -92,9 +104,15 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
       {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
       <div className="space-y-4">
         {/* Galería de imágenes */}
-        {(publication.image_url || (publication.gallery_images && publication.gallery_images.length > 0)) ? (
+        {publication.image_url ||
+        (publication.gallery_images &&
+          publication.gallery_images.length > 0) ? (
           <GalleryPreview
-            images={publication.image_url ? [publication.image_url] : (publication.gallery_images || [])}
+            images={
+              publication.image_url
+                ? [publication.image_url]
+                : publication.gallery_images || []
+            }
             title={publication.title}
             maxDisplay={4}
             className="mb-3"
@@ -110,19 +128,24 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           <div className="flex items-center gap-2 mb-2">
             {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
             <span className="text-green-700 font-semibold text-base">
-              {publication.price ? `${formatCurrency(publication.price.toLocaleString(), {
-                showCurrency: true,
-              })} ${translatePriceUnit(publication.priceUnit || '')}` : 'Precio a convenir'}
+              {publication.price
+                ? `${formatCurrency(publication.price.toLocaleString(), {
+                    showCurrency: true,
+                  })} ${translatePriceUnit(publication.priceUnit || "")}`
+                : "Precio a convenir"}
             </span>
           </div>
 
           {publication.description && (
-            <p className="text-gray-700 text-sm mb-3" style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}>
+            <p
+              className="text-gray-700 text-sm mb-3"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
               {publication.description}
             </p>
           )}
@@ -133,7 +156,9 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
               <div className="flex items-center gap-2 text-blue-700">
                 <TrendingUp className="h-3 w-3" />
                 <span className="font-medium text-xs">
-                  {publicationBids.totalBids} oferta{publicationBids.totalBids > 1 ? 's' : ''} activa{publicationBids.totalBids > 1 ? 's' : ''}
+                  {publicationBids.totalBids} oferta
+                  {publicationBids.totalBids > 1 ? "s" : ""} activa
+                  {publicationBids.totalBids > 1 ? "s" : ""}
                 </span>
               </div>
             </div>
@@ -141,7 +166,10 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
 
           <div className="flex gap-2">
             <Link href={`/feed/${publication.id}`}>
-              <Button size="sm" className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1">
+              <Button
+                size="sm"
+                className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1"
+              >
                 Ver más
               </Button>
             </Link>
@@ -154,10 +182,10 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
               Mensaje
             </Button> */}
             <StartChatButton
-              recipientId={parseInt(publication.user?.id || '0')}
-              recipientName={publication.user?.name || ''}
+              recipientId={parseInt(publication.user?.id || "0")}
+              recipientName={publication.user?.name || ""}
               className="flex-shrink-0 text-sm"
-              variant='outline'
+              variant="outline"
             />
           </div>
         </div>
@@ -169,10 +197,10 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
           onClick={toggleLike}
           disabled={isLikeLoading}
           className={`flex items-center gap-2 text-sm transition-colors ${
-            hasLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-          } ${isLikeLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+          } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
+          <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
           <span>{likesCount}</span>
         </button>
         <button
@@ -197,10 +225,13 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
                 <div key={index} className="flex items-start gap-3">
                   <UserAvatarDisplay
                     user={{
-                      id: typeof comment.user?.id === 'string' ? parseInt(comment.user.id) : (comment.user?.id as number) || 0,
-                      name: comment.user?.name || 'Usuario',
+                      id:
+                        typeof comment.user?.id === "string"
+                          ? parseInt(comment.user.id)
+                          : (comment.user?.id as number) || 0,
+                      name: comment.user?.name || "Usuario",
                       profile_image: comment.user?.profile_image,
-                      email: comment.user?.email
+                      email: comment.user?.email,
                     }}
                     size="sm"
                   />
@@ -208,7 +239,7 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
                     <div className="bg-gray-50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-medium text-gray-900">
-                          {comment.user?.name || 'Usuario'}
+                          {comment.user?.name || "Usuario"}
                         </span>
                         <span className="text-xs text-gray-500">
                           {formatDate(comment.created_at)}
@@ -231,4 +262,4 @@ const PublicationFeedCard = ({ publication, userRole, publicationBids }: Publica
   );
 };
 
-export default PublicationFeedCard; 
+export default PublicationFeedCard;

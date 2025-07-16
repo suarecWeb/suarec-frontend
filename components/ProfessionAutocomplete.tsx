@@ -24,9 +24,7 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
   }, [value]);
 
   const filteredSuggestions = suggestions
-    .filter((prof) =>
-      prof.toLowerCase().includes(inputValue.toLowerCase())
-    )
+    .filter((prof) => prof.toLowerCase().includes(inputValue.toLowerCase()))
     .slice(0, 5);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +49,10 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
 
   return (
     <div className="space-y-2 relative">
-      <label htmlFor="profession-autocomplete" className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor="profession-autocomplete"
+        className="block text-sm font-medium text-gray-700"
+      >
         {label}
       </label>
       <input
@@ -67,7 +68,11 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
         placeholder={placeholder}
         aria-autocomplete="list"
         aria-controls="profession-suggestions"
-        aria-activedescendant={showSuggestions && filteredSuggestions.length > 0 ? `suggestion-0` : undefined}
+        aria-activedescendant={
+          showSuggestions && filteredSuggestions.length > 0
+            ? `suggestion-0`
+            : undefined
+        }
       />
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
@@ -91,9 +96,11 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
           ))}
         </div>
       )}
-      <p className="text-xs text-gray-500 mt-1">Ejemplo: Desarrollador web, Abogado, Chef...</p>
+      <p className="text-xs text-gray-500 mt-1">
+        Ejemplo: Desarrollador web, Abogado, Chef...
+      </p>
     </div>
   );
 };
 
-export default ProfessionAutocomplete; 
+export default ProfessionAutocomplete;

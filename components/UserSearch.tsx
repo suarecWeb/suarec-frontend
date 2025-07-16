@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, User as UserIcon, MessageSquare, X } from 'lucide-react';
-import { UserService } from '@/services/UsersService';
-import { User } from '@/interfaces/user.interface';
+import { useState, useEffect, useRef } from "react";
+import { Search, User as UserIcon, MessageSquare, X } from "lucide-react";
+import { UserService } from "@/services/UsersService";
+import { User } from "@/interfaces/user.interface";
 
 interface UserSearchProps {
   onSelectUser: (user: User) => void;
@@ -10,7 +10,7 @@ interface UserSearchProps {
 }
 
 const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
 
   useEffect(() => {
     if (!isOpen) {
-      setSearchQuery('');
+      setSearchQuery("");
       setUsers([]);
       setError(null);
     }
@@ -42,8 +42,8 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
         const response = await UserService.searchUsers(searchQuery, 10);
         setUsers(response.data);
       } catch (err) {
-        console.error('Error searching users:', err);
-        setError('Error al buscar usuarios');
+        console.error("Error searching users:", err);
+        setError("Error al buscar usuarios");
       } finally {
         setLoading(false);
       }
@@ -122,12 +122,16 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
                           className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove('hidden');
+                            target.style.display = "none";
+                            target.nextElementSibling?.classList.remove(
+                              "hidden",
+                            );
                           }}
                         />
                       ) : null}
-                      <div className={`w-10 h-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${user.profile_image ? 'hidden' : ''}`}>
+                      <div
+                        className={`w-10 h-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center ${user.profile_image ? "hidden" : ""}`}
+                      >
                         <UserIcon className="h-5 w-5 text-[#097EEC]" />
                       </div>
                     </div>
@@ -159,7 +163,9 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
           ) : (
             <div className="p-8 text-center">
               <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Escribe al menos 2 caracteres para buscar</p>
+              <p className="text-gray-500">
+                Escribe al menos 2 caracteres para buscar
+              </p>
             </div>
           )}
         </div>
@@ -168,4 +174,4 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
   );
 };
 
-export default UserSearch; 
+export default UserSearch;

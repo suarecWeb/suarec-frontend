@@ -6,25 +6,25 @@ import MessageService from "@/services/MessageService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
-import { 
-  MessageSquare, 
-  Loader2, 
-  AlertCircle, 
-  ChevronDown, 
+import {
+  MessageSquare,
+  Loader2,
+  AlertCircle,
+  ChevronDown,
   X,
   User,
   Briefcase,
   FileText,
-  Send
+  Send,
 } from "lucide-react";
 
 interface StartChatButtonProps {
   recipientId: number;
   recipientName: string;
-  recipientType?: 'person' | 'business'; // Para personalizar los mensajes
-  context?: 'profile' | 'job' | 'application' | 'general'; // Contexto de donde se usa
+  recipientType?: "person" | "business"; // Para personalizar los mensajes
+  context?: "profile" | "job" | "application" | "general"; // Contexto de donde se usa
   className?: string;
-  variant?: 'primary' | 'outline'; // Para estilos adicionales si es necesario
+  variant?: "primary" | "outline"; // Para estilos adicionales si es necesario
 }
 
 interface MessageTemplate {
@@ -35,13 +35,13 @@ interface MessageTemplate {
   description: string;
 }
 
-const StartChatButton = ({ 
-  recipientId, 
-  recipientName, 
-  recipientType = 'person',
-  context = 'general',
+const StartChatButton = ({
+  recipientId,
+  recipientName,
+  recipientType = "person",
+  context = "general",
   className = "",
-  variant = "primary"
+  variant = "primary",
 }: StartChatButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,80 +54,80 @@ const StartChatButton = ({
   const getMessageTemplates = (): MessageTemplate[] => {
     const baseTemplates: MessageTemplate[] = [];
 
-    if (context === 'profile' && recipientType === 'person') {
+    if (context === "profile" && recipientType === "person") {
       baseTemplates.push(
         {
-          id: 'service_request',
-          title: 'Solicitar servicio',
+          id: "service_request",
+          title: "Solicitar servicio",
           message: `¡Hola ${recipientName}! He visto tu perfil y me interesa contratar tus servicios. ¿Podrías contarme más sobre lo que ofreces?`,
           icon: <Briefcase className="h-4 w-4" />,
-          description: 'Contratar servicios profesionales'
+          description: "Contratar servicios profesionales",
         },
         {
-          id: 'service_offer',
-          title: 'Ofrecer trabajo',
+          id: "service_offer",
+          title: "Ofrecer trabajo",
           message: `Hola ${recipientName}, tengo un proyecto que creo sería perfecto para tus habilidades. ¿Te interesaría conocer los detalles?`,
           icon: <FileText className="h-4 w-4" />,
-          description: 'Proponer un proyecto o trabajo'
+          description: "Proponer un proyecto o trabajo",
         },
         {
-          id: 'networking',
-          title: 'Networking profesional',
+          id: "networking",
+          title: "Networking profesional",
           message: `¡Hola ${recipientName}! Me parece muy interesante tu perfil profesional. Me gustaría conectar contigo para posibles colaboraciones futuras.`,
           icon: <User className="h-4 w-4" />,
-          description: 'Establecer contacto profesional'
-        }
+          description: "Establecer contacto profesional",
+        },
       );
-    } else if (context === 'application') {
+    } else if (context === "application") {
       baseTemplates.push(
         {
-          id: 'application_interest',
-          title: 'Interés en postulación',
+          id: "application_interest",
+          title: "Interés en postulación",
           message: `Hola ${recipientName}, he visto que te postulaste para nuestra oferta laboral. Me gustaría conocer más sobre tu experiencia y motivación.`,
           icon: <Briefcase className="h-4 w-4" />,
-          description: 'Seguimiento de postulación'
+          description: "Seguimiento de postulación",
         },
         {
-          id: 'interview_invitation',
-          title: 'Invitación a entrevista',
+          id: "interview_invitation",
+          title: "Invitación a entrevista",
           message: `¡Hola ${recipientName}! Tu perfil nos ha llamado mucho la atención. ¿Estarías disponible para una entrevista sobre la posición?`,
           icon: <User className="h-4 w-4" />,
-          description: 'Invitar a proceso de selección'
+          description: "Invitar a proceso de selección",
         },
         {
-          id: 'job_details',
-          title: 'Detalles del puesto',
+          id: "job_details",
+          title: "Detalles del puesto",
           message: `Hola ${recipientName}, me gustaría contarte más detalles sobre la posición y el proceso de selección. ¿Tienes tiempo para conversar?`,
           icon: <FileText className="h-4 w-4" />,
-          description: 'Información adicional del trabajo'
-        }
+          description: "Información adicional del trabajo",
+        },
       );
-    } else if (recipientType === 'business') {
+    } else if (recipientType === "business") {
       baseTemplates.push(
         {
-          id: 'job_inquiry',
-          title: 'Consulta sobre empleo',
+          id: "job_inquiry",
+          title: "Consulta sobre empleo",
           message: `Hola ${recipientName}, estoy interesado/a en las oportunidades laborales disponibles en su empresa. ¿Podrían proporcionarme más información?`,
           icon: <Briefcase className="h-4 w-4" />,
-          description: 'Preguntar sobre vacantes'
+          description: "Preguntar sobre vacantes",
         },
         {
-          id: 'service_proposal',
-          title: 'Propuesta de servicios',
+          id: "service_proposal",
+          title: "Propuesta de servicios",
           message: `¡Hola ${recipientName}! Ofrezco servicios que podrían ser de interés para su empresa. Me gustaría presentarles mi propuesta.`,
           icon: <FileText className="h-4 w-4" />,
-          description: 'Ofrecer servicios profesionales'
-        }
+          description: "Ofrecer servicios profesionales",
+        },
       );
     }
 
     // Mensaje general siempre disponible
     baseTemplates.push({
-      id: 'general',
-      title: 'Saludo profesional',
+      id: "general",
+      title: "Saludo profesional",
       message: `¡Hola ${recipientName}! ¿Cómo estás? Me gustaría conversar contigo cuando tengas un momento libre. ¿Te parece bien?`,
       icon: <MessageSquare className="h-4 w-4" />,
-      description: 'Mensaje de presentación general'
+      description: "Mensaje de presentación general",
     });
 
     return baseTemplates;
@@ -139,7 +139,7 @@ const StartChatButton = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = Cookies.get("token");
       if (!token) {
         router.push("/auth/login");
@@ -161,8 +161,11 @@ const StartChatButton = ({
         return;
       }
 
-      const finalMessage = messageContent || customMessage || `¡Hola ${recipientName}! Me interesa conocer más información.`;
-      
+      const finalMessage =
+        messageContent ||
+        customMessage ||
+        `¡Hola ${recipientName}! Me interesa conocer más información.`;
+
       await MessageService.createMessage({
         content: finalMessage,
         senderId: currentUserId,
@@ -172,12 +175,12 @@ const StartChatButton = ({
       router.push("/chat");
     } catch (error: any) {
       console.error("Error al iniciar chat:", error);
-      
+
       let errorMessage = "Error al enviar mensaje. Inténtalo de nuevo.";
       if (error.response) {
         errorMessage = error.response.data.message || errorMessage;
       }
-      
+
       setError(errorMessage);
       setTimeout(() => setError(null), 5000);
     } finally {
@@ -198,11 +201,9 @@ const StartChatButton = ({
         <button
           onClick={() => setShowOptions(!showOptions)}
           disabled={loading}
-          className={
-            `flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-sm font-medium
-            ${variant === 'primary' ? 'bg-[#097EEC] text-white hover:bg-[#0A6BC7]' : 'border border-gray-300 bg-white text-black hover:bg-gray-50'} 
-            disabled:opacity-50 disabled:cursor-not-allowed ${loading ? 'cursor-not-allowed' : ''}`
-          }
+          className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-sm font-medium
+            ${variant === "primary" ? "bg-[#097EEC] text-white hover:bg-[#0A6BC7]" : "border border-gray-300 bg-white text-black hover:bg-gray-50"} 
+            disabled:opacity-50 disabled:cursor-not-allowed ${loading ? "cursor-not-allowed" : ""}`}
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -217,18 +218,20 @@ const StartChatButton = ({
       {showOptions && (
         <>
           {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-50" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50"
             onClick={() => setShowOptions(false)}
             aria-hidden="true"
           />
-          
+
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md max-h-[90vh] flex flex-col">
               {/* Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-                <h3 className="font-medium text-gray-800">Elige cómo iniciar la conversación</h3>
+                <h3 className="font-medium text-gray-800">
+                  Elige cómo iniciar la conversación
+                </h3>
                 <button
                   onClick={() => setShowOptions(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -252,9 +255,15 @@ const StartChatButton = ({
                         {template.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-800 text-sm mb-1">{template.title}</h4>
-                        <p className="text-xs text-gray-500 mb-2">{template.description}</p>
-                        <p className="text-sm text-gray-600 italic leading-relaxed">{template.message}</p>
+                        <h4 className="font-medium text-gray-800 text-sm mb-1">
+                          {template.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {template.description}
+                        </p>
+                        <p className="text-sm text-gray-600 italic leading-relaxed">
+                          {template.message}
+                        </p>
                       </div>
                     </div>
                   </button>

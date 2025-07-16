@@ -7,16 +7,21 @@ import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 const baseURL = "/suarec/comments";
 
 // Función para obtener comentarios con paginación
-const getComments = (params?: PaginationParams) => 
+const getComments = (params?: PaginationParams) =>
   api.get<PaginationResponse<Comment>>(baseURL, { params });
 
 // Función para obtener comentarios de una publicación específica
-const getPublicationComments = (publicationId: string, params?: PaginationParams) => 
-  api.get<PaginationResponse<Comment>>(`/suarec/publications/${publicationId}/comments`, { params });
+const getPublicationComments = (
+  publicationId: string,
+  params?: PaginationParams,
+) =>
+  api.get<PaginationResponse<Comment>>(
+    `/suarec/publications/${publicationId}/comments`,
+    { params },
+  );
 
 // Función para obtener un comentario por ID
-const getCommentById = (id: string) => 
-  api.get<Comment>(`${baseURL}/${id}`);
+const getCommentById = (id: string) => api.get<Comment>(`${baseURL}/${id}`);
 
 // Función para crear un nuevo comentario
 const createComment = (commentData: {
@@ -24,16 +29,14 @@ const createComment = (commentData: {
   created_at: Date;
   publicationId: string;
   userId: string | number;
-}) => 
-  api.post<Comment>(baseURL, commentData);
+}) => api.post<Comment>(baseURL, commentData);
 
 // Función para actualizar un comentario existente
-const updateComment = (id: string, commentData: Partial<Comment>) => 
+const updateComment = (id: string, commentData: Partial<Comment>) =>
   api.patch<Comment>(`${baseURL}/${id}`, commentData);
 
 // Función para eliminar un comentario
-const deleteComment = (id: string) => 
-  api.delete(`${baseURL}/${id}`);
+const deleteComment = (id: string) => api.delete(`${baseURL}/${id}`);
 
 const CommentService = {
   getComments,

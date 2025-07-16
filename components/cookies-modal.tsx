@@ -1,6 +1,6 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import { X } from 'lucide-react';
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import { X } from "lucide-react";
 
 interface CookiesModalProps {
   isOpen: boolean;
@@ -52,39 +52,114 @@ const CookiesModal = ({ isOpen, onClose }: CookiesModalProps) => {
 
                 <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4 text-gray-700 space-y-6">
                   <p className="text-sm text-gray-500 mb-4">
-                    POLÍTICA DE COOKIES DE SUAREC<br/>
+                    POLÍTICA DE COOKIES DE SUAREC
+                    <br />
                     Fecha de última actualización: 16 de junio de 2025.
                   </p>
                   <section>
-                    <p>En SUAREC S.A.S. (en adelante &quot;SUAREC&quot;), utilizamos cookies para garantizar el correcto funcionamiento de nuestra plataforma web y app, mejorar la experiencia del usuario, ofrecer contenido personalizado y analizar el comportamiento de navegación con fines estadísticos y de mejora continua.</p>
+                    <p>
+                      En SUAREC S.A.S. (en adelante &quot;SUAREC&quot;),
+                      utilizamos cookies para garantizar el correcto
+                      funcionamiento de nuestra plataforma web y app, mejorar la
+                      experiencia del usuario, ofrecer contenido personalizado y
+                      analizar el comportamiento de navegación con fines
+                      estadísticos y de mejora continua.
+                    </p>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">1. ¿Qué son las cookies?</h4>
-                    <p>Las cookies son pequeños archivos que se almacenan en el dispositivo del usuario (ordenador, smartphone o tableta) al acceder a nuestro sitio web o app. Estas permiten recordar información sobre su visita, como el idioma preferido, la sesión iniciada o los servicios más utilizados.</p>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      1. ¿Qué son las cookies?
+                    </h4>
+                    <p>
+                      Las cookies son pequeños archivos que se almacenan en el
+                      dispositivo del usuario (ordenador, smartphone o tableta)
+                      al acceder a nuestro sitio web o app. Estas permiten
+                      recordar información sobre su visita, como el idioma
+                      preferido, la sesión iniciada o los servicios más
+                      utilizados.
+                    </p>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">2. Tipos de cookies utilizadas</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      2. Tipos de cookies utilizadas
+                    </h4>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li><span className="font-semibold">Cookies técnicas o necesarias:</span> esenciales para la navegación y el uso adecuado de las funciones básicas, como acceder a secciones seguras del sitio.</li>
-                      <li><span className="font-semibold">Cookies de personalización:</span> permiten recordar información para adaptar la experiencia del usuario (idioma, ciudad de búsqueda, perfil de usuario).</li>
-                      <li><span className="font-semibold">Cookies analíticas:</span> nos permiten conocer el comportamiento de los usuarios en la plataforma para mejorar nuestros servicios. Por ejemplo, saber cuántas personas visitan una sección específica.</li>
-                      <li><span className="font-semibold">Cookies publicitarias:</span> utilizadas para mostrar anuncios relevantes y medir su efectividad. Incluyen cookies de plataformas como Meta (Facebook, Instagram) y Google Ads.</li>
+                      <li>
+                        <span className="font-semibold">
+                          Cookies técnicas o necesarias:
+                        </span>{" "}
+                        esenciales para la navegación y el uso adecuado de las
+                        funciones básicas, como acceder a secciones seguras del
+                        sitio.
+                      </li>
+                      <li>
+                        <span className="font-semibold">
+                          Cookies de personalización:
+                        </span>{" "}
+                        permiten recordar información para adaptar la
+                        experiencia del usuario (idioma, ciudad de búsqueda,
+                        perfil de usuario).
+                      </li>
+                      <li>
+                        <span className="font-semibold">
+                          Cookies analíticas:
+                        </span>{" "}
+                        nos permiten conocer el comportamiento de los usuarios
+                        en la plataforma para mejorar nuestros servicios. Por
+                        ejemplo, saber cuántas personas visitan una sección
+                        específica.
+                      </li>
+                      <li>
+                        <span className="font-semibold">
+                          Cookies publicitarias:
+                        </span>{" "}
+                        utilizadas para mostrar anuncios relevantes y medir su
+                        efectividad. Incluyen cookies de plataformas como Meta
+                        (Facebook, Instagram) y Google Ads.
+                      </li>
                     </ul>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">3. Cookies propias y de terceros</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      3. Cookies propias y de terceros
+                    </h4>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li><span className="font-semibold">Cookies propias:</span> son gestionadas directamente por SUAREC.</li>
-                      <li><span className="font-semibold">Cookies de terceros:</span> son gestionadas por otras entidades que tratan los datos en nuestro nombre, como Google, Meta o proveedores de analítica.</li>
+                      <li>
+                        <span className="font-semibold">Cookies propias:</span>{" "}
+                        son gestionadas directamente por SUAREC.
+                      </li>
+                      <li>
+                        <span className="font-semibold">
+                          Cookies de terceros:
+                        </span>{" "}
+                        son gestionadas por otras entidades que tratan los datos
+                        en nuestro nombre, como Google, Meta o proveedores de
+                        analítica.
+                      </li>
                     </ul>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">4. Consentimiento del usuario</h4>
-                    <p>Cuando accedes por primera vez a nuestra plataforma, te solicitamos tu consentimiento para el uso de cookies, excepto aquellas que son estrictamente necesarias para el funcionamiento del sistema. Puedes configurar o rechazar el uso de cookies en cualquier momento desde el panel de configuración.</p>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      4. Consentimiento del usuario
+                    </h4>
+                    <p>
+                      Cuando accedes por primera vez a nuestra plataforma, te
+                      solicitamos tu consentimiento para el uso de cookies,
+                      excepto aquellas que son estrictamente necesarias para el
+                      funcionamiento del sistema. Puedes configurar o rechazar
+                      el uso de cookies en cualquier momento desde el panel de
+                      configuración.
+                    </p>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">5. Cómo desactivar o eliminar cookies</h4>
-                    <p>Puedes configurar tu navegador para restringir, bloquear o eliminar cookies. A continuación te compartimos enlaces a los procedimientos según el navegador:</p>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      5. Cómo desactivar o eliminar cookies
+                    </h4>
+                    <p>
+                      Puedes configurar tu navegador para restringir, bloquear o
+                      eliminar cookies. A continuación te compartimos enlaces a
+                      los procedimientos según el navegador:
+                    </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Google Chrome</li>
                       <li>Mozilla Firefox</li>
@@ -93,11 +168,20 @@ const CookiesModal = ({ isOpen, onClose }: CookiesModalProps) => {
                     </ul>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">6. Actualizaciones de esta política</h4>
-                    <p>SUAREC puede modificar esta Política de Cookies en cualquier momento para adaptarla a cambios normativos o a mejoras en la plataforma. Te recomendamos revisar esta página periódicamente.</p>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      6. Actualizaciones de esta política
+                    </h4>
+                    <p>
+                      SUAREC puede modificar esta Política de Cookies en
+                      cualquier momento para adaptarla a cambios normativos o a
+                      mejoras en la plataforma. Te recomendamos revisar esta
+                      página periódicamente.
+                    </p>
                   </section>
                   <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">7. Contacto</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      7. Contacto
+                    </h4>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Correo: soportesuarec@gmail.com</li>
                       <li>Teléfono: +57 314 637 3088</li>
@@ -123,4 +207,4 @@ const CookiesModal = ({ isOpen, onClose }: CookiesModalProps) => {
   );
 };
 
-export default CookiesModal; 
+export default CookiesModal;

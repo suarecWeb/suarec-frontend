@@ -1,5 +1,5 @@
 // services/RatingService.ts
-import api from './axios_config';
+import api from "./axios_config";
 
 export interface CreateRatingDto {
   reviewerId: number;
@@ -40,7 +40,7 @@ export interface ContractReadyForRating {
     name: string;
     profile_image?: string;
   };
-  userRole: 'CLIENT' | 'PROVIDER';
+  userRole: "CLIENT" | "PROVIDER";
   canRate: boolean;
   alreadyRated: boolean;
   completedAt: Date;
@@ -54,20 +54,24 @@ export interface RatingStats {
 }
 
 export enum RatingCategory {
-  SERVICE = 'SERVICE',
-  EMPLOYER = 'EMPLOYER',
-  EMPLOYEE = 'EMPLOYEE'
+  SERVICE = "SERVICE",
+  EMPLOYER = "EMPLOYER",
+  EMPLOYEE = "EMPLOYEE",
 }
 
 class RatingService {
   // Crear una nueva calificación
   async createRating(ratingData: CreateRatingDto): Promise<Rating> {
-    const response = await api.post('/suarec/ratings', ratingData);
+    const response = await api.post("/suarec/ratings", ratingData);
     return response.data;
   }
 
   // Obtener calificaciones de un usuario
-  async getUserRatings(userId: number, page: number = 1, limit: number = 10): Promise<{
+  async getUserRatings(
+    userId: number,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
     data: Rating[];
     meta: {
       total: number;
@@ -78,7 +82,9 @@ class RatingService {
       hasPrevPage: boolean;
     };
   }> {
-    const response = await api.get(`/suarec/ratings/user/${userId}?page=${page}&limit=${limit}`);
+    const response = await api.get(
+      `/suarec/ratings/user/${userId}?page=${page}&limit=${limit}`,
+    );
     return response.data;
   }
 
@@ -90,12 +96,15 @@ class RatingService {
 
   // Obtener contratos listos para calificar
   async getContractsReadyForRating(): Promise<ContractReadyForRating[]> {
-    const response = await api.get('/suarec/ratings/ready-to-rate');
+    const response = await api.get("/suarec/ratings/ready-to-rate");
     return response.data;
   }
 
   // Actualizar una calificación
-  async updateRating(ratingId: string, updateData: Partial<CreateRatingDto>): Promise<Rating> {
+  async updateRating(
+    ratingId: string,
+    updateData: Partial<CreateRatingDto>,
+  ): Promise<Rating> {
     const response = await api.put(`/suarec/ratings/${ratingId}`, updateData);
     return response.data;
   }

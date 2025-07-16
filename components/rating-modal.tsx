@@ -4,7 +4,10 @@
 import { useState } from "react";
 import { X, Loader2, CheckCircle, AlertCircle, User } from "lucide-react";
 import StarRating from "./star-rating";
-import RatingService, { CreateRatingDto, RatingCategory } from "@/services/RatingService";
+import RatingService, {
+  CreateRatingDto,
+  RatingCategory,
+} from "@/services/RatingService";
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -25,11 +28,13 @@ const RatingModal: React.FC<RatingModalProps> = ({
   reviewerId,
   workContractId,
   workContractTitle,
-  onRatingSubmitted
+  onRatingSubmitted,
 }) => {
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
-  const [category, setCategory] = useState<RatingCategory>(RatingCategory.SERVICE);
+  const [category, setCategory] = useState<RatingCategory>(
+    RatingCategory.SERVICE,
+  );
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -63,7 +68,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
         if (onRatingSubmitted) onRatingSubmitted();
       }, 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Error al enviar la calificación");
+      setError(
+        err.response?.data?.message || "Error al enviar la calificación",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +137,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
                 <div>
                   <p className="font-medium text-gray-900">{revieweeName}</p>
                   {workContractTitle && (
-                    <p className="text-sm text-gray-500">Trabajo: {workContractTitle}</p>
+                    <p className="text-sm text-gray-500">
+                      Trabajo: {workContractTitle}
+                    </p>
                   )}
                 </div>
               </div>
@@ -148,7 +157,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
                         name="category"
                         value={cat}
                         checked={category === cat}
-                        onChange={(e) => setCategory(e.target.value as RatingCategory)}
+                        onChange={(e) =>
+                          setCategory(e.target.value as RatingCategory)
+                        }
                         className="mr-3 text-[#097EEC] focus:ring-[#097EEC]"
                         disabled={isSubmitting}
                       />
@@ -180,7 +191,10 @@ const RatingModal: React.FC<RatingModalProps> = ({
 
               {/* Comment */}
               <div>
-                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="comment"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Comentario (opcional)
                 </label>
                 <textarea

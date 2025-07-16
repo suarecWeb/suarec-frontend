@@ -24,9 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col`}>
         <NotificationProvider>
           <WebSocketProvider>
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
+            <div className="flex-1 flex flex-col">{children}</div>
             <ConditionalFooter />
           </WebSocketProvider>
         </NotificationProvider>

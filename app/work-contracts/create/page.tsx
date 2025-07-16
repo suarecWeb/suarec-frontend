@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
-import WorkContractService, { CreateWorkContractDto } from "@/services/WorkContractService";
+import WorkContractService, {
+  CreateWorkContractDto,
+} from "@/services/WorkContractService";
 import { UserService } from "@/services/UsersService";
 import PublicationService from "@/services/PublicationsService";
 import {
@@ -29,7 +31,7 @@ interface FormData {
   description: string;
   agreed_price: number;
   currency: string;
-  type: 'SERVICE' | 'EMPLOYMENT';
+  type: "SERVICE" | "EMPLOYMENT";
   start_date: string;
   estimated_completion: string;
   location: string;
@@ -57,16 +59,22 @@ const CreateWorkContractPageContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  
+
   // Estados para búsqueda de usuarios y publicaciones
   const [userSearchTerm, setUserSearchTerm] = useState("");
-  const [userSearchResults, setUserSearchResults] = useState<UserSearchResult[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<UserSearchResult | null>(null);
+  const [userSearchResults, setUserSearchResults] = useState<
+    UserSearchResult[]
+  >([]);
+  const [selectedProvider, setSelectedProvider] =
+    useState<UserSearchResult | null>(null);
   const [showUserSearch, setShowUserSearch] = useState(false);
-  
+
   const [publicationSearchTerm, setPublicationSearchTerm] = useState("");
-  const [publicationSearchResults, setPublicationSearchResults] = useState<PublicationSearchResult[]>([]);
-  const [selectedPublication, setSelectedPublication] = useState<PublicationSearchResult | null>(null);
+  const [publicationSearchResults, setPublicationSearchResults] = useState<
+    PublicationSearchResult[]
+  >([]);
+  const [selectedPublication, setSelectedPublication] =
+    useState<PublicationSearchResult | null>(null);
   const [showPublicationSearch, setShowPublicationSearch] = useState(false);
 
   const {
@@ -136,14 +144,17 @@ const CreateWorkContractPageContent = () => {
     }
 
     try {
-      const response = await PublicationService.getPublications({ page: 1, limit: 10 });
+      const response = await PublicationService.getPublications({
+        page: 1,
+        limit: 10,
+      });
       // Filtrar publicaciones que tienen id y mapear al formato correcto
       const filteredPublications: PublicationSearchResult[] = response.data.data
-        .filter((pub: any) => pub.id && typeof pub.id === 'string') // Solo publicaciones con id válido
+        .filter((pub: any) => pub.id && typeof pub.id === "string") // Solo publicaciones con id válido
         .map((pub: any) => ({
           id: pub.id as string,
           title: pub.title,
-          category: pub.category
+          category: pub.category,
         }));
       setPublicationSearchResults(filteredPublications);
       /*const filtered = response.data.data.filter(pub =>
@@ -171,7 +182,7 @@ const CreateWorkContractPageContent = () => {
     setValue("publicationId", publication.id);
     setShowPublicationSearch(false);
     setPublicationSearchTerm(publication.title);
-    
+
     // Auto-completar título si está vacío
     if (!watch("title")) {
       setValue("title", `Contrato para: ${publication.title}`);
@@ -222,7 +233,9 @@ const CreateWorkContractPageContent = () => {
         currency: data.currency,
         type: data.type,
         start_date: data.start_date ? new Date(data.start_date) : undefined,
-        estimated_completion: data.estimated_completion ? new Date(data.estimated_completion) : undefined,
+        estimated_completion: data.estimated_completion
+          ? new Date(data.estimated_completion)
+          : undefined,
         location: data.location || undefined,
         client_notes: data.client_notes || undefined,
         clientId: currentUserId,
@@ -230,25 +243,27 @@ const CreateWorkContractPageContent = () => {
         publicationId: selectedPublication?.id,
       };
 
-      const response = await WorkContractService.createWorkContract(contractData);
-      
+      const response =
+        await WorkContractService.createWorkContract(contractData);
+
       setSuccess("Contrato creado exitosamente");
-      
+
       // Resetear formulario
       reset();
       setSelectedProvider(null);
       setSelectedPublication(null);
       setUserSearchTerm("");
       setPublicationSearchTerm("");
-      
+
       // Redirigir después de 2 segundos
       setTimeout(() => {
         router.push(`/work-contracts/${response.data.id}`);
       }, 2000);
-      
     } catch (err: any) {
       setIsLoading(false);
-      const errorMessage = err.response?.data?.message || "Error al crear el contrato. Inténtalo de nuevo.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Error al crear el contrato. Inténtalo de nuevo.";
       setError(errorMessage);
       console.error("Error al crear contrato:", err);
     } finally {
@@ -314,7 +329,8 @@ const CreateWorkContractPageContent = () => {
                       htmlFor="title"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Título del Contrato <span className="text-red-500">*</span>
+                      Título del Contrato{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="title"
@@ -327,7 +343,8 @@ const CreateWorkContractPageContent = () => {
                         required: "El título es obligatorio",
                         maxLength: {
                           value: 200,
-                          message: "El título no puede exceder los 200 caracteres",
+                          message:
+                            "El título no puede exceder los 200 caracteres",
                         },
                       })}
                       disabled={isLoading}
@@ -355,7 +372,8 @@ const CreateWorkContractPageContent = () => {
                       {...register("description", {
                         maxLength: {
                           value: 1000,
-                          message: "La descripción no puede exceder los 1000 caracteres",
+                          message:
+                            "La descripción no puede exceder los 1000 caracteres",
                         },
                       })}
                       disabled={isLoading}
@@ -543,10 +561,16 @@ const CreateWorkContractPageContent = () => {
                             <User className="h-4 w-4 text-[#097EEC]" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{selectedProvider.name}</p>
-                            <p className="text-sm text-gray-500">{selectedProvider.email}</p>
+                            <p className="font-medium text-gray-900">
+                              {selectedProvider.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {selectedProvider.email}
+                            </p>
                             {selectedProvider.profession && (
-                              <p className="text-xs text-gray-500">{selectedProvider.profession}</p>
+                              <p className="text-xs text-gray-500">
+                                {selectedProvider.profession}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -566,10 +590,16 @@ const CreateWorkContractPageContent = () => {
                                 <User className="h-4 w-4 text-[#097EEC]" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium text-gray-900">{user.name}</p>
-                                <p className="text-sm text-gray-500">{user.email}</p>
+                                <p className="font-medium text-gray-900">
+                                  {user.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {user.email}
+                                </p>
                                 {user.profession && (
-                                  <p className="text-xs text-gray-500">{user.profession}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {user.profession}
+                                  </p>
                                 )}
                               </div>
                             </button>
@@ -624,27 +654,38 @@ const CreateWorkContractPageContent = () => {
                       {/* Selected Publication */}
                       {selectedPublication && (
                         <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="font-medium text-gray-900">{selectedPublication.title}</p>
-                          <p className="text-sm text-gray-500">{selectedPublication.category}</p>
+                          <p className="font-medium text-gray-900">
+                            {selectedPublication.title}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {selectedPublication.category}
+                          </p>
                         </div>
                       )}
 
                       {/* Publication Search Results */}
-                      {showPublicationSearch && publicationSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto thin-scrollbar">
-                          {publicationSearchResults.map((publication) => (
-                            <button
-                              key={publication.id}
-                              type="button"
-                              onClick={() => handleSelectPublication(publication)}
-                              className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                            >
-                              <p className="font-medium text-gray-900">{publication.title}</p>
-                              <p className="text-sm text-gray-500">{publication.category}</p>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {showPublicationSearch &&
+                        publicationSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto thin-scrollbar">
+                            {publicationSearchResults.map((publication) => (
+                              <button
+                                key={publication.id}
+                                type="button"
+                                onClick={() =>
+                                  handleSelectPublication(publication)
+                                }
+                                className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                              >
+                                <p className="font-medium text-gray-900">
+                                  {publication.title}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {publication.category}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -657,10 +698,22 @@ const CreateWorkContractPageContent = () => {
                           Información sobre Contratos
                         </h3>
                         <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc ml-4">
-                          <li>Los contratos permiten formalizar acuerdos de trabajo</li>
-                          <li>El proveedor debe aceptar el contrato para que sea válido</li>
-                          <li>Puedes actualizar el estado del contrato según el progreso</li>
-                          <li>Al completarse, ambas partes podrán calificarse mutuamente</li>
+                          <li>
+                            Los contratos permiten formalizar acuerdos de
+                            trabajo
+                          </li>
+                          <li>
+                            El proveedor debe aceptar el contrato para que sea
+                            válido
+                          </li>
+                          <li>
+                            Puedes actualizar el estado del contrato según el
+                            progreso
+                          </li>
+                          <li>
+                            Al completarse, ambas partes podrán calificarse
+                            mutuamente
+                          </li>
                         </ul>
                       </div>
                     </div>
@@ -704,7 +757,7 @@ const CreateWorkContractPageContent = () => {
 // Componente principal protegido con RoleGuard
 const CreateWorkContractPage = () => {
   return (
-    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS', 'PERSON']}>
+    <RoleGuard allowedRoles={["ADMIN", "BUSINESS", "PERSON"]}>
       <CreateWorkContractPageContent />
     </RoleGuard>
   );

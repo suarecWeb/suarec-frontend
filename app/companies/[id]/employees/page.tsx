@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import CompanyService from "@/services/CompanyService";
@@ -61,24 +61,40 @@ const EmployeesPageContent = () => {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
-        setUserRoles(decoded.roles.map(role => role.name));
+        setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
         console.error("Error al decodificar token:", error);
       }
     }
   }, []);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchCompanyData();
-    }
-  }, [params.id]);
+  const fetchEmployees = useCallback(
+    async (paginationParams: PaginationParams = { page: 1, limit: 10 }) => {
+      try {
+        setLoadingEmployees(true);
+        const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const fetchCompanyData = async () => {
+        const response = await CompanyService.getEmployees(
+          companyId,
+          paginationParams,
+        );
+        setEmployees(response.data.data);
+        setPagination(response.data.meta);
+      } catch (err) {
+        console.error("Error al cargar empleados:", err);
+        setError("Error al cargar los empleados");
+      } finally {
+        setLoadingEmployees(false);
+      }
+    },
+    [params.id],
+  );
+
+  const fetchCompanyData = useCallback(async () => {
     try {
       setLoading(true);
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
+
       // Obtener datos de la empresa
       const companyResponse = await CompanyService.getCompanyById(companyId);
       setCompany(companyResponse.data);
@@ -91,38 +107,31 @@ const EmployeesPageContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, fetchEmployees]);
 
-  const fetchEmployees = async (paginationParams: PaginationParams = { page: 1, limit: 10 }) => {
-    try {
-      setLoadingEmployees(true);
-      const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
-      const response = await CompanyService.getEmployees(companyId, paginationParams);
-      setEmployees(response.data.data);
-      setPagination(response.data.meta);
-    } catch (err) {
-      console.error("Error al cargar empleados:", err);
-      setError("Error al cargar los empleados");
-    } finally {
-      setLoadingEmployees(false);
+  useEffect(() => {
+    if (params.id) {
+      fetchCompanyData();
     }
-  };
+  }, [params.id, fetchCompanyData]);
 
   const fetchAvailableUsers = async () => {
     try {
       // Obtener usuarios que no son empleados de esta empresa
       const response = await UserService.getUsers({ page: 1, limit: 50 });
       const allUsers = response.data.data;
-      
+
       // Filtrar usuarios que no son empleados de esta empresa y tienen rol PERSON
-      const available = allUsers.filter(user => 
-        !employees.some(emp => emp.id === user.id) &&
-        user.roles?.some(role => 
-          typeof role === 'string' ? role === 'PERSON' : role.name === 'PERSON'
-        )
+      const available = allUsers.filter(
+        (user) =>
+          !employees.some((emp) => emp.id === user.id) &&
+          user.roles?.some((role) =>
+            typeof role === "string"
+              ? role === "PERSON"
+              : role.name === "PERSON",
+          ),
       );
-      
+
       setAvailableUsers(available);
     } catch (err) {
       console.error("Error al cargar usuarios disponibles:", err);
@@ -133,16 +142,16 @@ const EmployeesPageContent = () => {
   const addEmployee = async (userId: string) => {
     try {
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
+
       await CompanyService.addEmployee(companyId, userId);
       setSuccess("Empleado agregado correctamente");
-      
+
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });
-      
+
       // Actualizar lista de usuarios disponibles
-      setAvailableUsers(prev => prev.filter(user => user.id !== userId));
-      
+      setAvailableUsers((prev) => prev.filter((user) => user.id !== userId));
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error al agregar empleado:", err);
@@ -152,17 +161,18 @@ const EmployeesPageContent = () => {
   };
 
   const removeEmployee = async (userId: string) => {
-    if (!confirm("¿Estás seguro de que deseas remover a este empleado?")) return;
+    if (!confirm("¿Estás seguro de que deseas remover a este empleado?"))
+      return;
 
     try {
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
+
       await CompanyService.removeEmployee(companyId, userId);
       setSuccess("Empleado removido correctamente");
-      
+
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });
-      
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error al remover empleado:", err);
@@ -177,20 +187,22 @@ const EmployeesPageContent = () => {
 
   const isOwnerOrAdmin = () => {
     if (!company || !currentUserId) return false;
-    return company.userId === currentUserId.toString() || userRoles.includes("ADMIN");
+    return (
+      company.userId === currentUserId.toString() || userRoles.includes("ADMIN")
+    );
   };
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("es-ES", {
       day: "2-digit",
-      month: "2-digit", 
+      month: "2-digit",
       year: "numeric",
     });
   };
 
   const getRoleBadgeColor = (role: any) => {
-    const roleName = typeof role === 'string' ? role : role.name;
+    const roleName = typeof role === "string" ? role : role.name;
     switch (roleName) {
       case "ADMIN":
         return "bg-purple-100 text-purple-800";
@@ -203,14 +215,16 @@ const EmployeesPageContent = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(
+    (employee) =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const filteredAvailableUsers = availableUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAvailableUsers = availableUsers.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -271,7 +285,9 @@ const EmployeesPageContent = () => {
               </Link>
             </div>
             <h1 className="text-3xl font-bold">Empleados - {company.name}</h1>
-            <p className="mt-2 text-blue-100">Gestiona los empleados de la empresa</p>
+            <p className="mt-2 text-blue-100">
+              Gestiona los empleados de la empresa
+            </p>
           </div>
         </div>
 
@@ -286,7 +302,11 @@ const EmployeesPageContent = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder={showAddEmployee ? "Buscar usuarios..." : "Buscar empleados..."}
+                  placeholder={
+                    showAddEmployee
+                      ? "Buscar usuarios..."
+                      : "Buscar empleados..."
+                  }
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -352,21 +372,28 @@ const EmployeesPageContent = () => {
                   <UserPlus className="h-6 w-6 text-[#097EEC]" />
                   Agregar Nuevo Empleado
                 </h2>
-                
+
                 {filteredAvailableUsers.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredAvailableUsers.map((user) => (
-                      <div key={user.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div
+                        key={user.id}
+                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-12 h-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
                             <Users className="h-6 w-6 text-[#097EEC]" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{user.name}</h4>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                            <h4 className="font-medium text-gray-900">
+                              {user.name}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {user.email}
+                            </p>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2 text-sm text-gray-600 mb-4">
                           <div className="flex items-center gap-2">
                             <Phone className="h-4 w-4" />
@@ -374,7 +401,12 @@ const EmployeesPageContent = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>Miembro desde: {user.created_at ? formatDate(user.created_at) : "N/A"}</span>
+                            <span>
+                              Miembro desde:{" "}
+                              {user.created_at
+                                ? formatDate(user.created_at)
+                                : "N/A"}
+                            </span>
                           </div>
                           {/* {user.roles && (
                             <div className="flex flex-wrap gap-1">
@@ -404,8 +436,13 @@ const EmployeesPageContent = () => {
                 ) : (
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">No hay usuarios disponibles</h3>
-                    <p className="text-gray-500">No se encontraron usuarios disponibles para agregar como empleados.</p>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No hay usuarios disponibles
+                    </h3>
+                    <p className="text-gray-500">
+                      No se encontraron usuarios disponibles para agregar como
+                      empleados.
+                    </p>
                   </div>
                 )}
               </div>
@@ -455,8 +492,12 @@ const EmployeesPageContent = () => {
                                     <Users className="h-5 w-5 text-[#097EEC]" />
                                   </div>
                                   <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                                    <div className="text-sm text-gray-500 md:hidden">{employee.email}</div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {employee.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500 md:hidden">
+                                      {employee.email}
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -479,21 +520,29 @@ const EmployeesPageContent = () => {
                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role)}`}
                                       >
                                         <Shield className="h-3 w-3 mr-1" />
-                                        {typeof role === 'string' ? role : role.name}
+                                        {typeof role === "string"
+                                          ? role
+                                          : role.name}
                                       </span>
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="text-gray-400 text-sm">Sin rol</span>
+                                  <span className="text-gray-400 text-sm">
+                                    Sin rol
+                                  </span>
                                 )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
-                                {employee.created_at ? formatDate(employee.created_at) : "N/A"}
+                                {employee.created_at
+                                  ? formatDate(employee.created_at)
+                                  : "N/A"}
                               </td>
                               {isOwnerOrAdmin() && (
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                   <button
-                                    onClick={() => employee.id && removeEmployee(employee.id)}
+                                    onClick={() =>
+                                      employee.id && removeEmployee(employee.id)
+                                    }
                                     className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -523,12 +572,13 @@ const EmployeesPageContent = () => {
                     <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                       <Users className="h-10 w-10 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">No hay empleados</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No hay empleados
+                    </h3>
                     <p className="mt-2 text-gray-500">
-                      {isOwnerOrAdmin() 
+                      {isOwnerOrAdmin()
                         ? "Esta empresa aún no tiene empleados registrados. Agrega empleados para comenzar."
-                        : "Esta empresa no tiene empleados registrados públicamente."
-                      }
+                        : "Esta empresa no tiene empleados registrados públicamente."}
                     </p>
                   </div>
                 )}

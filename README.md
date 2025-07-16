@@ -46,12 +46,14 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 El sistema ahora implementa un flujo automático de verificación de email que funciona de la siguiente manera:
 
 #### 1. Registro de Usuario
+
 - El usuario completa el formulario de registro (PERSON o BUSINESS)
 - Al enviar el formulario, se crea el usuario/empresa en el sistema
 - **Automáticamente** se envía un email de verificación al correo registrado
 - El usuario es redirigido a la página de verificación de email
 
 #### 2. Página de Verificación de Email
+
 - **URL**: `/auth/verify-email?email=usuario@email.com`
 - Muestra un mensaje de confirmación de que la cuenta fue creada
 - Incluye instrucciones claras sobre qué hacer:
@@ -62,6 +64,7 @@ El sistema ahora implementa un flujo automático de verificación de email que f
 - Incluye un enlace para ir al login si ya verificó el email
 
 #### 3. Verificación del Email
+
 - El usuario hace clic en el enlace del email
 - **URL**: `/auth/verify-email?token=token_de_verificacion`
 - El sistema verifica el token y marca el email como verificado
@@ -69,6 +72,7 @@ El sistema ahora implementa un flujo automático de verificación de email que f
 - Redirige automáticamente al login con un parámetro `verified=true`
 
 #### 4. Login con Confirmación
+
 - **URL**: `/auth/login?verified=true`
 - El formulario de login detecta el parámetro y muestra un mensaje de éxito
 - El usuario puede iniciar sesión normalmente

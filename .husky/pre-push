@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+
+#echo "🧪 Ejecutando tests unitarios..."
+#npm run test
+
+#echo "   Ejecutando pruebas E2E..."
+#npm run cypress:run
+
+echo "🏗️ Probando build de producción..."
+npm run build
+
+echo "✅ Todas las verificaciones pasaron exitosamente!"

@@ -1,25 +1,25 @@
-import api from './axios_config';
-import Cookies from 'js-cookie';
+import api from "./axios_config";
+import Cookies from "js-cookie";
 
 export enum PaymentHistoryType {
-  SENT = 'sent',
-  RECEIVED = 'received',
-  ALL = 'all'
+  SENT = "sent",
+  RECEIVED = "received",
+  ALL = "all",
 }
 
 export enum PaymentStatus {
-  PENDING = 'PENDING',
-  FINISHED = 'FINISHED',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED'
+  PENDING = "PENDING",
+  FINISHED = "FINISHED",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
 }
 
 export enum PaymentMethod {
-  CREDIT_CARD = 'credit_card',
-  DEBIT_CARD = 'debit_card',
-  BANK_TRANSFER = 'bank_transfer',
-  DIGITAL_WALLET = 'digital_wallet',
-  CASH = 'cash',
+  CREDIT_CARD = "credit_card",
+  DEBIT_CARD = "debit_card",
+  BANK_TRANSFER = "bank_transfer",
+  DIGITAL_WALLET = "digital_wallet",
+  CASH = "cash",
 }
 
 export interface PaymentHistoryDto {
@@ -59,7 +59,7 @@ export interface PaymentStatusByContractDto {
 
 export class PaymentService {
   static async createPayment(data: any) {
-    const response = await api.post('suarec/payments', data);
+    const response = await api.post("suarec/payments", data);
     return response.data;
   }
 
@@ -69,8 +69,8 @@ export class PaymentService {
   }
 
   static async getMyPaymentHistory(params: PaymentHistoryDto = {}) {
-    const token = Cookies.get('token');
-    const response = await api.get('suarec/payments/my-history', {
+    const token = Cookies.get("token");
+    const response = await api.get("suarec/payments/my-history", {
       params,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -80,19 +80,19 @@ export class PaymentService {
   }
 
   static async getAllPaymentsForAdmin(params: AdminPaymentFilterDto = {}) {
-    const token = Cookies.get('token');
-    
+    const token = Cookies.get("token");
+
     // Limpiar parámetros undefined
     const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== "") {
         acc[key] = value;
       }
       return acc;
     }, {} as any);
 
-    console.log('Enviando parámetros limpios:', cleanParams); // Debug
+    console.log("Enviando parámetros limpios:", cleanParams); // Debug
 
-    const response = await api.get('suarec/payments', {
+    const response = await api.get("suarec/payments", {
       params: cleanParams,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -101,23 +101,35 @@ export class PaymentService {
     return response.data;
   }
 
-  static async updatePaymentStatus(paymentId: string, updateData: UpdatePaymentStatusDto) {
-    const token = Cookies.get('token');
-    const response = await api.post(`suarec/payments/${paymentId}/update`, updateData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  static async updatePaymentStatus(
+    paymentId: string,
+    updateData: UpdatePaymentStatusDto,
+  ) {
+    const token = Cookies.get("token");
+    const response = await api.post(
+      `suarec/payments/${paymentId}/update`,
+      updateData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     return response.data;
   }
 
-  static async getPaymentStatusByContract(contractId: string): Promise<PaymentStatusByContractDto> {
-    const token = Cookies.get('token');
-    const response = await api.get(`suarec/payments/contract/${contractId}/status`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  static async getPaymentStatusByContract(
+    contractId: string,
+  ): Promise<PaymentStatusByContractDto> {
+    const token = Cookies.get("token");
+    const response = await api.get(
+      `suarec/payments/contract/${contractId}/status`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     return response.data;
   }
 }
