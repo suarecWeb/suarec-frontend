@@ -55,7 +55,8 @@ const EditPublicationPage = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
-  const [originalPublication, setOriginalPublication] = useState<Publication | null>(null);
+  const [originalPublication, setOriginalPublication] =
+    useState<Publication | null>(null);
   const router = useRouter();
 
   const {
@@ -85,7 +86,7 @@ const EditPublicationPage = () => {
     try {
       const decoded = jwtDecode<TokenPayload>(token);
       setCurrentUserId(decoded.id);
-      setUserRoles(decoded.roles.map(role => role.name));
+      setUserRoles(decoded.roles.map((role) => role.name));
     } catch (err) {
       console.error("Error al decodificar token:", err);
       router.push("/auth/login");
@@ -99,29 +100,35 @@ const EditPublicationPage = () => {
 
       try {
         setIsFetching(true);
-        const publicationId = Array.isArray(params.id) ? params.id[0] : params.id;
-        
-        const response = await PublicationService.getPublicationById(publicationId);
+        const publicationId = Array.isArray(params.id)
+          ? params.id[0]
+          : params.id;
+
+        const response =
+          await PublicationService.getPublicationById(publicationId);
         const publication = response.data;
-        
+
         setOriginalPublication(publication);
-        
+
         // Verificar si el usuario puede editar esta publicación
-        if (currentUserId && publication.userId !== currentUserId && !userRoles.includes("ADMIN")) {
+        if (
+          currentUserId &&
+          publication.userId !== currentUserId &&
+          !userRoles.includes("ADMIN")
+        ) {
           setError("No tienes permiso para editar esta publicación");
           return;
         }
-        
+
         // Establecer valores en el formulario
         setValue("title", publication.title);
         setValue("description", publication.description || "");
         setValue("category", publication.category);
         setValue("image_url", publication.image_url || "");
-        
+
         if (publication.image_url) {
           setPreviewUrl(publication.image_url);
         }
-        
       } catch (err) {
         console.error("Error al cargar la publicación:", err);
         setError("No se pudo cargar la información de la publicación");
@@ -157,7 +164,7 @@ const EditPublicationPage = () => {
     // Esta función debería conectarse con tu servicio real de almacenamiento de imágenes
     // Por ahora, simularemos un retraso y devolveremos una URL falsa
     setUploading(true);
-    
+
     return new Promise((resolve) => {
       setTimeout(() => {
         setUploading(false);
@@ -169,20 +176,20 @@ const EditPublicationPage = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!params.id || !originalPublication) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Subir imagen si existe y ha cambiado
       let imageUrl = data.image_url;
       if (selectedFile) {
         imageUrl = await uploadImage(selectedFile);
       }
-      
+
       // Obtener publicationId
       const publicationId = Array.isArray(params.id) ? params.id[0] : params.id;
-      
+
       // Crear objeto con datos actualizados
       const updatedData: Partial<Publication> = {
         title: data.title,
@@ -191,17 +198,16 @@ const EditPublicationPage = () => {
         image_url: imageUrl,
         modified_at: new Date(),
       };
-      
+
       // Actualizar publicación
       await PublicationService.updatePublication(publicationId, updatedData);
-      
+
       setSuccess("Publicación actualizada exitosamente");
-      
+
       // Redirigir después de 1.5 segundos
       setTimeout(() => {
         router.push(`/publications/${publicationId}`);
       }, 1500);
-      
     } catch (err) {
       console.error("Error al actualizar la publicación:", err);
       setError("Error al actualizar la publicación. Inténtalo de nuevo.");
@@ -236,7 +242,11 @@ const EditPublicationPage = () => {
           <div className="bg-white rounded-lg shadow-lg p-6">
             {/* Back button */}
             <Link
-              href={originalPublication?.id ? `/publications/${originalPublication.id}` : "/publications"}
+              href={
+                originalPublication?.id
+                  ? `/publications/${originalPublication.id}`
+                  : "/publications"
+              }
               className="inline-flex items-center text-gray-600 hover:text-[#097EEC] mb-6 transition-colors"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -268,7 +278,9 @@ const EditPublicationPage = () => {
             {isFetching ? (
               <div className="py-12 flex flex-col items-center justify-center">
                 <Loader2 className="h-12 w-12 text-[#097EEC] animate-spin mb-4" />
-                <p className="text-gray-500">Cargando información de la publicación...</p>
+                <p className="text-gray-500">
+                  Cargando información de la publicación...
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -294,7 +306,8 @@ const EditPublicationPage = () => {
                           required: "El título es obligatorio",
                           maxLength: {
                             value: 100,
-                            message: "El título no puede exceder los 100 caracteres",
+                            message:
+                              "El título no puede exceder los 100 caracteres",
                           },
                         })}
                         disabled={isLoading}
@@ -350,18 +363,22 @@ const EditPublicationPage = () => {
                         id="description"
                         rows={6}
                         className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
-                          errors.description ? "border-red-500" : "border-gray-200"
+                          errors.description
+                            ? "border-red-500"
+                            : "border-gray-200"
                         }`}
                         placeholder="Describe tu servicio o lo que estás buscando..."
                         {...register("description", {
                           required: "La descripción es obligatoria",
                           minLength: {
                             value: 20,
-                            message: "La descripción debe tener al menos 20 caracteres",
+                            message:
+                              "La descripción debe tener al menos 20 caracteres",
                           },
                           maxLength: {
                             value: 1000,
-                            message: "La descripción no puede exceder los 1000 caracteres",
+                            message:
+                              "La descripción no puede exceder los 1000 caracteres",
                           },
                         })}
                         disabled={isLoading}
@@ -454,16 +471,20 @@ const EditPublicationPage = () => {
                             <li className="flex justify-between">
                               <span>Fecha de creación:</span>
                               <span className="font-medium">
-                                {originalPublication?.created_at 
-                                  ? new Date(originalPublication.created_at).toLocaleDateString() 
+                                {originalPublication?.created_at
+                                  ? new Date(
+                                      originalPublication.created_at,
+                                    ).toLocaleDateString()
                                   : "N/A"}
                               </span>
                             </li>
                             <li className="flex justify-between">
                               <span>Última modificación:</span>
                               <span className="font-medium">
-                                {originalPublication?.modified_at 
-                                  ? new Date(originalPublication.modified_at).toLocaleDateString() 
+                                {originalPublication?.modified_at
+                                  ? new Date(
+                                      originalPublication.modified_at,
+                                    ).toLocaleDateString()
                                   : "N/A"}
                               </span>
                             </li>
@@ -484,7 +505,11 @@ const EditPublicationPage = () => {
                 <div className="border-t border-gray-200 pt-6 mt-6">
                   <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
                     <Link
-                      href={originalPublication?.id ? `/publications/${originalPublication.id}` : "/publications"}
+                      href={
+                        originalPublication?.id
+                          ? `/publications/${originalPublication.id}`
+                          : "/publications"
+                      }
                       className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors text-center"
                     >
                       Cancelar

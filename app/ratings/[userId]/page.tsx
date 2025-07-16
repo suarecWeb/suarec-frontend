@@ -1,14 +1,18 @@
 // app/ratings/[userId]/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import StarRating from "@/components/star-rating";
 import RatingModal from "@/components/rating-modal";
 import RoleGuard from "@/components/role-guard";
 import { Pagination } from "@/components/ui/pagination";
-import RatingService, { Rating, RatingStats, RatingCategory } from "@/services/RatingService";
+import RatingService, {
+  Rating,
+  RatingStats,
+  RatingCategory,
+} from "@/services/RatingService";
 import { UserService } from "@/services/UsersService";
 import { User } from "@/interfaces/user.interface";
 import {
@@ -32,8 +36,10 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 
 const UserRatingsPageContent = () => {
   const params = useParams();
-  const userId = parseInt(Array.isArray(params.userId) ? params.userId[0] : params.userId);
-  
+  const userId = parseInt(
+    Array.isArray(params.userId) ? params.userId[0] : params.userId,
+  );
+
   const [user, setUser] = useState<User | null>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [stats, setStats] = useState<RatingStats | null>(null);
@@ -42,7 +48,7 @@ const UserRatingsPageContent = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  
+
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -64,15 +70,7 @@ const UserRatingsPageContent = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserData();
-      fetchRatings();
-      fetchStats();
-    }
-  }, [userId, pagination.page]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await UserService.getUserById(userId);
       setUser(response.data);
@@ -80,20 +78,24 @@ const UserRatingsPageContent = () => {
       console.error("Error al cargar usuario:", err);
       setError("Error al cargar la información del usuario");
     }
-  };
+  }, [userId]);
 
-  const fetchRatings = async () => {
+  const fetchRatings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await RatingService.getUserRatings(userId, pagination.page, pagination.limit);
-      
+      const response = await RatingService.getUserRatings(
+        userId,
+        pagination.page,
+        pagination.limit,
+      );
+
       let filteredRatings = response.data;
       if (selectedCategory !== "all") {
         filteredRatings = response.data.filter(
-          (rating: Rating) => rating.category === selectedCategory
+          (rating: Rating) => rating.category === selectedCategory,
         );
       }
-      
+
       setRatings(filteredRatings);
       setPagination(response.meta);
     } catch (err) {
@@ -102,19 +104,27 @@ const UserRatingsPageContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, pagination.page, pagination.limit, selectedCategory]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await RatingService.getUserRatingStats(userId);
       setStats(response);
     } catch (err) {
       console.error("Error al cargar estadísticas:", err);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserData();
+      fetchRatings();
+      fetchStats();
+    }
+  }, [userId, pagination.page, fetchUserData, fetchRatings, fetchStats]);
 
   const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setPagination((prev) => ({ ...prev, page }));
   };
 
   const formatDate = (dateString: Date | string) => {
@@ -191,7 +201,7 @@ const UserRatingsPageContent = () => {
                   <BarChart3 className="h-5 w-5 text-[#097EEC]" />
                   Estadísticas de Calificaciones
                 </h3>
-                
+
                 {stats ? (
                   <div className="space-y-6">
                     {/* Overall rating */}
@@ -199,27 +209,41 @@ const UserRatingsPageContent = () => {
                       <div className="text-3xl font-bold text-[#097EEC] mb-2">
                         {stats.averageRating.toFixed(1)}
                       </div>
-                      <StarRating rating={stats.averageRating} readonly size="lg" />
+                      <StarRating
+                        rating={stats.averageRating}
+                        readonly
+                        size="lg"
+                      />
                       <p className="text-sm text-gray-600 mt-2">
-                        Basado en {stats.totalRatings} calificación{stats.totalRatings !== 1 ? 'es' : ''}
+                        Basado en {stats.totalRatings} calificación
+                        {stats.totalRatings !== 1 ? "es" : ""}
                       </p>
                     </div>
 
                     {/* Rating distribution */}
                     <div>
-                      <h4 className="font-medium text-gray-800 mb-3">Distribución</h4>
+                      <h4 className="font-medium text-gray-800 mb-3">
+                        Distribución
+                      </h4>
                       <div className="space-y-2">
                         {[5, 4, 3, 2, 1].map((starCount) => (
-                          <div key={starCount} className="flex items-center gap-2">
+                          <div
+                            key={starCount}
+                            className="flex items-center gap-2"
+                          >
                             <span className="text-sm w-6">{starCount}</span>
                             <Star className="h-4 w-4 text-yellow-400 fill-current" />
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
                               <div
                                 className="bg-[#097EEC] h-2 rounded-full"
                                 style={{
-                                  width: `${stats.totalRatings > 0 
-                                    ? (stats.ratingDistribution[starCount] / stats.totalRatings) * 100 
-                                    : 0}%`
+                                  width: `${
+                                    stats.totalRatings > 0
+                                      ? (stats.ratingDistribution[starCount] /
+                                          stats.totalRatings) *
+                                        100
+                                      : 0
+                                  }%`,
                                 }}
                               />
                             </div>
@@ -234,21 +258,34 @@ const UserRatingsPageContent = () => {
                     {/* Category stats */}
                     {Object.keys(stats.categoryStats).length > 0 && (
                       <div>
-                        <h4 className="font-medium text-gray-800 mb-3">Por Categoría</h4>
+                        <h4 className="font-medium text-gray-800 mb-3">
+                          Por Categoría
+                        </h4>
                         <div className="space-y-3">
-                          {Object.entries(stats.categoryStats).map(([category, data]) => (
-                            <div key={category} className="flex justify-between items-center">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(category)}`}>
-                                {getCategoryLabel(category)}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <StarRating rating={data.average} readonly size="sm" />
-                                <span className="text-sm text-gray-600">
-                                  ({data.count})
+                          {Object.entries(stats.categoryStats).map(
+                            ([category, data]) => (
+                              <div
+                                key={category}
+                                className="flex justify-between items-center"
+                              >
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(category)}`}
+                                >
+                                  {getCategoryLabel(category)}
                                 </span>
+                                <div className="flex items-center gap-2">
+                                  <StarRating
+                                    rating={data.average}
+                                    readonly
+                                    size="sm"
+                                  />
+                                  <span className="text-sm text-gray-600">
+                                    ({data.count})
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ),
+                          )}
                         </div>
                       </div>
                     )}
@@ -256,7 +293,9 @@ const UserRatingsPageContent = () => {
                 ) : (
                   <div className="text-center py-8">
                     <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No hay estadísticas disponibles</p>
+                    <p className="text-gray-500">
+                      No hay estadísticas disponibles
+                    </p>
                   </div>
                 )}
 
@@ -337,9 +376,11 @@ const UserRatingsPageContent = () => {
                                   </p>
                                 </div>
                               </div>
-                              
+
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(rating.category)}`}>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(rating.category)}`}
+                                >
                                   {getCategoryLabel(rating.category)}
                                 </span>
                               </div>
@@ -353,7 +394,9 @@ const UserRatingsPageContent = () => {
                               <div className="bg-gray-50 rounded-lg p-4">
                                 <div className="flex items-start gap-2">
                                   <MessageSquare className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
-                                  <p className="text-gray-700 text-sm">{rating.comment}</p>
+                                  <p className="text-gray-700 text-sm">
+                                    {rating.comment}
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -361,7 +404,8 @@ const UserRatingsPageContent = () => {
                             {rating.workContract && (
                               <div className="mt-4 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500">
-                                  Trabajo relacionado: {rating.workContract.title}
+                                  Trabajo relacionado:{" "}
+                                  {rating.workContract.title}
                                 </p>
                               </div>
                             )}

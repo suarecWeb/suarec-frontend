@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Company } from '@/interfaces/company.interface';
-import CompanyService from '@/services/CompanyService';
+import { useState } from "react";
+import { Company } from "@/interfaces/company.interface";
+import CompanyService from "@/services/CompanyService";
 
 interface CompanyLocationFormProps {
   companyId: string;
@@ -10,17 +10,17 @@ interface CompanyLocationFormProps {
   onSave?: () => void;
 }
 
-export default function CompanyLocationForm({ 
-  companyId, 
+export default function CompanyLocationForm({
+  companyId,
   initialData,
-  onSave 
+  onSave,
 }: CompanyLocationFormProps) {
   const [formData, setFormData] = useState({
     latitude: initialData?.latitude || 3.3417,
     longitude: initialData?.longitude || -76.5306,
-    address: initialData?.address || '',
-    city: initialData?.city || '',
-    country: initialData?.country || ''
+    address: initialData?.address || "",
+    city: initialData?.city || "",
+    country: initialData?.country || "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -29,9 +29,9 @@ export default function CompanyLocationForm({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -46,8 +46,8 @@ export default function CompanyLocationForm({
       setSuccess(true);
       onSave?.();
     } catch (err) {
-      setError('Error al actualizar la ubicación');
-      console.error('Error:', err);
+      setError("Error al actualizar la ubicación");
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -56,12 +56,17 @@ export default function CompanyLocationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Ubicación de la Empresa</h3>
-        
+        <h3 className="text-lg font-medium text-gray-900">
+          Ubicación de la Empresa
+        </h3>
+
         {/* Campos de dirección */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="address"
+              className="block text-sm font-medium text-gray-700"
+            >
               Dirección
             </label>
             <input
@@ -76,7 +81,10 @@ export default function CompanyLocationForm({
           </div>
 
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="city"
+              className="block text-sm font-medium text-gray-700"
+            >
               Ciudad
             </label>
             <input
@@ -91,7 +99,10 @@ export default function CompanyLocationForm({
           </div>
 
           <div>
-            <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="country"
+              className="block text-sm font-medium text-gray-700"
+            >
               País
             </label>
             <input
@@ -109,7 +120,10 @@ export default function CompanyLocationForm({
         {/* Coordenadas */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="latitude"
+              className="block text-sm font-medium text-gray-700"
+            >
               Latitud
             </label>
             <input
@@ -124,7 +138,10 @@ export default function CompanyLocationForm({
           </div>
 
           <div>
-            <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="longitude"
+              className="block text-sm font-medium text-gray-700"
+            >
               Longitud
             </label>
             <input
@@ -174,9 +191,9 @@ export default function CompanyLocationForm({
           disabled={loading}
           className="inline-flex justify-center rounded-md border border-transparent bg-[#097EEC] py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-[#0A6BC7] focus:outline-none focus:ring-2 focus:ring-[#097EEC] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Guardando...' : 'Guardar Ubicación'}
+          {loading ? "Guardando..." : "Guardar Ubicación"}
         </button>
       </div>
     </form>
   );
-} 
+}

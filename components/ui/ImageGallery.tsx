@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from './button';
-import { X, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
-import { getPublicUrl } from '@/lib/utils';
+import React, { useState } from "react";
+import { Button } from "./button";
+import { X, Edit, Trash2, Image as ImageIcon } from "lucide-react";
+import { getPublicUrl } from "@/lib/utils";
 
 interface GalleryImage {
   id: number;
@@ -31,17 +31,17 @@ export function ImageGallery({
   onEdit,
   onReorder,
   maxImages = 20,
-  className = '',
-  title = 'Galería de Imágenes',
-  showActions = true
+  className = "",
+  title = "Galería de Imágenes",
+  showActions = true,
 }: ImageGalleryProps) {
   const [selectedImages, setSelectedImages] = useState<number[]>([]);
   const [editingImage, setEditingImage] = useState<number | null>(null);
-  const [editDescription, setEditDescription] = useState('');
+  const [editDescription, setEditDescription] = useState("");
 
   const handleImageClick = (imageId: number) => {
     if (selectedImages.includes(imageId)) {
-      setSelectedImages(selectedImages.filter(id => id !== imageId));
+      setSelectedImages(selectedImages.filter((id) => id !== imageId));
     } else {
       setSelectedImages([...selectedImages, imageId]);
     }
@@ -55,20 +55,20 @@ export function ImageGallery({
 
   const handleEdit = (image: GalleryImage) => {
     setEditingImage(image.id);
-    setEditDescription(image.description || '');
+    setEditDescription(image.description || "");
   };
 
   const handleSaveEdit = () => {
     if (editingImage && onEdit) {
       onEdit(editingImage, editDescription);
       setEditingImage(null);
-      setEditDescription('');
+      setEditDescription("");
     }
   };
 
   const handleCancelEdit = () => {
     setEditingImage(null);
-    setEditDescription('');
+    setEditDescription("");
   };
 
   const handleReorder = () => {
@@ -93,10 +93,13 @@ export function ImageGallery({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>{images.length} de {maxImages} imágenes</span>
+          <span>
+            {images.length} de {maxImages} imágenes
+          </span>
           {selectedImages.length > 0 && (
             <span className="text-blue-600">
-              • {selectedImages.length} seleccionada{selectedImages.length > 1 ? 's' : ''}
+              • {selectedImages.length} seleccionada
+              {selectedImages.length > 1 ? "s" : ""}
             </span>
           )}
         </div>
@@ -109,11 +112,7 @@ export function ImageGallery({
               {selectedImages.length} imágenes seleccionadas
             </span>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleReorder}
-              >
+              <Button size="sm" variant="outline" onClick={handleReorder}>
                 Reordenar
               </Button>
               <Button
@@ -134,8 +133,8 @@ export function ImageGallery({
             key={image.id}
             className={`relative group border rounded-lg overflow-hidden ${
               selectedImages.includes(image.id)
-                ? 'ring-2 ring-blue-500 border-blue-500'
-                : 'border-gray-200'
+                ? "ring-2 ring-blue-500 border-blue-500"
+                : "border-gray-200"
             }`}
           >
             <div className="aspect-square">
@@ -145,7 +144,7 @@ export function ImageGallery({
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder-image.jpg';
+                  target.src = "/placeholder-image.jpg";
                 }}
               />
             </div>
@@ -159,9 +158,11 @@ export function ImageGallery({
                     onClick={() => handleImageClick(image.id)}
                     className="bg-white text-gray-900 hover:bg-gray-100"
                   >
-                    {selectedImages.includes(image.id) ? 'Deseleccionar' : 'Seleccionar'}
+                    {selectedImages.includes(image.id)
+                      ? "Deseleccionar"
+                      : "Seleccionar"}
                   </Button>
-                  
+
                   {onEdit && (
                     <Button
                       size="sm"
@@ -172,7 +173,7 @@ export function ImageGallery({
                       <Edit className="h-4 w-4" />
                     </Button>
                   )}
-                  
+
                   {onDelete && (
                     <Button
                       size="sm"
@@ -228,4 +229,4 @@ export function ImageGallery({
       </div>
     </div>
   );
-} 
+}

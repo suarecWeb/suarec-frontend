@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react';
-import { Button } from './button';
-import { Input } from './input';
-import { Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
-import SupabaseService from '@/services/supabase.service';
+import React, { useState, useRef } from "react";
+import { Button } from "./button";
+import { Input } from "./input";
+import { Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
+import SupabaseService from "@/services/supabase.service";
 
 interface ImageUploadProps {
   onImagesUploaded: (results: { url: string; path: string }[]) => void;
@@ -20,10 +20,10 @@ export function ImageUpload({
   onImagesUploaded,
   multiple = false,
   maxFiles = 1,
-  folder = 'profile-images',
-  className = '',
-  title = 'Subir Imágenes',
-  description = 'Selecciona una o más imágenes para subir'
+  folder = "profile-images",
+  className = "",
+  title = "Subir Imágenes",
+  description = "Selecciona una o más imágenes para subir",
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -33,37 +33,41 @@ export function ImageUpload({
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
+
     if (files.length === 0) return;
 
     // Validar número máximo de archivos
     if (files.length > maxFiles) {
-      setError(`Puedes subir máximo ${maxFiles} archivo${maxFiles > 1 ? 's' : ''}`);
+      setError(
+        `Puedes subir máximo ${maxFiles} archivo${maxFiles > 1 ? "s" : ""}`,
+      );
       return;
     }
 
     // Validar tipos de archivo
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const invalidFiles = files.filter(file => !validTypes.includes(file.type));
-    
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const invalidFiles = files.filter(
+      (file) => !validTypes.includes(file.type),
+    );
+
     if (invalidFiles.length > 0) {
-      setError('Solo se permiten archivos JPG, PNG y WebP');
+      setError("Solo se permiten archivos JPG, PNG y WebP");
       return;
     }
 
     // Validar tamaño (máximo 5MB por archivo)
     const maxSize = 5 * 1024 * 1024; // 5MB
-    const oversizedFiles = files.filter(file => file.size > maxSize);
-    
+    const oversizedFiles = files.filter((file) => file.size > maxSize);
+
     if (oversizedFiles.length > 0) {
-      setError('Cada archivo debe tener un tamaño máximo de 5MB');
+      setError("Cada archivo debe tener un tamaño máximo de 5MB");
       return;
     }
 
     setError(null);
-    
+
     // Crear previews
-    const urls = files.map(file => URL.createObjectURL(file));
+    const urls = files.map((file) => URL.createObjectURL(file));
     setPreviewUrls(urls);
 
     // Subir archivos
@@ -77,29 +81,28 @@ export function ImageUpload({
 
     try {
       const results = [];
-      
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const result = await SupabaseService.uploadImage(file, folder);
-        
+
         if (result.error) {
           throw new Error(result.error);
         }
-        
+
         results.push({ url: result.url, path: result.path });
         setUploadProgress(((i + 1) / files.length) * 100);
       }
 
       onImagesUploaded(results);
       setPreviewUrls([]);
-      
+
       // Limpiar input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
-      
     } catch (error: any) {
-      setError(error.message || 'Error al subir las imágenes');
+      setError(error.message || "Error al subir las imágenes");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -114,12 +117,14 @@ export function ImageUpload({
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
-    
+
     if (files.length > 0) {
       const input = fileInputRef.current;
       if (input) {
         input.files = event.dataTransfer.files as any;
-        handleFileSelect({ target: { files: event.dataTransfer.files } } as any);
+        handleFileSelect({
+          target: { files: event.dataTransfer.files },
+        } as any);
       }
     }
   };
@@ -137,7 +142,7 @@ export function ImageUpload({
         </h3>
         <p className="text-sm text-gray-600">{description}</p>
       </div>
-      
+
       <div
         className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
         onDrop={handleDrop}
@@ -152,13 +157,13 @@ export function ImageUpload({
           className="hidden"
           disabled={isUploading}
         />
-        
+
         <div className="space-y-4">
           <Upload className="mx-auto h-12 w-12 text-gray-400" />
-          
+
           <div>
             <p className="text-sm text-gray-600">
-              Arrastra y suelta imágenes aquí, o{' '}
+              Arrastra y suelta imágenes aquí, o{" "}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -222,4 +227,4 @@ export function ImageUpload({
       )}
     </div>
   );
-} 
+}

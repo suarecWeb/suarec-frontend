@@ -1,7 +1,7 @@
-import Link from "next/link"
+import Link from "next/link";
 
 // Configuración para evitar prerenderización estática
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const CheckEmailPage = () => {
   return (
@@ -24,16 +24,17 @@ const CheckEmailPage = () => {
             />
           </svg>
         </div>
-        
+
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Revisa tu email</h1>
           <p className="text-gray-500 mt-2">
-            Hemos enviado un enlace de recuperación a tu dirección de email. 
-            Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
+            Hemos enviado un enlace de recuperación a tu dirección de email.
+            Revisa tu bandeja de entrada y sigue las instrucciones para
+            restablecer tu contraseña.
           </p>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         <div className="text-center">
           <p className="text-sm text-gray-500">
@@ -46,7 +47,7 @@ const CheckEmailPage = () => {
             intenta con otro email
           </Link>
         </div>
-        
+
         <div className="text-center">
           <Link
             href="/auth/login"
@@ -57,7 +58,7 @@ const CheckEmailPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CheckEmailPage
+export default CheckEmailPage;

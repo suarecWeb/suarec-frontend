@@ -32,17 +32,17 @@ import {
   MapPin,
   MoreVertical,
   Download,
-  X
+  X,
 } from "lucide-react";
 import DownloadCVButton from "@/components/download-cv-button";
 
 // Modal de confirmación
-const RemoveEmployeeModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  employeeName, 
-  isLoading 
+const RemoveEmployeeModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  employeeName,
+  isLoading,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -55,7 +55,7 @@ const RemoveEmployeeModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
         onClick={onClose}
       ></div>
@@ -64,23 +64,24 @@ const RemoveEmployeeModal = ({
       <div className="relative bg-white rounded-lg border border-gray-200 shadow-xl max-w-lg w-full mx-auto transform transition-all">
         <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div className="sm:flex sm:items-start">
-        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-          <Trash2 className="h-6 w-6 text-red-600" />
-        </div>
-        <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Remover empleado
-          </h3>
-          <div className="mt-2">
-            <p className="text-sm text-gray-500">
-          ¿Estás seguro de que deseas remover a <strong>{employeeName}</strong> de la empresa? 
-          Esta acción no se puede deshacer.
-            </p>
+            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Remover empleado
+              </h3>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  ¿Estás seguro de que deseas remover a{" "}
+                  <strong>{employeeName}</strong> de la empresa? Esta acción no
+                  se puede deshacer.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-          </div>
-        </div>
-        
+
         <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
             type="button"
@@ -94,7 +95,7 @@ const RemoveEmployeeModal = ({
                 Removiendo...
               </>
             ) : (
-              'Remover'
+              "Remover"
             )}
           </button>
           <button
@@ -123,11 +124,14 @@ const MyEmployeesPageContent = () => {
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [removingEmployee, setRemovingEmployee] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  
+
   // Estados para la modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [employeeToRemove, setEmployeeToRemove] = useState<{ id: string; name: string } | null>(null);
-  
+  const [employeeToRemove, setEmployeeToRemove] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   const router = useRouter();
 
   const [pagination, setPagination] = useState({
@@ -146,9 +150,9 @@ const MyEmployeesPageContent = () => {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
-        setUserRoles(decoded.roles.map(role => role.name));
+        setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
       }
     }
   }, []);
@@ -160,9 +164,13 @@ const MyEmployeesPageContent = () => {
 
       try {
         // Obtener la empresa del usuario actual
-        const response = await CompanyService.getCompanies({ page: 1, limit: 100 });
-        const userCompany = response.data.data.find(company =>
-          company.user && parseInt(company.user.id || '0') === currentUserId
+        const response = await CompanyService.getCompanies({
+          page: 1,
+          limit: 100,
+        });
+        const userCompany = response.data.data.find(
+          (company) =>
+            company.user && parseInt(company.user.id || "0") === currentUserId,
         );
 
         if (userCompany) {
@@ -183,13 +191,15 @@ const MyEmployeesPageContent = () => {
   }, [currentUserId, userRoles]);
 
   // Función para cargar empleados
-  const fetchEmployees = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+  const fetchEmployees = async (
+    params: PaginationParams = { page: 1, limit: pagination.limit },
+  ) => {
     if (!companyId) return;
 
     try {
       setLoading(true);
       const response = await CompanyService.getEmployees(companyId, params);
-      console.log('empleados: ' + JSON.stringify(response.data.data));
+      console.log("empleados: " + JSON.stringify(response.data.data));
       setEmployees(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
@@ -213,8 +223,8 @@ const MyEmployeesPageContent = () => {
     };
 
     if (openMenuId) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [openMenuId]);
 
@@ -223,7 +233,10 @@ const MyEmployeesPageContent = () => {
   };
 
   // Función para abrir la modal de confirmación
-  const handleRemoveEmployeeClick = (employeeId: string, employeeName: string) => {
+  const handleRemoveEmployeeClick = (
+    employeeId: string,
+    employeeName: string,
+  ) => {
     setEmployeeToRemove({ id: employeeId, name: employeeName });
     setIsModalOpen(true);
     setOpenMenuId(null);
@@ -262,11 +275,15 @@ const MyEmployeesPageContent = () => {
 
   // Filtrar empleados según el término de búsqueda
   const filteredEmployees = searchTerm
-    ? employees.filter(employee =>
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (employee.profession && employee.profession.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
+    ? employees.filter(
+        (employee) =>
+          employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (employee.profession &&
+            employee.profession
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())),
+      )
     : employees;
 
   const formatDate = (dateString: Date | string) => {
@@ -279,7 +296,7 @@ const MyEmployeesPageContent = () => {
   };
 
   const getRoleBadgeColor = (role: any) => {
-    const roleName = typeof role === 'string' ? role : role.name;
+    const roleName = typeof role === "string" ? role : role.name;
     switch (roleName) {
       case "ADMIN":
         return "bg-purple-100 text-purple-800";
@@ -328,7 +345,9 @@ const MyEmployeesPageContent = () => {
                   <div className="flex items-center gap-3">
                     <Calendar className="h-8 w-8 text-white/80" />
                     <div>
-                      <p className="text-2xl font-bold">{new Date(companyInfo.created_at).getFullYear()}</p>
+                      <p className="text-2xl font-bold">
+                        {new Date(companyInfo.created_at).getFullYear()}
+                      </p>
                       <p className="text-blue-100 text-sm">Año de Fundación</p>
                     </div>
                   </div>
@@ -417,13 +436,20 @@ const MyEmployeesPageContent = () => {
                 {filteredEmployees.length > 0 ? (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredEmployees.map((employee) => (
-                      <div key={employee.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                      <div
+                        key={employee.id}
+                        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative"
+                      >
                         {/* Menú de opciones */}
                         <div className="absolute top-2 right-2 z-10">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenMenuId(openMenuId === employee.id ? null : employee.id!);
+                              setOpenMenuId(
+                                openMenuId === employee.id
+                                  ? null
+                                  : employee.id!,
+                              );
                             }}
                             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                           >
@@ -480,7 +506,10 @@ const MyEmployeesPageContent = () => {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRemoveEmployeeClick(employee.id!, employee.name);
+                                    handleRemoveEmployeeClick(
+                                      employee.id!,
+                                      employee.name,
+                                    );
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
                                 >
@@ -524,7 +553,9 @@ const MyEmployeesPageContent = () => {
                                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role)}`}
                                     >
                                       <Shield className="h-3 w-3 mr-1" />
-                                      {typeof role === 'string' ? role : role.name}
+                                      {typeof role === "string"
+                                        ? role
+                                        : role.name}
                                     </span>
                                   ))}
                                 </div>
@@ -546,7 +577,12 @@ const MyEmployeesPageContent = () => {
 
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Calendar className="h-4 w-4 text-gray-400" />
-                              <span>Miembro desde: {employee.created_at ? formatDate(employee.created_at) : "N/A"}</span>
+                              <span>
+                                Miembro desde:{" "}
+                                {employee.created_at
+                                  ? formatDate(employee.created_at)
+                                  : "N/A"}
+                              </span>
                             </div>
 
                             {employee?.currentEmployment && (
@@ -558,14 +594,19 @@ const MyEmployeesPageContent = () => {
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
-                                  {employee.currentEmployment.isActive ? "Activo" : "Inactivo"}
+                                  {employee.currentEmployment.isActive
+                                    ? "Activo"
+                                    : "Inactivo"}
                                 </span>
                                 <span className="text-xs text-gray-600">
                                   {employee.currentEmployment.isActive
                                     ? `Desde ${formatDate(employee.currentEmployment.startDate)}`
                                     : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${
                                         employee.currentEmployment.endDate
-                                          ? formatDate(employee.currentEmployment.endDate)
+                                          ? formatDate(
+                                              employee.currentEmployment
+                                                .endDate,
+                                            )
                                           : "presente"
                                       }`}
                                 </span>
@@ -580,14 +621,16 @@ const MyEmployeesPageContent = () => {
                                   Habilidades:
                                 </p>
                                 <div className="flex flex-wrap gap-1">
-                                  {employee.skills.slice(0, 3).map((skill, index) => (
-                                    <span
-                                      key={index}
-                                      className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
-                                    >
-                                      {skill}
-                                    </span>
-                                  ))}
+                                  {employee.skills
+                                    .slice(0, 3)
+                                    .map((skill, index) => (
+                                      <span
+                                        key={index}
+                                        className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
                                   {employee.skills.length > 3 && (
                                     <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
                                       +{employee.skills.length - 3} más
@@ -621,12 +664,13 @@ const MyEmployeesPageContent = () => {
                     <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                       <Users className="h-10 w-10 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">No hay empleados</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No hay empleados
+                    </h3>
                     <p className="mt-2 text-gray-500">
                       {searchTerm
                         ? "No se encontraron empleados que coincidan con tu búsqueda."
-                        : "Tu empresa aún no tiene empleados registrados. Los empleados se agregarán automáticamente cuando aceptes aplicaciones."
-                      }
+                        : "Tu empresa aún no tiene empleados registrados. Los empleados se agregarán automáticamente cuando aceptes aplicaciones."}
                     </p>
                   </div>
                 )}
@@ -645,7 +689,8 @@ const MyEmployeesPageContent = () => {
                 {/* Results Summary */}
                 {!loading && !error && filteredEmployees.length > 0 && (
                   <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredEmployees.length} de {pagination.total} empleados
+                    Mostrando {filteredEmployees.length} de {pagination.total}{" "}
+                    empleados
                   </div>
                 )}
               </>
@@ -659,7 +704,7 @@ const MyEmployeesPageContent = () => {
         isOpen={isModalOpen}
         onClose={handleCancelRemove}
         onConfirm={handleConfirmRemove}
-        employeeName={employeeToRemove?.name || ''}
+        employeeName={employeeToRemove?.name || ""}
         isLoading={removingEmployee === employeeToRemove?.id}
       />
     </>
@@ -669,7 +714,7 @@ const MyEmployeesPageContent = () => {
 // Componente principal protegido con RoleGuard - solo empresas pueden ver empleados
 const MyEmployeesPage = () => {
   return (
-    <RoleGuard allowedRoles={['BUSINESS', 'ADMIN']}>
+    <RoleGuard allowedRoles={["BUSINESS", "ADMIN"]}>
       <MyEmployeesPageContent />
     </RoleGuard>
   );

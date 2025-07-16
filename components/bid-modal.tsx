@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Contract } from '../interfaces/contract.interface';
-import { ContractService } from '../services/ContractService';
-import { X, DollarSign, MessageSquare, TrendingUp, AlertCircle } from 'lucide-react';
-import { translatePriceUnit } from '@/lib/utils';
+import { useState } from "react";
+import { Contract } from "../interfaces/contract.interface";
+import { ContractService } from "../services/ContractService";
+import {
+  X,
+  DollarSign,
+  MessageSquare,
+  TrendingUp,
+  AlertCircle,
+} from "lucide-react";
+import { translatePriceUnit } from "@/lib/utils";
 
 interface BidModalProps {
   contract: Contract;
@@ -13,9 +19,14 @@ interface BidModalProps {
   onBidSubmitted: () => void;
 }
 
-export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: BidModalProps) {
-  const [amount, setAmount] = useState('');
-  const [message, setMessage] = useState('');
+export default function BidModal({
+  contract,
+  isOpen,
+  onClose,
+  onBidSubmitted,
+}: BidModalProps) {
+  const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,14 +37,14 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
       await ContractService.createBid({
         contractId: contract.id,
         amount: parseFloat(amount),
-        message: message || undefined
+        message: message || undefined,
       });
 
       onBidSubmitted();
       onClose();
     } catch (error) {
-      console.error('Error creating bid:', error);
-      alert('Error al crear la oferta');
+      console.error("Error creating bid:", error);
+      alert("Error al crear la oferta");
     } finally {
       setIsLoading(false);
     }
@@ -64,16 +75,22 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
         <div className="p-6">
           {/* Contract Info */}
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-6 border border-gray-200">
-            <h3 className="font-semibold text-lg text-gray-800 mb-2">{contract.publication?.title}</h3>
+            <h3 className="font-semibold text-lg text-gray-800 mb-2">
+              {contract.publication?.title}
+            </h3>
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
               <div className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
-                <span>Precio actual: ${contract.currentPrice?.toLocaleString()} {translatePriceUnit(contract.priceUnit)}</span>
+                <span>
+                  Precio actual: ${contract.currentPrice?.toLocaleString()}{" "}
+                  {translatePriceUnit(contract.priceUnit)}
+                </span>
               </div>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-700">
-                💡 Ofrece un precio competitivo para aumentar tus posibilidades de ser seleccionado.
+                💡 Ofrece un precio competitivo para aumentar tus posibilidades
+                de ser seleccionado.
               </p>
             </div>
           </div>
@@ -100,7 +117,8 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
               <div className="flex items-start gap-2 mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-yellow-700">
-                  Una oferta más baja puede ser más atractiva, pero asegúrate de que sea rentable para ti.
+                  Una oferta más baja puede ser más atractiva, pero asegúrate de
+                  que sea rentable para ti.
                 </p>
               </div>
             </div>
@@ -121,7 +139,8 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Un mensaje convincente puede marcar la diferencia en la selección.
+                Un mensaje convincente puede marcar la diferencia en la
+                selección.
               </p>
             </div>
 
@@ -158,4 +177,4 @@ export default function BidModal({ contract, isOpen, onClose, onBidSubmitted }: 
       </div>
     </div>
   );
-} 
+}

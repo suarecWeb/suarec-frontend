@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Publication } from '../interfaces/publication.interface';
-import { ContractService } from '../services/ContractService';
-import { useRouter } from 'next/navigation';
-import { 
-  X, 
-  DollarSign, 
-  Clock, 
-  MessageSquare, 
-  CheckCircle, 
+import { useState } from "react";
+import { Publication } from "../interfaces/publication.interface";
+import { ContractService } from "../services/ContractService";
+import { useRouter } from "next/navigation";
+import {
+  X,
+  DollarSign,
+  Clock,
+  MessageSquare,
+  CheckCircle,
   AlertCircle,
   CreditCard,
   Banknote,
   Building,
   Smartphone,
   Calendar,
-  Receipt
-} from 'lucide-react';
-import { translatePriceUnit } from '@/lib/utils';
-import { formatCurrency } from '@/lib/formatCurrency';
+  Receipt,
+} from "lucide-react";
+import { translatePriceUnit } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 interface ContractModalProps {
   publication: Publication;
@@ -27,30 +27,53 @@ interface ContractModalProps {
   onClose: () => void;
 }
 
-type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'WOMPI';
+type PaymentMethod = "efectivo" | "transferencia" | "tarjeta" | "WOMPI";
 
 const paymentMethods = [
-  { id: 'efectivo', name: 'Efectivo', icon: Banknote, description: 'Pago en efectivo al momento del servicio' },
-  { id: 'transferencia', name: 'Transferencia bancaria', icon: Building, description: 'Transferencia a cuenta bancaria' },
-  { id: 'tarjeta', name: 'Tarjeta de crédito/débito', icon: CreditCard, description: 'Visa, Mastercard, etc.' }
+  {
+    id: "efectivo",
+    name: "Efectivo",
+    icon: Banknote,
+    description: "Pago en efectivo al momento del servicio",
+  },
+  {
+    id: "transferencia",
+    name: "Transferencia bancaria",
+    icon: Building,
+    description: "Transferencia a cuenta bancaria",
+  },
+  {
+    id: "tarjeta",
+    name: "Tarjeta de crédito/débito",
+    icon: CreditCard,
+    description: "Visa, Mastercard, etc.",
+  },
 ] as const;
 
-export default function ContractModal({ publication, isOpen, onClose }: ContractModalProps) {
-  const [contractType, setContractType] = useState<'accept' | 'custom'>('accept');
+export default function ContractModal({
+  publication,
+  isOpen,
+  onClose,
+}: ContractModalProps) {
+  const [contractType, setContractType] = useState<"accept" | "custom">(
+    "accept",
+  );
   const [customPrice, setCustomPrice] = useState(0);
-  const [serviceAddress, setServiceAddress] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
-  const [locationDescription, setLocationDescription] = useState('');
-  const [message, setMessage] = useState('');
-  const [requestedDate, setRequestedDate] = useState('');
-  const [requestedTime, setRequestedTime] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo');
+  const [serviceAddress, setServiceAddress] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [locationDescription, setLocationDescription] = useState("");
+  const [message, setMessage] = useState("");
+  const [requestedDate, setRequestedDate] = useState("");
+  const [requestedTime, setRequestedTime] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // Calcular precios
-  const basePrice = Number(contractType === 'accept' ? publication.price! : customPrice);
+  const basePrice = Number(
+    contractType === "accept" ? publication.price! : customPrice,
+  );
   const iva = Math.round(basePrice * 0.19);
   const totalPrice = basePrice + iva;
 
@@ -60,51 +83,51 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
     try {
       if (isNaN(basePrice) || basePrice <= 0) {
-        alert('Debes ingresar un precio válido');
+        alert("Debes ingresar un precio válido");
         setIsLoading(false);
         return;
       }
 
       if (!requestedDate) {
-        alert('La fecha de servicio es obligatoria');
+        alert("La fecha de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!requestedTime) {
-        alert('La hora de servicio es obligatoria');
+        alert("La hora de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!serviceAddress.trim()) {
-        alert('La dirección del servicio es obligatoria');
+        alert("La dirección del servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!propertyType) {
-        alert('Debes seleccionar el tipo de inmueble');
+        alert("Debes seleccionar el tipo de inmueble");
         setIsLoading(false);
         return;
       }
 
       if (!neighborhood.trim()) {
-        alert('El barrio es obligatorio');
+        alert("El barrio es obligatorio");
         setIsLoading(false);
         return;
       }
 
       let newPaymentMethod = paymentMethod;
-      if (paymentMethod === 'tarjeta' || paymentMethod === 'transferencia' ) {
-        newPaymentMethod = 'WOMPI';
+      if (paymentMethod === "tarjeta" || paymentMethod === "transferencia") {
+        newPaymentMethod = "WOMPI";
       }
 
       const contractData = {
         publicationId: publication.id!,
         initialPrice: Number(basePrice),
         totalPrice: Number(totalPrice),
-        priceUnit: publication.priceUnit || 'project',
+        priceUnit: publication.priceUnit || "project",
         clientMessage: message || undefined,
         requestedDate: new Date(requestedDate),
         requestedTime: requestedTime,
@@ -112,22 +135,25 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         serviceAddress: serviceAddress.trim(),
         propertyType: propertyType,
         neighborhood: neighborhood.trim(),
-        locationDescription: locationDescription.trim() || undefined
+        locationDescription: locationDescription.trim() || undefined,
       };
 
-      console.log('Enviando datos de contratación:', contractData);
-      console.log('Desglose de precios:');
-      console.log('- Precio base:', basePrice);
-      console.log('- IVA (19%):', iva);
-      console.log('- Total:', totalPrice);
+      console.log("Enviando datos de contratación:", contractData);
+      console.log("Desglose de precios:");
+      console.log("- Precio base:", basePrice);
+      console.log("- IVA (19%):", iva);
+      console.log("- Total:", totalPrice);
 
       await ContractService.createContract(contractData);
 
       onClose();
-      router.push('/contracts');
+      router.push("/contracts");
     } catch (error: any) {
-      console.error('Error creating contract:', error?.response?.data || error);
-      alert('Error al crear la contratación: ' + (error?.response?.data?.message || 'Error desconocido'));
+      console.error("Error creating contract:", error?.response?.data || error);
+      alert(
+        "Error al crear la contratación: " +
+          (error?.response?.data?.message || "Error desconocido"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +169,9 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">Contratar Servicio</h2>
-              <p className="text-blue-100 text-sm">Completa los detalles de tu contratación</p>
+              <p className="text-blue-100 text-sm">
+                Completa los detalles de tu contratación
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -158,14 +186,22 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
         <div className="p-4 space-y-6">
           {/* Publication Info */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-2">{publication.title}</h3>
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{publication.description}</p>
+            <h3 className="font-semibold text-gray-800 mb-2">
+              {publication.title}
+            </h3>
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+              {publication.description}
+            </p>
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
-                <span className="text-lg">{formatCurrency(publication.price.toLocaleString(), {
-                  showCurrency: true,
-                })}</span>
-                <span className="text-sm text-gray-600">por {translatePriceUnit(publication.priceUnit || '')}</span>
+                <span className="text-lg">
+                  {formatCurrency(publication.price.toLocaleString(), {
+                    showCurrency: true,
+                  })}
+                </span>
+                <span className="text-sm text-gray-600">
+                  por {translatePriceUnit(publication.priceUnit || "")}
+                </span>
               </div>
             )}
           </div>
@@ -181,36 +217,45 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                   <input
                     type="radio"
                     value="accept"
-                    checked={contractType === 'accept'}
-                    onChange={(e) => setContractType(e.target.value as 'accept')}
+                    checked={contractType === "accept"}
+                    onChange={(e) =>
+                      setContractType(e.target.value as "accept")
+                    }
                     className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <CheckCircle className="h-4 w-4 text-[#097EEC]" />
-                      <span className="font-medium text-gray-800">Aceptar tarifa original</span>
+                      <span className="font-medium text-gray-800">
+                        Aceptar tarifa original
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {formatCurrency(publication.price?.toLocaleString())} {translatePriceUnit(publication.priceUnit || '')}
+                      {formatCurrency(publication.price?.toLocaleString())}{" "}
+                      {translatePriceUnit(publication.priceUnit || "")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Proceso más rápido y directo
                     </p>
                   </div>
                 </label>
-                
+
                 <label className="flex items-start p-3 border-2 border-gray-200 rounded-lg hover:border-[#097EEC] transition-colors cursor-pointer">
                   <input
                     type="radio"
                     value="custom"
-                    checked={contractType === 'custom'}
-                    onChange={(e) => setContractType(e.target.value as 'custom')}
+                    checked={contractType === "custom"}
+                    onChange={(e) =>
+                      setContractType(e.target.value as "custom")
+                    }
                     className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <AlertCircle className="h-4 w-4 text-[#097EEC]" />
-                      <span className="font-medium text-gray-800">Ofrecer tarifa personalizada</span>
+                      <span className="font-medium text-gray-800">
+                        Ofrecer tarifa personalizada
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600">
                       Negocia el precio que mejor se ajuste
@@ -224,10 +269,11 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
             </div>
 
             {/* Custom Price Input */}
-            {contractType === 'custom' && (
+            {contractType === "custom" && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tu oferta (${translatePriceUnit(publication.priceUnit || '')}):
+                  Tu oferta (${translatePriceUnit(publication.priceUnit || "")}
+                  ):
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -245,7 +291,8 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                 <div className="flex items-start gap-2 mt-3 p-3 bg-blue-100 rounded-lg">
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-blue-700">
-                    Una oferta personalizada puede dificultar la contratación y tomar más tiempo en ser revisada.
+                    Una oferta personalizada puede dificultar la contratación y
+                    tomar más tiempo en ser revisada.
                   </p>
                 </div>
               </div>
@@ -255,7 +302,8 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 <Calendar className="inline h-4 w-4 mr-1" />
-                Fecha y hora del servicio <span className="text-red-500">*</span>
+                Fecha y hora del servicio{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -267,11 +315,11 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                     value={requestedDate}
                     onChange={(e) => setRequestedDate(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date().toISOString().split("T")[0]}
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-2">
                     Hora:
@@ -300,23 +348,31 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                     <label
                       key={method.id}
                       className={`flex items-start p-3 border-2 rounded-lg hover:border-[#097EEC] transition-colors cursor-pointer ${
-                        paymentMethod === method.id ? 'border-[#097EEC] bg-blue-50' : 'border-gray-200'
+                        paymentMethod === method.id
+                          ? "border-[#097EEC] bg-blue-50"
+                          : "border-gray-200"
                       }`}
                     >
                       <input
                         type="radio"
                         value={method.id}
                         checked={paymentMethod === method.id}
-                        onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                        onChange={(e) =>
+                          setPaymentMethod(e.target.value as PaymentMethod)
+                        }
                         className="mt-1 mr-3 text-[#097EEC] focus:ring-[#097EEC]"
                         required
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <Icon className="h-4 w-4 text-[#097EEC]" />
-                          <span className="font-medium text-gray-800 text-sm">{method.name}</span>
+                          <span className="font-medium text-gray-800 text-sm">
+                            {method.name}
+                          </span>
                         </div>
-                        <p className="text-xs text-gray-600">{method.description}</p>
+                        <p className="text-xs text-gray-600">
+                          {method.description}
+                        </p>
                       </div>
                     </label>
                   );
@@ -330,7 +386,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                 <Building className="inline h-4 w-4 mr-1" />
                 Información del lugar <span className="text-red-500">*</span>
               </label>
-              
+
               <div className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
                 {/* Dirección */}
                 <div>
@@ -425,30 +481,39 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
             <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Receipt className="h-5 w-5 text-green-600" />
-                <h3 className="font-semibold text-gray-800">Resumen del precio</h3>
+                <h3 className="font-semibold text-gray-800">
+                  Resumen del precio
+                </h3>
               </div>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Precio base:</span>
-                  <span className="font-medium">{formatCurrency(basePrice.toLocaleString())}</span>
+                  <span className="font-medium">
+                    {formatCurrency(basePrice.toLocaleString())}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">IVA (19%):</span>
-                  <span className="font-medium">{formatCurrency(iva.toLocaleString())}</span>
+                  <span className="font-medium">
+                    {formatCurrency(iva.toLocaleString())}
+                  </span>
                 </div>
                 <hr className="border-gray-300" />
                 <div className="flex justify-between items-center text-lg font-bold text-green-600">
                   <span>Total a pagar:</span>
-                  <span>{formatCurrency(totalPrice.toLocaleString(), {
-                    showCurrency: true,
-                  })}</span>
+                  <span>
+                    {formatCurrency(totalPrice.toLocaleString(), {
+                      showCurrency: true,
+                    })}
+                  </span>
                 </div>
               </div>
-              
+
               <div className="mt-3 p-2 bg-white rounded border border-green-300">
                 <p className="text-xs text-gray-600">
-                  <strong>Método de pago:</strong> {paymentMethods.find(m => m.id === paymentMethod)?.name}
+                  <strong>Método de pago:</strong>{" "}
+                  {paymentMethods.find((m) => m.id === paymentMethod)?.name}
                 </p>
               </div>
             </div>

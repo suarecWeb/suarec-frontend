@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { X, MessageSquare, User } from 'lucide-react';
+import React from "react";
+import { X, MessageSquare, User } from "lucide-react";
 
 interface MessageNotificationProps {
   id: string;
@@ -32,9 +32,9 @@ const MessageNotification: React.FC<MessageNotificationProps> = ({
 }) => {
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -69,16 +69,16 @@ const MessageNotification: React.FC<MessageNotificationProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
-          
+
           <p className="text-sm text-gray-600 line-clamp-2 mb-2">
             {message.content}
           </p>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">
               {formatTime(message.created_at)}
             </span>
-            
+
             <button
               onClick={() => onOpenChat(conversationId)}
               className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -93,4 +93,4 @@ const MessageNotification: React.FC<MessageNotificationProps> = ({
   );
 };
 
-export default MessageNotification; 
+export default MessageNotification;

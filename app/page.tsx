@@ -1,8 +1,8 @@
-"use client"
-import Image from "next/image"
-import Link from "next/link"
-import Navbar from "@/components/navbar"
-import CountdownTimer from "@/components/countdown-timer"
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import Navbar from "@/components/navbar";
+import CountdownTimer from "@/components/countdown-timer";
 import {
   ArrowRight,
   Briefcase,
@@ -14,21 +14,21 @@ import {
   Shield,
   Zap,
   Globe,
-  Award
-} from "lucide-react"
-import logoImage from "@/public/CafeYFogon.png"
-import logoImageDos from "@/public/veens.png"
-import logoImageTres from "@/public/enfacol.png"
-import logoImageCuatro from "@/public/OlimpoCocktail.png"
-import ContactModal from "@/components/contact-modal"
-import CookiesModal from "@/components/cookies-modal"
-import { useState } from "react"
-import SuarecLogo from "@/components/logo"
-import { CompaniesCarousel } from "@/components/CompaniesCarousel"
+  Award,
+} from "lucide-react";
+import logoImage from "@/public/CafeYFogon.png";
+import logoImageDos from "@/public/veens.png";
+import logoImageTres from "@/public/enfacol.png";
+import logoImageCuatro from "@/public/OlimpoCocktail.png";
+import ContactModal from "@/components/contact-modal";
+import CookiesModal from "@/components/cookies-modal";
+import { useState } from "react";
+import SuarecLogo from "@/components/logo";
+import { CompaniesCarousel } from "@/components/CompaniesCarousel";
 
 export default function Home() {
-  const [isContactOpen, setContactOpen] = useState(false)
-  const [isCookiesOpen, setCookiesOpen] = useState(false)
+  const [isContactOpen, setContactOpen] = useState(false);
+  const [isCookiesOpen, setCookiesOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -59,8 +59,12 @@ export default function Home() {
 
           {/* Logo/Título principal */}
           <div className="mb-8">
-            <SuarecLogo width={550} height={100} className="mx-auto mb-4 w-[70%] drop-shadow-2xl"
-              theme="dark" />
+            <SuarecLogo
+              width={550}
+              height={100}
+              className="mx-auto mb-4 w-[70%] drop-shadow-2xl"
+              theme="dark"
+            />
             <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-3"></div>
             <div className="w-12 h-1 bg-white/30 mx-auto"></div>
           </div>
@@ -68,9 +72,14 @@ export default function Home() {
           {/* Subtítulo elegante */}
           <div className="max-w-4xl mx-auto mb-8">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-eras text-white/95 leading-relaxed">
-              Conectamos <span className="font-eras-bold-italic text-[#97CBFF]">talento excepcional</span>
+              Conectamos{" "}
+              <span className="font-eras-bold-italic text-[#97CBFF]">
+                talento excepcional
+              </span>
               <br />
-              <span className="text-[#97CBFF] font-eras-bold-italic">con oportunidades extraordinarias</span>
+              <span className="text-[#97CBFF] font-eras-bold-italic">
+                con oportunidades extraordinarias
+              </span>
             </h2>
           </div>
 
@@ -78,7 +87,9 @@ export default function Home() {
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 font-eras leading-relaxed">
             La plataforma donde los mejores profesionales encuentran
             <br />
-            <span className="font-eras-bold">las empresas que transformarán su carrera.</span>
+            <span className="font-eras-bold">
+              las empresas que transformarán su carrera.
+            </span>
           </p>
 
           {/* Estadísticas */}
@@ -132,10 +143,15 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">
-              ¿Por qué elegir <span className="text-[#097EEC] font-eras-bold-italic">SUAREC</span>?
+              ¿Por qué elegir{" "}
+              <span className="text-[#097EEC] font-eras-bold-italic">
+                SUAREC
+              </span>
+              ?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
-              Descubre las ventajas que nos hacen la plataforma preferida por profesionales y empresas
+              Descubre las ventajas que nos hacen la plataforma preferida por
+              profesionales y empresas
             </p>
           </div>
 
@@ -144,17 +160,26 @@ export default function Home() {
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Briefcase className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Ofertas exclusivas</h3>
-              <p className="text-gray-600 leading-relaxed font-eras">Accede a oportunidades laborales únicas que no encontrarás en otras plataformas. Trabajamos directamente con las mejores empresas.</p>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Ofertas exclusivas
+              </h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Accede a oportunidades laborales únicas que no encontrarás en
+                otras plataformas. Trabajamos directamente con las mejores
+                empresas.
+              </p>
             </div>
 
             <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Building2 className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Empresas verificadas</h3>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Empresas verificadas
+              </h3>
               <p className="text-gray-600 leading-relaxed font-eras">
-                Todas nuestras empresas pasan por un riguroso proceso de verificación para garantizar las mejores condiciones laborales.
+                Todas nuestras empresas pasan por un riguroso proceso de
+                verificación para garantizar las mejores condiciones laborales.
               </p>
             </div>
 
@@ -162,9 +187,12 @@ export default function Home() {
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Comunidad activa</h3>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Comunidad activa
+              </h3>
               <p className="text-gray-600 leading-relaxed font-eras">
-                Forma parte de una red de profesionales que comparten oportunidades, experiencias y crecen juntos.
+                Forma parte de una red de profesionales que comparten
+                oportunidades, experiencias y crecen juntos.
               </p>
             </div>
 
@@ -172,38 +200,54 @@ export default function Home() {
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Shield className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Seguridad garantizada</h3>
-              <p className="text-gray-600 leading-relaxed font-eras">Tu información está protegida con los más altos estándares de seguridad y privacidad.</p>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Seguridad garantizada
+              </h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Tu información está protegida con los más altos estándares de
+                seguridad y privacidad.
+              </p>
             </div>
 
             <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Zap className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Proceso rápido</h3>
-              <p className="text-gray-600 leading-relaxed font-eras">Conectamos profesionales con empresas en tiempo récord, sin trámites complicados.</p>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Proceso rápido
+              </h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Conectamos profesionales con empresas en tiempo récord, sin
+                trámites complicados.
+              </p>
             </div>
 
             <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
               <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Award className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">Calidad premium</h3>
-              <p className="text-gray-600 leading-relaxed font-eras">Solo trabajamos con los mejores profesionales y las empresas más prestigiosas del mercado.</p>
+              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
+                Calidad premium
+              </h3>
+              <p className="text-gray-600 leading-relaxed font-eras">
+                Solo trabajamos con los mejores profesionales y las empresas más
+                prestigiosas del mercado.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      
-
       {/* Sección de Alianzas */}
       <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-eras-bold mb-4 text-gray-800">Nuestras alianzas estratégicas</h2>
+            <h2 className="text-4xl md:text-5xl font-eras-bold mb-4 text-gray-800">
+              Nuestras alianzas estratégicas
+            </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
-              Trabajamos con empresas líderes para ofrecerte las mejores oportunidades laborales del mercado.
+              Trabajamos con empresas líderes para ofrecerte las mejores
+              oportunidades laborales del mercado.
             </p>
           </div>
 
@@ -236,7 +280,8 @@ export default function Home() {
               ¿Listo para encontrar tu próxima oportunidad?
             </h2>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-eras">
-              Únete a miles de profesionales que ya han encontrado el trabajo de sus sueños con SUAREC.
+              Únete a miles de profesionales que ya han encontrado el trabajo de
+              sus sueños con SUAREC.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
@@ -260,8 +305,14 @@ export default function Home() {
         </div>
       </section>
 
-      <ContactModal isOpen={isContactOpen} onClose={() => setContactOpen(false)} />
-      <CookiesModal isOpen={isCookiesOpen} onClose={() => setCookiesOpen(false)} />
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setContactOpen(false)}
+      />
+      <CookiesModal
+        isOpen={isCookiesOpen}
+        onClose={() => setCookiesOpen(false)}
+      />
     </div>
-  )
+  );
 }

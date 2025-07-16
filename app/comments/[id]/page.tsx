@@ -1,7 +1,13 @@
-'use client'
+"use client";
 import { useState, useEffect } from "react";
 import { buttonVariants } from "@/components/ui/button";
-import { Table, TableRow, TableCell, TableHead, TableBody } from "@/components/ui/table";
+import {
+  Table,
+  TableRow,
+  TableCell,
+  TableHead,
+  TableBody,
+} from "@/components/ui/table";
 import Link from "next/link";
 import { Comment } from "@/interfaces/comment.interface";
 import Navbar from "@/components/navbar";
@@ -23,7 +29,9 @@ const CommentPageContent = () => {
     hasPrevPage: false,
   });
 
-  const fetchComments = async (params: PaginationParams = { page: 1, limit: 10 }) => {
+  const fetchComments = async (
+    params: PaginationParams = { page: 1, limit: 10 },
+  ) => {
     try {
       setLoading(true);
       const response = await CommentService.getComments(params);
@@ -32,7 +40,7 @@ const CommentPageContent = () => {
           ...comment,
           publication: comment.publication || null,
           user: comment.user || null,
-        }))
+        })),
       );
       setPagination(response.data.meta);
     } catch (err) {
@@ -70,16 +78,21 @@ const CommentPageContent = () => {
       <Navbar />
       <main className="flex min-h-screen flex-col items-center gap-5 p-24">
         <h1 className="text-2xl font-bold">Comentarios</h1>
-        <Link href="/comment/create" className={buttonVariants({ variant: "default" })}>Crear comentario</Link>
-        
+        <Link
+          href="/comment/create"
+          className={buttonVariants({ variant: "default" })}
+        >
+          Crear comentario
+        </Link>
+
         {loading && <p>Cargando comentarios...</p>}
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             {error}
           </div>
         )}
-        
+
         <Table>
           <TableHead>
             <TableRow>
@@ -90,20 +103,28 @@ const CommentPageContent = () => {
           </TableHead>
           <TableBody>
             {comments.length > 0 ? (
-              comments.map(comment => (
+              comments.map((comment) => (
                 <TableRow key={comment.id}>
                   <TableCell>{comment.id}</TableCell>
                   <TableCell>{comment.description}</TableCell>
                   <TableCell className="flex space-x-2">
-                    <button 
-                      onClick={() => handleEdit(comment.id ? comment.id : '1')} 
-                      className={buttonVariants({ variant: "default", size: "sm" })}
+                    <button
+                      onClick={() => handleEdit(comment.id ? comment.id : "1")}
+                      className={buttonVariants({
+                        variant: "default",
+                        size: "sm",
+                      })}
                     >
                       Editar
                     </button>
-                    <button 
-                      onClick={() => handleDelete(comment.id ? comment.id : '1')} 
-                      className={buttonVariants({ variant: "destructive", size: "sm" })}
+                    <button
+                      onClick={() =>
+                        handleDelete(comment.id ? comment.id : "1")
+                      }
+                      className={buttonVariants({
+                        variant: "destructive",
+                        size: "sm",
+                      })}
                     >
                       Eliminar
                     </button>
@@ -119,7 +140,7 @@ const CommentPageContent = () => {
             )}
           </TableBody>
         </Table>
-        
+
         {pagination.totalPages > 1 && (
           <div className="mt-4">
             <Pagination
@@ -129,7 +150,7 @@ const CommentPageContent = () => {
             />
           </div>
         )}
-        
+
         {!loading && !error && comments.length > 0 && (
           <div className="text-sm text-gray-500 mt-4">
             Mostrando {comments.length} de {pagination.total} comentarios
@@ -142,7 +163,7 @@ const CommentPageContent = () => {
 
 const CommentPage = () => {
   return (
-    <RoleGuard allowedRoles={['ADMIN', 'PERSON']}>
+    <RoleGuard allowedRoles={["ADMIN", "PERSON"]}>
       <CommentPageContent />
     </RoleGuard>
   );

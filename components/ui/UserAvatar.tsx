@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { User, Camera, Loader2 } from 'lucide-react';
-import SupabaseService from '@/services/supabase.service';
+import React, { useState } from "react";
+import { User, Camera, Loader2 } from "lucide-react";
+import SupabaseService from "@/services/supabase.service";
 
 interface UserAvatarProps {
   user: {
@@ -11,7 +11,7 @@ interface UserAvatarProps {
     profile_image?: string;
     email?: string;
   };
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
   showUpload?: boolean;
   onImageUploaded?: (imageUrl: string) => void;
   className?: string;
@@ -19,45 +19,47 @@ interface UserAvatarProps {
   onClick?: () => void;
 }
 
-export function UserAvatar({ 
-  user, 
-  size = 'md', 
-  showUpload = false, 
+export function UserAvatar({
+  user,
+  size = "md",
+  showUpload = false,
   onImageUploaded,
-  className = '',
+  className = "",
   clickable = false,
-  onClick
+  onClick,
 }: UserAvatarProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const sizeClasses = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-12 h-12 text-sm',
-    lg: 'w-16 h-16 text-lg',
-    xl: 'w-24 h-24 text-xl'
+    sm: "w-8 h-8 text-xs",
+    md: "w-12 h-12 text-sm",
+    lg: "w-16 h-16 text-lg",
+    xl: "w-24 h-24 text-xl",
   };
 
   const iconSizes = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8',
-    xl: 'w-12 h-12'
+    sm: "w-4 h-4",
+    md: "w-6 h-6",
+    lg: "w-8 h-8",
+    xl: "w-12 h-12",
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Solo se permiten archivos de imagen');
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Solo se permiten archivos de imagen");
       return;
     }
 
     // Validar tamaño (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError('La imagen no debe superar los 5MB');
+      setUploadError("La imagen no debe superar los 5MB");
       return;
     }
 
@@ -65,8 +67,8 @@ export function UserAvatar({
       setIsUploading(true);
       setUploadError(null);
 
-      const result = await SupabaseService.uploadImage(file, 'profile-images');
-      
+      const result = await SupabaseService.uploadImage(file, "profile-images");
+
       if (result.error) {
         throw new Error(result.error);
       }
@@ -74,10 +76,9 @@ export function UserAvatar({
       if (onImageUploaded) {
         onImageUploaded(result.url);
       }
-
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      setUploadError(error.message || 'Error al subir la imagen');
+      console.error("Error uploading image:", error);
+      setUploadError(error.message || "Error al subir la imagen");
     } finally {
       setIsUploading(false);
     }
@@ -85,9 +86,9 @@ export function UserAvatar({
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -109,8 +110,8 @@ export function UserAvatar({
           bg-gradient-to-br from-blue-500 to-blue-600 
           text-white font-semibold 
           overflow-hidden
-          ${clickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
-          ${isUploading ? 'opacity-50' : ''}
+          ${clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
+          ${isUploading ? "opacity-50" : ""}
         `}
         onClick={handleClick}
       >
@@ -122,7 +123,7 @@ export function UserAvatar({
             onError={(e) => {
               // Si la imagen falla, mostrar iniciales
               const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
+              target.style.display = "none";
               const parent = target.parentElement;
               if (parent) {
                 parent.innerHTML = `<span class="text-white font-semibold">${getInitials(user.name)}</span>`;
@@ -138,8 +139,9 @@ export function UserAvatar({
       {showUpload && (
         <div className="absolute -bottom-1 -right-1">
           <label className="cursor-pointer">
-            <div className={`
-              ${size === 'sm' ? 'w-6 h-6' : 'w-8 h-8'} 
+            <div
+              className={`
+              ${size === "sm" ? "w-6 h-6" : "w-8 h-8"} 
               bg-blue-600 
               rounded-full 
               flex items-center justify-center 
@@ -147,7 +149,8 @@ export function UserAvatar({
               hover:bg-blue-700 
               transition-colors
               shadow-lg
-            `}>
+            `}
+            >
               {isUploading ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
@@ -176,13 +179,13 @@ export function UserAvatar({
 }
 
 // Componente para mostrar solo la imagen sin funcionalidad de upload
-export function UserAvatarDisplay({ 
-  user, 
-  size = 'md', 
-  className = '',
+export function UserAvatarDisplay({
+  user,
+  size = "md",
+  className = "",
   clickable = false,
-  onClick
-}: Omit<UserAvatarProps, 'showUpload' | 'onImageUploaded'>) {
+  onClick,
+}: Omit<UserAvatarProps, "showUpload" | "onImageUploaded">) {
   return (
     <UserAvatar
       user={user}
@@ -196,12 +199,12 @@ export function UserAvatarDisplay({
 }
 
 // Componente para mostrar con funcionalidad de upload
-export function UserAvatarEditable({ 
-  user, 
-  size = 'md', 
+export function UserAvatarEditable({
+  user,
+  size = "md",
   onImageUploaded,
-  className = ''
-}: Omit<UserAvatarProps, 'showUpload' | 'clickable' | 'onClick'>) {
+  className = "",
+}: Omit<UserAvatarProps, "showUpload" | "clickable" | "onClick">) {
   return (
     <UserAvatar
       user={user}
@@ -211,4 +214,4 @@ export function UserAvatarEditable({
       className={className}
     />
   );
-} 
+}

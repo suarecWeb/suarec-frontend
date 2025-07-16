@@ -3,7 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import ExperienceForm from "./ExperienceForm";
 import { Experience } from "@/interfaces/user.interface";
 
@@ -44,4 +44,4 @@ export default function ExperienceDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

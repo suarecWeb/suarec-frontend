@@ -1,19 +1,28 @@
-"use client"
-import { useEffect, useState } from "react"
-import { UserService } from "@/services/UsersService"
-import { PaginationParams } from "@/interfaces/pagination-params.interface"
-import { User } from "@/interfaces/user.interface"
-import Navbar from "@/components/navbar"
-import { Pagination } from "@/components/ui/pagination"
-import RoleGuard from "@/components/role-guard"
-import { PlusCircle, Edit, Trash2, AlertCircle, Search, UserIcon, Mail, Shield } from "lucide-react"
-import Link from "next/link"
+"use client";
+import { useEffect, useState } from "react";
+import { UserService } from "@/services/UsersService";
+import { PaginationParams } from "@/interfaces/pagination-params.interface";
+import { User } from "@/interfaces/user.interface";
+import Navbar from "@/components/navbar";
+import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Search,
+  UserIcon,
+  Mail,
+  Shield,
+} from "lucide-react";
+import Link from "next/link";
 
 const UsersPageContent = () => {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -21,12 +30,14 @@ const UsersPageContent = () => {
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
-  })
+  });
 
-  const fetchUsers = async (params: PaginationParams = { page: 1, limit: 10 }) => {
+  const fetchUsers = async (
+    params: PaginationParams = { page: 1, limit: 10 },
+  ) => {
     try {
-      setLoading(true)
-      const response = await UserService.getUsers(params)
+      setLoading(true);
+      const response = await UserService.getUsers(params);
 
       // Asegurarse de que roles esté correctamente mapeado
       setUsers(
@@ -34,37 +45,37 @@ const UsersPageContent = () => {
           ...user,
           roles: user.roles || [],
         })),
-      )
+      );
 
-      setPagination(response.data.meta)
+      setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar los usuarios")
-      console.error("Error al obtener usuarios:", err)
+      setError("Error al cargar los usuarios");
+      console.error("Error al obtener usuarios:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const handlePageChange = (page: number) => {
-    fetchUsers({ page, limit: pagination.limit })
-  }
+    fetchUsers({ page, limit: pagination.limit });
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
       try {
-        await UserService.deleteUser(id)
+        await UserService.deleteUser(id);
         // Recargar la página actual después de eliminar
-        fetchUsers({ page: pagination.page, limit: pagination.limit })
+        fetchUsers({ page: pagination.page, limit: pagination.limit });
       } catch (err) {
-        console.error("Error al eliminar usuario:", err)
-        setError("Error al eliminar el usuario")
+        console.error("Error al eliminar usuario:", err);
+        setError("Error al eliminar el usuario");
       }
     }
-  }
+  };
 
   const filteredUsers = searchTerm
     ? users.filter(
@@ -73,24 +84,26 @@ const UsersPageContent = () => {
           user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (user.roles &&
             user.roles.some((role) =>
-              typeof role === "string" ? role.toLowerCase().includes(searchTerm.toLowerCase()) : false,
+              typeof role === "string"
+                ? role.toLowerCase().includes(searchTerm.toLowerCase())
+                : false,
             )),
       )
-    : users
+    : users;
 
   // Función para obtener el color de fondo según el rol
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "ADMIN":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       case "BUSINESS":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "PERSON":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   return (
     <>
@@ -100,7 +113,9 @@ const UsersPageContent = () => {
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold">Usuarios</h1>
-            <p className="mt-2 text-blue-100">Gestiona todos los usuarios registrados en la plataforma</p>
+            <p className="mt-2 text-blue-100">
+              Gestiona todos los usuarios registrados en la plataforma
+            </p>
           </div>
         </div>
 
@@ -189,14 +204,18 @@ const UsersPageContent = () => {
                                   <UserIcon className="h-5 w-5 text-[#097EEC]" />
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {user.name}
+                                  </div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                               <div className="flex items-center gap-1">
                                 <Mail className="h-3 w-3 text-gray-400" />
-                                <span className="text-sm text-gray-500">{user.email}</span>
+                                <span className="text-sm text-gray-500">
+                                  {user.email}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -208,24 +227,34 @@ const UsersPageContent = () => {
                                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role.toString())}`}
                                     >
                                       <Shield className="h-3 w-3 mr-1" />
-                                      {typeof role === "string" ? role.toLowerCase().includes(searchTerm.toLowerCase()) : role.name}
+                                      {typeof role === "string"
+                                        ? role
+                                            .toLowerCase()
+                                            .includes(searchTerm.toLowerCase())
+                                        : role.name}
                                     </span>
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-gray-400 text-sm">Sin rol</span>
+                                <span className="text-gray-400 text-sm">
+                                  Sin rol
+                                </span>
                               )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex justify-end gap-3">
                                 <button
-                                  onClick={() => alert(`Editar usuario con ID: ${user.id}`)}
+                                  onClick={() =>
+                                    alert(`Editar usuario con ID: ${user.id}`)
+                                  }
                                   className="text-amber-600 hover:text-amber-700 transition-colors"
                                 >
                                   <Edit className="h-5 w-5" />
                                 </button>
                                 <button
-                                  onClick={() => user.id && handleDelete(user.id)}
+                                  onClick={() =>
+                                    user.id && handleDelete(user.id)
+                                  }
                                   className="text-red-600 hover:text-red-700 transition-colors"
                                 >
                                   <Trash2 className="h-5 w-5" />
@@ -242,8 +271,12 @@ const UsersPageContent = () => {
                     <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                       <UserIcon className="h-10 w-10 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">No hay usuarios disponibles</h3>
-                    <p className="mt-2 text-gray-500">No se encontraron usuarios que coincidan con tu búsqueda.</p>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No hay usuarios disponibles
+                    </h3>
+                    <p className="mt-2 text-gray-500">
+                      No se encontraron usuarios que coincidan con tu búsqueda.
+                    </p>
                   </div>
                 )}
 
@@ -261,7 +294,8 @@ const UsersPageContent = () => {
                 {/* Results Summary */}
                 {!loading && !error && filteredUsers.length > 0 && (
                   <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredUsers.length} de {pagination.total} usuarios
+                    Mostrando {filteredUsers.length} de {pagination.total}{" "}
+                    usuarios
                   </div>
                 )}
               </>
@@ -270,8 +304,8 @@ const UsersPageContent = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
 // Componente principal protegido con RoleGuard
 const UsersPage = () => {
@@ -279,8 +313,7 @@ const UsersPage = () => {
     <RoleGuard allowedRoles={["ADMIN"]}>
       <UsersPageContent />
     </RoleGuard>
-  )
-}
+  );
+};
 
-export default UsersPage
-
+export default UsersPage;

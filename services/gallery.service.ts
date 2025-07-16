@@ -1,4 +1,4 @@
-import api from './axios_config';
+import api from "./axios_config";
 
 export interface GalleryImage {
   id: number;
@@ -23,13 +23,17 @@ export interface UpdateGalleryImageRequest {
 export class GalleryService {
   // Obtener galería de usuario
   static async getUserGallery(): Promise<GalleryImage[]> {
-    const response = await api.get('/suarec/users/me/gallery');
+    const response = await api.get("/suarec/users/me/gallery");
     return response.data;
   }
 
   // Agregar imagen a galería de usuario
-  static async addImageToUserGallery(imageUrl: string, imagePath: string, description?: string): Promise<GalleryImage> {
-    const response = await api.post('/suarec/users/me/gallery', {
+  static async addImageToUserGallery(
+    imageUrl: string,
+    imagePath: string,
+    description?: string,
+  ): Promise<GalleryImage> {
+    const response = await api.post("/suarec/users/me/gallery", {
       image_url: imageUrl,
       image_path: imagePath,
       description,
@@ -38,14 +42,25 @@ export class GalleryService {
   }
 
   // Subir múltiples imágenes a galería de usuario
-  static async uploadMultipleImagesToUserGallery(uploadData: UploadGalleryImagesRequest): Promise<GalleryImage[]> {
-    const response = await api.post('/suarec/users/me/gallery/upload-multiple', uploadData);
+  static async uploadMultipleImagesToUserGallery(
+    uploadData: UploadGalleryImagesRequest,
+  ): Promise<GalleryImage[]> {
+    const response = await api.post(
+      "/suarec/users/me/gallery/upload-multiple",
+      uploadData,
+    );
     return response.data;
   }
 
   // Actualizar imagen de galería de usuario
-  static async updateUserGalleryImage(imageId: number, updateData: UpdateGalleryImageRequest): Promise<GalleryImage> {
-    const response = await api.patch(`/suarec/users/me/gallery/${imageId}`, updateData);
+  static async updateUserGalleryImage(
+    imageId: number,
+    updateData: UpdateGalleryImageRequest,
+  ): Promise<GalleryImage> {
+    const response = await api.patch(
+      `/suarec/users/me/gallery/${imageId}`,
+      updateData,
+    );
     return response.data;
   }
 
@@ -55,20 +70,28 @@ export class GalleryService {
   }
 
   // Reordenar imágenes de galería de usuario
-  static async reorderUserGalleryImages(imageIds: number[]): Promise<GalleryImage[]> {
-    const response = await api.post('/suarec/users/me/gallery/reorder', { imageIds });
+  static async reorderUserGalleryImages(
+    imageIds: number[],
+  ): Promise<GalleryImage[]> {
+    const response = await api.post("/suarec/users/me/gallery/reorder", {
+      imageIds,
+    });
     return response.data;
   }
 
   // Obtener galería de empresa
   static async getCompanyGallery(): Promise<GalleryImage[]> {
-    const response = await api.get('/suarec/companies/me/gallery');
+    const response = await api.get("/suarec/companies/me/gallery");
     return response.data;
   }
 
   // Agregar imagen a galería de empresa
-  static async addImageToCompanyGallery(imageUrl: string, imagePath: string, description?: string): Promise<GalleryImage> {
-    const response = await api.post('/suarec/companies/me/gallery', {
+  static async addImageToCompanyGallery(
+    imageUrl: string,
+    imagePath: string,
+    description?: string,
+  ): Promise<GalleryImage> {
+    const response = await api.post("/suarec/companies/me/gallery", {
       image_url: imageUrl,
       image_path: imagePath,
       description,
@@ -77,14 +100,25 @@ export class GalleryService {
   }
 
   // Subir múltiples imágenes a galería de empresa
-  static async uploadMultipleImagesToCompanyGallery(uploadData: UploadGalleryImagesRequest): Promise<GalleryImage[]> {
-    const response = await api.post('/suarec/companies/me/gallery/upload-multiple', uploadData);
+  static async uploadMultipleImagesToCompanyGallery(
+    uploadData: UploadGalleryImagesRequest,
+  ): Promise<GalleryImage[]> {
+    const response = await api.post(
+      "/suarec/companies/me/gallery/upload-multiple",
+      uploadData,
+    );
     return response.data;
   }
 
   // Actualizar imagen de galería de empresa
-  static async updateCompanyGalleryImage(imageId: number, updateData: UpdateGalleryImageRequest): Promise<GalleryImage> {
-    const response = await api.patch(`/suarec/companies/me/gallery/${imageId}`, updateData);
+  static async updateCompanyGalleryImage(
+    imageId: number,
+    updateData: UpdateGalleryImageRequest,
+  ): Promise<GalleryImage> {
+    const response = await api.patch(
+      `/suarec/companies/me/gallery/${imageId}`,
+      updateData,
+    );
     return response.data;
   }
 
@@ -94,8 +128,12 @@ export class GalleryService {
   }
 
   // Reordenar imágenes de galería de empresa
-  static async reorderCompanyGalleryImages(imageIds: number[]): Promise<GalleryImage[]> {
-    const response = await api.post('/suarec/companies/me/gallery/reorder', { imageIds });
+  static async reorderCompanyGalleryImages(
+    imageIds: number[],
+  ): Promise<GalleryImage[]> {
+    const response = await api.post("/suarec/companies/me/gallery/reorder", {
+      imageIds,
+    });
     return response.data;
   }
-} 
+}
