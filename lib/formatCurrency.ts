@@ -19,26 +19,26 @@ interface FormatCurencyOptions {
 
 export const formatCurrency = (
   value: number | string | null | undefined,
-  options: FormatCurencyOptions = {}
+  options: FormatCurencyOptions = {},
 ): string => {
   const {
     showSymbol = true,
     showCurrency = false,
     decimals = 0,
     compact = false,
-    showText = false
+    showText = false,
   } = options;
 
   // Manejar valores nulos o indefinidos
-  if (value === null || value === undefined || value === '') {
-    return showSymbol ? '$0' : '0';
+  if (value === null || value === undefined || value === "") {
+    return showSymbol ? "$0" : "0";
   }
 
   // Convertir a número
   let numValue: number;
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     // Limpiar string: remover todo excepto números, puntos y comas
-    const cleanValue = value.replace(/[^\d.-]/g, '');
+    const cleanValue = value.replace(/[^\d.-]/g, "");
     numValue = parseFloat(cleanValue);
   } else {
     numValue = value;
@@ -46,7 +46,7 @@ export const formatCurrency = (
 
   // Validar que sea un número válido
   if (isNaN(numValue)) {
-    return showSymbol ? '$0' : '0';
+    return showSymbol ? "$0" : "0";
   }
 
   // Formato compacto (K, M, B)
@@ -55,9 +55,9 @@ export const formatCurrency = (
   }
 
   // Formatear usando Intl.NumberFormat para Colombia
-  const formatter = new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
+  const formatter = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -67,19 +67,19 @@ export const formatCurrency = (
   // Personalizar el resultado según las opciones
   if (!showSymbol && !showCurrency) {
     // Solo el número con puntuación
-    formatted = formatted.replace(/[$COP\s]/g, '').trim();
+    formatted = formatted.replace(/[$COP\s]/g, "").trim();
   } else if (!showSymbol && showCurrency) {
     // Número + COP
-    formatted = formatted.replace('$', '').trim() + ' COP';
+    formatted = formatted.replace("$", "").trim() + " COP";
   } else if (showSymbol && showCurrency) {
     // $ + número + COP
-    formatted = formatted + ' COP';
+    formatted = formatted + " COP";
   }
   // Si showSymbol es true y showCurrency es false, usar el formato por defecto
 
   // Agregar texto "peso/pesos"
   if (showText) {
-    const textSuffix = Math.abs(numValue) === 1 ? ' peso' : ' pesos';
+    const textSuffix = Math.abs(numValue) === 1 ? " peso" : " pesos";
     formatted += textSuffix;
   }
 
@@ -91,8 +91,8 @@ export const formatCurrency = (
  */
 const formatCompactCOP = (value: number, showSymbol: boolean): string => {
   const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  const symbol = showSymbol ? '$' : '';
+  const sign = value < 0 ? "-" : "";
+  const symbol = showSymbol ? "$" : "";
 
   if (abs >= 1e12) {
     return `${sign}${symbol}${(abs / 1e12).toFixed(1)}B`;

@@ -15,11 +15,11 @@ interface ApplyCompanyButtonProps {
   className?: string;
 }
 
-const ApplyCompanyButton = ({ 
-  companyId, 
-  companyName, 
-  companyUserId, 
-  className = "" 
+const ApplyCompanyButton = ({
+  companyId,
+  companyName,
+  companyUserId,
+  className = "",
 }: ApplyCompanyButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -28,7 +28,7 @@ const ApplyCompanyButton = ({
   const handleApply = async () => {
     try {
       setLoading(true);
-      
+
       const token = Cookies.get("token");
       if (!token) {
         router.push("/auth/login");
@@ -39,7 +39,9 @@ const ApplyCompanyButton = ({
       const currentUserId = decoded.id;
 
       // Verificar que el usuario tenga rol de PERSON
-      const hasPersonRole = decoded.roles.some(role => role.name === "PERSON");
+      const hasPersonRole = decoded.roles.some(
+        (role) => role.name === "PERSON",
+      );
       if (!hasPersonRole) {
         alert("Solo las personas pueden postularse a empresas");
         return;
@@ -58,7 +60,7 @@ Me gustaría conocer más sobre las oportunidades laborales disponibles y cómo 
 ¡Espero poder conversar pronto!
 
 Saludos cordiales.`;
-      
+
       await MessageService.createMessage({
         content: applicationMessage,
         senderId: currentUserId,
@@ -66,12 +68,11 @@ Saludos cordiales.`;
       });
 
       setApplied(true);
-      
+
       // Mostrar mensaje de éxito por 2 segundos
       setTimeout(() => {
         setApplied(false);
       }, 2000);
-
     } catch (error) {
       console.error("Error al postularse:", error);
       alert("Error al enviar la postulación. Inténtalo de nuevo.");

@@ -110,36 +110,39 @@ const CreatePublicationPage = () => {
   // Función para subir imágenes (real)
   const uploadImage = async (file: File): Promise<string> => {
     setUploading(true);
-    const result = await SupabaseService.uploadImage(file, "publication-images");
+    const result = await SupabaseService.uploadImage(
+      file,
+      "publication-images",
+    );
     setUploading(false);
     if (result.error) throw new Error(result.error);
     return result.url;
   };
 
   const onSubmit = async (data: FormData) => {
-    console.log(typeof data.price)
+    console.log(typeof data.price);
 
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Obtener ID del usuario del token
       const token = Cookies.get("token");
       if (!token) {
         throw new Error("No se encontró token de autenticación");
       }
-      
+
       const decoded = jwtDecode<TokenPayload>(token);
       if (!decoded.id) {
         throw new Error("ID de usuario no encontrado en el token");
       }
-      
+
       // Subir imagen si existe
       let imageUrl = data.image_url;
       if (selectedFile) {
         imageUrl = await uploadImage(selectedFile);
       }
-      
+
       // Crear publicación (formato exacto según CreatePublicationDto)
       const publicationData = {
         title: data.title,
@@ -148,30 +151,32 @@ const CreatePublicationPage = () => {
         image_url: imageUrl || undefined, // Opcional
         price: data.price || 0, // Precio opcional
         priceUnit: data.priceUnit || undefined, // Unidad de precio opcional
-        created_at: new Date(), 
+        created_at: new Date(),
         modified_at: new Date(),
         userId: Number(decoded.id), // Asegurar que sea número
-        visitors: 0 // Opcional, inicializar en 0
+        visitors: 0, // Opcional, inicializar en 0
       };
-            
-      const response = await PublicationService.createPublication(publicationData);
-      
+
+      const response =
+        await PublicationService.createPublication(publicationData);
+
       setSuccess("Publicación creada exitosamente");
       setIsLoading(false);
-      
+
       // Resetear formulario
       reset();
       setSelectedFile(null);
       setPreviewUrl(null);
-      
+
       // Redirigir después de 2 segundos
       setTimeout(() => {
         router.push(`/publications/${response.data.id}`);
       }, 2000);
-      
     } catch (err: any) {
       setIsLoading(false);
-      const errorMessage = err.response?.data?.message || "Error al crear la publicación. Inténtalo de nuevo.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Error al crear la publicación. Inténtalo de nuevo.";
       setError(errorMessage);
       console.error("Error al crear publicación:", err);
     }
@@ -248,7 +253,8 @@ const CreatePublicationPage = () => {
                         required: "El título es obligatorio",
                         maxLength: {
                           value: 255,
-                          message: "El título no puede exceder los 255 caracteres",
+                          message:
+                            "El título no puede exceder los 255 caracteres",
                         },
                       })}
                       disabled={isLoading}
@@ -304,18 +310,22 @@ const CreatePublicationPage = () => {
                       id="description"
                       rows={6}
                       className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
-                        errors.description ? "border-red-500" : "border-gray-200"
+                        errors.description
+                          ? "border-red-500"
+                          : "border-gray-200"
                       }`}
                       placeholder="Describe tu servicio o lo que estás buscando..."
                       {...register("description", {
                         required: "La descripción es obligatoria",
                         minLength: {
                           value: 20,
-                          message: "La descripción debe tener al menos 20 caracteres",
+                          message:
+                            "La descripción debe tener al menos 20 caracteres",
                         },
                         maxLength: {
                           value: 500,
-                          message: "La descripción no puede exceder los 500 caracteres",
+                          message:
+                            "La descripción no puede exceder los 500 caracteres",
                         },
                       })}
                       disabled={isLoading}
@@ -334,7 +344,10 @@ const CreatePublicationPage = () => {
                   {/* Precio */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        htmlFor="price"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
                         Precio (opcional)
                       </label>
                       <input
@@ -343,18 +356,26 @@ const CreatePublicationPage = () => {
                         step="0.01"
                         min="0"
                         {...register("price", {
-                          min: { value: 0, message: "El precio debe ser mayor a 0" }
+                          min: {
+                            value: 0,
+                            message: "El precio debe ser mayor a 0",
+                          },
                         })}
                         className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         placeholder="Ej: 50.00"
                       />
                       {errors.price && (
-                        <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.price.message}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="priceUnit" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        htmlFor="priceUnit"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
                         Unidad de precio
                       </label>
                       <select
@@ -373,7 +394,9 @@ const CreatePublicationPage = () => {
                         <option value="service">Por servicio</option>
                       </select>
                       {errors.priceUnit && (
-                        <p className="mt-1 text-sm text-red-600">{errors.priceUnit.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.priceUnit.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -383,8 +406,10 @@ const CreatePublicationPage = () => {
                       <Info className="h-5 w-5 text-blue-400 mr-2 mt-0.5" />
                       <div>
                         <p className="text-sm text-blue-700">
-                          <strong>Consejo:</strong> Si especificas un precio, los usuarios podrán contratar tu servicio directamente. 
-                          Si no lo especificas, los usuarios te contactarán para negociar el precio.
+                          <strong>Consejo:</strong> Si especificas un precio,
+                          los usuarios podrán contratar tu servicio
+                          directamente. Si no lo especificas, los usuarios te
+                          contactarán para negociar el precio.
                         </p>
                       </div>
                     </div>
@@ -468,7 +493,10 @@ const CreatePublicationPage = () => {
                         </h3>
                         <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc ml-4">
                           <li>Sé específico sobre lo que ofreces o buscas</li>
-                          <li>Incluye detalles importantes como precio, ubicación, etc.</li>
+                          <li>
+                            Incluye detalles importantes como precio, ubicación,
+                            etc.
+                          </li>
                           <li>Usa un título claro y descriptivo</li>
                           <li>Añade una imagen relevante para destacar</li>
                         </ul>

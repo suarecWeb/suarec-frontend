@@ -14,7 +14,7 @@ export interface Comment {
   created_at: Date;
   publicationId?: string;
   userId?: string | number;
-  
+
   // Relaciones - para visualización en la UI, no para envío al backend
   publication?: {
     id: string;

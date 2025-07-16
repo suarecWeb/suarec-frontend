@@ -1,8 +1,8 @@
-"use client"
-import { useState } from 'react';
-import { Star, X } from 'lucide-react';
-import RatingService, { CreateRatingDto } from '@/services/RatingService';
-import toast from 'react-hot-toast';
+"use client";
+import { useState } from "react";
+import { Star, X } from "lucide-react";
+import RatingService, { CreateRatingDto } from "@/services/RatingService";
+import toast from "react-hot-toast";
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface RatingModalProps {
     name: string;
     profile_image?: string;
   };
-  userRole: 'CLIENT' | 'PROVIDER';
+  userRole: "CLIENT" | "PROVIDER";
   currentUserId: number;
 }
 
@@ -25,10 +25,10 @@ export default function RatingModal({
   contractTitle,
   otherUser,
   userRole,
-  currentUserId
+  currentUserId,
 }: RatingModalProps) {
   const [stars, setStars] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleStarClick = (starNumber: number) => {
@@ -37,9 +37,9 @@ export default function RatingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (stars === 0) {
-      toast.error('Por favor selecciona una calificación');
+      toast.error("Por favor selecciona una calificación");
       return;
     }
 
@@ -52,14 +52,16 @@ export default function RatingModal({
         workContractId: undefined, // No requerimos workContractId
         stars,
         comment: comment.trim() || undefined,
-        category: userRole === 'CLIENT' ? 'SERVICE' : 'EMPLOYER'
+        category: userRole === "CLIENT" ? "SERVICE" : "EMPLOYER",
       };
 
       await RatingService.createRating(ratingData);
-      toast.success('Calificación enviada exitosamente');
+      toast.success("Calificación enviada exitosamente");
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error al enviar la calificación');
+      toast.error(
+        error.response?.data?.message || "Error al enviar la calificación",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +88,7 @@ export default function RatingModal({
             Calificando a: <span className="font-medium">{otherUser.name}</span>
           </p>
           <p className="text-sm text-gray-500">
-            Tu rol: {userRole === 'CLIENT' ? 'Cliente' : 'Proveedor'}
+            Tu rol: {userRole === "CLIENT" ? "Cliente" : "Proveedor"}
           </p>
         </div>
 
@@ -103,8 +105,8 @@ export default function RatingModal({
                   onClick={() => handleStarClick(starNumber)}
                   className={`p-1 transition-colors ${
                     starNumber <= stars
-                      ? 'text-yellow-400 hover:text-yellow-500'
-                      : 'text-gray-300 hover:text-gray-400'
+                      ? "text-yellow-400 hover:text-yellow-500"
+                      : "text-gray-300 hover:text-gray-400"
                   }`}
                 >
                   <Star className="h-8 w-8 fill-current" />
@@ -112,12 +114,17 @@ export default function RatingModal({
               ))}
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {stars > 0 ? `${stars} estrella${stars > 1 ? 's' : ''}` : 'Selecciona una calificación'}
+              {stars > 0
+                ? `${stars} estrella${stars > 1 ? "s" : ""}`
+                : "Selecciona una calificación"}
             </p>
           </div>
 
           <div className="mb-6">
-            <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="comment"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Comentario (opcional)
             </label>
             <textarea
@@ -148,11 +155,11 @@ export default function RatingModal({
               disabled={isSubmitting || stars === 0}
               className="flex-1 px-4 py-2 bg-[#097EEC] text-white rounded-md hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Enviando...' : 'Enviar calificación'}
+              {isSubmitting ? "Enviando..." : "Enviar calificación"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
-import { PaymentService, PaymentStatus, PaymentMethod, AdminPaymentFilterDto, UpdatePaymentStatusDto } from "@/services/PaymentService";
+import {
+  PaymentService,
+  PaymentStatus,
+  PaymentMethod,
+  AdminPaymentFilterDto,
+  UpdatePaymentStatusDto,
+} from "@/services/PaymentService";
 import { PaymentTransaction } from "@/interfaces/payment.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import { Pagination } from "@/components/ui/pagination";
@@ -35,7 +41,7 @@ const AdminPaymentsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Estados de filtros
   const [filters, setFilters] = useState<AdminPaymentFilterDto>({
     page: 1,
@@ -43,9 +49,9 @@ const AdminPaymentsPage = () => {
   });
 
   // Estados temporales para los montos (con delay)
-  const [tempMinAmount, setTempMinAmount] = useState<string>('');
-  const [tempMaxAmount, setTempMaxAmount] = useState<string>('');
-  
+  const [tempMinAmount, setTempMinAmount] = useState<string>("");
+  const [tempMaxAmount, setTempMaxAmount] = useState<string>("");
+
   // Estados de paginación
   const [pagination, setPagination] = useState({
     total: 0,
@@ -58,86 +64,94 @@ const AdminPaymentsPage = () => {
 
   const router = useRouter();
 
+  const fetchPayments = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoading(page === 1);
+        setRefreshing(page !== 1);
+
+        const params = {
+          ...filters,
+          page,
+        };
+
+        console.log("Enviando parámetros:", params); // Debug
+
+        const response: PaginationResponse<PaymentTransaction> =
+          await PaymentService.getAllPaymentsForAdmin(params);
+
+        setPayments(response.data);
+        setPagination(response.meta);
+        setError(null);
+      } catch (err) {
+        console.error("Error al cargar pagos:", err);
+        setError("Error al cargar los pagos");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [filters],
+  );
+
   useEffect(() => {
     fetchPayments();
-  }, []);
-
-  const fetchPayments = async (page: number = 1) => {
-    try {
-      setLoading(page === 1);
-      setRefreshing(page !== 1);
-      
-      const params = {
-        ...filters,
-        page,
-      };
-
-      console.log('Enviando parámetros:', params); // Debug
-
-      const response: PaginationResponse<PaymentTransaction> = await PaymentService.getAllPaymentsForAdmin(params);
-      
-      setPayments(response.data);
-      setPagination(response.meta);
-      setError(null);
-    } catch (err) {
-      console.error("Error al cargar pagos:", err);
-      setError("Error al cargar los pagos");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  }, [fetchPayments]);
 
   useEffect(() => {
     if (!loading) {
       fetchPayments();
     }
-  }, [filters]);
+  }, [filters, fetchPayments, loading]);
 
   // Effect para delay en filtros de monto
   useEffect(() => {
     const delayTimer = setTimeout(() => {
       const minAmount = tempMinAmount ? Number(tempMinAmount) : undefined;
       const maxAmount = tempMaxAmount ? Number(tempMaxAmount) : undefined;
-      
+
       if (filters.minAmount !== minAmount || filters.maxAmount !== maxAmount) {
-        setFilters(prev => ({ 
-          ...prev, 
-          minAmount, 
+        setFilters((prev) => ({
+          ...prev,
+          minAmount,
           maxAmount,
-          page: 1 
+          page: 1,
         }));
       }
     }, 1000);
 
     return () => clearTimeout(delayTimer);
-  }, [tempMinAmount, tempMaxAmount]);
+  }, [tempMinAmount, tempMaxAmount, filters.minAmount, filters.maxAmount]);
 
   const handleFilterChange = (newFilters: Partial<AdminPaymentFilterDto>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+    setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
   };
 
   const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
+    setFilters((prev) => ({ ...prev, page }));
     fetchPayments(page);
   };
 
-  const handleUpdatePaymentStatus = async (paymentId: string, newStatus: PaymentStatus) => {
+  const handleUpdatePaymentStatus = async (
+    paymentId: string,
+    newStatus: PaymentStatus,
+  ) => {
     try {
-      await PaymentService.updatePaymentStatus(paymentId, { 
-        status: newStatus      
+      await PaymentService.updatePaymentStatus(paymentId, {
+        status: newStatus,
       });
-      
+
       // Actualizar el pago en la lista local
-      setPayments(prev => prev.map(payment => 
-        payment.id === paymentId 
-          ? { ...payment, status: newStatus }
-          : payment
-      ));
-      
+      setPayments((prev) =>
+        prev.map((payment) =>
+          payment.id === paymentId
+            ? { ...payment, status: newStatus }
+            : payment,
+        ),
+      );
     } catch (error) {
-      console.error('Error al actualizar estado del pago:', error);
-      setError('Error al actualizar el estado del pago');
+      console.error("Error al actualizar estado del pago:", error);
+      setError("Error al actualizar el estado del pago");
     }
   };
 
@@ -212,7 +226,7 @@ const AdminPaymentsPage = () => {
 
   if (loading && pagination.page === 1) {
     return (
-      <RoleGuard allowedRoles={['ADMIN']}>
+      <RoleGuard allowedRoles={["ADMIN"]}>
         <Navbar />
         <div className="min-h-screen bg-gray-50 pt-16">
           <div className="container mx-auto px-4 py-8">
@@ -226,7 +240,7 @@ const AdminPaymentsPage = () => {
   }
 
   return (
-    <RoleGuard allowedRoles={['ADMIN']}>
+    <RoleGuard allowedRoles={["ADMIN"]}>
       <Navbar />
       <div className="min-h-screen bg-gray-50 pt-16">
         {/* Header */}
@@ -235,19 +249,23 @@ const AdminPaymentsPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">Gestión de Pagos</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    Gestión de Pagos
+                  </h1>
                   <p className="mt-1 md:mt-2 text-sm md:text-base text-blue-100">
                     Panel de administración de todas las transacciones
                   </p>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => fetchPayments(pagination.page)}
                 disabled={refreshing}
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors w-full sm:w-auto"
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
                 <span>Actualizar</span>
               </button>
             </div>
@@ -272,7 +290,9 @@ const AdminPaymentsPage = () => {
                     {/* Filtros rápidos de estado */}
                     <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
                       <button
-                        onClick={() => handleFilterChange({ status: undefined })}
+                        onClick={() =>
+                          handleFilterChange({ status: undefined })
+                        }
                         className={`px-3 py-1 rounded-full text-sm transition-colors whitespace-nowrap ${
                           !filters.status
                             ? "bg-[#097EEC] text-white"
@@ -313,9 +333,13 @@ const AdminPaymentsPage = () => {
                     <input
                       type="number"
                       value={filters.payerId || ""}
-                      onChange={(e) => handleFilterChange({ 
-                        payerId: e.target.value ? Number(e.target.value) : undefined 
-                      })}
+                      onChange={(e) =>
+                        handleFilterChange({
+                          payerId: e.target.value
+                            ? Number(e.target.value)
+                            : undefined,
+                        })
+                      }
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                       placeholder="ID del pagador"
                     />
@@ -328,9 +352,13 @@ const AdminPaymentsPage = () => {
                     <input
                       type="number"
                       value={filters.payeeId || ""}
-                      onChange={(e) => handleFilterChange({ 
-                        payeeId: e.target.value ? Number(e.target.value) : undefined 
-                      })}
+                      onChange={(e) =>
+                        handleFilterChange({
+                          payeeId: e.target.value
+                            ? Number(e.target.value)
+                            : undefined,
+                        })
+                      }
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                       placeholder="ID del receptor"
                     />
@@ -343,7 +371,9 @@ const AdminPaymentsPage = () => {
                     <input
                       type="date"
                       value={filters.startDate || ""}
-                      onChange={(e) => handleFilterChange({ startDate: e.target.value })}
+                      onChange={(e) =>
+                        handleFilterChange({ startDate: e.target.value })
+                      }
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                     />
                   </div>
@@ -355,7 +385,9 @@ const AdminPaymentsPage = () => {
                     <input
                       type="date"
                       value={filters.endDate || ""}
-                      onChange={(e) => handleFilterChange({ endDate: e.target.value })}
+                      onChange={(e) =>
+                        handleFilterChange({ endDate: e.target.value })
+                      }
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                     />
                   </div>
@@ -393,8 +425,8 @@ const AdminPaymentsPage = () => {
                           page: 1,
                           limit: 10,
                         });
-                        setTempMinAmount('');
-                        setTempMaxAmount('');
+                        setTempMinAmount("");
+                        setTempMaxAmount("");
                       }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                     >
@@ -457,11 +489,13 @@ const AdminPaymentsPage = () => {
                               </h3>
                               <span
                                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                  payment.status
+                                  payment.status,
                                 )} sm:ml-2`}
                               >
                                 {getStatusIcon(payment.status)}
-                                <span className="ml-1">{getStatusText(payment.status)}</span>
+                                <span className="ml-1">
+                                  {getStatusText(payment.status)}
+                                </span>
                               </span>
                             </div>
 
@@ -506,12 +540,15 @@ const AdminPaymentsPage = () => {
                                 id={`finished-${payment.id}`}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    handleUpdatePaymentStatus(payment.id, PaymentStatus.FINISHED);
+                                    handleUpdatePaymentStatus(
+                                      payment.id,
+                                      PaymentStatus.FINISHED,
+                                    );
                                   }
                                 }}
                                 className="h-4 w-4 text-[#097EEC] focus:ring-[#097EEC] border-gray-300 rounded"
                               />
-                              <label 
+                              <label
                                 htmlFor={`finished-${payment.id}`}
                                 className="text-sm font-medium text-green-700 cursor-pointer"
                               >

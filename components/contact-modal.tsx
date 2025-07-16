@@ -1,6 +1,6 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import { X } from 'lucide-react';
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import { X } from "lucide-react";
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -52,13 +52,16 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
 
                 <div className="mt-4 text-gray-700 space-y-4">
                   <div>
-                    <span className="font-semibold">Correo electrónico:</span> soportesuarec@gmail.com
+                    <span className="font-semibold">Correo electrónico:</span>{" "}
+                    soportesuarec@gmail.com
                   </div>
                   <div>
-                    <span className="font-semibold">Dirección:</span> Cali, Valle del Cauca, Colombia
+                    <span className="font-semibold">Dirección:</span> Cali,
+                    Valle del Cauca, Colombia
                   </div>
                   <div>
-                    <span className="font-semibold">Teléfono:</span> +57 314 637 3088
+                    <span className="font-semibold">Teléfono:</span> +57 314 637
+                    3088
                   </div>
                 </div>
 
@@ -80,4 +83,4 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
   );
 };
 
-export default ContactModal; 
+export default ContactModal;

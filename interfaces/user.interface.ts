@@ -36,34 +36,41 @@ export interface Reference {
 
 export interface SocialLink {
   id?: string;
-  type: 'LinkedIn' | 'GitHub' | 'Twitter' | 'Facebook' | 'Instagram' | 'Website' | string;
+  type:
+    | "LinkedIn"
+    | "GitHub"
+    | "Twitter"
+    | "Facebook"
+    | "Instagram"
+    | "Website"
+    | string;
   url: string;
 }
 
 export interface User {
-  id?: string
-  email: string
-  password?: string
-  name: string
-  cellphone: string
-  genre: string
-  born_at: Date
-  cv_url?: string
-  profile_image?: string
-  created_at?: Date
-  roles?: string[] | { id: string; name: string }[] | undefined
-  profession?: string
-  skills?: string[]
+  id?: string;
+  email: string;
+  password?: string;
+  name: string;
+  cellphone: string;
+  genre: string;
+  born_at: Date;
+  cv_url?: string;
+  profile_image?: string;
+  created_at?: Date;
+  roles?: string[] | { id: string; name: string }[] | undefined;
+  profession?: string;
+  skills?: string[];
 
   // Relaciones
-  company?: Company
-  publications?: Publication[]
-  comments?: Comment[]
-  experiences?: Experience[]
-  bio?: string
-  education?: Education[]
-  references?: Reference[]
-  socialLinks?: SocialLink[]
+  company?: Company;
+  publications?: Publication[];
+  comments?: Comment[];
+  experiences?: Experience[];
+  bio?: string;
+  education?: Education[];
+  references?: Reference[];
+  socialLinks?: SocialLink[];
   currentEmployment?: {
     startDate: Date;
     endDate?: Date;
@@ -73,8 +80,8 @@ export interface User {
       months: number;
       years: number;
       displayText: string;
-    }
-  }
+    };
+  };
 }
 
 export // Interfaces para los DTOs

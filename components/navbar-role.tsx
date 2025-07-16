@@ -1,89 +1,108 @@
-"use client"
+"use client";
 
-import type React from "react"
-import Link from "next/link"
-import toast from "react-hot-toast"
-import { logOut } from "@/actions/log-out"
-import Cookies from "js-cookie"
-import { LogIn, LogOut, User, ChevronDown, Settings, CreditCard, BarChart3, Users, UserCheck, Handshake, FileText, Building2, Star } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/useAuth"
-import { jwtDecode } from "jwt-decode"
-import { TokenPayload } from "@/interfaces/auth.interface"
-
-
+import type React from "react";
+import Link from "next/link";
+import toast from "react-hot-toast";
+import { logOut } from "@/actions/log-out";
+import Cookies from "js-cookie";
+import {
+  LogIn,
+  LogOut,
+  User,
+  ChevronDown,
+  Settings,
+  CreditCard,
+  BarChart3,
+  Users,
+  UserCheck,
+  Handshake,
+  FileText,
+  Building2,
+  Star,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
 
 interface NavbarRoleProps {
-  isMobile: boolean
-  section: string
-  isScrolled?: boolean
+  isMobile: boolean;
+  section: string;
+  isScrolled?: boolean;
 }
 
 const handleNoLogin = () => {
-  toast.error("Necesitas estar logueado para realizar esta acción.")
-}
+  toast.error("Necesitas estar logueado para realizar esta acción.");
+};
 
-export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScrolled = false }: NavbarRoleProps) => {
-  const [token, setToken] = useState<string | undefined>(undefined)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [userName, setUserName] = useState<string | null>(null)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+export const NavbarRole: React.FC<NavbarRoleProps> = ({
+  isMobile,
+  section,
+  isScrolled = false,
+}: NavbarRoleProps) => {
+  const [token, setToken] = useState<string | undefined>(undefined);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Función para extraer el nombre del email (parte antes del @)
   const getDisplayName = (email: string | null) => {
-    if (!email) return 'Mi cuenta'
-    const name = email.split('@')[0]
+    if (!email) return "Mi cuenta";
+    const name = email.split("@")[0];
     // Capitalizar la primera letra
-    return name
-  }
+    return name;
+  };
 
   // Función para obtener la primera letra del email
   const getInitial = (email: string | null) => {
-    if (!email) return 'U'
-    return email.charAt(0).toUpperCase()
-  }
+    if (!email) return "U";
+    return email.charAt(0).toUpperCase();
+  };
 
   useEffect(() => {
-    const tokenValue = Cookies.get("token")
-    setToken(tokenValue)
-    
+    const tokenValue = Cookies.get("token");
+    setToken(tokenValue);
+
     if (tokenValue) {
       try {
-        const decoded = jwtDecode<TokenPayload>(tokenValue)
-        setUserRole(decoded.roles?.[0]?.name || null) // Tomar el nombre del primer rol
-        setUserName(decoded.email || null) // Obtener el email del usuario
+        const decoded = jwtDecode<TokenPayload>(tokenValue);
+        setUserRole(decoded.roles?.[0]?.name || null); // Tomar el nombre del primer rol
+        setUserName(decoded.email || null); // Obtener el email del usuario
       } catch (error) {
-        console.error("Error al decodificar token:", error)
-        setUserRole(null)
-        setUserName(null)
+        console.error("Error al decodificar token:", error);
+        setUserRole(null);
+        setUserName(null);
       }
     }
-  }, [])
-  const { isAuthenticated, user, userRoles } = useAuth()
+  }, []);
+  const { isAuthenticated, user, userRoles } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogOutClick = async () => {
-    await logOut()
-    router.push('/')
-  }
+    await logOut();
+    router.push("/");
+  };
 
   if (section !== "logIn") {
-    return null
+    return null;
   }
 
   if (isAuthenticated) {
@@ -114,7 +133,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
             <span>Cerrar sesión</span>
           </button>
         </div>
-      )
+      );
     }
 
     return (
@@ -122,20 +141,24 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 font-eras ${
-            isScrolled 
-              ? 'text-gray-700 hover:text-[#097EEC]' 
-              : 'text-white hover:text-white/90'
+            isScrolled
+              ? "text-gray-700 hover:text-[#097EEC]"
+              : "text-white hover:text-white/90"
           }`}
         >
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-            isScrolled 
-              ? 'bg-[#097EEC] text-white' 
-              : 'bg-white text-[#097EEC]'
-          }`}>
+          <div
+            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+              isScrolled ? "bg-[#097EEC] text-white" : "bg-white text-[#097EEC]"
+            }`}
+          >
             {getInitial(userName)}
           </div>
-          <span className="text-sm font-eras-medium truncate max-w-32">{getDisplayName(userName)}</span>
-          <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          <span className="text-sm font-eras-medium truncate max-w-32">
+            {getDisplayName(userName)}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`}
+          />
         </button>
 
         {isDropdownOpen && (
@@ -149,7 +172,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <span className="text-sm">Mi Perfil</span>
             </Link>
 
-            {(userRole === 'PERSON' || userRole === 'ADMIN') && (
+            {(userRole === "PERSON" || userRole === "ADMIN") && (
               <Link
                 href="/my-applications"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -160,7 +183,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               </Link>
             )}
 
-            {(userRole === 'BUSINESS' || userRole === 'ADMIN') && (
+            {(userRole === "BUSINESS" || userRole === "ADMIN") && (
               <Link
                 href="/companies"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -171,7 +194,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               </Link>
             )}
 
-            {(userRole === 'BUSINESS' || userRole === 'ADMIN') && (
+            {(userRole === "BUSINESS" || userRole === "ADMIN") && (
               <Link
                 href="/contracts"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -181,7 +204,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
                 <span className="text-sm">Contrataciones</span>
               </Link>
             )}
-            
+
             <Link
               href="/profile/edit"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -190,7 +213,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <Settings className="h-4 w-4" />
               <span className="text-sm">Configuración</span>
             </Link>
-            
+
             <Link
               href="/stats"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -199,8 +222,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <BarChart3 className="h-4 w-4" />
               <span className="text-sm">Mis Estadísticas</span>
             </Link>
-            
-            {userRoles.includes('ADMIN') ? (
+
+            {userRoles.includes("ADMIN") ? (
               <Link
                 href="/payments"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -229,13 +252,13 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
               <Star className="h-4 w-4" />
               <span className="text-sm">Calificaciones</span>
             </Link>
-            
+
             <div className="border-t border-gray-100 my-1"></div>
-            
+
             <button
               onClick={() => {
-                handleLogOutClick()
-                setIsDropdownOpen(false)
+                handleLogOutClick();
+                setIsDropdownOpen(false);
               }}
               className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-300 w-full text-left"
             >
@@ -245,7 +268,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
           </div>
         )}
       </div>
-    )
+    );
   }
 
   return (
@@ -264,6 +287,5 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({ isMobile, section, isScr
       <LogIn className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
       <span>Iniciar Sesión</span>
     </Link>
-  )
-}
-
+  );
+};

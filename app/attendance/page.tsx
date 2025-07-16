@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/navbar";
 import AttendanceService from "@/services/AttendanceService";
 import { User } from "@/interfaces/user.interface";
-import { PaginationParams } from "@/interfaces/pagination-params.interface";
-import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -34,7 +32,10 @@ import {
 } from "lucide-react";
 import CompanyService from "@/services/CompanyService";
 import { useRouter } from "next/navigation";
-import { CompanyCheckinTime, CompanyAttendanceStats } from "@/interfaces/attendance.interface";
+import {
+  CompanyCheckinTime,
+  CompanyAttendanceStats,
+} from "@/interfaces/attendance.interface";
 
 interface AttendanceStats {
   totalDays: number;
@@ -56,14 +57,19 @@ interface AttendanceRecord {
 const AttendancePageContent = () => {
   const [employees, setEmployees] = useState<User[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
+  const [attendanceStats, setAttendanceStats] =
+    useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 30)));
+  const [startDate, setStartDate] = useState<Date>(
+    new Date(new Date().setDate(new Date().getDate() - 30)),
+  );
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -79,14 +85,16 @@ const AttendancePageContent = () => {
   const [editCheckInTime, setEditCheckInTime] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [deletingRecordId, setDeletingRecordId] = useState<number | null>(null);
-  
+
   // Estados para configuración de hora de check-in
-  const [companyCheckinTime, setCompanyCheckinTime] = useState<CompanyCheckinTime | null>(null);
+  const [companyCheckinTime, setCompanyCheckinTime] =
+    useState<CompanyCheckinTime | null>(null);
   const [showCheckinConfig, setShowCheckinConfig] = useState(false);
   const [newCheckinTime, setNewCheckinTime] = useState("");
   const [updatingCheckinTime, setUpdatingCheckinTime] = useState(false);
-  const [companyAttendanceStats, setCompanyAttendanceStats] = useState<CompanyAttendanceStats | null>(null);
-  
+  const [companyAttendanceStats, setCompanyAttendanceStats] =
+    useState<CompanyAttendanceStats | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -96,24 +104,35 @@ const AttendancePageContent = () => {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
       }
     }
   }, []);
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchCompanyInfo();
-    }
-  }, [currentUserId]);
-
-  const fetchCompanyInfo = async () => {
+  const fetchCompanyAttendanceStats = useCallback(async () => {
     try {
-      const response = await CompanyService.getCompanies({ page: 1, limit: 100 });
-      const userCompany = response.data.data.find(company => 
-        company.user && parseInt(company.user.id || '0') === currentUserId
+      const response = await AttendanceService.getCompanyAttendanceStats(
+        startDate,
+        endDate,
       );
-      
+      console.log("Estadísticas de asistencia de la empresa:", response);
+      setCompanyAttendanceStats(response);
+    } catch (err) {
+      console.error("Error al obtener estadísticas de la empresa:", err);
+    }
+  }, [startDate, endDate]);
+
+  const fetchCompanyInfo = useCallback(async () => {
+    try {
+      const response = await CompanyService.getCompanies({
+        page: 1,
+        limit: 100,
+      });
+      const userCompany = response.data.data.find(
+        (company) =>
+          company.user && parseInt(company.user.id || "0") === currentUserId,
+      );
+
       if (userCompany) {
         setCompanyInfo(userCompany);
         fetchEmployees(userCompany.id);
@@ -126,7 +145,13 @@ const AttendancePageContent = () => {
       console.error("Error al cargar información de la empresa:", err);
       setError("Error al cargar la información de la empresa");
     }
-  };
+  }, [currentUserId, fetchCompanyAttendanceStats]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchCompanyInfo();
+    }
+  }, [currentUserId, fetchCompanyInfo]);
 
   const fetchEmployees = async (companyId: string) => {
     try {
@@ -145,7 +170,11 @@ const AttendancePageContent = () => {
     try {
       setLoadingAttendance(true);
       const [attendanceResponse, statsResponse] = await Promise.all([
-        AttendanceService.getEmployeeAttendance(parseInt(employeeId), startDate, endDate),
+        AttendanceService.getEmployeeAttendance(
+          parseInt(employeeId),
+          startDate,
+          endDate,
+        ),
         AttendanceService.getEmployeeAttendanceStats(parseInt(employeeId)),
       ]);
       console.log("Registros de asistencia del empleado:", attendanceResponse);
@@ -197,9 +226,10 @@ const AttendancePageContent = () => {
     return timeString;
   };
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(
+    (employee) =>
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Funciones para manejo de configuración de hora de check-in
@@ -214,16 +244,6 @@ const AttendancePageContent = () => {
     }
   };
 
-  const fetchCompanyAttendanceStats = async () => {
-    try {
-      const response = await AttendanceService.getCompanyAttendanceStats(startDate, endDate);
-      console.log("Estadísticas de asistencia de la empresa:", response);
-      setCompanyAttendanceStats(response);
-    } catch (err) {
-      console.error("Error al obtener estadísticas de la empresa:", err);
-    }
-  };
-
   const handleUpdateCheckinTime = async () => {
     if (!newCheckinTime) {
       setError("Por favor ingresa una hora válida");
@@ -232,7 +252,8 @@ const AttendancePageContent = () => {
 
     try {
       setUpdatingCheckinTime(true);
-      const response = await AttendanceService.updateCompanyCheckinTime(newCheckinTime);
+      const response =
+        await AttendanceService.updateCompanyCheckinTime(newCheckinTime);
       setCompanyCheckinTime(response);
       setSuccess("Hora de check-in actualizada correctamente");
       setShowCheckinConfig(false);
@@ -299,7 +320,10 @@ const AttendancePageContent = () => {
     }
   };
 
-  const handleRegisterAttendance = async (isAbsent: boolean = false, notes: string = "") => {
+  const handleRegisterAttendance = async (
+    isAbsent: boolean = false,
+    notes: string = "",
+  ) => {
     if (!selectedEmployee || !selectedEmployee.id) {
       setError("Selecciona un empleado válido.");
       return;
@@ -315,13 +339,21 @@ const AttendancePageContent = () => {
         isAbsent ? "00:00" : editCheckInTime,
         new Date(),
         isAbsent,
-        notes
+        notes,
       );
-      setSuccess(isAbsent ? "Ausencia registrada correctamente" : "Asistencia registrada correctamente");
+      setSuccess(
+        isAbsent
+          ? "Ausencia registrada correctamente"
+          : "Asistencia registrada correctamente",
+      );
       setEditCheckInTime("");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(isAbsent ? "Error al registrar la ausencia" : "Error al registrar la asistencia");
+      setError(
+        isAbsent
+          ? "Error al registrar la ausencia"
+          : "Error al registrar la asistencia",
+      );
       setTimeout(() => setError(null), 3000);
     } finally {
       setLoadingAttendance(false);
@@ -339,7 +371,9 @@ const AttendancePageContent = () => {
               <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <Building2 className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold truncate">Control de asistencia</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                    Control de asistencia
+                  </h1>
                   {companyInfo && (
                     <p className="mt-1 sm:mt-2 text-blue-100 text-sm sm:text-base truncate">
                       {companyInfo.name}
@@ -353,7 +387,7 @@ const AttendancePageContent = () => {
                   )}
                 </div>
               </div>
-              
+
               {/* Botones de acción */}
               <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 <button
@@ -364,7 +398,7 @@ const AttendancePageContent = () => {
                   <span className="hidden sm:inline">Configurar</span>
                 </button>
                 <button
-                  onClick={() => router.push('/my-employees')}
+                  onClick={() => router.push("/my-employees")}
                   className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-medium text-sm sm:text-base"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -382,16 +416,18 @@ const AttendancePageContent = () => {
           <div className="bg-white rounded-t-lg px-4 sm:px-6 py-3 border-b border-gray-200">
             <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 overflow-x-auto">
               <button
-                onClick={() => router.push('/my-employees')}
+                onClick={() => router.push("/my-employees")}
                 className="hover:text-[#097EEC] transition-colors whitespace-nowrap"
               >
                 Mis Empleados
               </button>
               <span>/</span>
-              <span className="text-gray-900 font-medium whitespace-nowrap">Control de Asistencia</span>
+              <span className="text-gray-900 font-medium whitespace-nowrap">
+                Control de Asistencia
+              </span>
             </nav>
           </div>
-          
+
           <div className="bg-white rounded-b-lg shadow-lg p-4 sm:p-6">
             {/* Search Bar */}
             <div className="flex flex-col gap-4 mb-6">
@@ -415,7 +451,7 @@ const AttendancePageContent = () => {
                   <input
                     type="date"
                     className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none flex-1 min-w-0"
-                    value={startDate.toISOString().split('T')[0]}
+                    value={startDate.toISOString().split("T")[0]}
                     onChange={(e) => {
                       const newDate = new Date(e.target.value);
                       handleDateChange(newDate, true);
@@ -427,7 +463,7 @@ const AttendancePageContent = () => {
                   <input
                     type="date"
                     className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none flex-1 min-w-0"
-                    value={endDate.toISOString().split('T')[0]}
+                    value={endDate.toISOString().split("T")[0]}
                     onChange={(e) => {
                       const newDate = new Date(e.target.value);
                       handleDateChange(newDate, false);
@@ -487,8 +523,12 @@ const AttendancePageContent = () => {
                             <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-sm sm:text-base truncate">{employee.name}</h3>
-                            <p className="text-xs sm:text-sm opacity-80 truncate">{employee.email}</p>
+                            <h3 className="font-medium text-sm sm:text-base truncate">
+                              {employee.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm opacity-80 truncate">
+                              {employee.email}
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -507,13 +547,21 @@ const AttendancePageContent = () => {
                             <UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-[#097EEC]" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedEmployee.name}</h2>
-                            <p className="text-gray-500 text-sm sm:text-base truncate">{selectedEmployee.email}</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                              {selectedEmployee.name}
+                            </h2>
+                            <p className="text-gray-500 text-sm sm:text-base truncate">
+                              {selectedEmployee.email}
+                            </p>
                           </div>
                         </div>
                         <button
                           className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow transition-colors text-sm sm:text-base flex-shrink-0"
-                          onClick={() => router.push(`/attendance/register?employeeId=${selectedEmployee.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/attendance/register?employeeId=${selectedEmployee.id}`,
+                            )
+                          }
                         >
                           <Save className="h-4 w-4 sm:h-5 sm:w-5" />
                           <span>Registrar asistencia</span>
@@ -527,8 +575,12 @@ const AttendancePageContent = () => {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <CalendarCheck className="h-6 w-6 sm:h-8 sm:w-8 text-[#097EEC] flex-shrink-0" />
                               <div className="min-w-0 flex-1">
-                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.totalDays}</p>
-                                <p className="text-xs sm:text-sm text-gray-600">Días Asistidos</p>
+                                <p className="text-lg sm:text-2xl font-bold truncate">
+                                  {attendanceStats.totalDays}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Días Asistidos
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -536,8 +588,12 @@ const AttendancePageContent = () => {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <Clock4 className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 flex-shrink-0" />
                               <div className="min-w-0 flex-1">
-                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.lateDays}</p>
-                                <p className="text-xs sm:text-sm text-gray-600">Días Tardanza</p>
+                                <p className="text-lg sm:text-2xl font-bold truncate">
+                                  {attendanceStats.lateDays}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Días Tardanza
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -545,8 +601,12 @@ const AttendancePageContent = () => {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <CalendarX className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 flex-shrink-0" />
                               <div className="min-w-0 flex-1">
-                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.absentDays}</p>
-                                <p className="text-xs sm:text-sm text-gray-600">Días Ausente</p>
+                                <p className="text-lg sm:text-2xl font-bold truncate">
+                                  {attendanceStats.absentDays}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Días Ausente
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -554,8 +614,12 @@ const AttendancePageContent = () => {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <Timer className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 flex-shrink-0" />
                               <div className="min-w-0 flex-1">
-                                <p className="text-lg sm:text-2xl font-bold truncate">{attendanceStats.timeInCompany}</p>
-                                <p className="text-xs sm:text-sm text-gray-600">Años en la Empresa</p>
+                                <p className="text-lg sm:text-2xl font-bold truncate">
+                                  {attendanceStats.timeInCompany}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-600">
+                                  Años en la Empresa
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -565,14 +629,19 @@ const AttendancePageContent = () => {
                       {/* Attendance Records */}
                       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                         <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                          <h3 className="text-lg font-semibold text-gray-800">Registro de Asistencia</h3>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Registro de Asistencia
+                          </h3>
                           <button
                             onClick={() => {
                               if (!selectedEmployee?.id) return;
                               const today = new Date();
-                              const isAlreadyRegistered = attendanceRecords.some(
-                                record => new Date(record.date).toDateString() === today.toDateString()
-                              );
+                              const isAlreadyRegistered =
+                                attendanceRecords.some(
+                                  (record) =>
+                                    new Date(record.date).toDateString() ===
+                                    today.toDateString(),
+                                );
                               if (isAlreadyRegistered) {
                                 setError("Ya existe un registro para hoy");
                                 return;
@@ -582,7 +651,9 @@ const AttendancePageContent = () => {
                             className="text-red-600 hover:text-red-800 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base"
                           >
                             <CalendarX className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <span className="hidden sm:inline">Marcar Ausente</span>
+                            <span className="hidden sm:inline">
+                              Marcar Ausente
+                            </span>
                             <span className="sm:hidden">Ausente</span>
                           </button>
                         </div>
@@ -593,36 +664,61 @@ const AttendancePageContent = () => {
                         ) : attendanceRecords.length === 0 ? (
                           <div className="py-12 text-center text-gray-500 px-4">
                             <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                            <p className="text-sm sm:text-base">No hay asistencias registradas para este empleado en el rango seleccionado.</p>
+                            <p className="text-sm sm:text-base">
+                              No hay asistencias registradas para este empleado
+                              en el rango seleccionado.
+                            </p>
                           </div>
                         ) : (
                           <div className="divide-y divide-gray-200">
                             {attendanceRecords.map((record) => (
-                              <div key={record.id} className={`p-4 hover:bg-gray-50 transition-colors ${record.isAbsent ? (record.notes === 'Ausencia automática' ? 'bg-red-50' : 'bg-yellow-50') : ''}`}>
+                              <div
+                                key={record.id}
+                                className={`p-4 hover:bg-gray-50 transition-colors ${record.isAbsent ? (record.notes === "Ausencia automática" ? "bg-red-50" : "bg-yellow-50") : ""}`}
+                              >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                      record.isLate ? "bg-yellow-100" : record.isAbsent ? (record.notes === 'Ausencia automática' ? "bg-red-200" : "bg-yellow-200") : "bg-green-100"
-                                    }`}>
+                                    <div
+                                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                        record.isLate
+                                          ? "bg-yellow-100"
+                                          : record.isAbsent
+                                            ? record.notes ===
+                                              "Ausencia automática"
+                                              ? "bg-red-200"
+                                              : "bg-yellow-200"
+                                            : "bg-green-100"
+                                      }`}
+                                    >
                                       {record.isLate ? (
                                         <Clock4 className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                                       ) : record.isAbsent ? (
-                                        <CalendarX className={`h-4 w-4 sm:h-5 sm:w-5 ${record.notes === 'Ausencia automática' ? 'text-red-600' : 'text-yellow-600'}`} />
+                                        <CalendarX
+                                          className={`h-4 w-4 sm:h-5 sm:w-5 ${record.notes === "Ausencia automática" ? "text-red-600" : "text-yellow-600"}`}
+                                        />
                                       ) : (
                                         <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                                       )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="font-medium text-gray-900 text-sm sm:text-base">{formatDate(record.date)}</p>
+                                      <p className="font-medium text-gray-900 text-sm sm:text-base">
+                                        {formatDate(record.date)}
+                                      </p>
                                       <p className="text-xs sm:text-sm text-gray-500">
                                         {record.isAbsent ? (
                                           <>
                                             Ausente
-                                            {record.notes === 'Ausencia automática' && (
-                                              <span className="ml-2 text-xs text-red-500 font-semibold">(Automática)</span>
+                                            {record.notes ===
+                                              "Ausencia automática" && (
+                                              <span className="ml-2 text-xs text-red-500 font-semibold">
+                                                (Automática)
+                                              </span>
                                             )}
-                                            {record.notes === 'Ausencia manual' && (
-                                              <span className="ml-2 text-xs text-yellow-500 font-semibold">(Manual)</span>
+                                            {record.notes ===
+                                              "Ausencia manual" && (
+                                              <span className="ml-2 text-xs text-yellow-500 font-semibold">
+                                                (Manual)
+                                              </span>
                                             )}
                                           </>
                                         ) : (
@@ -641,7 +737,9 @@ const AttendancePageContent = () => {
                                     </button>
                                     <button
                                       className="text-red-600 hover:text-red-800 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 transition-colors"
-                                      onClick={() => confirmDeleteRecord(record)}
+                                      onClick={() =>
+                                        confirmDeleteRecord(record)
+                                      }
                                     >
                                       <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </button>
@@ -658,7 +756,9 @@ const AttendancePageContent = () => {
                                           type="time"
                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                                           value={editCheckInTime}
-                                          onChange={e => setEditCheckInTime(e.target.value)}
+                                          onChange={(e) =>
+                                            setEditCheckInTime(e.target.value)
+                                          }
                                         />
                                       </div>
                                       <div>
@@ -670,7 +770,9 @@ const AttendancePageContent = () => {
                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                                           placeholder="Notas adicionales"
                                           value={editNotes}
-                                          onChange={e => setEditNotes(e.target.value)}
+                                          onChange={(e) =>
+                                            setEditNotes(e.target.value)
+                                          }
                                         />
                                       </div>
                                     </div>
@@ -679,32 +781,41 @@ const AttendancePageContent = () => {
                                         className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={() => saveEditRecord(record)}
                                       >
-                                        <Save className="h-4 w-4 sm:h-5 sm:w-5" /> Guardar
+                                        <Save className="h-4 w-4 sm:h-5 sm:w-5" />{" "}
+                                        Guardar
                                       </button>
                                       <button
                                         className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={cancelEditRecord}
                                       >
-                                        <X className="h-4 w-4 sm:h-5 sm:w-5" /> Cancelar
+                                        <X className="h-4 w-4 sm:h-5 sm:w-5" />{" "}
+                                        Cancelar
                                       </button>
                                     </div>
                                   </div>
                                 )}
                                 {deletingRecordId === record.id && (
                                   <div className="mt-4 p-3 sm:p-4 bg-red-50 rounded-lg border border-red-200">
-                                    <p className="text-red-800 mb-4 text-sm sm:text-base">¿Estás seguro de que deseas eliminar este registro?</p>
+                                    <p className="text-red-800 mb-4 text-sm sm:text-base">
+                                      ¿Estás seguro de que deseas eliminar este
+                                      registro?
+                                    </p>
                                     <div className="flex flex-col sm:flex-row gap-2">
                                       <button
                                         className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                                         onClick={() => deleteRecord(record)}
                                       >
-                                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" /> Sí, eliminar
+                                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />{" "}
+                                        Sí, eliminar
                                       </button>
                                       <button
                                         className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
-                                        onClick={() => setDeletingRecordId(null)}
+                                        onClick={() =>
+                                          setDeletingRecordId(null)
+                                        }
                                       >
-                                        <X className="h-4 w-4 sm:h-5 sm:w-5" /> Cancelar
+                                        <X className="h-4 w-4 sm:h-5 sm:w-5" />{" "}
+                                        Cancelar
                                       </button>
                                     </div>
                                   </div>
@@ -718,8 +829,13 @@ const AttendancePageContent = () => {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full py-16 sm:py-24 text-center text-gray-500 transition-all duration-300 px-4">
                       <FileText className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 sm:mb-6 text-gray-300" />
-                      <h3 className="text-xl sm:text-2xl font-semibold mb-2">Selecciona un empleado</h3>
-                      <p className="mb-4 text-sm sm:text-base">Haz clic en un empleado de la lista para ver su registro de asistencia.</p>
+                      <h3 className="text-xl sm:text-2xl font-semibold mb-2">
+                        Selecciona un empleado
+                      </h3>
+                      <p className="mb-4 text-sm sm:text-base">
+                        Haz clic en un empleado de la lista para ver su registro
+                        de asistencia.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -745,14 +861,16 @@ const AttendancePageContent = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Hora límite para las llegadas
                 </label>
                 <p className="text-sm text-gray-500 mb-3">
-                  Los empleados que registren su llegada después de esta hora serán marcados como tarde. El valor predeterminado es 07:00 AM.
+                  Los empleados que registren su llegada después de esta hora
+                  serán marcados como tarde. El valor predeterminado es 07:00
+                  AM.
                 </p>
                 <input
                   type="time"
@@ -762,7 +880,7 @@ const AttendancePageContent = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleUpdateCheckinTime}

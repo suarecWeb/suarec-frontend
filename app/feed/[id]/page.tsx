@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 const FeedPublicationDetail = () => {
   const params = useParams();
@@ -24,4 +24,4 @@ const FeedPublicationDetail = () => {
   );
 };
 
-export default FeedPublicationDetail; 
+export default FeedPublicationDetail;

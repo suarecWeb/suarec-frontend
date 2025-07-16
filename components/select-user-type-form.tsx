@@ -4,7 +4,13 @@ import { Role } from "@/interfaces/role.interface";
 import RolesService from "@/services/RolesService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, Building2, Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  User,
+  Building2,
+  Loader2,
+  ArrowRight,
+  AlertCircle,
+} from "lucide-react";
 
 const UserTypeForm = () => {
   const [userType, setUserType] = useState<string | null>(null);
@@ -56,7 +62,7 @@ const UserTypeForm = () => {
           <div>
             <h3 className="text-red-800 font-medium">Error</h3>
             <p className="text-red-700">{error}</p>
-            <button 
+            <button
               className="mt-2 text-red-600 hover:text-red-800 transition-colors"
               onClick={fetchRoles}
             >
@@ -71,41 +77,53 @@ const UserTypeForm = () => {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="text-lg font-medium text-gray-800">¿Cómo deseas registrarte?</h2>
+        <h2 className="text-lg font-medium text-gray-800">
+          ¿Cómo deseas registrarte?
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {roles.map((role) => 
-            role.name !== 'ADMIN' && (
-              <div key={role.name} 
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                  userType === role.name 
-                    ? 'border-[#097EEC] bg-[#097EEC]/5' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setUserType(role.name)}
-              >
-                <div className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full ${
-                    userType === role.name 
-                      ? 'bg-[#097EEC]/20' 
-                      : 'bg-gray-100'
-                  } flex items-center justify-center`}>
-                    {role.name === 'PERSON' ? (
-                      <User className={`h-5 w-5 ${userType === role.name ? 'text-[#097EEC]' : 'text-gray-500'}`} />
-                    ) : (
-                      <Building2 className={`h-5 w-5 ${userType === role.name ? 'text-[#097EEC]' : 'text-gray-500'}`} />
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="font-medium text-gray-800">{role.name === 'PERSON' ? 'Persona' : 'Empresa'}</h3>
-                    <p className="text-sm text-gray-500">
-                      {role.name === 'PERSON' 
-                        ? 'Crea tu perfil personal' 
-                        : 'Registra tu empresa'}
-                    </p>
+          {roles.map(
+            (role) =>
+              role.name !== "ADMIN" && (
+                <div
+                  key={role.name}
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    userType === role.name
+                      ? "border-[#097EEC] bg-[#097EEC]/5"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setUserType(role.name)}
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full ${
+                        userType === role.name
+                          ? "bg-[#097EEC]/20"
+                          : "bg-gray-100"
+                      } flex items-center justify-center`}
+                    >
+                      {role.name === "PERSON" ? (
+                        <User
+                          className={`h-5 w-5 ${userType === role.name ? "text-[#097EEC]" : "text-gray-500"}`}
+                        />
+                      ) : (
+                        <Building2
+                          className={`h-5 w-5 ${userType === role.name ? "text-[#097EEC]" : "text-gray-500"}`}
+                        />
+                      )}
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="font-medium text-gray-800">
+                        {role.name === "PERSON" ? "Persona" : "Empresa"}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {role.name === "PERSON"
+                          ? "Crea tu perfil personal"
+                          : "Registra tu empresa"}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
+              ),
           )}
         </div>
       </div>

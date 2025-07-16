@@ -1,5 +1,5 @@
-import Cookies from "js-cookie"
+import Cookies from "js-cookie";
 
 export const getToken = async () => {
-    return Cookies.get("token");
-}
+  return Cookies.get("token");
+};
