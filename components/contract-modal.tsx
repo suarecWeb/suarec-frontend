@@ -37,7 +37,7 @@ const paymentMethods = [
 
 export default function ContractModal({ publication, isOpen, onClose }: ContractModalProps) {
   const [contractType, setContractType] = useState<'accept' | 'custom'>('accept');
-  const [customPrice, setCustomPrice] = useState(0);
+  const [customPrice, setCustomPrice] = useState('');
   const [serviceAddress, setServiceAddress] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
@@ -50,7 +50,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
   const router = useRouter();
 
   // Calcular precios
-  const basePrice = Number(contractType === 'accept' ? publication.price! : customPrice);
+  const basePrice = Number(contractType === 'accept' ? publication.price! : (customPrice || 0));
   const iva = Math.round(basePrice * 0.19);
   const totalPrice = basePrice + iva;
 
@@ -102,7 +102,7 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
 
       const contractData = {
         publicationId: publication.id!,
-        initialPrice: Number(basePrice),
+        initialPrice: Number(customPrice || basePrice),
         totalPrice: Number(totalPrice),
         priceUnit: publication.priceUnit || 'project',
         clientMessage: message || undefined,
@@ -234,12 +234,12 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                   <input
                     type="number"
                     value={customPrice}
-                    onChange={(e) => setCustomPrice(Number(e.target.value))}
+                    onChange={(e) => setCustomPrice(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                     placeholder={`Ej: ${publication.price}`}
                     required
-                    min="1"
-                    step="0.01"
+                    min="0"
+                    step="1000"
                   />
                 </div>
                 <div className="flex items-start gap-2 mt-3 p-3 bg-blue-100 rounded-lg">
@@ -476,7 +476,9 @@ export default function ContractModal({ publication, isOpen, onClose }: Contract
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Contratar por $ {totalPrice.toLocaleString()}
+                    Contratar por {formatCurrency(totalPrice.toLocaleString(), {
+                      showCurrency: true,
+                    })}
                   </div>
                 )}
               </button>
