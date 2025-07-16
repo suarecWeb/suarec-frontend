@@ -125,7 +125,7 @@ export default function ContractModal({
 
       const contractData = {
         publicationId: publication.id!,
-        initialPrice: Number(basePrice),
+        initialPrice: Number(customPrice || basePrice),
         totalPrice: Number(totalPrice),
         priceUnit: publication.priceUnit || "project",
         clientMessage: message || undefined,
@@ -280,12 +280,12 @@ export default function ContractModal({
                   <input
                     type="number"
                     value={customPrice}
-                    onChange={(e) => setCustomPrice(Number(e.target.value))}
+                    onChange={(e) => setCustomPrice(e.target.valueAsNumber)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                     placeholder={`Ej: ${publication.price}`}
                     required
-                    min="1"
-                    step="0.01"
+                    min="0"
+                    step="1000"
                   />
                 </div>
                 <div className="flex items-start gap-2 mt-3 p-3 bg-blue-100 rounded-lg">
@@ -541,7 +541,10 @@ export default function ContractModal({
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Contratar por $ {totalPrice.toLocaleString()}
+                    Contratar por{" "}
+                    {formatCurrency(totalPrice.toLocaleString(), {
+                      showCurrency: true,
+                    })}
                   </div>
                 )}
               </button>
