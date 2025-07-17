@@ -25,7 +25,7 @@ import {
   Receipt,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import {
   PaymentService,
@@ -485,7 +485,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              contract.initialPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.initialPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -500,7 +502,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
                             {formatCurrency(
-                              contract.currentPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.currentPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -935,7 +939,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              contract.initialPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.initialPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -950,7 +956,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-green-800">
                             {formatCurrency(
-                              contract.currentPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.currentPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
