@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Contract, ContractStatus } from "@/interfaces/contract.interface";
 import { ContractService } from "@/services/ContractService";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 interface ProviderResponseModalProps {
@@ -154,7 +154,11 @@ export default function ProviderResponseModal({
                   {getPaymentMethodText(contract.paymentMethod)}
                 </p>
                 <p className="font-medium text-green-600">
-                  {formatCurrency(contract.initialPrice?.toLocaleString())}{" "}
+                  {formatCurrency(
+                    calculatePriceWithTax(
+                      contract.initialPrice!,
+                    ).toLocaleString(),
+                  )}{" "}
                   {translatePriceUnit(contract.priceUnit)}
                 </p>
               </div>

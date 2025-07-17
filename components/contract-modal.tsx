@@ -18,7 +18,7 @@ import {
   Calendar,
   Receipt,
 } from "lucide-react";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 interface ContractModalProps {
@@ -195,9 +195,12 @@ export default function ContractModal({
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
                 <span className="text-lg">
-                  {formatCurrency(publication.price.toLocaleString(), {
-                    showCurrency: true,
-                  })}
+                  {formatCurrency(
+                    calculatePriceWithTax(publication.price!).toLocaleString(),
+                    {
+                      showCurrency: true,
+                    },
+                  )}
                 </span>
                 <span className="text-sm text-gray-600">
                   por {translatePriceUnit(publication.priceUnit || "")}
@@ -231,7 +234,11 @@ export default function ContractModal({
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {formatCurrency(publication.price?.toLocaleString())}{" "}
+                      {formatCurrency(
+                        calculatePriceWithTax(
+                          publication.price!,
+                        ).toLocaleString(),
+                      )}{" "}
                       {translatePriceUnit(publication.priceUnit || "")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
@@ -282,7 +289,7 @@ export default function ContractModal({
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.valueAsNumber)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder={`Ej: ${publication.price}`}
+                    placeholder={`Ej: ${calculatePriceWithTax(publication.price!)}`}
                     required
                     min="0"
                     step="1000"
