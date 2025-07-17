@@ -21,6 +21,23 @@ export function translatePriceUnit(priceUnit: string): string {
   return translations[priceUnit] || priceUnit;
 }
 
+// Función para calcular el precio con IVA incluido
+export function calculatePriceWithTax(
+  basePrice: number | string,
+  taxRate: number = 0.19,
+): number {
+  // Convertir a número si es string
+  const price =
+    typeof basePrice === "string" ? parseFloat(basePrice) : basePrice;
+
+  // Validar que sea un número válido
+  if (isNaN(price) || price < 0) {
+    return 0;
+  }
+
+  return Math.round(price + price * taxRate);
+}
+
 // Función para obtener la URL pública de una imagen desde Supabase
 export function getPublicUrl(imagePath: string): string {
   // Si la imagen ya es una URL completa, la devolvemos tal como está
