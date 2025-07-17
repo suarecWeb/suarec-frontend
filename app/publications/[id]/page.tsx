@@ -879,13 +879,39 @@ const PublicationDetailPage = () => {
                               >
                                 <div className="flex justify-between items-start">
                                   <div className="flex items-start gap-4">
-                                    <div className="bg-[#097EEC] rounded-full p-3 text-white">
-                                      <UserIcon className="h-5 w-5" />
-                                    </div>
+                                    {comment.user?.id &&
+                                    comment.user.id !== "" &&
+                                    comment.user.id !== "undefined" ? (
+                                      <Link
+                                        href={`/profile/${comment.user.id}`}
+                                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                                      >
+                                        <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                          <UserIcon className="h-5 w-5" />
+                                        </div>
+                                      </Link>
+                                    ) : (
+                                      <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                        <UserIcon className="h-5 w-5" />
+                                      </div>
+                                    )}
                                     <div className="flex-1">
-                                      <p className="font-semibold text-gray-800">
-                                        {comment.user?.name || "Usuario"}
-                                      </p>
+                                      {comment.user?.id &&
+                                      comment.user.id !== "" &&
+                                      comment.user.id !== "undefined" ? (
+                                        <Link
+                                          href={`/profile/${comment.user.id}`}
+                                          className="hover:text-[#097EEC] transition-colors cursor-pointer"
+                                        >
+                                          <p className="font-semibold text-gray-800">
+                                            {comment.user?.name || "Usuario"}
+                                          </p>
+                                        </Link>
+                                      ) : (
+                                        <p className="font-semibold text-gray-800">
+                                          {comment.user?.name || "Usuario"}
+                                        </p>
+                                      )}
                                       <p className="text-sm text-gray-500 mb-2">
                                         {formatDate(comment.created_at)} a las{" "}
                                         {formatTime(comment.created_at)}
@@ -962,23 +988,59 @@ const PublicationDetailPage = () => {
                         {author ? (
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <UserAvatarDisplay
-                                user={{
-                                  id: author.id
-                                    ? typeof author.id === "string"
-                                      ? parseInt(author.id)
-                                      : author.id
-                                    : 0,
-                                  name: author.name,
-                                  profile_image: author.profile_image,
-                                  email: author.email,
-                                }}
-                                size="lg"
-                              />
+                              {author.id &&
+                              author.id !== "" &&
+                              author.id !== "undefined" ? (
+                                <Link
+                                  href={`/profile/${author.id}`}
+                                  className="hover:opacity-80 transition-opacity cursor-pointer"
+                                >
+                                  <UserAvatarDisplay
+                                    user={{
+                                      id: author.id
+                                        ? typeof author.id === "string"
+                                          ? parseInt(author.id)
+                                          : author.id
+                                        : 0,
+                                      name: author.name,
+                                      profile_image: author.profile_image,
+                                      email: author.email,
+                                    }}
+                                    size="lg"
+                                  />
+                                </Link>
+                              ) : (
+                                <UserAvatarDisplay
+                                  user={{
+                                    id: author.id
+                                      ? typeof author.id === "string"
+                                        ? parseInt(author.id)
+                                        : author.id
+                                      : 0,
+                                    name: author.name,
+                                    profile_image: author.profile_image,
+                                    email: author.email,
+                                  }}
+                                  size="lg"
+                                />
+                              )}
                               <div>
-                                <p className="font-semibold text-gray-800">
-                                  {author.name}
-                                </p>
+                                {author.id &&
+                                author.id !== "" &&
+                                author.id !== "undefined" ? (
+                                  <Link
+                                    href={`/profile/${author.id}`}
+                                    className="hover:text-[#097EEC] transition-colors cursor-pointer"
+                                  >
+                                    <p className="font-semibold text-gray-800">
+                                      {author.name}
+                                    </p>
+                                  </Link>
+                                ) : (
+                                  <p className="font-semibold text-gray-800">
+                                    {author.name}
+                                  </p>
+                                )}
                                 {author.profession && (
                                   <p className="text-sm text-gray-600">
                                     {author.profession}
