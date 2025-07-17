@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Publication } from "../interfaces/publication.interface";
 import { ContractService } from "../services/ContractService";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   X,
   DollarSign,
@@ -83,37 +84,37 @@ export default function ContractModal({
 
     try {
       if (isNaN(basePrice) || basePrice <= 0) {
-        alert("Debes ingresar un precio válido");
+        toast.error("Debes ingresar un precio válido");
         setIsLoading(false);
         return;
       }
 
       if (!requestedDate) {
-        alert("La fecha de servicio es obligatoria");
+        toast.error("La fecha de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!requestedTime) {
-        alert("La hora de servicio es obligatoria");
+        toast.error("La hora de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!serviceAddress.trim()) {
-        alert("La dirección del servicio es obligatoria");
+        toast.error("La dirección del servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!propertyType) {
-        alert("Debes seleccionar el tipo de inmueble");
+        toast.error("Debes seleccionar el tipo de inmueble");
         setIsLoading(false);
         return;
       }
 
       if (!neighborhood.trim()) {
-        alert("El barrio es obligatorio");
+        toast.error("El barrio es obligatorio");
         setIsLoading(false);
         return;
       }
@@ -146,11 +147,12 @@ export default function ContractModal({
 
       await ContractService.createContract(contractData);
 
+      toast.success("¡Contratación creada exitosamente!");
       onClose();
       router.push("/contracts");
     } catch (error: any) {
       console.error("Error creating contract:", error?.response?.data || error);
-      alert(
+      toast.error(
         "Error al crear la contratación: " +
           (error?.response?.data?.message || "Error desconocido"),
       );
