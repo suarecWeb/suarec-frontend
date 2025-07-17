@@ -10,7 +10,7 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 
 interface BidModalProps {
   contract: Contract;
@@ -82,7 +82,10 @@ export default function BidModal({
               <div className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
                 <span>
-                  Precio actual: ${contract.currentPrice?.toLocaleString()}{" "}
+                  Precio actual: $
+                  {calculatePriceWithTax(
+                    contract.currentPrice!,
+                  ).toLocaleString()}{" "}
                   {translatePriceUnit(contract.priceUnit)}
                 </span>
               </div>
@@ -108,7 +111,7 @@ export default function BidModal({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none"
-                  placeholder={`Ej: ${contract.currentPrice}`}
+                  placeholder={`Ej: ${calculatePriceWithTax(contract.currentPrice!)}`}
                   step="0.01"
                   min="1"
                   required

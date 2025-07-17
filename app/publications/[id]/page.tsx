@@ -45,7 +45,7 @@ import ContractModal from "@/components/contract-modal";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import RatingService from "@/services/RatingService";
 import { Star } from "lucide-react";
@@ -520,7 +520,16 @@ const PublicationDetailPage = () => {
                           {publication.price && (
                             <span className="inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                               <span className="font-semibold">
-                                {formatCurrency(publication.price)}
+                                {(() => {
+                                  const basePrice = publication.price;
+                                  const priceWithTax =
+                                    calculatePriceWithTax(basePrice);
+                                  console.log("🔍 Debug precio header:", {
+                                    basePrice,
+                                    priceWithTax,
+                                  });
+                                  return formatCurrency(priceWithTax);
+                                })()}
                               </span>
                               <span className="ml-1">
                                 {translatePriceUnit(
@@ -913,12 +922,21 @@ const PublicationDetailPage = () => {
                           </h3>
                           <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
-                              {formatCurrency(
-                                publication.price.toLocaleString(),
-                                {
-                                  showCurrency: true,
-                                },
-                              )}
+                              {(() => {
+                                const basePrice = publication.price;
+                                const priceWithTax =
+                                  calculatePriceWithTax(basePrice);
+                                console.log("🔍 Debug precio tarjeta:", {
+                                  basePrice,
+                                  priceWithTax,
+                                });
+                                return formatCurrency(
+                                  priceWithTax.toLocaleString(),
+                                  {
+                                    showCurrency: true,
+                                  },
+                                );
+                              })()}
                             </div>
                             <div className="text-sm text-gray-600 mb-4">
                               por{" "}
@@ -926,7 +944,7 @@ const PublicationDetailPage = () => {
                             </div>
                             <div className="bg-white rounded-lg p-3 border border-green-200">
                               <p className="text-xs text-gray-600">
-                                💡 Esta es la tarifa base. Puedes negociar
+                                💡 Precio con IVA incluido. Puedes negociar
                                 durante el proceso de contratación.
                               </p>
                             </div>

@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
@@ -129,9 +129,20 @@ const PublicationFeedCard = ({
             {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
             <span className="text-green-700 font-semibold text-base">
               {publication.price
-                ? `${formatCurrency(publication.price.toLocaleString(), {
-                    showCurrency: true,
-                  })} ${translatePriceUnit(publication.priceUnit || "")}`
+                ? (() => {
+                    const basePrice = publication.price;
+                    const priceWithTax = calculatePriceWithTax(basePrice);
+                    console.log("🔍 Debug precio ACTUALIZADO:", {
+                      basePrice,
+                      basePrice_type: typeof basePrice,
+                      priceWithTax,
+                      priceWithTax_type: typeof priceWithTax,
+                      calculation: `${basePrice} + (${basePrice} * 0.19) = ${priceWithTax}`,
+                    });
+                    return `${formatCurrency(priceWithTax.toLocaleString(), {
+                      showCurrency: true,
+                    })} ${translatePriceUnit(publication.priceUnit || "")}`;
+                  })()
                 : "Precio a convenir"}
             </span>
           </div>
