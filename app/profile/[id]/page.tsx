@@ -41,6 +41,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import StartChatButton from "@/components/start-chat-button";
 import DownloadCVButton from "@/components/download-cv-button";
 import PublicationService from "@/services/PublicationsService";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface PublicProfilePageProps {
   params: {
@@ -268,9 +269,19 @@ const PublicProfilePage = () => {
             <div className="bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-6 text-white">
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="relative">
-                  <div className="h-32 w-32 bg-white/20 rounded-full flex items-center justify-center text-white">
-                    <UserIcon className="h-16 w-16" />
-                  </div>
+                  <UserAvatar
+                    user={{
+                      id: user.id
+                        ? typeof user.id === "string"
+                          ? parseInt(user.id)
+                          : user.id
+                        : 0,
+                      name: user.name,
+                      profile_image: user.profile_image,
+                      email: user.email,
+                    }}
+                    size="xl"
+                  />
                 </div>
 
                 <div className="text-center md:text-left flex-1">
@@ -347,8 +358,9 @@ const PublicProfilePage = () => {
               <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left Column - Personal Info */}
                 <div className="lg:w-1/3">
+
                   {/* Información personal */}
-                  <div className="bg-gray-50 rounded-lg px-6 mb-6">
+                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Información de contacto
                     </h3>
@@ -401,83 +413,90 @@ const PublicProfilePage = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Profesión */}
+                      {user.profession && (
+                        <div className="flex items-start gap-3">
+                          <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                          <div>
+                            <p className="text-sm text-gray-500">Profesión</p>
+                            <p className="text-gray-800">{user.profession}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Miembro desde */}
+                      {user.created_at && (
+                        <div className="flex items-start gap-3">
+                          <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                          <div>
+                            <p className="text-sm text-gray-500">Miembro desde</p>
+                            <p className="text-gray-800">
+                              {formatDate(user.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+
+                      {/* REDES SOCIALES */}
+                      <div className="flex items-start gap-3 mt-4">
+                        <FileText2 className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-sm text-gray-500 font-semibold">
+                              Redes sociales
+                            </p>
+                          </div>
+                          {user.socialLinks &&
+                          user.socialLinks.length > 0 ? (
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {user.socialLinks.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-[#097EEC]/10 text-[#097EEC] rounded-full text-xs font-medium hover:bg-[#097EEC]/20 transition-colors"
+                                >
+                                  {link.type}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-800">
+                              Sin redes sociales registradas.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* HABILIDADES */}
+                      {user.skills && user.skills.length > 0 && (
+                        <div className="flex items-start gap-3 mt-4">
+                          <FileText className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-sm text-gray-500 font-semibold">
+                                Habilidades
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {user.skills.map((skill, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-1 rounded-full text-xs font-medium border border-[#097EEC]/20"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </div>
-
-                  {/* Habilidades */}
-                  {user.skills && user.skills.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg px-6 mb-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        Habilidades
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {user.skills.map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-[#097EEC]/10 text-[#097EEC] px-3 py-1.5 rounded-full text-sm font-medium border border-[#097EEC]/20"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Referencias */}
-                  {user.references && user.references.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg px-6 mb-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        Referencias
-                      </h3>
-                      <div className="space-y-4">
-                        {user.references.map((ref, idx) => (
-                          <div
-                            key={idx}
-                            className="border-l-4 border-[#097EEC] pl-4 bg-white p-3 rounded"
-                          >
-                            <h4 className="font-medium text-gray-800">
-                              {ref.name}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {ref.relationship}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              📞 {ref.contact}
-                            </p>
-                            {ref.comment && (
-                              <p className="text-sm text-gray-600 mt-1 italic">
-                                {ref.comment}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Redes sociales */}
-                  {user.socialLinks && user.socialLinks.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg px-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        Redes sociales
-                      </h3>
-                      <div className="space-y-2">
-                        {user.socialLinks.map((link, idx) => (
-                          <a
-                            key={idx}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-[#097EEC] hover:underline"
-                          >
-                            <Globe className="h-4 w-4" />
-                            <span>{link.type}</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Right Column - Professional Info */}
@@ -487,7 +506,7 @@ const PublicProfilePage = () => {
                     <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                         <FileText2 className="h-5 w-5 text-[#097EEC]" />
-                        Sobre mí
+                        Sobre {user.name}
                       </h3>
                       <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                         {user.bio}
@@ -581,7 +600,7 @@ const PublicProfilePage = () => {
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                         <FileText className="h-5 w-5 text-[#097EEC]" />
-                        Publicaciones
+                        Publicaciones de {user.name}
                       </h3>
                       <div className="space-y-4">
                         {user.publications.slice(0, 3).map((pub: any) => {
@@ -616,10 +635,6 @@ const PublicProfilePage = () => {
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   <span>{formatDate(pub.created_at)}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Eye className="h-3 w-3" />
-                                  <span>{pub.visitors || 0} visitas</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Link href={`/feed/${pub.id}`}>
