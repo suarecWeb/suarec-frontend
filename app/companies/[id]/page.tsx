@@ -386,7 +386,7 @@ export default function CompanyDetailsPage({
                   Acciones
                 </h3>
 
-                <div className="space-y-3">
+                <div className="flex flex-col space-y-3">
                   {isOwnerOrAdmin() && (
                     <>
                       <Link href={`/companies/${company.id}/employees`}>
@@ -417,7 +417,7 @@ export default function CompanyDetailsPage({
                     />
                   )}
 
-                  {currentUserId && (
+                  {isOwnerOrAdmin() && (
                     <Link href={`/companies/${company.id}/employees`}>
                       <Button
                         variant="outline"

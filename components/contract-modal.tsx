@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Publication } from "../interfaces/publication.interface";
 import { ContractService } from "../services/ContractService";
 import { useRouter } from "next/navigation";
+import { useNotification } from "@/contexts/NotificationContext";
 import {
   X,
   DollarSign,
@@ -69,6 +70,7 @@ export default function ContractModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { showNotification, showContractNotification } = useNotification();
 
   // Calcular precios
   const basePrice = Number(
@@ -83,37 +85,37 @@ export default function ContractModal({
 
     try {
       if (isNaN(basePrice) || basePrice <= 0) {
-        alert("Debes ingresar un precio válido");
+        showNotification("Debes ingresar un precio válido", "error");
         setIsLoading(false);
         return;
       }
 
       if (!requestedDate) {
-        alert("La fecha de servicio es obligatoria");
+        showNotification("La fecha de servicio es obligatoria", "error");
         setIsLoading(false);
         return;
       }
 
       if (!requestedTime) {
-        alert("La hora de servicio es obligatoria");
+        showNotification("La hora de servicio es obligatoria", "error");
         setIsLoading(false);
         return;
       }
 
       if (!serviceAddress.trim()) {
-        alert("La dirección del servicio es obligatoria");
+        showNotification("La dirección del servicio es obligatoria", "error");
         setIsLoading(false);
         return;
       }
 
       if (!propertyType) {
-        alert("Debes seleccionar el tipo de inmueble");
+        showNotification("Debes seleccionar el tipo de inmueble", "error");
         setIsLoading(false);
         return;
       }
 
       if (!neighborhood.trim()) {
-        alert("El barrio es obligatorio");
+        showNotification("El barrio es obligatorio", "error");
         setIsLoading(false);
         return;
       }
@@ -146,13 +148,21 @@ export default function ContractModal({
 
       await ContractService.createContract(contractData);
 
+      // Mostrar mensaje de éxito informando sobre las notificaciones
+      const priceText = formatCurrency(totalPrice.toLocaleString());
+      showContractNotification(
+        "Solicitud enviada al proveedor por mensaje interno",
+        "created",
+        priceText
+      );
+
       onClose();
       router.push("/contracts");
     } catch (error: any) {
       console.error("Error creating contract:", error?.response?.data || error);
-      alert(
-        "Error al crear la contratación: " +
-          (error?.response?.data?.message || "Error desconocido"),
+      showNotification(
+        `Error al crear la contratación: ${error?.response?.data?.message || "Error desconocido"}`,
+        "error"
       );
     } finally {
       setIsLoading(false);

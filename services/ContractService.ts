@@ -6,6 +6,10 @@ import {
   AcceptBidDto,
   ProviderResponseDto,
 } from "../interfaces/contract.interface";
+import { CreateMessageDto } from "../interfaces/message.interface";
+import { TokenPayload } from "../interfaces/auth.interface";
+import MessageService from "./MessageService";
+import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"}/suarec`;
@@ -15,7 +19,31 @@ export class ContractService {
     contractData: CreateContractDto,
   ): Promise<Contract> {
     const response = await api.post("/suarec/contracts", contractData);
-    return response.data;
+    const contract = response.data;
+
+    // Enviar notificación interna después de crear el contrato exitosamente
+    try {
+      const currentUserId = this.getCurrentUserId();
+      
+      if (currentUserId && contract && contract.provider) {
+        const clientName = contract.client?.name || "Un cliente";
+        const serviceTitle = contract.publication?.title || "Servicio solicitado";
+        
+        // Notificación interna para el proveedor
+        const internalMessage = `🔔 Nueva solicitud de servicio: ${clientName} ha solicitado tu servicio "${serviceTitle}". Revisa los detalles y responde en la sección de contratos.`;
+        
+        await this.sendInternalNotification(
+          currentUserId, // ID del cliente (quien envía)
+          contract.provider.id, // ID del proveedor (quien recibe)
+          internalMessage
+        );
+      }
+    } catch (notificationError) {
+      console.error("Error sending contract creation notification:", notificationError);
+      // No lanzamos el error para no afectar la creación del contrato
+    }
+
+    return contract;
   }
 
   static async createBid(bidData: CreateBidDto): Promise<any> {
@@ -61,10 +89,88 @@ export class ContractService {
         "/suarec/contracts/provider-response",
         data,
       );
+      const updatedContract = response.data;
+
+      // Enviar notificación interna después de responder exitosamente
+      try {
+        const currentUserId = this.getCurrentUserId();
+        
+        if (currentUserId && updatedContract && updatedContract.client) {
+          const clientName = updatedContract.client.name;
+          const providerName = updatedContract.provider?.name || "El proveedor";
+          const serviceTitle = updatedContract.publication?.title || "Tu servicio solicitado";
+          
+          let internalMessage: string;
+
+          // Determinar el mensaje basado en la acción
+          switch (data.action) {
+            case "accepted":
+              internalMessage = `✅ ¡Buenas noticias! ${providerName} ha aceptado tu solicitud para "${serviceTitle}". Puedes coordinar los detalles en la sección de contratos.`;
+              break;
+            case "rejected":
+              internalMessage = `❌ ${providerName} ha rechazado tu solicitud para "${serviceTitle}". Puedes buscar otros proveedores o contactar directamente para más información.`;
+              break;
+            case "negotiating":
+              internalMessage = `💬 ${providerName} ha propuesto cambios en tu solicitud para "${serviceTitle}". Revisa la propuesta en la sección de contratos.`;
+              break;
+            default:
+              internalMessage = `📋 ${providerName} ha respondido a tu solicitud para "${serviceTitle}". Revisa los detalles en la sección de contratos.`;
+          }
+
+          // Notificación interna para el cliente
+          await this.sendInternalNotification(
+            currentUserId, // ID del proveedor (quien envía)
+            updatedContract.client.id, // ID del cliente (quien recibe)
+            internalMessage
+          );
+        }
+      } catch (notificationError) {
+        console.error("Error sending provider response notification:", notificationError);
+        // No lanzamos el error para no afectar la respuesta del proveedor
+      }
+
       return response.data;
     } catch (error) {
       console.error("Error responding to contract:", error);
       throw error;
+    }
+  }
+
+  // Función auxiliar para enviar notificaciones internas de Suarec
+  private static async sendInternalNotification(
+    senderId: number,
+    recipientId: number,
+    message: string
+  ): Promise<void> {
+    try {
+      const messageData: CreateMessageDto = {
+        content: message,
+        senderId,
+        recipientId,
+      };
+      
+      await MessageService.createMessage(messageData);
+    } catch (error) {
+      console.error("Error sending internal notification:", error);
+      // No lanzamos el error para no bloquear el flujo principal
+    }
+  }
+
+  // Función auxiliar para obtener el ID del usuario actual
+  private static getCurrentUserId(): number | null {
+    try {
+      const token = Cookies.get("token");
+      
+      if (token) {
+        const decoded = jwtDecode<TokenPayload>(token);
+        const userId = decoded.id ? Number(decoded.id) : null;
+        return userId;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("❌ Error decoding token:", error);
+      return null;
     }
   }
 }

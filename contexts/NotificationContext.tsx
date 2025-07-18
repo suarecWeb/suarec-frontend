@@ -12,6 +12,11 @@ interface NotificationContextType {
     senderName: string,
     senderId?: number,
   ) => void;
+  showContractNotification: (
+    message: string,
+    type: "accepted" | "rejected" | "negotiating" | "created",
+    amount?: string,
+  ) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -116,9 +121,74 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     console.log("✅ Toast mostrado exitosamente");
   };
 
+  const showContractNotification = (
+    message: string,
+    type: "accepted" | "rejected" | "negotiating" | "created",
+    amount?: string,
+  ) => {
+    const getIcon = () => {
+      switch (type) {
+        case "accepted":
+          return "✅";
+        case "rejected":
+          return "❌";
+        case "negotiating":
+          return "💬";
+        case "created":
+          return "🎉";
+        default:
+          return "📋";
+      }
+    };
+
+    const getColor = () => {
+      switch (type) {
+        case "accepted":
+          return "#10B981"; // Green
+        case "rejected":
+          return "#EF4444"; // Red
+        case "negotiating":
+          return "#3B82F6"; // Blue
+        case "created":
+          return "#8B5CF6"; // Purple
+        default:
+          return "#097EEC";
+      }
+    };
+
+    toast(
+      <div className="flex items-center gap-3">
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+          style={{ backgroundColor: getColor() }}
+        >
+          {getIcon()}
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-sm text-gray-900">{message}</p>
+          {amount && (
+            <p className="text-xs text-gray-600">Monto: {amount}</p>
+          )}
+        </div>
+      </div>,
+      {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "#fff",
+          color: "#333",
+          border: "1px solid #e5e7eb",
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          padding: "12px",
+        },
+      },
+    );
+  };
+
   return (
     <NotificationContext.Provider
-      value={{ showNotification, showMessageNotification }}
+      value={{ showNotification, showMessageNotification, showContractNotification }}
     >
       {children}
       <Toaster />

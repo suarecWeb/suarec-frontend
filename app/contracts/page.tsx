@@ -27,6 +27,7 @@ import {
 import ProviderResponseModal from "@/components/provider-response-modal";
 import { translatePriceUnit } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { useNotification } from "@/contexts/NotificationContext";
 import {
   PaymentService,
   PaymentStatusByContractDto,
@@ -50,6 +51,7 @@ export default function ContractsPage() {
   const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] =
     useState(false);
   const router = useRouter();
+  const { showNotification } = useNotification();
   const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
   const [acceptPolicy, setAcceptPolicy] = useState(false);
   const [acceptPersonal, setAcceptPersonal] = useState(false);
@@ -137,7 +139,7 @@ export default function ContractsPage() {
       loadContracts(); // Recargar para ver los cambios
     } catch (error) {
       console.error("Error accepting bid:", error);
-      alert("Error al aceptar la oferta");
+      showNotification("Error al aceptar la oferta", "error");
     }
   };
 
@@ -145,18 +147,19 @@ export default function ContractsPage() {
     try {
       // Validar que los checkboxes estén marcados
       if (!acceptPolicy || !acceptPersonal) {
-        alert(
+        showNotification(
           "Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.",
+          "error"
         );
         return;
       }
 
       if (!contract.provider || !contract.provider.id) {
-        alert("No se encontró el proveedor para este contrato.");
+        showNotification("No se encontró el proveedor para este contrato.", "error");
         return;
       }
       if (!acceptanceTokens) {
-        alert("No se pudieron obtener los contratos de Wompi.");
+        showNotification("No se pudieron obtener los contratos de Wompi.", "error");
         return;
       }
       const paymentData = {
@@ -175,10 +178,10 @@ export default function ContractsPage() {
       if (payment && payment.wompi_payment_link) {
         window.location.href = payment.wompi_payment_link;
       } else {
-        alert("No se pudo obtener la URL de pago.");
+        showNotification("No se pudo obtener la URL de pago.", "error");
       }
     } catch (err) {
-      alert("Error al iniciar el pago.");
+      showNotification("Error al iniciar el pago.", "error");
     }
   };
 

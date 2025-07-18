@@ -191,9 +191,7 @@ const MyEmployeesPageContent = () => {
   }, [currentUserId, userRoles]);
 
   // Función para cargar empleados
-  const fetchEmployees = async (
-    params: PaginationParams = { page: 1, limit: pagination.limit },
-  ) => {
+  const fetchEmployees = async (params: PaginationParams = { page: 1, limit: pagination.limit, status: "all" }) => {
     if (!companyId) return;
 
     try {
@@ -276,19 +274,20 @@ const MyEmployeesPageContent = () => {
   // Filtrar empleados según el término de búsqueda
   const filteredEmployees = searchTerm
     ? employees.filter(
-        (employee) =>
-          employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (employee.profession &&
-            employee.profession
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())),
-      )
+      (employee) =>
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (employee.profession &&
+          employee.profession
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())),
+    )
     : employees;
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
+    const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+    return adjustedDate.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -335,8 +334,10 @@ const MyEmployeesPageContent = () => {
                   <div className="flex items-center gap-3">
                     <Users className="h-8 w-8 text-white/80" />
                     <div>
-                      <p className="text-2xl font-bold">{pagination.total}</p>
-                      <p className="text-blue-100 text-sm">Total Empleados</p>
+                      <p className="text-2xl font-bold">
+                        {employees.filter(emp => emp?.currentEmployment?.isActive).length}
+                      </p>
+                      <p className="text-blue-100 text-sm">Empleados Activos</p>
                     </div>
                   </div>
                 </div>
@@ -588,11 +589,10 @@ const MyEmployeesPageContent = () => {
                             {employee?.currentEmployment && (
                               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                                 <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    employee.currentEmployment.isActive
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${employee.currentEmployment.isActive
                                       ? "bg-green-100 text-green-800"
                                       : "bg-gray-100 text-gray-800"
-                                  }`}
+                                    }`}
                                 >
                                   {employee.currentEmployment.isActive
                                     ? "Activo"
@@ -601,14 +601,13 @@ const MyEmployeesPageContent = () => {
                                 <span className="text-xs text-gray-600">
                                   {employee.currentEmployment.isActive
                                     ? `Desde ${formatDate(employee.currentEmployment.startDate)}`
-                                    : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${
-                                        employee.currentEmployment.endDate
-                                          ? formatDate(
-                                              employee.currentEmployment
-                                                .endDate,
-                                            )
-                                          : "presente"
-                                      }`}
+                                    : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${employee.currentEmployment.endDate
+                                      ? formatDate(
+                                        employee.currentEmployment
+                                          .endDate,
+                                      )
+                                      : "presente"
+                                    }`}
                                 </span>
                               </div>
                             )}
