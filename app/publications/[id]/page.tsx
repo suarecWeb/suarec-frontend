@@ -962,23 +962,28 @@ const PublicationDetailPage = () => {
                         {author ? (
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <UserAvatarDisplay
-                                user={{
-                                  id: author.id
-                                    ? typeof author.id === "string"
-                                      ? parseInt(author.id)
-                                      : author.id
-                                    : 0,
-                                  name: author.name,
-                                  profile_image: author.profile_image,
-                                  email: author.email,
-                                }}
-                                size="lg"
-                              />
+                              <Link href={`/profile/${author.id}`}>
+                                <UserAvatarDisplay
+                                  user={{
+                                    id: author.id
+                                      ? typeof author.id === "string"
+                                        ? parseInt(author.id)
+                                        : author.id
+                                      : 0,
+                                    name: author.name,
+                                    profile_image: author.profile_image,
+                                    email: author.email,
+                                  }}
+                                  size="lg"
+                                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                                />
+                              </Link>
                               <div>
-                                <p className="font-semibold text-gray-800">
-                                  {author.name}
-                                </p>
+                                <Link href={`/profile/${author.id}`}>
+                                  <p className="font-semibold text-gray-800 hover:text-[#097EEC] transition-colors cursor-pointer">
+                                    {author.name}
+                                  </p>
+                                </Link>
                                 {author.profession && (
                                   <p className="text-sm text-gray-600">
                                     {author.profession}

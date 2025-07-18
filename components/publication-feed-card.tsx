@@ -75,19 +75,24 @@ const PublicationFeedCard = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <UserAvatarDisplay
-            user={{
-              id: publication.userId,
-              name: publication.user?.name || "Usuario",
-              profile_image: publication.user?.profile_image,
-              email: publication.user?.email,
-            }}
-            size="md"
-          />
+          <Link href={`/profile/${publication.user?.id}`}>
+            <UserAvatarDisplay
+              user={{
+                id: publication.userId,
+                name: publication.user?.name || "Usuario",
+                profile_image: publication.user?.profile_image,
+                email: publication.user?.email,
+              }}
+              size="md"
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            />
+          </Link>
           <div>
-            <h3 className="font-bold text-gray-900 text-sm">
-              {publication.user?.name || "Usuario"}
-            </h3>
+            <Link href={`/profile/${publication.user?.id}`}>
+              <h3 className="font-bold text-gray-900 text-sm hover:text-[#097EEC] transition-colors cursor-pointer">
+                {publication.user?.name || "Usuario"}
+              </h3>
+            </Link>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Tag className="h-3 w-3" />
               <span>{publication.category}</span>
