@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { UserGallery } from "./ui/UserGallery";
 import SupabaseService from "../services/supabase.service";
+import { calculatePriceWithTax } from "../lib/utils";
+import { formatCurrency } from "../lib/formatCurrency";
 
 interface CreatePublicationModalProps {
   isOpen: boolean;
@@ -403,6 +405,30 @@ export default function CreatePublicationModal({
                         {errors.price.message}
                       </p>
                     )}
+
+                    {/* Mostrar precio con IVA en tiempo real */}
+                    {(() => {
+                      const priceValue = watch("price");
+
+                      // Validación robusta del precio
+                      if (!priceValue && priceValue !== 0) return null;
+
+                      const numericPrice = Number(priceValue);
+
+                      // Solo mostrar si es un número válido y mayor que 0
+                      if (isNaN(numericPrice) || numericPrice <= 0) return null;
+
+                      return (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                          <p className="text-xs text-green-700">
+                            <strong>Precio con IVA (19%):</strong>{" "}
+                            {formatCurrency(
+                              calculatePriceWithTax(numericPrice),
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div>
@@ -424,6 +450,20 @@ export default function CreatePublicationModal({
                       <option value="weekly">Semanal</option>
                       <option value="service">Por servicio</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                  <div className="flex">
+                    <Info className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-yellow-700">
+                        <strong>Importante:</strong> El precio que ingreses es
+                        el precio base. Se aplicará automáticamente un 19% de
+                        IVA que será visible para los usuarios en el precio
+                        final mostrado en tu publicación.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
