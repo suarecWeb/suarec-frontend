@@ -20,7 +20,26 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
   className = "",
   isPublicProfile = false,
 }) => {
-  const exportToPDF = () => {
+  // Función para convertir imagen a base64
+  const getImageAsBase64 = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        const dataURL = canvas.toDataURL("image/jpeg", 0.8);
+        resolve(dataURL);
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = url;
+    });
+  };
+
+  const exportToPDF = async () => {
     if (!user) return;
     const doc = new jsPDF({
       orientation: "portrait",
@@ -51,9 +70,22 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
     doc.setLineWidth(0.5);
     doc.line(100, headerHeight + 5, 100, 290);
 
-    // --- Columna izquierda: Nombre, Contacto, Referencias, Redes ---
+    // --- Columna izquierda: Foto, Nombre, Contacto, Referencias, Redes ---
     let yLeft = headerHeight + 15;
     const xLeft = 15;
+
+    // Foto de perfil
+    if (user.profile_image) {
+      try {
+        const imageBase64 = await getImageAsBase64(user.profile_image);
+        const imgSize = 30; // Tamaño de la imagen en mm
+        doc.addImage(imageBase64, "JPEG", xLeft, yLeft, imgSize, imgSize);
+        yLeft += imgSize + 8; // Espacio después de la imagen
+      } catch (error) {
+        console.warn("No se pudo cargar la imagen de perfil:", error);
+        // Continuar sin la imagen
+      }
+    }
 
     // Nombre del usuario en la columna izquierda
     doc.setFont("helvetica", "bold");
@@ -244,7 +276,7 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
 
   return (
     <Button
-      onClick={exportToPDF}
+      onClick={() => exportToPDF()}
       variant={variant}
       size={size}
       className={`flex items-center gap-2 ${className}`}
