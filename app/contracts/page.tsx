@@ -234,7 +234,6 @@ export default function ContractsPage() {
     return (
       contract.status === ContractStatus.ACCEPTED &&
       contract.paymentMethod &&
-      contract.paymentMethod !== "efectivo" &&
       contract.totalPrice
     );
   };
@@ -788,6 +787,43 @@ export default function ContractsPage() {
                           />
                         )}
 
+                        {/* Cash Payment Advice */}
+                        {shouldShowPaymentButton(contract) &&
+                          contract.originalPaymentMethod === "efectivo" && (
+                            <div className="ml-auto mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg max-w-lg">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <span className="text-amber-600 text-sm">
+                                      💡
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-sm font-medium text-amber-800 mb-1">
+                                    💰 Consejo para pago en efectivo
+                                  </h4>
+                                  <p className="text-xs text-amber-700 leading-relaxed mb-2">
+                                    Al hacer clic en &quot;Ir a Pagar&quot;,
+                                    selecciona{" "}
+                                    <strong>
+                                      &quot;Paga en efectivo en Corresponsal
+                                      Bancario&quot;
+                                    </strong>{" "}
+                                    en Wompi para completar tu pago de forma
+                                    segura.
+                                  </p>
+                                  <p className="text-xs text-amber-600 font-medium">
+                                    📍 Acércate a un Corresponsal Bancario
+                                    Bancolombia en las próximas{" "}
+                                    <strong>72 horas</strong> con las
+                                    instrucciones que recibirás.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                         {/* Payment Button or Payment Status */}
                         {shouldShowPaymentButton(contract) ? (
                           <button
@@ -816,8 +852,7 @@ export default function ContractsPage() {
                               contractPaymentStatus[contract.id];
                             if (
                               paymentStatus?.hasCompletedPayments &&
-                              contract.status === ContractStatus.ACCEPTED &&
-                              contract.paymentMethod !== "efectivo"
+                              contract.status === ContractStatus.ACCEPTED
                             ) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
@@ -832,8 +867,7 @@ export default function ContractsPage() {
                             }
                             if (
                               paymentStatus?.hasPendingPayments &&
-                              contract.status === ContractStatus.ACCEPTED &&
-                              contract.paymentMethod !== "efectivo"
+                              contract.status === ContractStatus.ACCEPTED
                             ) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -850,8 +884,8 @@ export default function ContractsPage() {
                           })()
                         )}
 
-                        {/* Cash Payment Info */}
-                        {contract.status === ContractStatus.ACCEPTED &&
+                        {/* Cash Payment Info - Now handled through Wompi like other methods */}
+                        {/* {contract.status === ContractStatus.ACCEPTED &&
                           contract.paymentMethod === "efectivo" && (
                             <div className="px-4 ml-auto py-3 bg-amber-50 border border-amber-200 rounded-lg">
                               <div className="flex items-center gap-2 text-amber-800">
@@ -865,7 +899,7 @@ export default function ContractsPage() {
                                 </span>
                               </div>
                             </div>
-                          )}
+                          )} */}
                       </div>
                     </div>
                   ))}

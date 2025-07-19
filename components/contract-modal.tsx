@@ -120,7 +120,11 @@ export default function ContractModal({
       }
 
       let newPaymentMethod = paymentMethod;
-      if (paymentMethod === "tarjeta" || paymentMethod === "transferencia") {
+      if (
+        paymentMethod === "tarjeta" ||
+        paymentMethod === "transferencia" ||
+        paymentMethod === "efectivo"
+      ) {
         newPaymentMethod = "WOMPI";
       }
 
@@ -133,6 +137,7 @@ export default function ContractModal({
         requestedDate: new Date(requestedDate),
         requestedTime: requestedTime,
         paymentMethod: newPaymentMethod,
+        originalPaymentMethod: paymentMethod, // Preservar el método original seleccionado
         serviceAddress: serviceAddress.trim(),
         propertyType: propertyType,
         neighborhood: neighborhood.trim(),
@@ -387,6 +392,33 @@ export default function ContractModal({
                   );
                 })}
               </div>
+
+              {/* Cash Payment Advice */}
+              {paymentMethod === "efectivo" && (
+                <div className="mt-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                        <span className="text-amber-600 text-sm">💡</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-amber-800 mb-1">
+                        💰 Consejo para pago en efectivo
+                      </h4>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        Después de enviar esta solicitud, al momento de pagar
+                        selecciona{" "}
+                        <strong>
+                          &quot;Paga en efectivo en Corresponsal Bancario&quot;
+                        </strong>{" "}
+                        en la pasarela de Wompi para completar tu pago de forma
+                        segura.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Service Location */}
