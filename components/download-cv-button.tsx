@@ -20,7 +20,7 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
   className = "",
   isPublicProfile = false,
 }) => {
-  // Función para convertir imagen a base64
+  // Función para convertir imagen a base64 manteniendo transparencia
   const getImageAsBase64 = (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -28,10 +28,20 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+        
         canvas.width = img.width;
         canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        const dataURL = canvas.toDataURL("image/jpeg", 0.8);
+        
+        // NO rellenar el canvas con ningún color de fondo para mantener transparencia
+        // Simplemente dibujar la imagen sobre el canvas transparente
+        ctx.drawImage(img, 0, 0);
+        
+        // Usar PNG para mantener la transparencia, con calidad máxima
+        const dataURL = canvas.toDataURL("image/png");
         resolve(dataURL);
       };
       img.onerror = () => reject(new Error("Failed to load image"));
@@ -51,14 +61,31 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
     const headerHeight = 22;
     doc.setFillColor(9, 126, 236); // #097EEC
     doc.rect(0, 0, 210, headerHeight, "F");
+    
+    // Texto del encabezado
     doc.setFont("helvetica", "bolditalic");
     doc.setFontSize(30);
     doc.setTextColor(255, 255, 255);
     const suarecText = isPublicProfile
-      ? "Perfil de candidato - SUAREC"
-      : "Hoja de vida SUAREC";
+      ? "Perfil de candidato -"
+      : "Hoja de vida -";
     const suarecWidth = doc.getTextWidth(suarecText);
-    doc.text(suarecText, (210 - suarecWidth) / 2, headerHeight - 7);
+    const textX = (210 - suarecWidth) / 2 - 15; // Centrar pero dejar espacio para el logo
+    doc.text(suarecText, textX, headerHeight - 7);
+
+    // Agregar logo SUAREC al lado derecho del texto
+    try {
+      const logoBase64 = await getImageAsBase64("/suarec-logo.png");
+      const logoWidth = 50; // Ancho del logo en mm
+      const logoHeight = 10; // Alto del logo en mm (mantener proporción)
+      const logoX = textX + suarecWidth + 4; // Posición después del texto con un poco de espacio
+      const logoY = (headerHeight - logoHeight) / 2 + 1; // Centrar verticalmente
+      
+      // Agregar el logo directamente sin fondo para mantener transparencia
+      doc.addImage(logoBase64, "PNG", logoX, logoY, logoWidth, logoHeight);
+    } catch (error) {
+      console.warn("No se pudo cargar el logo de SUAREC:", error);
+    }
 
     // Dimensiones de columnas
     const leftColWidth = 85; // Reducido un poco para más espacio
