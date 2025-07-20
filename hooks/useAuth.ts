@@ -33,7 +33,6 @@ export const useAuth = () => {
           isLoading: false,
         });
       } catch (error) {
-        console.error("Error al decodificar token:", error);
         setAuthState({
           isAuthenticated: false,
           user: null,
