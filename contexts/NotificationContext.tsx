@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, ReactNode } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 interface NotificationContextType {
   showNotification: (
@@ -121,7 +121,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       value={{ showNotification, showMessageNotification }}
     >
       {children}
-      <Toaster />
     </NotificationContext.Provider>
   );
 };

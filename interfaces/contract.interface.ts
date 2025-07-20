@@ -29,6 +29,7 @@ export interface Contract {
   client?: User;
   totalPrice: number;
   paymentMethod: string;
+  originalPaymentMethod?: string;
   serviceAddress: string;
   propertyType: string;
   neighborhood: string;
@@ -59,6 +60,7 @@ export interface CreateContractDto {
   requestedDate: Date;
   requestedTime: string;
   paymentMethod: string;
+  originalPaymentMethod?: string;
   serviceAddress: string;
   propertyType: string;
   neighborhood: string;
