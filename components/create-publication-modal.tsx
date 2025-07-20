@@ -445,9 +445,9 @@ export default function CreatePublicationModal({
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>
-                      <option value="monthly">Mensual</option>
-                      <option value="daily">Diario</option>
-                      <option value="weekly">Semanal</option>
+                      <option value="monthly">Por mes</option>
+                      <option value="daily">Por día</option>
+                      <option value="weekly">Por semana</option>
                       <option value="service">Por servicio</option>
                     </select>
                   </div>

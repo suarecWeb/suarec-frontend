@@ -15,14 +15,29 @@ import {
   UserIcon,
   Mail,
   Shield,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { BankInfoService } from "@/services/bank-info.service";
+import { BankInfo } from "@/interfaces/bank-info";
+import { Loader2 } from "lucide-react";
 
 const UsersPageContent = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showBankInfoModal, setShowBankInfoModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  const [bankInfoLoading, setBankInfoLoading] = useState(false);
+  const [bankInfoError, setBankInfoError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -74,6 +89,58 @@ const UsersPageContent = () => {
         console.error("Error al eliminar usuario:", err);
         setError("Error al eliminar el usuario");
       }
+    }
+  };
+
+  const handleViewBankInfo = async (user: User) => {
+    if (!user.id) {
+      console.error("Usuario sin ID válido");
+      return;
+    }
+
+    console.log(
+      "Obteniendo información bancaria para usuario:",
+      user.id,
+      user.name,
+    );
+    setSelectedUser(user);
+    setShowBankInfoModal(true);
+    setBankInfoLoading(true);
+    setBankInfo(null);
+    setBankInfoError(null);
+
+    try {
+      console.log(
+        "Llamando a BankInfoService.getBankInfo con ID:",
+        parseInt(user.id),
+      );
+      const response = await BankInfoService.getBankInfo(parseInt(user.id));
+      console.log("Respuesta del servicio:", response);
+
+      if (response.success) {
+        if (response.data) {
+          console.log(
+            "Datos de información bancaria encontrados:",
+            response.data,
+          );
+          setBankInfo(response.data);
+        } else {
+          console.log("No se encontró información bancaria");
+          setBankInfo(null);
+        }
+      } else {
+        console.log("Error en la respuesta:", response.message);
+        setBankInfoError(
+          response.message || "Error al obtener información bancaria",
+        );
+        setBankInfo(null);
+      }
+    } catch (err) {
+      console.error("Error al obtener información bancaria:", err);
+      setBankInfoError("Error inesperado al obtener información bancaria");
+      setBankInfo(null);
+    } finally {
+      setBankInfoLoading(false);
     }
   };
 
@@ -252,6 +319,13 @@ const UsersPageContent = () => {
                                   <Edit className="h-5 w-5" />
                                 </button>
                                 <button
+                                  onClick={() => handleViewBankInfo(user)}
+                                  className="text-blue-600 hover:text-blue-700 transition-colors"
+                                  title="Ver información bancaria"
+                                >
+                                  <CreditCard className="h-5 w-5" />
+                                </button>
+                                <button
                                   onClick={() =>
                                     user.id && handleDelete(user.id)
                                   }
@@ -302,6 +376,114 @@ const UsersPageContent = () => {
             )}
           </div>
         </div>
+
+        {/* Modal de información bancaria */}
+        <Dialog open={showBankInfoModal} onOpenChange={setShowBankInfoModal}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                Información Bancaria - {selectedUser?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              {bankInfoLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#097EEC]" />
+                  <span className="ml-2 text-gray-600">
+                    Cargando información bancaria...
+                  </span>
+                </div>
+              ) : bankInfo ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Titular de la cuenta
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.accountHolderName}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo de documento
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.documentType}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de documento
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.documentNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Banco
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.bankName}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo de cuenta
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.accountType}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de cuenta
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.accountNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email de contacto
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.contactEmail}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Teléfono de contacto
+                      </label>
+                      <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {bankInfo.contactPhone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : bankInfoError ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Error al cargar información
+                  </h3>
+                  <p className="text-red-500">{bankInfoError}</p>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Sin información bancaria
+                  </h3>
+                  <p className="text-gray-500">
+                    Este usuario no ha registrado información bancaria.
+                  </p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
