@@ -35,20 +35,35 @@ export class BankInfoService {
   // Obtener información bancaria de un usuario
   static async getBankInfo(userId: number): Promise<BankInfoResponse> {
     try {
+      console.log(
+        `Solicitando información bancaria para usuario ID: ${userId}`,
+      );
       const response = await api.get(`/suarec/users/${userId}/bank-info`);
+      console.log("Respuesta exitosa del backend:", response.data);
       return {
         success: true,
         data: response.data,
       };
     } catch (error: any) {
+      console.error("Error en getBankInfo:", error);
+      console.error("Status del error:", error.response?.status);
+      console.error("Data del error:", error.response?.data);
+
       if (error.response?.status === 404) {
+        console.log("404: No se encontró información bancaria");
         return {
           success: true,
           data: undefined,
           message: "No se encontró información bancaria",
         };
       }
-      console.error("Error fetching bank info:", error);
+      if (error.response?.status === 403) {
+        console.log("403: Sin permisos para acceder");
+        return {
+          success: false,
+          message: "Sin permisos para acceder a esta información",
+        };
+      }
       return {
         success: false,
         message:
