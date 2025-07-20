@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
@@ -636,28 +637,27 @@ const PublicationDetailPage = () => {
                                 Galería de Imágenes
                               </h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {publication.gallery_images.map(
-                                  (imageUrl, index) => (
-                                    <div
-                                      key={index}
-                                      className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                                    >
-                                      <img
-                                        src={imageUrl}
-                                        alt={`${publication.title} - Imagen ${index + 1}`}
-                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                                      />
-                                    </div>
-                                  ),
-                                )}
+                                {publication.gallery_images.map((imageUrl, index) => (
+                                  <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                    <Image
+                                      src={imageUrl}
+                                      alt={`${publication.title} - Imagen ${index + 1}`}
+                                      width={300}
+                                      height={300}
+                                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                                    />
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           ) : publication.image_url ? (
                             // Mostrar imagen principal si no hay galería
                             <div className="rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-gray-50">
-                              <img
+                              <Image
                                 src={publication.image_url}
                                 alt={publication.title}
+                                width={800}
+                                height={600}
                                 className="w-full h-auto object-cover"
                               />
                             </div>

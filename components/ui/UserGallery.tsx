@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ImageUpload } from "./ImageUpload";
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Button } from './button';
+import { Plus, Loader2, AlertCircle } from 'lucide-react';
+import { GalleryService, GalleryImage } from '@/services/gallery.service';
+import { ImageUpload } from './ImageUpload';
 import { ImageGallery } from "./ImageGallery";
-import { GalleryService, GalleryImage } from "@/services/gallery.service";
-import { Button } from "./button";
-import { Plus, Loader2, AlertCircle } from "lucide-react";
 
 interface UserGalleryProps {
   userId: number;
@@ -199,9 +200,11 @@ export function UserGallery({
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <img
+              <Image
                 src={image.image_url}
-                alt={image.description || "Imagen de galería"}
+                alt={image.description || 'Imagen de galería'}
+                width={300}
+                height={300}
                 className="w-full h-full object-cover"
               />
 
@@ -266,9 +269,11 @@ export function UserGallery({
           <div className="flex flex-wrap gap-2">
             {selectedImages.map((imageUrl, index) => (
               <div key={index} className="relative">
-                <img
+                <Image
                   src={imageUrl}
                   alt={`Seleccionada ${index + 1}`}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 object-cover rounded border-2 border-blue-300"
                 />
                 <button
