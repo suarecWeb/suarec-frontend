@@ -42,12 +42,19 @@ import {
 import { UserAvatarEditable } from "@/components/ui/UserAvatar";
 import { UserGallery } from "@/components/ui/UserGallery";
 import DownloadCVButton from "@/components/download-cv-button";
+import BankInfoForm from "@/components/bank-info-form";
+import BankInfoDisplay from "@/components/bank-info-display";
+import { BankInfo } from "@/interfaces/bank-info";
+import { BankInfoService } from "@/services/bank-info.service";
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  const [showBankInfoForm, setShowBankInfoForm] = useState(false);
+  const [bankInfoLoading, setBankInfoLoading] = useState(false);
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState<
     Experience | undefined
@@ -87,6 +94,39 @@ const ProfilePage = () => {
 
     fetchUserProfile();
   }, [router]);
+
+  // Cargar información bancaria
+  useEffect(() => {
+    const fetchBankInfo = async () => {
+      if (!user?.id) return;
+
+      setBankInfoLoading(true);
+      try {
+        const result = await BankInfoService.getBankInfo(Number(user.id));
+        if (result.success) {
+          setBankInfo(result.data || null);
+        }
+      } catch (error) {
+        console.error("Error al cargar información bancaria:", error);
+      } finally {
+        setBankInfoLoading(false);
+      }
+    };
+
+    fetchBankInfo();
+  }, [user]);
+
+  const handleBankInfoSave = (data: BankInfo) => {
+    setBankInfo(data);
+    setShowBankInfoForm(false);
+    // El toast de éxito ya se muestra en el formulario
+  };
+
+  const handleBankInfoDelete = () => {
+    setBankInfo(null);
+    setShowBankInfoForm(false);
+    // El toast de éxito ya se muestra en el formulario
+  };
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
@@ -725,6 +765,9 @@ const ProfilePage = () => {
                           <TabsTrigger value="comments" className="flex-1">
                             Comentarios
                           </TabsTrigger>
+                          <TabsTrigger value="bankinfo" className="flex-1">
+                            Información Bancaria
+                          </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="publications">
@@ -845,6 +888,52 @@ const ProfilePage = () => {
                                   Ver Publicaciones
                                 </button>
                               </Link>
+                            </div>
+                          )}
+                        </TabsContent>
+
+                        {/* Tab de Información Bancaria */}
+                        <TabsContent value="bankinfo">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Información Bancaria
+                          </h3>{" "}
+                          {bankInfoLoading ? (
+                            <div className="space-y-4">
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-3/4" />
+                              <Skeleton className="h-4 w-1/2" />
+                            </div>
+                          ) : showBankInfoForm ? (
+                            <BankInfoForm
+                              userId={Number(user?.id)}
+                              initialData={bankInfo}
+                              onSave={handleBankInfoSave}
+                              onDelete={handleBankInfoDelete}
+                              onCancel={() => setShowBankInfoForm(false)}
+                            />
+                          ) : bankInfo ? (
+                            <BankInfoDisplay
+                              bankInfo={bankInfo}
+                              onEdit={() => setShowBankInfoForm(true)}
+                              isOwner={true}
+                            />
+                          ) : (
+                            <div className="bg-gray-50 rounded-lg p-8 text-center">
+                              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                              <h4 className="text-lg font-medium text-gray-800">
+                                No hay información bancaria
+                              </h4>
+                              <p className="text-gray-500 mt-2">
+                                Agrega tu información bancaria para que los
+                                administradores puedan procesar pagos y
+                                depósitos
+                              </p>
+                              <Button
+                                onClick={() => setShowBankInfoForm(true)}
+                                className="mt-4 bg-[#097EEC] text-white hover:bg-[#0A6BC7] transition-colors"
+                              >
+                                Agregar Información Bancaria
+                              </Button>
                             </div>
                           )}
                         </TabsContent>
