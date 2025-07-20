@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import MessageService from "@/services/MessageService";
@@ -28,6 +28,7 @@ import {
   User as UserIcon,
   Plus,
 } from "lucide-react";
+import Image from 'next/image';
 
 const ChatPageContent = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -717,9 +718,11 @@ const ChatPageContent = () => {
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             {conversation.user.profile_image ? (
-                              <img
+                              <Image
                                 src={conversation.user.profile_image}
                                 alt={conversation.user.name}
+                                width={48}
+                                height={48}
                                 className="w-12 h-12 rounded-full object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;

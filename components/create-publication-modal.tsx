@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import PublicationService from "../services/PublicationsService";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
-import { TokenPayload } from "../interfaces/auth.interface";
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+import PublicationService from '../services/PublicationsService';
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+import { TokenPayload } from '../interfaces/auth.interface';
+import { UserGallery } from './ui/UserGallery';
+import SupabaseService from '../services/supabase.service';
 import {
   X,
   FileImage,
@@ -16,8 +19,6 @@ import {
   AlertCircle,
   Image as ImageIcon,
 } from "lucide-react";
-import { UserGallery } from "./ui/UserGallery";
-import SupabaseService from "../services/supabase.service";
 import { calculatePriceWithTax } from "../lib/utils";
 import { formatCurrency } from "../lib/formatCurrency";
 
@@ -500,9 +501,11 @@ export default function CreatePublicationModal({
                     <label htmlFor="image-upload" className="cursor-pointer">
                       {previewUrl ? (
                         <div className="space-y-2">
-                          <img
+                          <Image
                             src={previewUrl}
                             alt="Preview"
+                            width={400}
+                            height={128}
                             className="w-full h-32 object-cover rounded-lg mx-auto"
                           />
                           <p className="text-xs text-gray-500">
@@ -571,9 +574,11 @@ export default function CreatePublicationModal({
                         <div className="grid grid-cols-5 gap-2">
                           {selectedGalleryImages.map((imageUrl, index) => (
                             <div key={index} className="relative aspect-square">
-                              <img
+                              <Image
                                 src={imageUrl}
                                 alt={`Seleccionada ${index + 1}`}
+                                width={80}
+                                height={80}
                                 className="w-full h-full object-cover rounded border-2 border-blue-300"
                               />
                               <button

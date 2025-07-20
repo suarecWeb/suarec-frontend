@@ -1,6 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { ImageWithFallback } from "./ImageWithFallback";
+import { Building2 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
 
 export const InfiniteMovingCards = ({
@@ -116,10 +119,14 @@ export const InfiniteMovingCards = ({
             key={idx}
           >
             <div className="relative">
-              <img
+              <ImageWithFallback
                 src={item.image}
                 alt={item.title}
+                width={450}
+                height={288}
                 className="w-full h-64 md:h-72 object-cover"
+                fallbackIcon={<Building2 className="w-8 h-8" />}
+                fallbackText="Empresa"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
