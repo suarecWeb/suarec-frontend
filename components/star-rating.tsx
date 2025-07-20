@@ -8,7 +8,7 @@ interface StarRatingProps {
   rating?: number;
   onRatingChange?: (rating: number) => void;
   readonly?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   showValue?: boolean;
   className?: string;
 }
@@ -17,22 +17,22 @@ const StarRating: React.FC<StarRatingProps> = ({
   rating = 0,
   onRatingChange,
   readonly = false,
-  size = 'md',
+  size = "md",
   showValue = false,
-  className = ""
+  className = "",
 }) => {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [currentRating, setCurrentRating] = useState<number>(rating);
 
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6'
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
   };
 
   const handleStarClick = (starRating: number) => {
     if (readonly) return;
-    
+
     setCurrentRating(starRating);
     if (onRatingChange) {
       onRatingChange(starRating);
@@ -51,7 +51,7 @@ const StarRating: React.FC<StarRatingProps> = ({
 
   const getStarColor = (starIndex: number) => {
     const effectiveRating = hoverRating || currentRating;
-    
+
     if (starIndex <= effectiveRating) {
       return "text-yellow-400 fill-current";
     }
@@ -70,13 +70,13 @@ const StarRating: React.FC<StarRatingProps> = ({
             onMouseLeave={handleMouseLeave}
             disabled={readonly}
             className={`
-              ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}
+              ${readonly ? "cursor-default" : "cursor-pointer hover:scale-110"}
               transition-transform duration-150 focus:outline-none focus:ring-2 focus:ring-[#097EEC] focus:ring-offset-1 rounded
-              ${readonly ? '' : 'hover:opacity-80'}
+              ${readonly ? "" : "hover:opacity-80"}
             `}
-            aria-label={`${starIndex} ${starIndex === 1 ? 'estrella' : 'estrellas'}`}
+            aria-label={`${starIndex} ${starIndex === 1 ? "estrella" : "estrellas"}`}
           >
-            <Star 
+            <Star
               className={`
                 ${sizeClasses[size]} 
                 ${getStarColor(starIndex)}
@@ -86,7 +86,7 @@ const StarRating: React.FC<StarRatingProps> = ({
           </button>
         ))}
       </div>
-      
+
       {showValue && (
         <span className="ml-2 text-sm text-gray-600 font-medium">
           {(hoverRating || currentRating).toFixed(1)}

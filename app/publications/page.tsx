@@ -1,30 +1,30 @@
 /* eslint-disable */
-'use client';
+"use client";
 import StartChatButton from "@/components/start-chat-button";
 
 import { useEffect, useState } from "react";
 import PublicationService from "@/services/PublicationsService";
-import { Publication } from "@/interfaces/publication.interface"; 
+import { Publication } from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
-import { 
-  PlusCircle, 
-  Edit, 
-  Trash2, 
-  AlertCircle, 
-  Search, 
-  Calendar, 
-  Eye, 
-  Tag, 
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Search,
+  Calendar,
+  Eye,
+  Tag,
   User,
   FileText,
   User2Icon,
-  Building2
-} from 'lucide-react';
+  Building2,
+} from "lucide-react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
@@ -64,15 +64,17 @@ const PublicationsPageContent = () => {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
-        setUserRoles(decoded.roles.map(role => role.name));
+        setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
       }
     }
   }, []);
 
   // Función para cargar todas las publicaciones
-  const fetchPublications = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+  const fetchPublications = async (
+    params: PaginationParams = { page: 1, limit: pagination.limit },
+  ) => {
     try {
       setLoading(true);
       const response = await PublicationService.getPublications(params);
@@ -87,9 +89,11 @@ const PublicationsPageContent = () => {
   };
 
   // Función para cargar mis publicaciones
-  const fetchMyPublications = async (params: PaginationParams = { page: 1, limit: myPagination.limit }) => {
+  const fetchMyPublications = async (
+    params: PaginationParams = { page: 1, limit: myPagination.limit },
+  ) => {
     if (!currentUserId) return;
-    
+
     try {
       setLoading(true);
       // Idealmente deberías tener un endpoint para obtener publicaciones por usuario
@@ -99,14 +103,14 @@ const PublicationsPageContent = () => {
         // Si tu API soporta filtrado por userId, deberías agregarlo aquí:
         // userId: currentUserId
       });
-      
+
       // Filtrar solo las publicaciones del usuario actual
       const userPublications = response.data.data.filter(
-        pub => parseInt(pub.user?.id || '0') === currentUserId
+        (pub) => parseInt(pub.user?.id || "0") === currentUserId,
       );
-      
+
       setMyPublications(userPublications);
-      
+
       // Actualizar paginación para mis publicaciones
       // Nota: Esto es una aproximación, ya que estamos filtrando del lado del cliente
       setMyPagination({
@@ -147,14 +151,16 @@ const PublicationsPageContent = () => {
     if (confirm("¿Estás seguro de que deseas eliminar esta publicación?")) {
       try {
         await PublicationService.deletePublication(id);
-        
+
         // Recargar la sección actual
         if (activeTab === "all") {
           fetchPublications({ page: pagination.page, limit: pagination.limit });
         } else {
-          fetchMyPublications({ page: myPagination.page, limit: myPagination.limit });
+          fetchMyPublications({
+            page: myPagination.page,
+            limit: myPagination.limit,
+          });
         }
-        
       } catch (err) {
         console.error("Error al eliminar publicación:", err);
         setError("Error al eliminar la publicación");
@@ -165,22 +171,21 @@ const PublicationsPageContent = () => {
   // Verificar si el usuario puede editar una publicación
   const canEditPublication = (publication: Publication) => {
     if (!currentUserId) return false;
-    
+
     // El propietario o un administrador pueden editar
-    return (
-      publication.userId === currentUserId || 
-      userRoles.includes("ADMIN")
-    );
+    return publication.userId === currentUserId || userRoles.includes("ADMIN");
   };
 
   // Filtrar publicaciones según el término de búsqueda
   const getFilteredPublications = (publications: Publication[]) => {
     if (!searchTerm) return publications;
-    
-    return publications.filter(pub => 
-      pub.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (pub.description && pub.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      pub.category.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return publications.filter(
+      (pub) =>
+        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pub.description &&
+          pub.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        pub.category.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   };
 
@@ -190,25 +195,28 @@ const PublicationsPageContent = () => {
   // Formatear fecha
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   // Renderizar tarjeta de publicación
   const renderPublicationCard = (publication: Publication) => {
     const isEditable = canEditPublication(publication);
-    
+
     // NO mostrar publicaciones sin imágenes
-    if (!publication.image_url && (!publication.gallery_images || publication.gallery_images.length === 0)) {
+    if (
+      !publication.image_url &&
+      (!publication.gallery_images || publication.gallery_images.length === 0)
+    ) {
       return null;
     }
-    
+
     return (
-      <div 
-        key={publication.id} 
+      <div
+        key={publication.id}
         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       >
         {/* Link para ver el detalle de la publicación */}
@@ -244,7 +252,7 @@ const PublicationsPageContent = () => {
               </div>
             )}
           </div>
-          
+
           {/* Publication Content */}
           <div className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -253,13 +261,17 @@ const PublicationsPageContent = () => {
                 {publication.category}
               </span>
             </div>
-            
-            <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">{publication.title}</h3>
-            
+
+            <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
+              {publication.title}
+            </h3>
+
             {publication.description && (
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{publication.description}</p>
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                {publication.description}
+              </p>
             )}
-            
+
             <div className="flex items-center text-xs text-gray-500 mb-4">
               <Calendar className="h-3 w-3 mr-1" />
               <span>Creado: {formatDate(publication.created_at)}</span>
@@ -270,21 +282,19 @@ const PublicationsPageContent = () => {
             </div>
           </div>
         </Link>
-        
+
         {/* Actions - solo mostrar si puede editar */}
         <div className="px-4 pb-4">
           <div className="flex justify-between pt-3 border-t border-gray-100">
             {isEditable ? (
               <>
                 <Link href={`/publications/${publication.id}/edit`}>
-                  <button
-                    className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm"
-                  >
+                  <button className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm">
                     <Edit className="h-4 w-4" />
                     <span>Editar</span>
                   </button>
                 </Link>
-                
+
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -299,18 +309,18 @@ const PublicationsPageContent = () => {
               </>
             ) : (
               <>
-                <Link 
+                <Link
                   href={`/publications/${publication.id}`}
                   className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm"
                 >
                   <span>Ver detalles</span>
                 </Link>
-                
+
                 {/* Botón de chat si no es el autor */}
                 {currentUserId && publication.userId !== currentUserId && (
                   <StartChatButton
                     recipientType="business"
-                    recipientId={parseInt(publication.user?.id || '0')}
+                    recipientId={parseInt(publication.user?.id || "0")}
                     recipientName="Autor"
                     className="text-xs px-2 py-1"
                   />
@@ -354,7 +364,7 @@ const PublicationsPageContent = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <Link href="/publications/create">
                 <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
                   <PlusCircle className="h-5 w-5" />
@@ -375,17 +385,23 @@ const PublicationsPageContent = () => {
             )}
 
             {/* Tabs for All/My Publications */}
-            <Tabs 
-              defaultValue="all" 
-              value={activeTab} 
+            <Tabs
+              defaultValue="all"
+              value={activeTab}
               onValueChange={setActiveTab}
               className="mt-6"
             >
               <TabsList className="grid grid-cols-2 mb-6 w-full sm:w-80">
-                <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white"
+                >
                   Ver todas
                 </TabsTrigger>
-                <TabsTrigger value="my" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="my"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white"
+                >
                   Mis publicaciones
                 </TabsTrigger>
               </TabsList>
@@ -400,15 +416,22 @@ const PublicationsPageContent = () => {
                   <>
                     {filteredAllPublications.length > 0 ? (
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredAllPublications.map(publication => renderPublicationCard(publication))}
+                        {filteredAllPublications.map((publication) =>
+                          renderPublicationCard(publication),
+                        )}
                       </div>
                     ) : (
                       <div className="py-16 text-center">
                         <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                           <AlertCircle className="h-10 w-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">No hay publicaciones disponibles</h3>
-                        <p className="mt-2 text-gray-500">No se encontraron publicaciones que coincidan con tu búsqueda.</p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No hay publicaciones disponibles
+                        </h3>
+                        <p className="mt-2 text-gray-500">
+                          No se encontraron publicaciones que coincidan con tu
+                          búsqueda.
+                        </p>
                       </div>
                     )}
 
@@ -422,13 +445,16 @@ const PublicationsPageContent = () => {
                         />
                       </div>
                     )}
-                    
+
                     {/* Results Summary */}
-                    {!loading && !error && filteredAllPublications.length > 0 && (
-                      <div className="mt-6 text-sm text-gray-500 text-center">
-                        Mostrando {filteredAllPublications.length} de {pagination.total} publicaciones
-                      </div>
-                    )}
+                    {!loading &&
+                      !error &&
+                      filteredAllPublications.length > 0 && (
+                        <div className="mt-6 text-sm text-gray-500 text-center">
+                          Mostrando {filteredAllPublications.length} de{" "}
+                          {pagination.total} publicaciones
+                        </div>
+                      )}
                   </>
                 )}
               </TabsContent>
@@ -446,8 +472,13 @@ const PublicationsPageContent = () => {
                         <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                           <User className="h-10 w-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">Inicia sesión para ver tus publicaciones</h3>
-                        <p className="mt-2 text-gray-500">Necesitas iniciar sesión para ver y gestionar tus publicaciones.</p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          Inicia sesión para ver tus publicaciones
+                        </h3>
+                        <p className="mt-2 text-gray-500">
+                          Necesitas iniciar sesión para ver y gestionar tus
+                          publicaciones.
+                        </p>
                         <Link href="/auth/login">
                           <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors">
                             Iniciar sesión
@@ -456,15 +487,22 @@ const PublicationsPageContent = () => {
                       </div>
                     ) : filteredMyPublications.length > 0 ? (
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredMyPublications.map(publication => renderPublicationCard(publication))}
+                        {filteredMyPublications.map((publication) =>
+                          renderPublicationCard(publication),
+                        )}
                       </div>
                     ) : (
                       <div className="py-16 text-center">
                         <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                           <FileText className="h-10 w-10 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">No has creado publicaciones aún</h3>
-                        <p className="mt-2 text-gray-500">Crea tu primera publicación para ofrecer tus servicios o buscar oportunidades.</p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No has creado publicaciones aún
+                        </h3>
+                        <p className="mt-2 text-gray-500">
+                          Crea tu primera publicación para ofrecer tus servicios
+                          o buscar oportunidades.
+                        </p>
                         <Link href="/publications/create">
                           <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
                             <PlusCircle className="h-5 w-5" />
@@ -484,13 +522,17 @@ const PublicationsPageContent = () => {
                         />
                       </div>
                     )}
-                    
+
                     {/* Results Summary for My Publications */}
-                    {!loading && !error && currentUserId && filteredMyPublications.length > 0 && (
-                      <div className="mt-6 text-sm text-gray-500 text-center">
-                        Mostrando {filteredMyPublications.length} de {myPagination.total} publicaciones
-                      </div>
-                    )}
+                    {!loading &&
+                      !error &&
+                      currentUserId &&
+                      filteredMyPublications.length > 0 && (
+                        <div className="mt-6 text-sm text-gray-500 text-center">
+                          Mostrando {filteredMyPublications.length} de{" "}
+                          {myPagination.total} publicaciones
+                        </div>
+                      )}
                   </>
                 )}
               </TabsContent>
@@ -505,7 +547,7 @@ const PublicationsPageContent = () => {
 // Componente principal protegido con RoleGuard
 const PublicationsPage = () => {
   return (
-    <RoleGuard allowedRoles={['ADMIN', 'BUSINESS', 'PERSON']}>
+    <RoleGuard allowedRoles={["ADMIN", "BUSINESS", "PERSON"]}>
       <PublicationsPageContent />
     </RoleGuard>
   );

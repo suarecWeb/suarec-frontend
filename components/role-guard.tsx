@@ -3,9 +3,9 @@
 // If the user is not authorized, it redirects them to the login page or an access denied page.
 // If the authorization check is still loading, it shows a loading spinner.
 // It uses the `useRoleGuard` custom hook to handle the authorization logic.
-'use client';
+"use client";
 
-import { useRoleGuard } from '@/hooks/auth/use-role-guard';
+import { useRoleGuard } from "@/hooks/auth/use-role-guard";
 
 interface RoleGuardProps {
   children: React.ReactNode;

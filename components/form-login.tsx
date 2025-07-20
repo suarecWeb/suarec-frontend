@@ -1,97 +1,119 @@
-"use client"
-import AuthService from "@/services/AuthService"
-import type React from "react"
+"use client";
+import AuthService from "@/services/AuthService";
+import type React from "react";
 
-import { useState, useTransition, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Cookies from "js-cookie"
-import Link from "next/link"
-import { AlertCircle, CheckCircle, ArrowLeft, Loader2 } from "lucide-react"
+import { useState, useTransition, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Cookies from "js-cookie";
+import Link from "next/link";
+import {
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 const FormLogin = () => {
-  const [error, setError] = useState<string | undefined>("")
-  const [success, setSuccess] = useState<string | undefined>("")
-  const [isPending, startTransition] = useTransition()
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
+  const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Verificar si viene de la verificación de email o token expirado
   useEffect(() => {
-    const verified = searchParams.get("verified")
-    const expired = searchParams.get("expired")
-    
+    const verified = searchParams.get("verified");
+    const expired = searchParams.get("expired");
+
     if (verified === "true") {
-      setSuccess("¡Email verificado exitosamente! Ya puedes iniciar sesión.")
+      setSuccess(
+        "¡Correo electrónico verificado exitosamente! Ya puedes iniciar sesión.",
+      );
     }
-    
+
     if (expired === "true") {
-      setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.")
+      setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleGoogleSubmit = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/auth/google/callback`
-  }
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suarec/auth/google/callback`;
+  };
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (event) => {
-    event.preventDefault()
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
 
     const values = {
-      email: event.currentTarget.email.value,
+      email: event.currentTarget.email.value.toLowerCase(),
       password: event.currentTarget.password.value,
-    }
+    };
 
-    setError("")
-    setSuccess("")
+    setError("");
+    setSuccess("");
 
     startTransition(async () => {
       try {
         const res = await AuthService.login({
           email: values.email,
           password: values.password,
-        })
+        });
 
         if (res.data.token === undefined || res.data.token === null) {
-          setError("Error iniciando sesión")
-          return
+          setError("Error iniciando sesión");
+          return;
         }
 
-        Cookies.set("token", res.data.token)
-        Cookies.set("email", res.data.email)
-        Cookies.set("role", res.data.roles[0].name)
+        Cookies.set("token", res.data.token);
+        Cookies.set("email", res.data.email);
+        Cookies.set("role", res.data.roles[0].name);
 
-        setSuccess("Inicio de sesión exitoso")
+        setSuccess("Inicio de sesión exitoso");
 
         // Pequeña pausa para mostrar el mensaje de éxito
         setTimeout(() => {
-          router.push("/feed")
-        }, 1000)
+          router.push("/feed");
+        }, 1000);
       } catch (err: any) {
         // Verificar si es un error de email no verificado
         const errorMessage = err.response?.data?.message || "";
-        
-        if (errorMessage.toLowerCase().includes("verify your email") || 
-            errorMessage.toLowerCase().includes("verificar") ||
-            errorMessage.toLowerCase().includes("verification")) {
-          
-          setError("Tu email no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.")
-          
+
+        if (
+          errorMessage.toLowerCase().includes("verify your email") ||
+          errorMessage.toLowerCase().includes("verificar") ||
+          errorMessage.toLowerCase().includes("verification")
+        ) {
+          setError(
+            "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.",
+          );
+
           // Redirigir a la página de verificación después de 3 segundos
           setTimeout(() => {
-            router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}`)
-          }, 3000)
+            router.push(
+              `/auth/verify-email?email=${encodeURIComponent(values.email)}`,
+            );
+          }, 3000);
         } else {
           // Error genérico de credenciales
-          setError("Email o contraseña incorrectos. Por favor, verifica tus credenciales.")
+          setError(
+            "Email o contraseña incorrectos. Por favor, verifica tus credenciales.",
+          );
         }
       }
-    })
-  }
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700"
+        >
           Correo electrónico
         </label>
         <div className="relative">
@@ -109,10 +131,16 @@ const FormLogin = () => {
 
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
             Contraseña
           </label>
-          <Link href="/auth/forgot" className="text-sm text-[#097EEC] hover:text-[#082D50] transition-colors">
+          <Link
+            href="/auth/forgot"
+            className="text-sm text-[#097EEC] hover:text-[#082D50] transition-colors"
+          >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
@@ -120,21 +148,35 @@ const FormLogin = () => {
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="••••••••"
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+            className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
             disabled={isPending}
             required
           />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 transition-colors"
+            onClick={() => setShowPassword(!showPassword)}
+            disabled={isPending}
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
         </div>
       </div>
 
       {error && (
-        <div className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm ${
-          error.includes("no ha sido verificado") 
-            ? "bg-blue-50 text-blue-700 border border-blue-200" 
-            : "bg-red-50 text-red-700"
-        }`}>
+        <div
+          className={`px-4 py-3 rounded-lg flex items-center gap-2 text-sm ${
+            error.includes("no ha sido verificado")
+              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              : "bg-red-50 text-red-700"
+          }`}
+        >
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
           <div className="flex-1">
             <span className="block">{error}</span>
@@ -220,8 +262,7 @@ const FormLogin = () => {
       </button>
       */}
     </form>
-  )
-}
+  );
+};
 
-export default FormLogin
-
+export default FormLogin;

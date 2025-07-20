@@ -5,17 +5,17 @@ import { useState, useEffect } from "react";
 import SearchBar from "./utils/searchBar";
 import { NavbarRole } from "./navbar-role";
 import Cookies from "js-cookie";
-import { jwtDecode } from 'jwt-decode';
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Users, 
-  FileText, 
-  Building2, 
-  Briefcase, 
-  UserCheck, 
-  Clock, 
+import { jwtDecode } from "jwt-decode";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Users,
+  FileText,
+  Building2,
+  Briefcase,
+  UserCheck,
+  Clock,
   MessageSquare,
   Bell,
   Search,
@@ -23,8 +23,9 @@ import {
   TrendingUp,
   Handshake,
   CreditCard,
-  Star
-} from 'lucide-react';
+  Star,
+  BarChart3,
+} from "lucide-react";
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
 
@@ -38,176 +39,194 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   const updateUserRoles = () => {
-    const token = Cookies.get('token');
+    const token = Cookies.get("token");
     if (token) {
       try {
         const decodedToken = jwtDecode<TokenPayload>(token);
-        const roles = decodedToken.roles?.map(role => role.name) || [];
+        const roles = decodedToken.roles?.map((role) => role.name) || [];
         setUserRoles(roles);
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
         setUserRoles([]);
       }
     } else {
       setUserRoles([]);
     }
-  }
+  };
 
   useEffect(() => {
-    updateUserRoles()
-    
+    updateUserRoles();
+
     // Escuchar cambios en el estado de autenticación
     const handleAuthChange = () => {
-      updateUserRoles()
-    }
-    
-    window.addEventListener('authStateChanged', handleAuthChange)
-    
+      updateUserRoles();
+    };
+
+    window.addEventListener("authStateChanged", handleAuthChange);
+
     // Detectar scroll para cambiar el estilo de la navbar
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    
+    window.addEventListener("scroll", handleScroll);
+
     return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange)
-      window.removeEventListener('scroll', handleScroll);
-    }
+      window.removeEventListener("authStateChanged", handleAuthChange);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   // Efecto para controlar el scroll del body cuando el menú móvil está abierto
   useEffect(() => {
     if (isMenuOpen) {
       // Prevenir scroll del body
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
       document.body.style.top = `-${window.scrollY}px`;
-      document.body.style.width = '100%';
+      document.body.style.width = "100%";
     } else {
       // Restaurar scroll del body
       const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
       }
     }
 
     // Cleanup cuando el componente se desmonta
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
     };
   }, [isMenuOpen]);
 
   const hasRole = (roles: string[]): boolean => {
-    return roles.some(role => userRoles.includes(role));
+    return roles.some((role) => userRoles.includes(role));
   };
 
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg' 
-          : 'bg-[#097EEC]'
-      }`}>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-[#097EEC]"
+        }`}
+      >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16 lg:h-20">
             {/* Logo */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className={`transition-all duration-300 hover:scale-105 ${
-                isScrolled ? 'text-[#097EEC]' : 'text-white'
+                isScrolled ? "text-[#097EEC]" : "text-white"
               }`}
             >
-              <SuarecLogo 
-                className="w-24 sm:w-28 md:w-32" 
-              />
+              <SuarecLogo className="w-24 sm:w-28 md:w-32" />
             </Link>
 
             {/* Desktop Navigation - Oculto para ADMIN */}
-            <div className={`lg:items-center lg:space-x-2 ${hasRole(['ADMIN']) ? 'hidden' : 'hidden lg:flex'}`}>
+            <div
+              className={`lg:items-center lg:space-x-2 ${hasRole(["ADMIN"]) ? "hidden" : "hidden lg:flex"}`}
+            >
               {/* Navigation Links */}
               <div className="flex items-center space-x-1">
-                {hasRole(['ADMIN']) && (
-                  <NavLink href="/users" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
+                {hasRole(["ADMIN"]) && (
+                  <NavLink
+                    href="/users"
+                    icon={<Users className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Usuarios
                   </NavLink>
                 )}
-                
-                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                  <NavLink href="/feed" icon={<TrendingUp className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Feed
+
+                {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
+                  <NavLink
+                    href="/feed"
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
+                    Publicaciones
                   </NavLink>
                 )}
-                
-                {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                  <NavLink href="/companies" icon={<Building2 className="h-4 w-4" />} isScrolled={isScrolled}>
+
+                {hasRole(["ADMIN", "PERSON"]) && (
+                  <NavLink
+                    href="/companies"
+                    icon={<Building2 className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Compañías
                   </NavLink>
                 )}
 
-                {hasRole(['BUSINESS', 'ADMIN']) && (
+                {hasRole(["BUSINESS", "ADMIN"]) && (
                   <NotificationBadge userRoles={userRoles}>
-                    <NavLink href="/applications" icon={<Briefcase className="h-4 w-4" />} isScrolled={isScrolled}>
+                    <NavLink
+                      href="/applications"
+                      icon={<Briefcase className="h-4 w-4" />}
+                      isScrolled={isScrolled}
+                    >
                       Aplicaciones
                     </NavLink>
                   </NotificationBadge>
                 )}
 
-                {hasRole(['PERSON', 'ADMIN']) && (
-                  <NavLink href="/my-applications" icon={<UserCheck className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Mis aplicaciones
-                  </NavLink>
-                )}
-
-                {hasRole(['BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/my-employees" icon={<Users className="h-4 w-4" />} isScrolled={isScrolled}>
+                {hasRole(["BUSINESS", "ADMIN"]) && (
+                  <NavLink
+                    href="/my-employees"
+                    icon={<Users className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Mis empleados
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/chat" icon={<MessageSquare className="h-4 w-4" />} isScrolled={isScrolled}>
+                {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
+                  <NavLink
+                    href="/chat"
+                    icon={<MessageSquare className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Mensajes
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/contracts" icon={<Handshake className="h-4 w-4" />} isScrolled={isScrolled}>
+                {hasRole(["PERSON", "ADMIN"]) && (
+                  <NavLink
+                    href="/contracts"
+                    icon={<Handshake className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Contrataciones
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON','BUSINESS', 'ADMIN']) && (
-                  <NavLink href="/ratings" icon={<Star className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Calificaciones
-                  </NavLink>
-                )}
-
                 {/* Enlaces de pagos según el rol */}
-                {hasRole(['ADMIN']) && (
-                  <NavLink href="/payments" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
+                {hasRole(["ADMIN"]) && (
+                  <NavLink
+                    href="/payments"
+                    icon={<CreditCard className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
                     Pagos
                   </NavLink>
                 )}
 
-                {hasRole(['PERSON', 'BUSINESS']) && (
-                  <NavLink href="/payments/history" icon={<CreditCard className="h-4 w-4" />} isScrolled={isScrolled}>
-                    Historial de Pagos
-                  </NavLink>
-                )}
-                
                 {/* User Menu */}
                 <div className="ml-4 pl-4 border-l border-white/20">
-                  <NavbarRole isMobile={false} section="logIn" isScrolled={isScrolled} />
+                  <NavbarRole
+                    isMobile={false}
+                    section="logIn"
+                    isScrolled={isScrolled}
+                  />
                 </div>
               </div>
             </div>
@@ -215,11 +234,11 @@ const Navbar = () => {
             {/* Mobile menu button - Siempre visible para ADMIN */}
             <button
               className={`flex items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 ${
-                hasRole(['ADMIN']) ? '' : 'lg:hidden'
+                hasRole(["ADMIN"]) ? "" : "lg:hidden"
               } ${
-                isScrolled 
-                  ? 'text-[#097EEC] hover:bg-[#097EEC]/10' 
-                  : 'text-white hover:bg-white/10'
+                isScrolled
+                  ? "text-[#097EEC] hover:bg-[#097EEC]/10"
+                  : "text-white hover:bg-white/10"
               }`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
@@ -236,7 +255,9 @@ const Navbar = () => {
 
       {/* Mobile Navigation Overlay - Siempre disponible para ADMIN */}
       {isMenuOpen && (
-        <div className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm ${hasRole(['ADMIN']) ? '' : 'lg:hidden'}`}>
+        <div
+          className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm ${hasRole(["ADMIN"]) ? "" : "lg:hidden"}`}
+        >
           <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl">
             <div className="flex h-full flex-col">
               {/* Mobile Header */}
@@ -249,61 +270,127 @@ const Navbar = () => {
                   <X className="h-6 w-6 text-gray-600" />
                 </button>
               </div>
-              
+
               {/* Navigation Links */}
               <div className="flex-1 overflow-y-auto py-4">
                 <div className="flex flex-col space-y-1 px-4">
-                  {hasRole(['ADMIN']) && (
-                    <MobileNavLink href="/users" icon={<Users className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["ADMIN"]) && (
+                    <MobileNavLink
+                      href="/users"
+                      icon={<Users className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Usuarios
                     </MobileNavLink>
                   )}
-                  
-                  {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                    <MobileNavLink href="/feed" icon={<TrendingUp className="h-5 w-5" />} onClick={closeMenu}>
-                      Feed
+
+                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
+                    <MobileNavLink
+                      href="/feed"
+                      icon={<TrendingUp className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
+                      Publicaciones
                     </MobileNavLink>
                   )}
-                  
-                  {hasRole(['ADMIN', 'BUSINESS', 'PERSON']) && (
-                    <MobileNavLink href="/companies" icon={<Building2 className="h-5 w-5" />} onClick={closeMenu}>
+
+                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
+                    <MobileNavLink
+                      href="/companies"
+                      icon={<Building2 className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Compañías
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['BUSINESS', 'ADMIN']) && (
-                    <MobileNavLink href="/applications" icon={<Briefcase className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["BUSINESS", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/applications"
+                      icon={<Briefcase className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Aplicaciones
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['PERSON', 'ADMIN']) && (
-                    <MobileNavLink href="/my-applications" icon={<UserCheck className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["PERSON", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/my-applications"
+                      icon={<UserCheck className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Mis aplicaciones
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['BUSINESS', 'ADMIN']) && (
-                    <MobileNavLink href="/my-employees" icon={<Users className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["BUSINESS", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/my-employees"
+                      icon={<Users className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Mis empleados
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
-                    <MobileNavLink href="/chat" icon={<MessageSquare className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/chat"
+                      icon={<MessageSquare className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Mensajes
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
-                    <MobileNavLink href="/contracts" icon={<Handshake className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/contracts"
+                      icon={<Handshake className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Contrataciones
                     </MobileNavLink>
                   )}
 
-                  {hasRole(['PERSON', 'BUSINESS', 'ADMIN']) && (
-                    <MobileNavLink href="/ratings" icon={<Star className="h-5 w-5" />} onClick={closeMenu}>
+                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
+                    <MobileNavLink
+                      href="/ratings"
+                      icon={<Star className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
                       Calificaciones
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
+                    <MobileNavLink
+                      href="/stats"
+                      icon={<BarChart3 className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
+                      Estadísticas
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(["ADMIN"]) && (
+                    <MobileNavLink
+                      href="/payments"
+                      icon={<CreditCard className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
+                      Pagos
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(["BUSINESS", "PERSON"]) && (
+                    <MobileNavLink
+                      href="/payments/history"
+                      icon={<CreditCard className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
+                      Historial de Pagos
                     </MobileNavLink>
                   )}
                 </div>
@@ -317,10 +404,10 @@ const Navbar = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Backdrop - click to close */}
-          <div 
-            className="absolute inset-0 -z-10" 
+          <div
+            className="absolute inset-0 -z-10"
             onClick={closeMenu}
             aria-hidden="true"
           />
@@ -331,23 +418,23 @@ const Navbar = () => {
 };
 
 // Desktop Navigation Link component
-const NavLink = ({ 
-  href, 
-  children, 
-  icon, 
-  isScrolled 
-}: { 
-  href: string; 
-  children: React.ReactNode; 
-  icon: React.ReactNode; 
-  isScrolled: boolean 
+const NavLink = ({
+  href,
+  children,
+  icon,
+  isScrolled,
+}: {
+  href: string;
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  isScrolled: boolean;
 }) => (
-  <Link 
-    href={href} 
+  <Link
+    href={href}
     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 hover:scale-105 ${
-      isScrolled 
-        ? 'text-gray-700 hover:text-[#097EEC] hover:bg-[#097EEC]/5' 
-        : 'text-white hover:text-white/90 hover:bg-white/10'
+      isScrolled
+        ? "text-gray-700 hover:text-[#097EEC] hover:bg-[#097EEC]/5"
+        : "text-white hover:text-white/90 hover:bg-white/10"
     }`}
   >
     {icon}
@@ -356,19 +443,19 @@ const NavLink = ({
 );
 
 // Mobile Navigation Link component
-const MobileNavLink = ({ 
-  href, 
-  children, 
+const MobileNavLink = ({
+  href,
+  children,
   icon,
-  onClick 
-}: { 
-  href: string; 
+  onClick,
+}: {
+  href: string;
   children: React.ReactNode;
   icon: React.ReactNode;
   onClick?: () => void;
 }) => (
-  <Link 
-    href={href} 
+  <Link
+    href={href}
     onClick={onClick}
     className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-800 hover:bg-[#097EEC]/10 hover:text-[#097EEC] transition-all duration-300 font-medium active:bg-[#097EEC]/20"
   >

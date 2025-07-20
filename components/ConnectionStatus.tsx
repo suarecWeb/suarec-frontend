@@ -1,14 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Wifi, WifiOff, Loader2 } from 'lucide-react';
+import React from "react";
+import { Wifi, WifiOff, Loader2 } from "lucide-react";
 
 interface ConnectionStatusProps {
   isConnected: boolean;
   isConnecting: boolean;
 }
 
-const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ isConnected, isConnecting }) => {
+const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
+  isConnected,
+  isConnecting,
+}) => {
   if (isConnecting) {
     return (
       <div className="flex items-center gap-2 text-yellow-600">
@@ -35,4 +38,4 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ isConnected, isConn
   );
 };
 
-export default ConnectionStatus; 
+export default ConnectionStatus;

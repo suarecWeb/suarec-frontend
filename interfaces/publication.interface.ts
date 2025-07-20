@@ -20,4 +20,3 @@ export interface Publication {
   user?: User;
   comments?: Comment[];
 }
-  

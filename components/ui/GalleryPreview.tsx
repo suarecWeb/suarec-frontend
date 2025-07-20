@@ -14,8 +14,8 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
   images,
   title,
   maxDisplay = 6,
-  className = '',
-  showTitle = false
+  className = "",
+  showTitle = false,
 }) => {
   if (!images || images.length === 0) {
     return null;
@@ -44,7 +44,9 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
         {remainingCount > 0 && (
           <div className="aspect-square bg-gray-100 rounded-md border border-gray-200 flex items-center justify-center">
             <div className="text-center">
-              <span className="text-lg font-bold text-gray-500">+{remainingCount}</span>
+              <span className="text-lg font-bold text-gray-500">
+                +{remainingCount}
+              </span>
               <p className="text-xs text-gray-500">más</p>
             </div>
           </div>
@@ -54,4 +56,4 @@ const GalleryPreview: React.FC<GalleryPreviewProps> = ({
   );
 };
 
-export default GalleryPreview; 
+export default GalleryPreview;

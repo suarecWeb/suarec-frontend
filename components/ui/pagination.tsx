@@ -18,14 +18,14 @@ const Pagination = ({
   const renderPageNumbers = () => {
     const pageNumbers = [];
     const maxPagesToShow = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
     let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-    
+
     if (endPage - startPage + 1 < maxPagesToShow) {
       startPage = Math.max(1, endPage - maxPagesToShow + 1);
     }
-    
+
     // Añadir primera página
     if (startPage > 1) {
       pageNumbers.push(
@@ -34,23 +34,28 @@ const Pagination = ({
           onClick={() => onPageChange(1)}
           className={cn(
             "h-8 w-8 rounded-md flex items-center justify-center",
-            1 === currentPage ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            1 === currentPage
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted",
           )}
         >
           1
-        </button>
+        </button>,
       );
-      
+
       // Añadir elipsis si hay un salto
       if (startPage > 2) {
         pageNumbers.push(
-          <span key="start-ellipsis" className="h-8 w-8 flex items-center justify-center">
+          <span
+            key="start-ellipsis"
+            className="h-8 w-8 flex items-center justify-center"
+          >
             ...
-          </span>
+          </span>,
         );
       }
     }
-    
+
     // Añadir páginas intermedias
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(
@@ -59,45 +64,55 @@ const Pagination = ({
           onClick={() => onPageChange(i)}
           className={cn(
             "h-8 w-8 rounded-md flex items-center justify-center",
-            i === currentPage ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            i === currentPage
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted",
           )}
         >
           {i}
-        </button>
+        </button>,
       );
     }
-    
+
     // Añadir última página
     if (endPage < totalPages) {
       // Añadir elipsis si hay un salto
       if (endPage < totalPages - 1) {
         pageNumbers.push(
-          <span key="end-ellipsis" className="h-8 w-8 flex items-center justify-center">
+          <span
+            key="end-ellipsis"
+            className="h-8 w-8 flex items-center justify-center"
+          >
             ...
-          </span>
+          </span>,
         );
       }
-      
+
       pageNumbers.push(
         <button
           key={totalPages}
           onClick={() => onPageChange(totalPages)}
           className={cn(
             "h-8 w-8 rounded-md flex items-center justify-center",
-            totalPages === currentPage ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+            totalPages === currentPage
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted",
           )}
         >
           {totalPages}
-        </button>
+        </button>,
       );
     }
-    
+
     return pageNumbers;
   };
-  
+
   return (
     <div
-      className={cn("flex items-center justify-center space-x-2 py-4", className)}
+      className={cn(
+        "flex items-center justify-center space-x-2 py-4",
+        className,
+      )}
       {...props}
     >
       <button
@@ -105,21 +120,23 @@ const Pagination = ({
         disabled={currentPage <= 1}
         className={cn(
           "h-8 w-8 rounded-md flex items-center justify-center",
-          currentPage <= 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"
+          currentPage <= 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted",
         )}
         aria-label="Go to previous page"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
-      
+
       {renderPageNumbers()}
-      
+
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
         className={cn(
           "h-8 w-8 rounded-md flex items-center justify-center",
-          currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"
+          currentPage >= totalPages
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:bg-muted",
         )}
         aria-label="Go to next page"
       >

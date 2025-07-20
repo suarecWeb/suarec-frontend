@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/navbar";
 import AttendanceService from "@/services/AttendanceService";
 import CompanyService from "@/services/CompanyService";
@@ -41,10 +41,11 @@ const RegisterAttendancePageContent = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [checkInTime, setCheckInTime] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [companyCheckinTime, setCompanyCheckinTime] = useState<CompanyCheckinTime | null>(null);
+  const [companyCheckinTime, setCompanyCheckinTime] =
+    useState<CompanyCheckinTime | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -54,30 +55,22 @@ const RegisterAttendancePageContent = () => {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
       }
     }
   }, []);
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchCompanyInfo();
-    }
-  }, [currentUserId]);
-
-  useEffect(() => {
-    if (employees.length === 1) {
-      setSelectedEmployee(employees[0]);
-    }
-  }, [employees]);
-
-  const fetchCompanyInfo = async () => {
+  const fetchCompanyInfo = useCallback(async () => {
     try {
-      const response = await CompanyService.getCompanies({ page: 1, limit: 100 });
-      const userCompany = response.data.data.find(company => 
-        company.user && parseInt(company.user.id || '0') === currentUserId
+      const response = await CompanyService.getCompanies({
+        page: 1,
+        limit: 100,
+      });
+      const userCompany = response.data.data.find(
+        (company) =>
+          company.user && parseInt(company.user.id || "0") === currentUserId,
       );
-      
+
       if (userCompany) {
         setCompanyInfo(userCompany);
         fetchEmployees(userCompany.id);
@@ -89,7 +82,19 @@ const RegisterAttendancePageContent = () => {
       console.error("Error al cargar información de la empresa:", err);
       setError("Error al cargar la información de la empresa");
     }
-  };
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchCompanyInfo();
+    }
+  }, [currentUserId, fetchCompanyInfo]);
+
+  useEffect(() => {
+    if (employees.length === 1) {
+      setSelectedEmployee(employees[0]);
+    }
+  }, [employees]);
 
   const fetchEmployees = async (companyId: string) => {
     try {
@@ -130,32 +135,36 @@ const RegisterAttendancePageContent = () => {
     }
     try {
       setLoadingRegister(true);
-      
+
       // Determinar si el empleado llega tarde
       let isLate = false;
       if (companyCheckinTime && companyCheckinTime.checkInTime) {
-        const [checkHour, checkMinute] = checkInTime.split(':').map(Number);
-        const [limitHour, limitMinute] = companyCheckinTime.checkInTime.split(':').map(Number);
-        
+        const [checkHour, checkMinute] = checkInTime.split(":").map(Number);
+        const [limitHour, limitMinute] = companyCheckinTime.checkInTime
+          .split(":")
+          .map(Number);
+
         const checkTimeInMinutes = checkHour * 60 + checkMinute;
         const limitTimeInMinutes = limitHour * 60 + limitMinute;
-        
+
         isLate = checkTimeInMinutes > limitTimeInMinutes;
       }
-      
+
       await AttendanceService.registerAttendance(
         Number(selectedEmployee.id),
         checkInTime,
         new Date(date),
         false, // isAbsent
-        isLate ? `Llegada tarde (límite: ${companyCheckinTime?.checkInTime})` : undefined
+        isLate
+          ? `Llegada tarde (límite: ${companyCheckinTime?.checkInTime})`
+          : undefined,
       );
-      
+
       const lateMessage = isLate ? " (marcado como tarde)" : "";
       setSuccess(`Asistencia registrada correctamente${lateMessage}`);
       setCheckInTime("");
       setTimeout(() => {
-        setSuccess(null)
+        setSuccess(null);
         router.push("/attendance");
       }, 3000);
     } catch (err) {
@@ -166,7 +175,7 @@ const RegisterAttendancePageContent = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(employee => {
+  const filteredEmployees = employees.filter((employee) => {
     console.log("Empleado en lista (register):", employee);
     return (
       employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -179,13 +188,15 @@ const RegisterAttendancePageContent = () => {
     if (!companyCheckinTime || !companyCheckinTime.checkInTime || !checkTime) {
       return false;
     }
-    
-    const [checkHour, checkMinute] = checkTime.split(':').map(Number);
-    const [limitHour, limitMinute] = companyCheckinTime.checkInTime.split(':').map(Number);
-    
+
+    const [checkHour, checkMinute] = checkTime.split(":").map(Number);
+    const [limitHour, limitMinute] = companyCheckinTime.checkInTime
+      .split(":")
+      .map(Number);
+
     const checkTimeInMinutes = checkHour * 60 + checkMinute;
     const limitTimeInMinutes = limitHour * 60 + limitMinute;
-    
+
     return checkTimeInMinutes > limitTimeInMinutes;
   };
 
@@ -200,7 +211,9 @@ const RegisterAttendancePageContent = () => {
               <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <Building2 className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold truncate">Registrar asistencia</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                    Registrar asistencia
+                  </h1>
                   {companyInfo && (
                     <p className="mt-1 sm:mt-2 text-blue-100 text-sm sm:text-base truncate">
                       {companyInfo.name}
@@ -214,10 +227,10 @@ const RegisterAttendancePageContent = () => {
                   )}
                 </div>
               </div>
-              
+
               {/* Botón para volver a Mis Empleados */}
               <button
-                onClick={() => router.push('/my-employees')}
+                onClick={() => router.push("/my-employees")}
                 className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-medium text-sm sm:text-base flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -234,16 +247,18 @@ const RegisterAttendancePageContent = () => {
           <div className="bg-white rounded-t-lg px-4 sm:px-6 py-3 border-b border-gray-200">
             <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 overflow-x-auto">
               <button
-                onClick={() => router.push('/my-employees')}
+                onClick={() => router.push("/my-employees")}
                 className="hover:text-[#097EEC] transition-colors whitespace-nowrap"
               >
                 Mis Empleados
               </button>
               <span>/</span>
-              <span className="text-gray-900 font-medium whitespace-nowrap">Registrar Asistencia</span>
+              <span className="text-gray-900 font-medium whitespace-nowrap">
+                Registrar Asistencia
+              </span>
             </nav>
           </div>
-          
+
           <div className="bg-white rounded-b-lg shadow-lg p-4 sm:p-6">
             {/* Search Bar */}
             <div className="flex flex-col gap-4 mb-6">
@@ -281,14 +296,16 @@ const RegisterAttendancePageContent = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Indicador de llegada tarde */}
               {checkInTime && companyCheckinTime && (
-                <div className={`flex items-center gap-2 p-3 rounded-lg border ${
-                  isCheckInLate(checkInTime) 
-                    ? 'bg-red-50 border-red-200 text-red-800' 
-                    : 'bg-green-50 border-green-200 text-green-800'
-                }`}>
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg border ${
+                    isCheckInLate(checkInTime)
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : "bg-green-50 border-green-200 text-green-800"
+                  }`}
+                >
                   {isCheckInLate(checkInTime) ? (
                     <>
                       <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
@@ -305,7 +322,8 @@ const RegisterAttendancePageContent = () => {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">Llegada a tiempo</p>
                         <p className="text-xs">
-                          Dentro del horario (límite: {companyCheckinTime.checkInTime})
+                          Dentro del horario (límite:{" "}
+                          {companyCheckinTime.checkInTime})
                         </p>
                       </div>
                     </>
@@ -353,7 +371,10 @@ const RegisterAttendancePageContent = () => {
                       <button
                         key={employee.id}
                         onClick={() => {
-                          console.log("Empleado seleccionado (register):", employee);
+                          console.log(
+                            "Empleado seleccionado (register):",
+                            employee,
+                          );
                           setSelectedEmployee(employee);
                         }}
                         className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors ${
@@ -367,8 +388,12 @@ const RegisterAttendancePageContent = () => {
                             <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-sm sm:text-base truncate">{employee.name}</h3>
-                            <p className="text-xs sm:text-sm opacity-80 truncate">{employee.email}</p>
+                            <h3 className="font-medium text-sm sm:text-base truncate">
+                              {employee.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm opacity-80 truncate">
+                              {employee.email}
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -383,7 +408,7 @@ const RegisterAttendancePageContent = () => {
                       <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">
                         Registrar asistencia
                       </h2>
-                      
+
                       <div className="space-y-4 sm:space-y-6">
                         {/* Employee Info */}
                         <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
@@ -391,8 +416,12 @@ const RegisterAttendancePageContent = () => {
                             <UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-[#097EEC]" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{selectedEmployee.name}</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedEmployee.email}</p>
+                            <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                              {selectedEmployee.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">
+                              {selectedEmployee.email}
+                            </p>
                           </div>
                         </div>
 
@@ -457,8 +486,12 @@ const RegisterAttendancePageContent = () => {
                   ) : (
                     <div className="text-center py-12 px-4">
                       <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Selecciona un Empleado</h3>
-                      <p className="text-gray-500 text-sm sm:text-base">Elige un empleado para registrar su asistencia</p>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Selecciona un Empleado
+                      </h3>
+                      <p className="text-gray-500 text-sm sm:text-base">
+                        Elige un empleado para registrar su asistencia
+                      </p>
                     </div>
                   )}
                 </div>

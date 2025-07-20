@@ -2,12 +2,12 @@ import { User } from "./user.interface";
 import { Publication } from "./publication.interface";
 
 export enum ContractStatus {
-  PENDING = 'pending',
-  NEGOTIATING = 'negotiating',
-  ACCEPTED = 'accepted',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-  COMPLETED = 'completed'
+  PENDING = "pending",
+  NEGOTIATING = "negotiating",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected",
+  CANCELLED = "cancelled",
+  COMPLETED = "completed",
 }
 
 export interface ContractBid {
@@ -29,10 +29,11 @@ export interface Contract {
   client?: User;
   totalPrice: number;
   paymentMethod: string;
+  originalPaymentMethod?: string;
   serviceAddress: string;
   propertyType: string;
   neighborhood: string;
-  locationDescription?: string; 
+  locationDescription?: string;
   providerId: number;
   provider?: User;
   initialPrice: number;
@@ -59,6 +60,7 @@ export interface CreateContractDto {
   requestedDate: Date;
   requestedTime: string;
   paymentMethod: string;
+  originalPaymentMethod?: string;
   serviceAddress: string;
   propertyType: string;
   neighborhood: string;
@@ -77,9 +79,12 @@ export interface AcceptBidDto {
 
 export interface ProviderResponseDto {
   contractId: string;
-  action: ContractStatus.ACCEPTED | ContractStatus.REJECTED | ContractStatus.NEGOTIATING;
+  action:
+    | ContractStatus.ACCEPTED
+    | ContractStatus.REJECTED
+    | ContractStatus.NEGOTIATING;
   providerMessage?: string;
   counterOffer?: number;
   proposedDate?: Date;
   proposedTime?: string;
-} 
+}

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -6,6 +6,7 @@ import { Button } from './button';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { GalleryService, GalleryImage } from '@/services/gallery.service';
 import { ImageUpload } from './ImageUpload';
+import { ImageGallery } from "./ImageGallery";
 
 interface UserGalleryProps {
   userId: number;
@@ -15,12 +16,12 @@ interface UserGalleryProps {
   showSelection?: boolean;
 }
 
-export function UserGallery({ 
-  userId, 
-  className = '',
+export function UserGallery({
+  userId,
+  className = "",
   onImagesSelected,
   maxSelection = 5,
-  showSelection = false
+  showSelection = false,
 }: UserGalleryProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,29 +41,32 @@ export function UserGallery({
       const galleryImages = await GalleryService.getUserGallery();
       setImages(galleryImages);
     } catch (error) {
-      console.error('Error loading gallery:', error);
-      setError('Error al cargar la galería');
+      console.error("Error loading gallery:", error);
+      setError("Error al cargar la galería");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImagesUploaded = async (results: { url: string; path: string }[]) => {
+  const handleImagesUploaded = async (
+    results: { url: string; path: string }[],
+  ) => {
     try {
       setIsUploading(true);
       setError(null);
-      
+
       const uploadData = {
-        image_urls: results.map(r => r.url),
-        image_paths: results.map(r => r.path),
+        image_urls: results.map((r) => r.url),
+        image_paths: results.map((r) => r.path),
       };
 
-      const newImages = await GalleryService.uploadMultipleImagesToUserGallery(uploadData);
+      const newImages =
+        await GalleryService.uploadMultipleImagesToUserGallery(uploadData);
       setImages([...images, ...newImages]);
       setShowUpload(false);
     } catch (error) {
-      console.error('Error uploading images:', error);
-      setError('Error al subir las imágenes');
+      console.error("Error uploading images:", error);
+      setError("Error al subir las imágenes");
     } finally {
       setIsUploading(false);
     }
@@ -71,25 +75,27 @@ export function UserGallery({
   const handleDeleteImage = async (imageId: number) => {
     try {
       await GalleryService.deleteUserGalleryImage(imageId);
-      setImages(images.filter(img => img.id !== imageId));
+      setImages(images.filter((img) => img.id !== imageId));
       // También remover de seleccionados si estaba seleccionada
-      const imageToDelete = images.find(img => img.id === imageId);
+      const imageToDelete = images.find((img) => img.id === imageId);
       if (imageToDelete) {
-        setSelectedImages(selectedImages.filter(url => url !== imageToDelete.image_url));
+        setSelectedImages(
+          selectedImages.filter((url) => url !== imageToDelete.image_url),
+        );
       }
     } catch (error) {
-      console.error('Error deleting image:', error);
-      setError('Error al eliminar la imagen');
+      console.error("Error deleting image:", error);
+      setError("Error al eliminar la imagen");
     }
   };
 
   const handleImageSelect = (imageUrl: string) => {
     if (!showSelection) return;
 
-    setSelectedImages(prev => {
+    setSelectedImages((prev) => {
       if (prev.includes(imageUrl)) {
         // Deseleccionar
-        const newSelection = prev.filter(url => url !== imageUrl);
+        const newSelection = prev.filter((url) => url !== imageUrl);
         onImagesSelected?.(newSelection);
         return newSelection;
       } else {
@@ -107,8 +113,8 @@ export function UserGallery({
   };
 
   const handleImageDeselect = (imageUrl: string) => {
-    setSelectedImages(prev => {
-      const newSelection = prev.filter(url => url !== imageUrl);
+    setSelectedImages((prev) => {
+      const newSelection = prev.filter((url) => url !== imageUrl);
       onImagesSelected?.(newSelection);
       return newSelection;
     });
@@ -123,7 +129,10 @@ export function UserGallery({
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse"></div>
+            <div
+              key={i}
+              className="aspect-square bg-gray-200 rounded-lg animate-pulse"
+            ></div>
           ))}
         </div>
       </div>
@@ -137,10 +146,12 @@ export function UserGallery({
         <div>
           <h3 className="text-lg font-semibold text-gray-800">Mi Galería</h3>
           <p className="text-sm text-gray-600">
-            {images.length}/10 imágenes • {showSelection && `${selectedImages.length}/${maxSelection} seleccionadas`}
+            {images.length}/10 imágenes •{" "}
+            {showSelection &&
+              `${selectedImages.length}/${maxSelection} seleccionadas`}
           </p>
         </div>
-        
+
         {images.length < 10 && (
           <Button
             onClick={() => setShowUpload(!showUpload)}
@@ -185,8 +196,8 @@ export function UserGallery({
               key={image.id}
               className={`relative group aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                 showSelection && selectedImages.includes(image.image_url)
-                  ? 'border-blue-500 ring-2 ring-blue-200'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? "border-blue-500 ring-2 ring-blue-200"
+                  : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <Image
@@ -196,18 +207,24 @@ export function UserGallery({
                 height={300}
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Overlay con acciones */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                   {showSelection ? (
                     <Button
                       size="sm"
-                      variant={selectedImages.includes(image.image_url) ? "destructive" : "default"}
+                      variant={
+                        selectedImages.includes(image.image_url)
+                          ? "destructive"
+                          : "default"
+                      }
                       onClick={() => handleImageSelect(image.image_url)}
                       className="text-xs"
                     >
-                      {selectedImages.includes(image.image_url) ? 'Quitar' : 'Seleccionar'}
+                      {selectedImages.includes(image.image_url)
+                        ? "Quitar"
+                        : "Seleccionar"}
                     </Button>
                   ) : (
                     <Button
@@ -237,7 +254,9 @@ export function UserGallery({
             <Plus className="h-8 w-8 text-gray-400" />
           </div>
           <p className="text-gray-600 mb-2">No tienes imágenes en tu galería</p>
-          <p className="text-sm text-gray-500">Agrega hasta 10 fotos para usar en tus publicaciones</p>
+          <p className="text-sm text-gray-500">
+            Agrega hasta 10 fotos para usar en tus publicaciones
+          </p>
         </div>
       )}
 
@@ -270,4 +289,4 @@ export function UserGallery({
       )}
     </div>
   );
-} 
+}

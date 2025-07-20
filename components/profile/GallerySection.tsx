@@ -1,48 +1,53 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { ImageUpload } from '@/components/ui/ImageUpload';
-import { ImageGallery } from '@/components/ui/ImageGallery';
-import { GalleryService, GalleryImage } from '@/services/gallery.service';
-import { Button } from '@/components/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { ImageGallery } from "@/components/ui/ImageGallery";
+import { GalleryService, GalleryImage } from "@/services/gallery.service";
+import { Button } from "@/components/ui/button";
+import { Plus, Loader2 } from "lucide-react";
 
 interface GallerySectionProps {
   isCompany?: boolean;
   className?: string;
 }
 
-export function GallerySection({ isCompany = false, className = '' }: GallerySectionProps) {
+export function GallerySection({
+  isCompany = false,
+  className = "",
+}: GallerySectionProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
-  useEffect(() => {
-    loadGallery();
-  }, []);
-
-  const loadGallery = async () => {
+  const loadGallery = useCallback(async () => {
     try {
       setIsLoading(true);
-      const galleryImages = isCompany 
+      const galleryImages = isCompany
         ? await GalleryService.getCompanyGallery()
         : await GalleryService.getUserGallery();
       setImages(galleryImages);
     } catch (error) {
-      console.error('Error loading gallery:', error);
+      console.error("Error loading gallery:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isCompany]);
 
-  const handleImagesUploaded = async (results: { url: string; path: string }[]) => {
+  useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
+
+  const handleImagesUploaded = async (
+    results: { url: string; path: string }[],
+  ) => {
     try {
       setIsUploading(true);
-      
+
       const uploadData = {
-        image_urls: results.map(r => r.url),
-        image_paths: results.map(r => r.path),
+        image_urls: results.map((r) => r.url),
+        image_paths: results.map((r) => r.path),
       };
 
       const newImages = isCompany
@@ -52,7 +57,7 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
       setImages([...images, ...newImages]);
       setShowUpload(false);
     } catch (error) {
-      console.error('Error uploading images:', error);
+      console.error("Error uploading images:", error);
     } finally {
       setIsUploading(false);
     }
@@ -65,10 +70,10 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
       } else {
         await GalleryService.deleteUserGalleryImage(imageId);
       }
-      
-      setImages(images.filter(img => img.id !== imageId));
+
+      setImages(images.filter((img) => img.id !== imageId));
     } catch (error) {
-      console.error('Error deleting image:', error);
+      console.error("Error deleting image:", error);
     }
   };
 
@@ -79,11 +84,9 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
         ? await GalleryService.updateCompanyGalleryImage(imageId, updateData)
         : await GalleryService.updateUserGalleryImage(imageId, updateData);
 
-      setImages(images.map(img => 
-        img.id === imageId ? updatedImage : img
-      ));
+      setImages(images.map((img) => (img.id === imageId ? updatedImage : img)));
     } catch (error) {
-      console.error('Error updating image:', error);
+      console.error("Error updating image:", error);
     }
   };
 
@@ -95,7 +98,7 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
 
       setImages(reorderedImages);
     } catch (error) {
-      console.error('Error reordering images:', error);
+      console.error("Error reordering images:", error);
     }
   };
 
@@ -131,7 +134,7 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
             maxFiles={20 - images.length}
             folder={isCompany ? "company-gallery" : "gallery-images"}
             title="Subir Fotos a la Galería"
-            description={`Puedes subir hasta ${20 - images.length} foto${20 - images.length > 1 ? 's' : ''} más`}
+            description={`Puedes subir hasta ${20 - images.length} foto${20 - images.length > 1 ? "s" : ""} más`}
             className="mb-4"
           />
           {isUploading && (
@@ -156,11 +159,11 @@ export function GallerySection({ isCompany = false, className = '' }: GallerySec
       {images.length >= 20 && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            Has alcanzado el límite de 20 imágenes en tu galería. 
-            Elimina algunas fotos para poder agregar más.
+            Has alcanzado el límite de 20 imágenes en tu galería. Elimina
+            algunas fotos para poder agregar más.
           </p>
         </div>
       )}
     </div>
   );
-} 
+}

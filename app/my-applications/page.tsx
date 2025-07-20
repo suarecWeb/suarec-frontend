@@ -10,13 +10,13 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Search, 
-  Calendar, 
-  Eye, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Search,
+  Calendar,
+  Eye,
   Building2,
   FileText,
   Clock,
@@ -25,7 +25,7 @@ import {
   Trash2,
   ExternalLink,
   Users,
-} from 'lucide-react';
+} from "lucide-react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
@@ -54,18 +54,23 @@ const MyApplicationsPageContent = () => {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
       }
     }
   }, []);
 
   // Función para cargar aplicaciones del usuario
-  const fetchApplications = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+  const fetchApplications = async (
+    params: PaginationParams = { page: 1, limit: pagination.limit },
+  ) => {
     if (!currentUserId) return;
-    
+
     try {
       setLoading(true);
-      const response = await ApplicationService.getUserApplications(currentUserId.toString(), params);
+      const response = await ApplicationService.getUserApplications(
+        currentUserId.toString(),
+        params,
+      );
       setApplications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
@@ -94,9 +99,9 @@ const MyApplicationsPageContent = () => {
 
     try {
       await ApplicationService.deleteApplication(applicationId);
-      
+
       // Actualizar la lista de aplicaciones
-      setApplications(applications.filter(app => app.id !== applicationId));
+      setApplications(applications.filter((app) => app.id !== applicationId));
       setError(null);
     } catch (err) {
       console.error("Error al eliminar aplicación:", err);
@@ -108,10 +113,10 @@ const MyApplicationsPageContent = () => {
   // Filtrar aplicaciones según el término de búsqueda y estado
   const getFilteredApplications = () => {
     let filtered = applications;
-    
+
     // Filtrar por estado según la pestaña activa
     if (activeTab !== "all") {
-      filtered = filtered.filter(app => {
+      filtered = filtered.filter((app) => {
         switch (activeTab) {
           case "pending":
             return app.status === "PENDING";
@@ -126,16 +131,22 @@ const MyApplicationsPageContent = () => {
         }
       });
     }
-    
+
     // Filtrar por término de búsqueda
     if (searchTerm) {
-      filtered = filtered.filter(app => 
-        app.publication?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.publication?.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (app.message && app.message.toLowerCase().includes(searchTerm.toLowerCase()))
+      filtered = filtered.filter(
+        (app) =>
+          app.publication?.title
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          app.publication?.category
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (app.message &&
+            app.message.toLowerCase().includes(searchTerm.toLowerCase())),
       );
     }
-    
+
     return filtered;
   };
 
@@ -144,48 +155,48 @@ const MyApplicationsPageContent = () => {
   // Formatear fecha
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   const formatTime = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // Obtener color del estado
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'INTERVIEW':
-        return 'bg-blue-100 text-blue-800';
-      case 'ACCEPTED':
-        return 'bg-green-100 text-green-800';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800';
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800";
+      case "INTERVIEW":
+        return "bg-blue-100 text-blue-800";
+      case "ACCEPTED":
+        return "bg-green-100 text-green-800";
+      case "REJECTED":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   // Obtener texto del estado
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return 'Pendiente';
-      case 'INTERVIEW':
-        return 'En entrevista';
-      case 'ACCEPTED':
-        return 'Aceptada';
-      case 'REJECTED':
-        return 'Rechazada';
+      case "PENDING":
+        return "Pendiente";
+      case "INTERVIEW":
+        return "En entrevista";
+      case "ACCEPTED":
+        return "Aceptada";
+      case "REJECTED":
+        return "Rechazada";
       default:
         return status;
     }
@@ -194,13 +205,13 @@ const MyApplicationsPageContent = () => {
   // Obtener ícono del estado
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case "PENDING":
         return <Clock className="h-4 w-4" />;
-      case 'INTERVIEW':
+      case "INTERVIEW":
         return <Users className="h-4 w-4" />;
-      case 'ACCEPTED':
+      case "ACCEPTED":
         return <CheckCircle className="h-4 w-4" />;
-      case 'REJECTED':
+      case "REJECTED":
         return <XCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
@@ -210,20 +221,22 @@ const MyApplicationsPageContent = () => {
   // Renderizar tarjeta de aplicación
   const renderApplicationCard = (application: Application) => {
     return (
-      <div 
-        key={application.id} 
+      <div
+        key={application.id}
         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Header con estado y fecha */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}
+              >
                 {getStatusIcon(application.status)}
                 {getStatusText(application.status)}
               </span>
-              
-              {application.status === 'PENDING' && (
+
+              {application.status === "PENDING" && (
                 <button
                   onClick={() => handleDeleteApplication(application.id!)}
                   className="text-red-500 hover:text-red-700 transition-colors p-1"
@@ -233,7 +246,7 @@ const MyApplicationsPageContent = () => {
                 </button>
               )}
             </div>
-            
+
             <div className="text-xs text-gray-500">
               {formatDate(application.created_at)}
             </div>
@@ -241,7 +254,7 @@ const MyApplicationsPageContent = () => {
 
           {/* Información de la publicación */}
           <div className="mb-4">
-            <Link 
+            <Link
               href={`/publications/${application.publicationId}`}
               className="group"
             >
@@ -250,7 +263,7 @@ const MyApplicationsPageContent = () => {
                 <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
               </h3>
             </Link>
-            
+
             {application.publication?.category && (
               <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                 {application.publication.category}
@@ -263,7 +276,9 @@ const MyApplicationsPageContent = () => {
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Tu mensaje:</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Tu mensaje:
+                </span>
               </div>
               <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">
                 {application.message}
@@ -272,50 +287,61 @@ const MyApplicationsPageContent = () => {
           )}
 
           {/* Información adicional según el estado */}
-          {application.status === 'INTERVIEW' && (
+          {application.status === "INTERVIEW" && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-800">¡Invitado a entrevista!</span>
+                <span className="font-medium text-blue-800">
+                  ¡Invitado a entrevista!
+                </span>
               </div>
               <p className="text-blue-700 text-sm">
-                ¡Felicitaciones! Has pasado a la etapa de entrevista. La empresa se pondrá en contacto contigo pronto para coordinar los detalles.
+                ¡Felicitaciones! Has pasado a la etapa de entrevista. La empresa
+                se pondrá en contacto contigo pronto para coordinar los
+                detalles.
               </p>
             </div>
           )}
 
-          {application.status === 'ACCEPTED' && (
+          {application.status === "ACCEPTED" && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-800">¡Aplicación aceptada!</span>
+                <span className="font-medium text-green-800">
+                  ¡Aplicación aceptada!
+                </span>
               </div>
               <p className="text-green-700 text-sm">
-                La empresa ha aceptado tu aplicación. Deberían contactarte pronto para coordinar los siguientes pasos.
+                La empresa ha aceptado tu aplicación. Deberían contactarte
+                pronto para coordinar los siguientes pasos.
               </p>
             </div>
           )}
 
-          {application.status === 'REJECTED' && (
+          {application.status === "REJECTED" && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <XCircle className="h-5 w-5 text-red-600" />
-                <span className="font-medium text-red-800">Aplicación no seleccionada</span>
+                <span className="font-medium text-red-800">
+                  Aplicación no seleccionada
+                </span>
               </div>
               <p className="text-red-700 text-sm">
-                En esta ocasión no fuiste seleccionado para esta oportunidad. ¡No te desanimes y sigue aplicando!
+                En esta ocasión no fuiste seleccionado para esta oportunidad.
+                ¡No te desanimes y sigue aplicando!
               </p>
             </div>
           )}
 
-          {application.status === 'PENDING' && (
+          {application.status === "PENDING" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-5 w-5 text-yellow-600" />
                 <span className="font-medium text-yellow-800">En revisión</span>
               </div>
               <p className="text-yellow-700 text-sm">
-                Tu aplicación está siendo revisada por la empresa. Te notificaremos cuando haya una respuesta.
+                Tu aplicación está siendo revisada por la empresa. Te
+                notificaremos cuando haya una respuesta.
               </p>
             </div>
           )}
@@ -323,7 +349,10 @@ const MyApplicationsPageContent = () => {
           {/* Fecha y hora de aplicación */}
           <div className="flex items-center gap-2 text-xs text-gray-500 pt-4 border-t border-gray-100">
             <Clock className="h-3 w-3" />
-            <span>Aplicaste el {formatDate(application.created_at)} a las {formatTime(application.created_at)}</span>
+            <span>
+              Aplicaste el {formatDate(application.created_at)} a las{" "}
+              {formatTime(application.created_at)}
+            </span>
           </div>
         </div>
       </div>
@@ -335,20 +364,20 @@ const MyApplicationsPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-6 sm:py-8 pt-20 sm:pt-24">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Mis aplicaciones</h1>
-            <p className="mt-2 text-blue-100">
+            <h1 className="text-2xl sm:text-3xl font-bold">Mis aplicaciones</h1>
+            <p className="mt-2 text-blue-100 text-sm sm:text-base">
               Revisa el estado de todas tus aplicaciones laborales
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="container mx-auto px-4 -mt-4 sm:-mt-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
             {/* Actions Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
@@ -356,15 +385,15 @@ const MyApplicationsPageContent = () => {
                 <input
                   type="text"
                   placeholder="Buscar aplicaciones..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm sm:text-base"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <Link href="/publications">
-                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
+              <Link href="/publications" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2 text-sm sm:text-base">
+                  <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Ver oportunidades</span>
                 </button>
               </Link>
@@ -382,26 +411,41 @@ const MyApplicationsPageContent = () => {
             )}
 
             {/* Tabs for filtering applications */}
-            <Tabs 
-              defaultValue="all" 
-              value={activeTab} 
+            <Tabs
+              defaultValue="all"
+              value={activeTab}
               onValueChange={setActiveTab}
               className="mt-6"
             >
-              <TabsList className="grid grid-cols-5 mb-6 w-full sm:w-auto">
-                <TabsTrigger value="all" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6 w-full gap-1 sm:gap-0 h-auto p-1">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Todas
                 </TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="pending"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Pendientes
                 </TabsTrigger>
-                <TabsTrigger value="interview" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
-                  En entrevista
+                <TabsTrigger
+                  value="interview"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2 col-span-2 sm:col-span-1"
+                >
+                  Entrevista
                 </TabsTrigger>
-                <TabsTrigger value="accepted" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="accepted"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Aceptadas
                 </TabsTrigger>
-                <TabsTrigger value="rejected" className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white">
+                <TabsTrigger
+                  value="rejected"
+                  className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                >
                   Rechazadas
                 </TabsTrigger>
               </TabsList>
@@ -414,8 +458,10 @@ const MyApplicationsPageContent = () => {
                 ) : (
                   <>
                     {filteredApplications.length > 0 ? (
-                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredApplications.map(application => renderApplicationCard(application))}
+                      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                        {filteredApplications.map((application) =>
+                          renderApplicationCard(application),
+                        )}
                       </div>
                     ) : (
                       <div className="py-16 text-center">
@@ -423,19 +469,23 @@ const MyApplicationsPageContent = () => {
                           <Briefcase className="h-10 w-10 text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          {activeTab === "pending" && "No tienes aplicaciones pendientes"}
-                          {activeTab === "interview" && "No tienes aplicaciones en entrevista"}
-                          {activeTab === "accepted" && "No tienes aplicaciones aceptadas"}
-                          {activeTab === "rejected" && "No tienes aplicaciones rechazadas"}
-                          {activeTab === "all" && "No has hecho aplicaciones aún"}
+                          {activeTab === "pending" &&
+                            "No tienes aplicaciones pendientes"}
+                          {activeTab === "interview" &&
+                            "No tienes aplicaciones en entrevista"}
+                          {activeTab === "accepted" &&
+                            "No tienes aplicaciones aceptadas"}
+                          {activeTab === "rejected" &&
+                            "No tienes aplicaciones rechazadas"}
+                          {activeTab === "all" &&
+                            "No has hecho aplicaciones aún"}
                         </h3>
                         <p className="mt-2 text-gray-500">
-                          {searchTerm 
+                          {searchTerm
                             ? "No se encontraron aplicaciones que coincidan con tu búsqueda."
-                            : "Explora las oportunidades disponibles y comienza a aplicar."
-                          }
+                            : "Explora las oportunidades disponibles y comienza a aplicar."}
                         </p>
-                        
+
                         {!searchTerm && (
                           <Link href="/publications">
                             <button className="mt-4 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
@@ -457,11 +507,12 @@ const MyApplicationsPageContent = () => {
                         />
                       </div>
                     )}
-                    
+
                     {/* Results Summary */}
                     {!loading && !error && filteredApplications.length > 0 && (
                       <div className="mt-6 text-sm text-gray-500 text-center">
-                        Mostrando {filteredApplications.length} de {pagination.total} aplicaciones
+                        Mostrando {filteredApplications.length} de{" "}
+                        {pagination.total} aplicaciones
                       </div>
                     )}
                   </>
@@ -478,7 +529,7 @@ const MyApplicationsPageContent = () => {
 // Componente principal protegido con RoleGuard - solo personas pueden ver sus aplicaciones
 const MyApplicationsPage = () => {
   return (
-    <RoleGuard allowedRoles={['PERSON', 'ADMIN']}>
+    <RoleGuard allowedRoles={["PERSON", "ADMIN"]}>
       <MyApplicationsPageContent />
     </RoleGuard>
   );

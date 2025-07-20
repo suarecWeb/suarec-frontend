@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import SuarecLogo from "@/components/logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +17,12 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="container mx-auto">
           <Link href="/" className="inline-block">
             {/* <h1 className="text-2xl font-extrabold text-white">SUAREC</h1> */}
-            <SuarecLogo width={120} height={50} className="text-white" theme="dark" />
+            <SuarecLogo
+              width={120}
+              height={50}
+              className="text-white"
+              theme="dark"
+            />
           </Link>
         </div>
       </header>
@@ -31,22 +36,24 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Contenido principal - Ancho adaptativo según la página */}
       <div className="flex-grow flex justify-center items-center w-full px-4 py-8 relative z-10">
-        <div className={`w-full ${
-          // Usar clases dinámicas según la página
-          isRegistrationPage || isVerifyEmailPage
-            ? "max-w-4xl lg:max-w-5xl xl:max-w-6xl" // Ancho más equilibrado
-            : "max-w-[500px]" // Ancho original para otros contenidos
-        } bg-white rounded-xl shadow-2xl overflow-hidden`}>
-          <div className="p-8 md:p-10">
-            {children}
-          </div>
+        <div
+          className={`w-full ${
+            // Usar clases dinámicas según la página
+            isRegistrationPage || isVerifyEmailPage
+              ? "max-w-4xl lg:max-w-5xl xl:max-w-6xl" // Ancho más equilibrado
+              : "max-w-[500px]" // Ancho original para otros contenidos
+          } bg-white rounded-xl shadow-2xl overflow-hidden`}
+        >
+          <div className="p-8 md:p-10">{children}</div>
         </div>
       </div>
 
       {/* Footer */}
       <footer className="w-full py-4 text-center text-white/70 text-sm">
         <div className="container mx-auto">
-          <p>© {new Date().getFullYear()} SUAREC. Todos los derechos reservados.</p>
+          <p>
+            © {new Date().getFullYear()} SUAREC. Todos los derechos reservados.
+          </p>
         </div>
       </footer>
     </div>

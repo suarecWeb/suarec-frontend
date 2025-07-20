@@ -3,10 +3,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { X, Send, Loader2 } from 'lucide-react';
 import StarRating from './star-rating';
 import RatingService from '@/services/RatingService';
 import { RatingCategory } from '@/interfaces/rating.interface';
+import { X, Star, Send, Loader2 } from "lucide-react";
 
 interface RateUserModalProps {
   isOpen: boolean;
@@ -30,10 +30,10 @@ export default function RateUserModal({
   userToRate,
   workContractId,
   category = RatingCategory.SERVICE,
-  onRatingSubmitted
+  onRatingSubmitted,
 }: RateUserModalProps) {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,9 +41,9 @@ export default function RateUserModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (rating === 0) {
-      setError('Por favor selecciona una calificación');
+      setError("Por favor selecciona una calificación");
       return;
     }
 
@@ -57,17 +57,19 @@ export default function RateUserModal({
         stars: rating,
         comment: comment.trim() || undefined,
         category,
-        workContractId
+        workContractId,
       });
 
       onRatingSubmitted?.();
       onClose();
-      
+
       // Reset form
       setRating(0);
-      setComment('');
+      setComment("");
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al enviar la calificación');
+      setError(
+        err.response?.data?.message || "Error al enviar la calificación",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +77,7 @@ export default function RateUserModal({
 
   const handleClose = () => {
     setRating(0);
-    setComment('');
+    setComment("");
     setError(null);
     onClose();
   };
@@ -83,13 +85,13 @@ export default function RateUserModal({
   const getCategoryText = () => {
     switch (category) {
       case RatingCategory.SERVICE:
-        return 'como proveedor de servicio';
+        return "como proveedor de servicio";
       case RatingCategory.EMPLOYER:
-        return 'como empleador';
+        return "como empleador";
       case RatingCategory.EMPLOYEE:
-        return 'como empleado';
+        return "como empleado";
       default:
-        return '';
+        return "";
     }
   };
 

@@ -1,10 +1,12 @@
-import api from './axios_config';
-import { Experience } from '@/interfaces/user.interface';
+import api from "./axios_config";
+import { Experience } from "@/interfaces/user.interface";
 
-const baseURL = '/suarec/experiences';
+const baseURL = "/suarec/experiences";
 
 export class ExperienceService {
-  static async createExperience(experience: Omit<Experience, 'id' | 'created_at' | 'updated_at'>) {
+  static async createExperience(
+    experience: Omit<Experience, "id" | "created_at" | "updated_at">,
+  ) {
     return api.post(baseURL, experience);
   }
 
@@ -19,4 +21,4 @@ export class ExperienceService {
   static async deleteExperience(id: string) {
     return api.delete(`${baseURL}/${id}`);
   }
-} 
+}

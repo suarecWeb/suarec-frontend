@@ -3,8 +3,8 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { ImageWithFallback } from "./ImageWithFallback";
-import React, { useEffect, useState } from "react";
 import { Building2 } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
 
 export const InfiniteMovingCards = ({
   items,
@@ -32,20 +32,51 @@ export const InfiniteMovingCards = ({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    addAnimation();
-  }, [isMobile]); // Re-ejecutar cuando cambie el estado móvil
-
   const [start, setStart] = useState(false);
-  
-  function addAnimation() {
+
+  const getDirection = useCallback(() => {
+    if (containerRef.current) {
+      if (direction === "left") {
+        containerRef.current.style.setProperty(
+          "--animation-direction",
+          "forwards",
+        );
+      } else {
+        containerRef.current.style.setProperty(
+          "--animation-direction",
+          "reverse",
+        );
+      }
+    }
+  }, [direction]);
+
+  const getSpeed = useCallback(() => {
+    if (containerRef.current) {
+      // En móviles, usar velocidad "fast" sin importar el prop speed
+      const effectiveSpeed = isMobile ? "fast" : speed;
+
+      if (effectiveSpeed === "fast") {
+        containerRef.current.style.setProperty("--animation-duration", "40s");
+      } else if (effectiveSpeed === "normal") {
+        containerRef.current.style.setProperty("--animation-duration", "60s");
+      } else if (effectiveSpeed === "slow") {
+        containerRef.current.style.setProperty("--animation-duration", "120s");
+      } else if (effectiveSpeed === "very-slow") {
+        containerRef.current.style.setProperty("--animation-duration", "180s");
+      } else {
+        containerRef.current.style.setProperty("--animation-duration", "300s");
+      }
+    }
+  }, [isMobile, speed]);
+
+  const addAnimation = useCallback(() => {
     if (containerRef.current && scrollerRef.current) {
       const scrollerContent = Array.from(scrollerRef.current.children);
 
@@ -60,43 +91,12 @@ export const InfiniteMovingCards = ({
       getSpeed();
       setStart(true);
     }
-  }
-  
-  const getDirection = () => {
-    if (containerRef.current) {
-      if (direction === "left") {
-        containerRef.current.style.setProperty(
-          "--animation-direction",
-          "forwards",
-        );
-      } else {
-        containerRef.current.style.setProperty(
-          "--animation-direction",
-          "reverse",
-        );
-      }
-    }
-  };
-  
-  const getSpeed = () => {
-    if (containerRef.current) {
-      // En móviles, usar velocidad "fast" sin importar el prop speed
-      const effectiveSpeed = isMobile ? "fast" : speed;
-      
-      if (effectiveSpeed === "fast") {
-        containerRef.current.style.setProperty("--animation-duration", "40s");
-      } else if (effectiveSpeed === "normal") {
-        containerRef.current.style.setProperty("--animation-duration", "60s");
-      } else if (effectiveSpeed === "slow") {
-        containerRef.current.style.setProperty("--animation-duration", "120s");
-      } else if (effectiveSpeed === "very-slow") {
-        containerRef.current.style.setProperty("--animation-duration", "180s");
-      } else {
-        containerRef.current.style.setProperty("--animation-duration", "300s");
-      }
-    }
-  };
-  
+  }, [getDirection, getSpeed]);
+
+  useEffect(() => {
+    addAnimation();
+  }, [isMobile, addAnimation]); // Re-ejecutar cuando cambie el estado móvil
+
   return (
     <div
       ref={containerRef}
@@ -145,4 +145,4 @@ export const InfiniteMovingCards = ({
       </ul>
     </div>
   );
-}; 
+};

@@ -6,9 +6,8 @@ const getRoles = () => {
   return api.get(baseURL);
 };
 
-
 const RolesService = {
-    getRoles
+  getRoles,
 };
 
 export default RolesService;

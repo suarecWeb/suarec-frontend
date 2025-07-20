@@ -33,13 +33,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+    <html lang="en">
+      <body className={inter.className}>
         <NotificationProvider>
           <WebSocketProvider>
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
+            <div className="flex-1 flex flex-col">{children}</div>
             <ConditionalFooter />
           </WebSocketProvider>
         </NotificationProvider>

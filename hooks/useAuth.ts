@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
-import { TokenPayload } from '@/interfaces/auth.interface';
+import { useState, useEffect } from "react";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -19,13 +19,13 @@ export const useAuth = () => {
   });
 
   const updateAuthState = () => {
-    const token = Cookies.get('token');
-    
+    const token = Cookies.get("token");
+
     if (token) {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
-        const roles = decoded.roles?.map(role => role.name) || [];
-        
+        const roles = decoded.roles?.map((role) => role.name) || [];
+
         setAuthState({
           isAuthenticated: true,
           user: decoded,
@@ -33,7 +33,7 @@ export const useAuth = () => {
           isLoading: false,
         });
       } catch (error) {
-        console.error('Error al decodificar token:', error);
+        console.error("Error al decodificar token:", error);
         setAuthState({
           isAuthenticated: false,
           user: null,
@@ -59,12 +59,12 @@ export const useAuth = () => {
       updateAuthState();
     };
 
-    window.addEventListener('authStateChanged', handleAuthChange);
+    window.addEventListener("authStateChanged", handleAuthChange);
 
     return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange);
+      window.removeEventListener("authStateChanged", handleAuthChange);
     };
   }, []);
 
   return authState;
-}; 
+};

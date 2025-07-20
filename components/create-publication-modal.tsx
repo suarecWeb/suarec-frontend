@@ -8,9 +8,19 @@ import PublicationService from '../services/PublicationsService';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../interfaces/auth.interface';
-import { X, FileImage, Loader2, CheckCircle, Info, AlertCircle, ImageIcon } from 'lucide-react';
 import { UserGallery } from './ui/UserGallery';
 import SupabaseService from '../services/supabase.service';
+import {
+  X,
+  FileImage,
+  Loader2,
+  CheckCircle,
+  Info,
+  AlertCircle,
+  Image as ImageIcon,
+} from "lucide-react";
+import { calculatePriceWithTax } from "../lib/utils";
+import { formatCurrency } from "../lib/formatCurrency";
 
 interface CreatePublicationModalProps {
   isOpen: boolean;
@@ -54,14 +64,20 @@ const PRICE_UNITS = [
   "service", // Por servicio
 ];
 
-export default function CreatePublicationModal({ isOpen, onClose, onPublicationCreated }: CreatePublicationModalProps) {
+export default function CreatePublicationModal({
+  isOpen,
+  onClose,
+  onPublicationCreated,
+}: CreatePublicationModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedGalleryImages, setSelectedGalleryImages] = useState<string[]>([]);
+  const [selectedGalleryImages, setSelectedGalleryImages] = useState<string[]>(
+    [],
+  );
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const router = useRouter();
@@ -116,7 +132,10 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
   // Función para subir imágenes (real)
   const uploadImage = async (file: File): Promise<string> => {
     setUploading(true);
-    const result = await SupabaseService.uploadImage(file, "publication-images");
+    const result = await SupabaseService.uploadImage(
+      file,
+      "publication-images",
+    );
     setUploading(false);
     if (result.error) throw new Error(result.error);
     return result.url;
@@ -126,59 +145,62 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Obtener ID del usuario del token
       const token = Cookies.get("token");
       if (!token) {
         throw new Error("No se encontró token de autenticación");
       }
-      
+
       const decoded = jwtDecode<TokenPayload>(token);
       if (!decoded.id) {
         throw new Error("ID de usuario no encontrado en el token");
       }
-      
+
       // Subir imagen si existe
       let imageUrl = data.image_url;
       if (selectedFile) {
         imageUrl = await uploadImage(selectedFile);
       }
-      
+
       // Crear publicación - asegurar que el precio sea número
       const publicationData = {
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
         image_url: imageUrl || undefined,
-        gallery_images: selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
+        gallery_images:
+          selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
         price: data.price ? Number(data.price) : undefined, // Convertir explícitamente a número
         priceUnit: data.priceUnit || undefined,
-        created_at: new Date(), 
+        created_at: new Date(),
         modified_at: new Date(),
         userId: Number(decoded.id),
-        visitors: 0
+        visitors: 0,
       };
-            
-      const response = await PublicationService.createPublication(publicationData);
-      
+
+      const response =
+        await PublicationService.createPublication(publicationData);
+
       setSuccess("Publicación creada exitosamente");
       setIsLoading(false);
-      
+
       // Resetear formulario
       reset();
       setSelectedFile(null);
       setPreviewUrl(null);
-      
+
       // Cerrar modal y actualizar feed
       setTimeout(() => {
         onPublicationCreated?.();
         onClose();
         setSuccess(null);
       }, 2000);
-      
     } catch (err: any) {
       setIsLoading(false);
-      const errorMessage = err.response?.data?.message || "Error al crear la publicación. Inténtalo de nuevo.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Error al crear la publicación. Inténtalo de nuevo.";
       setError(errorMessage);
       console.error("Error al crear publicación:", err);
     }
@@ -207,7 +229,9 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">Crear Publicación</h2>
-              <p className="text-blue-100 text-sm">Comparte tus servicios o búsquedas con la comunidad</p>
+              <p className="text-blue-100 text-sm">
+                Comparte tus servicios o búsquedas con la comunidad
+              </p>
             </div>
             <button
               onClick={handleClose}
@@ -249,7 +273,10 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
               <div className="space-y-4">
                 {/* Title field */}
                 <div className="space-y-2">
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Título <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -263,19 +290,25 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                       required: "El título es obligatorio",
                       maxLength: {
                         value: 255,
-                        message: "El título no puede exceder los 255 caracteres",
+                        message:
+                          "El título no puede exceder los 255 caracteres",
                       },
                     })}
                     disabled={isLoading}
                   />
                   {errors.title && (
-                    <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.title.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Category field */}
                 <div className="space-y-2">
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="category"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Categoría <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -296,13 +329,18 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     ))}
                   </select>
                   {errors.category && (
-                    <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.category.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Description field */}
                 <div className="space-y-2">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Descripción <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -316,17 +354,21 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                       required: "La descripción es obligatoria",
                       minLength: {
                         value: 20,
-                        message: "La descripción debe tener al menos 20 caracteres",
+                        message:
+                          "La descripción debe tener al menos 20 caracteres",
                       },
                       maxLength: {
                         value: 500,
-                        message: "La descripción no puede exceder los 500 caracteres",
+                        message:
+                          "La descripción no puede exceder los 500 caracteres",
                       },
                     })}
                     disabled={isLoading}
                   ></textarea>
                   {errors.description ? (
-                    <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.description.message}
+                    </p>
                   ) : (
                     <p className="text-gray-500 text-xs">
                       Caracteres: {watch("description")?.length || 0}/500
@@ -337,7 +379,10 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                 {/* Precio */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="price"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Precio <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -348,18 +393,50 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                       required
                       {...register("price", {
                         valueAsNumber: true,
-                        min: { value: 0, message: "El precio debe ser mayor a 0" }
+                        min: {
+                          value: 0,
+                          message: "El precio debe ser mayor a 0",
+                        },
                       })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                       placeholder="Ej: 50.00"
                     />
                     {errors.price && (
-                      <p className="mt-1 text-xs text-red-600">{errors.price.message}</p>
+                      <p className="mt-1 text-xs text-red-600">
+                        {errors.price.message}
+                      </p>
                     )}
+
+                    {/* Mostrar precio con IVA en tiempo real */}
+                    {(() => {
+                      const priceValue = watch("price");
+
+                      // Validación robusta del precio
+                      if (!priceValue && priceValue !== 0) return null;
+
+                      const numericPrice = Number(priceValue);
+
+                      // Solo mostrar si es un número válido y mayor que 0
+                      if (isNaN(numericPrice) || numericPrice <= 0) return null;
+
+                      return (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                          <p className="text-xs text-green-700">
+                            <strong>Precio con IVA (19%):</strong>{" "}
+                            {formatCurrency(
+                              calculatePriceWithTax(numericPrice),
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div>
-                    <label htmlFor="priceUnit" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="priceUnit"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Unidad
                     </label>
                     <select
@@ -369,14 +446,25 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>
-                      <option value="project">Por proyecto</option>
-                      <option value="event">Por evento</option>
-                      <option value="monthly">Mensual</option>
-                      <option value="daily">Diario</option>
-                      <option value="weekly">Semanal</option>
-                      <option value="piece">Por pieza</option>
+                      <option value="monthly">Por mes</option>
+                      <option value="daily">Por día</option>
+                      <option value="weekly">Por semana</option>
                       <option value="service">Por servicio</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                  <div className="flex">
+                    <Info className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-yellow-700">
+                        <strong>Importante:</strong> El precio que ingreses es
+                        el precio base. Se aplicará automáticamente un 19% de
+                        IVA que será visible para los usuarios en el precio
+                        final mostrado en tu publicación.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -385,8 +473,10 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     <Info className="h-4 w-4 text-blue-400 mr-2 mt-0.5" />
                     <div>
                       <p className="text-xs text-blue-700">
-                        <strong>Consejo:</strong> Si especificas un precio, los usuarios podrán contratar tu servicio directamente. 
-                        Si no lo especificas, los usuarios te contactarán para negociar el precio.
+                        <strong>Consejo:</strong> Si especificas un precio, los
+                        usuarios podrán contratar tu servicio directamente. Si
+                        no lo especificas, los usuarios te contactarán para
+                        negociar el precio.
                       </p>
                     </div>
                   </div>
@@ -418,13 +508,19 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                             height={128}
                             className="w-full h-32 object-cover rounded-lg mx-auto"
                           />
-                          <p className="text-xs text-gray-500">Haz clic para cambiar la imagen</p>
+                          <p className="text-xs text-gray-500">
+                            Haz clic para cambiar la imagen
+                          </p>
                         </div>
                       ) : (
                         <div className="space-y-2">
                           <FileImage className="h-8 w-8 text-gray-400 mx-auto" />
-                          <p className="text-sm text-gray-600">Haz clic para subir una imagen</p>
-                          <p className="text-xs text-gray-500">PNG, JPG hasta 5MB</p>
+                          <p className="text-sm text-gray-600">
+                            Haz clic para subir una imagen
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG hasta 5MB
+                          </p>
                         </div>
                       )}
                     </label>
@@ -446,14 +542,17 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                       </label>
                       <button
                         type="button"
-                        onClick={() => setShowGallerySelector(!showGallerySelector)}
+                        onClick={() =>
+                          setShowGallerySelector(!showGallerySelector)
+                        }
                         className="text-sm text-[#097EEC] hover:text-[#0A6BC7] flex items-center gap-1"
                       >
                         <ImageIcon className="h-4 w-4" />
-                        {showGallerySelector ? 'Ocultar' : 'Seleccionar'} ({selectedGalleryImages.length}/5)
+                        {showGallerySelector ? "Ocultar" : "Seleccionar"} (
+                        {selectedGalleryImages.length}/5)
                       </button>
                     </div>
-                    
+
                     {showGallerySelector && (
                       <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                         <UserGallery
@@ -469,7 +568,8 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                     {selectedGalleryImages.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-sm text-gray-600">
-                          Imágenes seleccionadas: {selectedGalleryImages.length}/5
+                          Imágenes seleccionadas: {selectedGalleryImages.length}
+                          /5
                         </p>
                         <div className="grid grid-cols-5 gap-2">
                           {selectedGalleryImages.map((imageUrl, index) => (
@@ -483,7 +583,11 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
                               />
                               <button
                                 type="button"
-                                onClick={() => setSelectedGalleryImages(prev => prev.filter((_, i) => i !== index))}
+                                onClick={() =>
+                                  setSelectedGalleryImages((prev) =>
+                                    prev.filter((_, i) => i !== index),
+                                  )
+                                }
                                 className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                               >
                                 ×
@@ -531,4 +635,4 @@ export default function CreatePublicationModal({ isOpen, onClose, onPublicationC
       </div>
     </div>
   );
-} 
+}

@@ -1,21 +1,21 @@
 /* eslint-disable */
-"use client"
-import { useEffect, useState } from "react"
-import CompanyService from "@/services/CompanyService"
-import { Company } from "@/interfaces/company.interface"
-import { PaginationParams } from "@/interfaces/pagination-params.interface"
-import Navbar from "@/components/navbar"
-import { Pagination } from "@/components/ui/pagination"
-import RoleGuard from "@/components/role-guard"
-import { 
-  PlusCircle, 
-  Edit, 
-  Trash2, 
-  AlertCircle, 
-  Search, 
-  Building2, 
-  Mail, 
-  Phone, 
+"use client";
+import { useEffect, useState } from "react";
+import CompanyService from "@/services/CompanyService";
+import { Company } from "@/interfaces/company.interface";
+import { PaginationParams } from "@/interfaces/pagination-params.interface";
+import Navbar from "@/components/navbar";
+import { Pagination } from "@/components/ui/pagination";
+import RoleGuard from "@/components/role-guard";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Search,
+  Building2,
+  Mail,
+  Phone,
   Calendar,
   Eye,
   User,
@@ -28,12 +28,12 @@ import { TokenPayload } from "@/interfaces/auth.interface"
 import Image from "next/image"
 
 const CompaniesPageContent = () => {
-  const [companies, setCompanies] = useState<Company[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
-  const [userRoles, setUserRoles] = useState<string[]>([])
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -41,66 +41,68 @@ const CompaniesPageContent = () => {
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
-  })
+  });
 
   // Obtener información del usuario al cargar
   useEffect(() => {
-    const token = Cookies.get("token")
+    const token = Cookies.get("token");
     if (token) {
       try {
-        const decoded = jwtDecode<TokenPayload>(token)
-        setCurrentUserId(decoded.id)
-        setUserRoles(decoded.roles.map(role => role.name))
+        const decoded = jwtDecode<TokenPayload>(token);
+        setCurrentUserId(decoded.id);
+        setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error('Error al decodificar token:', error)
+        console.error("Error al decodificar token:", error);
       }
     }
-  }, [])
+  }, []);
 
   // Cargar empresas
-  const fetchCompanies = async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+  const fetchCompanies = async (
+    params: PaginationParams = { page: 1, limit: pagination.limit },
+  ) => {
     try {
-      setLoading(true)
-      const response = await CompanyService.getCompanies(params)
-      setCompanies(response.data.data)
-      setPagination(response.data.meta)
+      setLoading(true);
+      const response = await CompanyService.getCompanies(params);
+      setCompanies(response.data.data);
+      setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar las empresas")
-      console.error("Error al obtener empresas:", err)
+      setError("Error al cargar las empresas");
+      console.error("Error al obtener empresas:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchCompanies()
-  }, [])
+    fetchCompanies();
+  }, []);
 
   const handlePageChange = (page: number) => {
-    fetchCompanies({ page, limit: pagination.limit })
-  }
+    fetchCompanies({ page, limit: pagination.limit });
+  };
 
   // Verificar si el usuario es administrador
   const isAdmin = () => {
-    return userRoles.includes("ADMIN")
-  }
+    return userRoles.includes("ADMIN");
+  };
 
   const handleDelete = async (id: string) => {
     if (!isAdmin()) {
-      setError("No tienes permisos para eliminar empresas")
-      return
+      setError("No tienes permisos para eliminar empresas");
+      return;
     }
 
     if (confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
       try {
-        await CompanyService.deleteCompany(id)
-        fetchCompanies({ page: pagination.page, limit: pagination.limit })
+        await CompanyService.deleteCompany(id);
+        fetchCompanies({ page: pagination.page, limit: pagination.limit });
       } catch (err) {
-        console.error("Error al eliminar empresa:", err)
-        setError("Error al eliminar la empresa")
+        console.error("Error al eliminar empresa:", err);
+        setError("Error al eliminar la empresa");
       }
     }
-  }
+  };
 
   const filteredCompanies = searchTerm
     ? companies.filter(
@@ -109,16 +111,16 @@ const CompaniesPageContent = () => {
           company.nit.toLowerCase().includes(searchTerm.toLowerCase()) ||
           company.email.toLowerCase().includes(searchTerm.toLowerCase()),
       )
-    : companies
+    : companies;
 
   const formatDate = (dateString: Date | string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    })
-  }
+    });
+  };
 
   return (
     <>
@@ -128,7 +130,9 @@ const CompaniesPageContent = () => {
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold">Empresas</h1>
-            <p className="mt-2 text-blue-100">Explora y conoce las empresas registradas en la plataforma</p>
+            <p className="mt-2 text-blue-100">
+              Explora y conoce las empresas registradas en la plataforma
+            </p>
           </div>
         </div>
 
@@ -182,8 +186,8 @@ const CompaniesPageContent = () => {
                 {filteredCompanies.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredCompanies.map((company) => (
-                      <div 
-                        key={company.id} 
+                      <div
+                        key={company.id}
                         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                       >
                         <div className="p-6">
@@ -204,9 +208,13 @@ const CompaniesPageContent = () => {
                               </div>
                             )}
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-800 mb-1">{company.name}</h3>
-                              <p className="text-sm text-gray-500 font-medium">NIT: {company.nit}</p>
-                              
+                              <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                                {company.name}
+                              </h3>
+                              <p className="text-sm text-gray-500 font-medium">
+                                NIT: {company.nit}
+                              </p>
+
                               <div className="mt-4 space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Mail className="h-4 w-4 text-gray-400" />
@@ -218,12 +226,14 @@ const CompaniesPageContent = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="h-4 w-4 text-gray-400" />
-                                  <span>Fundada: {formatDate(company.born_at)}</span>
+                                  <span>
+                                    Fundada: {formatDate(company.born_at)}
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           </div>
-                          
+
                           {/* Actions */}
                           <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
                             <Link href={`/companies/${company.id}`}>
@@ -232,7 +242,7 @@ const CompaniesPageContent = () => {
                                 <span>Ver detalles</span>
                               </button>
                             </Link>
-                            
+
                             {isAdmin() && (
                               <div className="flex gap-3">
                                 <Link href={`/companies/${company.id}/edit`}>
@@ -241,9 +251,11 @@ const CompaniesPageContent = () => {
                                     <span>Editar</span>
                                   </button>
                                 </Link>
-                                
+
                                 <button
-                                  onClick={() => company.id && handleDelete(company.id)}
+                                  onClick={() =>
+                                    company.id && handleDelete(company.id)
+                                  }
                                   className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -261,8 +273,12 @@ const CompaniesPageContent = () => {
                     <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
                       <Building2 className="h-10 w-10 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">No hay empresas disponibles</h3>
-                    <p className="mt-2 text-gray-500">No se encontraron empresas que coincidan con tu búsqueda.</p>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No hay empresas disponibles
+                    </h3>
+                    <p className="mt-2 text-gray-500">
+                      No se encontraron empresas que coincidan con tu búsqueda.
+                    </p>
                   </div>
                 )}
 
@@ -280,7 +296,8 @@ const CompaniesPageContent = () => {
                 {/* Results Summary */}
                 {!loading && !error && filteredCompanies.length > 0 && (
                   <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredCompanies.length} de {pagination.total} empresas
+                    Mostrando {filteredCompanies.length} de {pagination.total}{" "}
+                    empresas
                   </div>
                 )}
               </>
@@ -289,8 +306,8 @@ const CompaniesPageContent = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
 // Componente principal protegido con RoleGuard
 const CompaniesPage = () => {
@@ -298,7 +315,7 @@ const CompaniesPage = () => {
     <RoleGuard allowedRoles={["ADMIN", "BUSINESS", "PERSON"]}>
       <CompaniesPageContent />
     </RoleGuard>
-  )
-}
+  );
+};
 
-export default CompaniesPage
+export default CompaniesPage;

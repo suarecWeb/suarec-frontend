@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Clock } from 'lucide-react';
 
@@ -13,4 +13,4 @@ const CountdownTimer = () => {
   );
 };
 
-export default CountdownTimer; 
+export default CountdownTimer;
