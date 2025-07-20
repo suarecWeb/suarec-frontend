@@ -59,7 +59,7 @@ export default function ContractsPage() {
     [contractId: string]: PaymentStatusByContractDto;
   }>({});
   const [activeTab, setActiveTab] = useState<"client" | "provider" | "all">(
-    "all",
+    "provider",
   );
 
   useEffect(() => {

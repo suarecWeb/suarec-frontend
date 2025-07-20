@@ -40,8 +40,7 @@ export class ContractService {
         );
 
         // Enviar notificación por email al proveedor sobre la nueva solicitud
-        // TODO: Cambiar cuando sirva BREVO
-        if (false) {
+        if (contract.provider.email) {
           await EmailVerificationService.sendServiceContractNotification({
             recipientEmail: contract.provider.email,
             recipientName: contract.provider.name,
@@ -149,7 +148,6 @@ export class ContractService {
           );
 
           // Enviar notificación por email al cliente sobre la respuesta del proveedor
-          // TODO: Cambiar cuando sirva BREVO
           if (updatedContract.client.email) {
             await EmailVerificationService.sendServiceContractNotification({
               recipientEmail: updatedContract.client.email,

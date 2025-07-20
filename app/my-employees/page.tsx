@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import CompanyService from "@/services/CompanyService";
+import MessageService from "@/services/MessageService";
+import EmailVerificationService from "@/services/EmailVerificationService";
 import { User } from "@/interfaces/user.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { Pagination } from "@/components/ui/pagination";
@@ -74,9 +76,14 @@ const RemoveEmployeeModal = ({
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
                   ¿Estás seguro de que deseas remover a{" "}
-                  <strong>{employeeName}</strong> de la empresa? Esta acción no
-                  se puede deshacer.
+                  <strong>{employeeName}</strong> de la empresa? Esta acción:
                 </p>
+                <ul className="text-sm text-gray-500 mt-2 ml-4 list-disc">
+                  <li>Removerá al empleado de la empresa</li>
+                  <li>Enviará una notificación automática por mensaje interno</li>
+                  <li>Enviará una notificación automática por correo electrónico</li>
+                  <li>No se puede deshacer</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -235,6 +242,11 @@ const MyEmployeesPageContent = () => {
     employeeId: string,
     employeeName: string,
   ) => {
+    if (!currentUserId) {
+      setError("Error: No se pudo identificar el usuario actual");
+      return;
+    }
+    
     setEmployeeToRemove({ id: employeeId, name: employeeName });
     setIsModalOpen(true);
     setOpenMenuId(null);
@@ -242,18 +254,56 @@ const MyEmployeesPageContent = () => {
 
   // Función para confirmar la eliminación
   const handleConfirmRemove = async () => {
-    if (!employeeToRemove || !companyId) return;
+    if (!employeeToRemove || !companyId || !currentUserId) return;
 
     setRemovingEmployee(employeeToRemove.id);
 
     try {
+      // Primero remover el empleado de la empresa
       await CompanyService.removeEmployee(companyId, employeeToRemove.id);
-      setSuccess(`${employeeToRemove.name} ha sido removido de la empresa`);
+      
+      // Enviar mensaje automático al empleado removido
+      try {
+        const messageContent = `Hola ${employeeToRemove.name}, te informamos que has sido removido de la empresa ${companyInfo?.name || 'la empresa'}. Si tienes alguna pregunta, por favor contacta con el administrador.`;
+        
+        await MessageService.createMessage({
+          content: messageContent,
+          senderId: currentUserId,
+          recipientId: parseInt(employeeToRemove.id)
+        });
+        
+        console.log('Mensaje de notificación enviado al empleado removido');
+      } catch (messageError) {
+        console.error('Error al enviar mensaje de notificación:', messageError);
+        // No bloqueamos el proceso si falla el mensaje
+      }
+
+      // Enviar correo electrónico de notificación de remoción
+      try {
+        const employeeData = employees.find(emp => emp.id === employeeToRemove.id);
+        if (employeeData?.email) {
+          await EmailVerificationService.sendEmployeeRemovalNotification({
+            employeeEmail: employeeData.email,
+            employeeName: employeeToRemove.name,
+            companyName: companyInfo?.name || 'la empresa',
+            removalReason: "TERMINATION",
+            customMessage: "Agradecemos tu dedicación durante este tiempo.",
+            endDate: new Date().toISOString().split('T')[0] // Fecha actual en formato YYYY-MM-DD
+          });
+          
+          console.log('Correo electrónico de notificación enviado al empleado removido');
+        }
+      } catch (emailError) {
+        console.error('Error al enviar correo electrónico de notificación:', emailError);
+        // No bloqueamos el proceso si falla el correo
+      }
+
+      setSuccess(`${employeeToRemove.name} ha sido removido de la empresa y se le ha enviado una notificación por mensaje y correo electrónico`);
 
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });
 
-      setTimeout(() => setSuccess(null), 3000);
+      setTimeout(() => setSuccess(null), 4000);
     } catch (err) {
       console.error("Error al remover empleado:", err);
       setError("Error al remover el empleado");
