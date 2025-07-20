@@ -25,6 +25,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { toast } from "react-hot-toast";
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -51,7 +52,7 @@ const CompaniesPageContent = () => {
         setCurrentUserId(decoded.id);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error("Error al decodificar token:", error);
+        toast.error("Error al decodificar el token");
       }
     }
   }, []);
@@ -66,8 +67,7 @@ const CompaniesPageContent = () => {
       setCompanies(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar las empresas");
-      console.error("Error al obtener empresas:", err);
+      toast.error("Error al cargar las empresas");
     } finally {
       setLoading(false);
     }
@@ -97,8 +97,7 @@ const CompaniesPageContent = () => {
         await CompanyService.deleteCompany(id);
         fetchCompanies({ page: pagination.page, limit: pagination.limit });
       } catch (err) {
-        console.error("Error al eliminar empresa:", err);
-        setError("Error al eliminar la empresa");
+        toast.error("Error al eliminar la empresa");
       }
     }
   };

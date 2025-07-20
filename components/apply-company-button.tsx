@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { Briefcase, Loader2, CheckCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ApplyCompanyButtonProps {
   companyId: string;
@@ -43,12 +44,14 @@ const ApplyCompanyButton = ({
         (role) => role.name === "PERSON",
       );
       if (!hasPersonRole) {
-        alert("Solo las personas pueden postularse a empresas");
+        toast.error(
+          "Debes tener un rol de 'Persona' para postularte a una empresa.",
+        );
         return;
       }
 
       if (currentUserId === companyUserId) {
-        alert("No puedes postularte a tu propia empresa");
+        toast.error("No puedes postularte a tu propia empresa");
         return;
       }
 
@@ -74,8 +77,7 @@ Saludos cordiales.`;
         setApplied(false);
       }, 2000);
     } catch (error) {
-      console.error("Error al postularse:", error);
-      alert("Error al enviar la postulación. Inténtalo de nuevo.");
+      toast.error("Error al enviar la postulación");
     } finally {
       setLoading(false);
     }
