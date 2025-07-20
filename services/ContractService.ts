@@ -9,6 +9,7 @@ import {
 import { CreateMessageDto } from "../interfaces/message.interface";
 import { TokenPayload } from "../interfaces/auth.interface";
 import MessageService from "./MessageService";
+import EmailVerificationService from "./EmailVerificationService";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
@@ -37,6 +38,24 @@ export class ContractService {
           contract.provider.id, // ID del proveedor (quien recibe)
           internalMessage
         );
+
+        // Enviar notificación por email al proveedor sobre la nueva solicitud
+        // TODO: Cambiar cuando sirva BREVO
+        if (false) {
+          await EmailVerificationService.sendServiceContractNotification({
+            recipientEmail: contract.provider.email,
+            recipientName: contract.provider.name,
+            notificationType: "IN_PROGRESS",
+            contractData: {
+              contractId: contract.id,
+              serviceTitle: serviceTitle,
+              clientName: clientName,
+              agreedPrice: contract.totalPrice,
+              currency: "COP",
+              customMessage: contract.clientMessage
+            }
+          });
+        }
       }
     } catch (notificationError) {
       console.error("Error sending contract creation notification:", notificationError);
@@ -101,20 +120,25 @@ export class ContractService {
           const serviceTitle = updatedContract.publication?.title || "Tu servicio solicitado";
           
           let internalMessage: string;
+          let emailNotificationType: "ACCEPTED" | "REJECTED" | "IN_PROGRESS";
 
           // Determinar el mensaje basado en la acción
           switch (data.action) {
             case "accepted":
               internalMessage = `✅ ¡Buenas noticias! ${providerName} ha aceptado tu solicitud para "${serviceTitle}". Puedes coordinar los detalles en la sección de contratos.`;
+              emailNotificationType = "ACCEPTED";
               break;
             case "rejected":
               internalMessage = `❌ ${providerName} ha rechazado tu solicitud para "${serviceTitle}". Puedes buscar otros proveedores o contactar directamente para más información.`;
+              emailNotificationType = "REJECTED";
               break;
             case "negotiating":
               internalMessage = `💬 ${providerName} ha propuesto cambios en tu solicitud para "${serviceTitle}". Revisa la propuesta en la sección de contratos.`;
+              emailNotificationType = "IN_PROGRESS";
               break;
             default:
               internalMessage = `📋 ${providerName} ha respondido a tu solicitud para "${serviceTitle}". Revisa los detalles en la sección de contratos.`;
+              emailNotificationType = "IN_PROGRESS";
           }
 
           // Notificación interna para el cliente
@@ -123,6 +147,24 @@ export class ContractService {
             updatedContract.client.id, // ID del cliente (quien recibe)
             internalMessage
           );
+
+          // Enviar notificación por email al cliente sobre la respuesta del proveedor
+          // TODO: Cambiar cuando sirva BREVO
+          if (updatedContract.client.email) {
+            await EmailVerificationService.sendServiceContractNotification({
+              recipientEmail: updatedContract.client.email,
+              recipientName: updatedContract.client.name,
+              notificationType: emailNotificationType,
+              contractData: {
+                contractId: updatedContract.id,
+                serviceTitle: serviceTitle,
+                providerName: providerName,
+                agreedPrice: updatedContract.currentPrice || updatedContract.totalPrice,
+                currency: "COP",
+                customMessage: data.providerMessage
+              }
+            });
+          }
         }
       } catch (notificationError) {
         console.error("Error sending provider response notification:", notificationError);
