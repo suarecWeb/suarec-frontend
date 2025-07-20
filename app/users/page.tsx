@@ -15,6 +15,8 @@ import {
   UserIcon,
   Mail,
   Shield,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -74,6 +76,23 @@ const UsersPageContent = () => {
         console.error("Error al eliminar usuario:", err);
         setError("Error al eliminar el usuario");
       }
+    }
+  };
+
+  const handleVerificationToggle = async (id: string, currentStatus: boolean) => {
+    try {
+      const updateData = { isVerify: !currentStatus };
+      
+      await UserService.partialUpdateUser(id, updateData);
+      
+      // Actualizar el estado local inmediatamente
+      setUsers(prev => 
+        prev.map(user => 
+          user.id === id ? { ...user, isVerify: !currentStatus } : user
+        )
+      );
+    } catch (err) {
+      setError("Error al actualizar la verificación del usuario");
     }
   };
 
@@ -189,6 +208,12 @@ const UsersPageContent = () => {
                           </th>
                           <th
                             scope="col"
+                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Verificado
+                          </th>
+                          <th
+                            scope="col"
                             className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
                             Acciones
@@ -240,6 +265,26 @@ const UsersPageContent = () => {
                                   Sin rol
                                 </span>
                               )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <div className="flex items-center justify-center">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={user.isVerify || false}
+                                    onChange={() =>
+                                      user.id && handleVerificationToggle(user.id, user.isVerify || false)
+                                    }
+                                  />
+                                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#097EEC]"></div>
+                                </label>
+                                {user.isVerify ? (
+                                  <CheckCircle className="h-5 w-5 text-green-500 ml-2" />
+                                ) : (
+                                  <XCircle className="h-5 w-5 text-red-500 ml-2" />
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex justify-end gap-3">
