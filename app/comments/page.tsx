@@ -4,6 +4,7 @@ import CommentService from "@/services/CommentsService";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import RoleGuard from "@/components/role-guard";
+import toast from "react-hot-toast";
 
 interface Comment {
   id: string;
@@ -26,7 +27,6 @@ const CommentsPageContent = () => {
     setLoading(true);
     CommentService.getComments()
       .then((res: any) => {
-        console.log("Respuesta del servicio:", res.data);
         // Verificar si la respuesta tiene la estructura esperada con paginación
         if (res.data && res.data.data && Array.isArray(res.data.data)) {
           setComments(res.data.data);
@@ -34,14 +34,12 @@ const CommentsPageContent = () => {
           // Compatibilidad con la estructura anterior
           setComments(res.data);
         } else {
-          console.error("Formato de respuesta inesperado:", res.data);
-          setError("Error en el formato de los datos");
+          toast.error("Error en el formato de los datos");
           setComments([]);
         }
       })
       .catch((err: any) => {
-        console.error("Error al obtener comentarios:", err);
-        setError("Error al cargar los comentarios");
+        toast.error("Error al cargar los comentarios");
       })
       .finally(() => {
         setLoading(false);
@@ -51,10 +49,12 @@ const CommentsPageContent = () => {
   const handleDelete = (id: string) => {
     CommentService.deleteComment(id)
       .then(() => {
-        alert("Comentario eliminado correctamente");
+        toast.success("Comentario eliminado correctamente");
         fetchComments(); // Recargar la lista de comentarios
       })
-      .catch((err) => console.error("Error al eliminar comentario:", err));
+      .catch((err) => {
+        toast.error("Error al eliminar el comentario");
+      });
   };
 
   return (

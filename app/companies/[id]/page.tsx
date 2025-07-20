@@ -29,6 +29,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 export default function CompanyDetailsPage({
   params,
@@ -50,7 +51,7 @@ export default function CompanyDetailsPage({
         setCurrentUserId(decoded.id);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error("Error al decodificar token:", error);
+        toast.error("Error al decodificar el token");
       }
     }
   }, []);
@@ -61,8 +62,7 @@ export default function CompanyDetailsPage({
         const response = await CompanyService.getCompanyById(params.id);
         setCompany(response.data);
       } catch (err) {
-        setError("Error al cargar la empresa");
-        console.error("Error:", err);
+        toast.error("Error al cargar la empresa");
       } finally {
         setLoading(false);
       }

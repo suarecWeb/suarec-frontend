@@ -41,6 +41,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import StartChatButton from "@/components/start-chat-button";
 import DownloadCVButton from "@/components/download-cv-button";
 import PublicationService from "@/services/PublicationsService";
+import toast from "react-hot-toast";
 
 interface PublicProfilePageProps {
   params: {
@@ -652,12 +653,8 @@ const PublicProfilePage = () => {
                                               // Recargar la página para actualizar la lista
                                               window.location.reload();
                                             } catch (error) {
-                                              console.error(
-                                                "Error al eliminar publicación:",
-                                                error,
-                                              );
-                                              alert(
-                                                "Error al eliminar la publicación",
+                                              toast.error(
+                                                "No se pudo eliminar la publicación.",
                                               );
                                             }
                                           }
