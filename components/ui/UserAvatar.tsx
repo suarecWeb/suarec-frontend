@@ -124,15 +124,8 @@ export function UserAvatar({
             width={96}
             height={96}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Si la imagen falla, mostrar iniciales
-              const target = e.target as HTMLImageElement;
-              target.style.display = "none";
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `<span class="text-white font-semibold">${getInitials(user.name)}</span>`;
-              }
-            }}
+            fallbackIcon={<span className="text-white font-semibold">{getInitials(user.name)}</span>}
+            fallbackText=""
           />
         ) : (
           <User className={iconSizes[size]} />

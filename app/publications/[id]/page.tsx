@@ -50,6 +50,7 @@ import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import RatingService from "@/services/RatingService";
 import { Star } from "lucide-react";
+import toast from "react-hot-toast";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -275,8 +276,8 @@ const PublicationDetailPage = () => {
     } else {
       navigator.clipboard
         .writeText(window.location.href)
-        .then(() => alert("Enlace copiado al portapapeles"))
-        .catch((error) => console.error("Error al copiar enlace:", error));
+        .then(() => toast.success("Enlace copiado al portapapeles"))
+        .catch((error) => toast.error("Error al copiar enlace:", error));
     }
   };
 

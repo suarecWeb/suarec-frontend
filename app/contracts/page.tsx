@@ -33,6 +33,7 @@ import {
 } from "../../services/PaymentService";
 import { WompiService } from "../../services/WompiService";
 import StartChatButton from "@/components/start-chat-button";
+import toast from "react-hot-toast";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -104,9 +105,8 @@ export default function ContractsPage() {
           );
           return { contractId: contract.id, status: paymentStatus };
         } catch (error) {
-          console.error(
-            `Error loading payment status for contract ${contract.id}:`,
-            error,
+          toast.error(
+            `Error al cargar el estado de pago para el contrato ${contract.id}: ${error instanceof Error ? error.message : "Error desconocido"}`,
           );
           return null;
         }
@@ -125,7 +125,7 @@ export default function ContractsPage() {
 
       setContractPaymentStatus(paymentStatusMap);
     } catch (error) {
-      console.error("Error loading contracts:", error);
+      toast.error("Error al cargar el estado de pago");
     } finally {
       setIsLoading(false);
     }
@@ -136,8 +136,7 @@ export default function ContractsPage() {
       await ContractService.acceptBid({ bidId });
       loadContracts(); // Recargar para ver los cambios
     } catch (error) {
-      console.error("Error accepting bid:", error);
-      alert("Error al aceptar la oferta");
+      toast.error("Error al aceptar la oferta");
     }
   };
 
@@ -145,18 +144,18 @@ export default function ContractsPage() {
     try {
       // Validar que los checkboxes estén marcados
       if (!acceptPolicy || !acceptPersonal) {
-        alert(
+        toast.error(
           "Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.",
         );
         return;
       }
 
       if (!contract.provider || !contract.provider.id) {
-        alert("No se encontró el proveedor para este contrato.");
+        toast.error("No se encontró el proveedor para este contrato.");
         return;
       }
       if (!acceptanceTokens) {
-        alert("No se pudieron obtener los contratos de Wompi.");
+        toast.error("No se pudieron obtener los contratos de Wompi.");
         return;
       }
       const paymentData = {
@@ -175,10 +174,10 @@ export default function ContractsPage() {
       if (payment && payment.wompi_payment_link) {
         window.location.href = payment.wompi_payment_link;
       } else {
-        alert("No se pudo obtener la URL de pago.");
+        toast.error("No se pudo obtener la URL de pago.");
       }
     } catch (err) {
-      alert("Error al iniciar el pago.");
+      toast.error("Error al iniciar el pago.");
     }
   };
 

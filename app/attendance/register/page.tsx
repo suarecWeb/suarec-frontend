@@ -120,7 +120,6 @@ const RegisterAttendancePageContent = () => {
   };
 
   const handleRegisterAttendance = async () => {
-    console.log("Empleado para registrar (register):", selectedEmployee);
     if (!selectedEmployee || !selectedEmployee.id) {
       setError("Por favor selecciona un empleado válido.");
       return;
@@ -176,7 +175,6 @@ const RegisterAttendancePageContent = () => {
   };
 
   const filteredEmployees = employees.filter((employee) => {
-    console.log("Empleado en lista (register):", employee);
     return (
       employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -371,10 +369,6 @@ const RegisterAttendancePageContent = () => {
                       <button
                         key={employee.id}
                         onClick={() => {
-                          console.log(
-                            "Empleado seleccionado (register):",
-                            employee,
-                          );
                           setSelectedEmployee(employee);
                         }}
                         className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors ${

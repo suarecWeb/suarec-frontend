@@ -15,6 +15,7 @@ import CommentService from "@/services/CommentsService";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
+import toast from "react-hot-toast";
 
 const CommentPageContent = () => {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -44,8 +45,7 @@ const CommentPageContent = () => {
       );
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar los comentarios");
-      console.error("Error al obtener comentarios:", err);
+      toast.error("Error al cargar los comentarios");
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ const CommentPageContent = () => {
       // Recargar la página actual después de eliminar
       fetchComments({ page: pagination.page, limit: pagination.limit });
     } catch (err) {
-      console.error("Error al eliminar comentario:", err);
+      toast.error("Error al eliminar el comentario");
     }
   };
 
