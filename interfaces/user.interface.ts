@@ -61,6 +61,7 @@ export interface User {
   roles?: string[] | { id: string; name: string }[] | undefined;
   profession?: string;
   skills?: string[];
+  isVerify?: boolean;
 
   // Relaciones
   company?: Company;

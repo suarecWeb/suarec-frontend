@@ -28,8 +28,8 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
-import Image from 'next/image';
-import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
+import Image from "next/image";
+import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 
 const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -224,19 +224,20 @@ const PublicationsPageContent = () => {
           {/* Publication Image */}
           <div className="h-40 bg-gray-200 relative">
             {publication.image_url ? (
-              <ImageWithFallback 
-                src={publication.image_url} 
-                alt={publication.title} 
+              <ImageWithFallback
+                src={publication.image_url}
+                alt={publication.title}
                 width={400}
                 height={160}
                 className="w-full h-full object-cover"
                 fallbackIcon={<Building2 className="h-8 w-8" />}
                 fallbackText="Sin imagen"
               />
-            ) : publication.gallery_images && publication.gallery_images.length > 0 ? (
-              <ImageWithFallback 
-                src={publication.gallery_images[0]} 
-                alt={publication.title} 
+            ) : publication.gallery_images &&
+              publication.gallery_images.length > 0 ? (
+              <ImageWithFallback
+                src={publication.gallery_images[0]}
+                alt={publication.title}
                 width={400}
                 height={160}
                 className="w-full h-full object-cover"

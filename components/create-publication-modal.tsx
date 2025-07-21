@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
-import PublicationService from '../services/PublicationsService';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
-import { TokenPayload } from '../interfaces/auth.interface';
-import { UserGallery } from './ui/UserGallery';
-import SupabaseService from '../services/supabase.service';
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import PublicationService from "../services/PublicationsService";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "../interfaces/auth.interface";
+import { UserGallery } from "./ui/UserGallery";
+import SupabaseService from "../services/supabase.service";
 import {
   X,
   FileImage,
