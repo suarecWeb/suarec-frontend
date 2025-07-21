@@ -417,7 +417,7 @@ export default function CompanyDetailsPage({
                     />
                   )}
 
-                  {currentUserId && (
+                  {isOwnerOrAdmin() && (
                     <Link href={`/companies/${company.id}/employees`}>
                       <Button
                         variant="outline"

@@ -64,14 +64,17 @@ const updateApplication = async (
       const application = response.data;
 
       // Verificar que tenemos toda la información necesaria
-      if (application.user?.id) {
+      const userId = application.user?.id || application.userId;
+      const companyId = application.publication?.user?.company?.id;
+
+      if (userId && companyId && !isNaN(Number(userId))) {
         try {
           // Agregar el usuario como empleado de la empresa
           await api.post(
-            `suarec/companies/${application.publication?.user?.company?.id}/employees/${application.user.id}`,
+            `suarec/companies/${companyId}/employees/${userId}`,
           );
           console.log(
-            `Usuario ${application.user.id} agregado como empleado de la empresa ${application.publication?.user?.company?.id}`,
+            `Usuario ${userId} agregado como empleado de la empresa ${companyId}`,
           );
         } catch (employeeError) {
           console.warn(
@@ -80,6 +83,10 @@ const updateApplication = async (
           );
           // No lanzamos el error para no afectar la actualización de la aplicación
         }
+      } else {
+        console.warn(
+          `No se pudo agregar empleado automáticamente: userId=${userId}, companyId=${companyId}`,
+        );
       }
     }
 

@@ -35,6 +35,7 @@ import {
   X,
 } from "lucide-react";
 import DownloadCVButton from "@/components/download-cv-button";
+import BulkEmployeeUpload from "@/components/bulk-employee-upload";
 
 // Modal de confirmación
 const RemoveEmployeeModal = ({
@@ -124,6 +125,7 @@ const MyEmployeesPageContent = () => {
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [removingEmployee, setRemovingEmployee] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Estados para la modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -385,22 +387,48 @@ const MyEmployeesPageContent = () => {
                 />
               </div>
 
-              {/* Attendance Actions */}
+              {/* Actions */}
               <div className="flex gap-3 flex-wrap">
-                <a
-                  href="/attendance"
-                  className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Control de Asistencia
-                </a>
-                <a
-                  href="/attendance/register"
-                  className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Registrar Asistencia
-                </a>
+                {showBulkUpload ? (
+                  <button
+                    onClick={() => {
+                      setShowBulkUpload(false);
+                      setSearchTerm("");
+                    }}
+                    className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                  >
+                    <X className="h-4 w-4" />
+                    Volver
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowBulkUpload(true);
+                        setSearchTerm("");
+                      }}
+                      disabled={!companyId}
+                      className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Users className="h-4 w-4" />
+                      Carga Masiva
+                    </button>
+                    <a
+                      href="/attendance"
+                      className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors font-medium"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Control de Asistencia
+                    </a>
+                    <a
+                      href="/attendance/register"
+                      className="inline-flex items-center gap-2 w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Registrar Asistencia
+                    </a>
+                  </>
+                )}
               </div>
             </div>
 
@@ -432,8 +460,32 @@ const MyEmployeesPageContent = () => {
               </div>
             ) : (
               <>
-                {/* Employees Grid */}
-                {filteredEmployees.length > 0 ? (
+                {/* Bulk Upload Section */}
+                {showBulkUpload ? (
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <Users className="h-6 w-6 text-green-600" />
+                      Carga Masiva de Empleados
+                    </h2>
+                    {companyId ? (
+                      <BulkEmployeeUpload 
+                        companyId={companyId}
+                        onSuccess={() => {
+                          fetchEmployees({ page: pagination.page, limit: pagination.limit });
+                          setShowBulkUpload(false);
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#097EEC] mx-auto mb-4"></div>
+                        <p className="text-gray-600">Cargando información de la empresa...</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Employees Grid */}
+                    {filteredEmployees.length > 0 ? (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredEmployees.map((employee) => (
                       <div
@@ -692,6 +744,8 @@ const MyEmployeesPageContent = () => {
                     Mostrando {filteredEmployees.length} de {pagination.total}{" "}
                     empleados
                   </div>
+                )}
+                  </>
                 )}
               </>
             )}
