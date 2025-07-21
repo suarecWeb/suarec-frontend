@@ -1,11 +1,12 @@
 // components/rate-user-modal.tsx
 "use client";
 
-import { useState } from "react";
-import { X, Star, Send, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import Image from "next/image";
 import StarRating from "./star-rating";
 import RatingService from "@/services/RatingService";
 import { RatingCategory } from "@/interfaces/rating.interface";
+import { X, Star, Send, Loader2 } from "lucide-react";
 
 interface RateUserModalProps {
   isOpen: boolean;
@@ -117,9 +118,11 @@ export default function RateUserModal({
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
               {userToRate.profile_image ? (
-                <img
+                <Image
                   src={userToRate.profile_image}
                   alt={userToRate.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (

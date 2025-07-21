@@ -115,7 +115,7 @@ const AttendancePageContent = () => {
         startDate,
         endDate,
       );
-      console.log("Estadísticas de asistencia de la empresa:", response);
+
       setCompanyAttendanceStats(response);
     } catch (err) {
       console.error("Error al obtener estadísticas de la empresa:", err);
@@ -179,7 +179,6 @@ const AttendancePageContent = () => {
         ),
         AttendanceService.getEmployeeAttendanceStats(parseInt(employeeId)),
       ]);
-      console.log("Registros de asistencia del empleado:", attendanceResponse);
       setAttendanceRecords(attendanceResponse);
       setAttendanceStats(statsResponse);
     } catch (err) {
@@ -195,7 +194,6 @@ const AttendancePageContent = () => {
       setError("ID de empleado no válido");
       return;
     }
-    console.log("Empleado seleccionado:", employee);
     setSelectedEmployee(employee);
     fetchEmployeeAttendance(employee.id.toString());
   };

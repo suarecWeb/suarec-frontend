@@ -25,7 +25,7 @@ import {
   Receipt,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
-import { translatePriceUnit } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
@@ -34,6 +34,7 @@ import {
 } from "../../services/PaymentService";
 import { WompiService } from "../../services/WompiService";
 import StartChatButton from "@/components/start-chat-button";
+import toast from "react-hot-toast";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -106,9 +107,8 @@ export default function ContractsPage() {
           );
           return { contractId: contract.id, status: paymentStatus };
         } catch (error) {
-          console.error(
-            `Error loading payment status for contract ${contract.id}:`,
-            error,
+          toast.error(
+            `Error al cargar el estado de pago para el contrato ${contract.id}: ${error instanceof Error ? error.message : "Error desconocido"}`,
           );
           return null;
         }
@@ -127,7 +127,7 @@ export default function ContractsPage() {
 
       setContractPaymentStatus(paymentStatusMap);
     } catch (error) {
-      console.error("Error loading contracts:", error);
+      toast.error("Error al cargar el estado de pago");
     } finally {
       setIsLoading(false);
     }
@@ -138,8 +138,7 @@ export default function ContractsPage() {
       await ContractService.acceptBid({ bidId });
       loadContracts(); // Recargar para ver los cambios
     } catch (error) {
-      console.error("Error accepting bid:", error);
-      showNotification("Error al aceptar la oferta", "error");
+      toast.error("Error al aceptar la oferta");
     }
   };
 
@@ -147,25 +146,18 @@ export default function ContractsPage() {
     try {
       // Validar que los checkboxes estén marcados
       if (!acceptPolicy || !acceptPersonal) {
-        showNotification(
+        toast.error(
           "Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.",
-          "error",
         );
         return;
       }
 
       if (!contract.provider || !contract.provider.id) {
-        showNotification(
-          "No se encontró el proveedor para este contrato.",
-          "error",
-        );
+        toast.error("No se encontró el proveedor para este contrato.");
         return;
       }
       if (!acceptanceTokens) {
-        showNotification(
-          "No se pudieron obtener los contratos de Wompi.",
-          "error",
-        );
+        toast.error("No se pudieron obtener los contratos de Wompi.");
         return;
       }
       const paymentData = {
@@ -184,10 +176,10 @@ export default function ContractsPage() {
       if (payment && payment.wompi_payment_link) {
         window.location.href = payment.wompi_payment_link;
       } else {
-        showNotification("No se pudo obtener la URL de pago.", "error");
+        toast.error("No se pudo obtener la URL de pago.");
       }
     } catch (err) {
-      showNotification("Error al iniciar el pago.", "error");
+      toast.error("Error al iniciar el pago.");
     }
   };
 
@@ -243,7 +235,6 @@ export default function ContractsPage() {
     return (
       contract.status === ContractStatus.ACCEPTED &&
       contract.paymentMethod &&
-      contract.paymentMethod !== "efectivo" &&
       contract.totalPrice
     );
   };
@@ -494,7 +485,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              contract.initialPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.initialPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -509,7 +502,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
                             {formatCurrency(
-                              contract.currentPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.currentPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -793,6 +788,43 @@ export default function ContractsPage() {
                           />
                         )}
 
+                        {/* Cash Payment Advice */}
+                        {shouldShowPaymentButton(contract) &&
+                          contract.originalPaymentMethod === "efectivo" && (
+                            <div className="ml-auto mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg max-w-lg">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <span className="text-amber-600 text-sm">
+                                      💡
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-sm font-medium text-amber-800 mb-1">
+                                    💰 Consejo para pago en efectivo
+                                  </h4>
+                                  <p className="text-xs text-amber-700 leading-relaxed mb-2">
+                                    Al hacer clic en &quot;Ir a Pagar&quot;,
+                                    selecciona{" "}
+                                    <strong>
+                                      &quot;Paga en efectivo en Corresponsal
+                                      Bancario&quot;
+                                    </strong>{" "}
+                                    en Wompi para completar tu pago de forma
+                                    segura.
+                                  </p>
+                                  <p className="text-xs text-amber-600 font-medium">
+                                    📍 Acércate a un Corresponsal Bancario
+                                    Bancolombia en las próximas{" "}
+                                    <strong>72 horas</strong> con las
+                                    instrucciones que recibirás.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                         {/* Payment Button or Payment Status */}
                         {shouldShowPaymentButton(contract) ? (
                           <button
@@ -821,8 +853,7 @@ export default function ContractsPage() {
                               contractPaymentStatus[contract.id];
                             if (
                               paymentStatus?.hasCompletedPayments &&
-                              contract.status === ContractStatus.ACCEPTED &&
-                              contract.paymentMethod !== "efectivo"
+                              contract.status === ContractStatus.ACCEPTED
                             ) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
@@ -837,8 +868,7 @@ export default function ContractsPage() {
                             }
                             if (
                               paymentStatus?.hasPendingPayments &&
-                              contract.status === ContractStatus.ACCEPTED &&
-                              contract.paymentMethod !== "efectivo"
+                              contract.status === ContractStatus.ACCEPTED
                             ) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -855,8 +885,8 @@ export default function ContractsPage() {
                           })()
                         )}
 
-                        {/* Cash Payment Info */}
-                        {contract.status === ContractStatus.ACCEPTED &&
+                        {/* Cash Payment Info - Now handled through Wompi like other methods */}
+                        {/* {contract.status === ContractStatus.ACCEPTED &&
                           contract.paymentMethod === "efectivo" && (
                             <div className="px-4 ml-auto py-3 bg-amber-50 border border-amber-200 rounded-lg">
                               <div className="flex items-center gap-2 text-amber-800">
@@ -870,7 +900,7 @@ export default function ContractsPage() {
                                 </span>
                               </div>
                             </div>
-                          )}
+                          )} */}
                       </div>
                     </div>
                   ))}
@@ -944,7 +974,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              contract.initialPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.initialPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -959,7 +991,9 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-green-800">
                             {formatCurrency(
-                              contract.currentPrice?.toLocaleString(),
+                              calculatePriceWithTax(
+                                contract.currentPrice || 0,
+                              ).toLocaleString(),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>

@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import CompanyLocationForm from "@/components/company-location-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function EditCompanyPage({
   params,
@@ -25,8 +26,7 @@ export default function EditCompanyPage({
         const response = await CompanyService.getCompanyById(params.id);
         setCompany(response.data);
       } catch (err) {
-        setError("Error al cargar la empresa");
-        console.error("Error:", err);
+        toast.error("Error al cargar la empresa");
       } finally {
         setLoading(false);
       }

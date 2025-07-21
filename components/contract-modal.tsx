@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Publication } from "../interfaces/publication.interface";
 import { ContractService } from "../services/ContractService";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
   X,
@@ -85,43 +86,47 @@ export default function ContractModal({
 
     try {
       if (isNaN(basePrice) || basePrice <= 0) {
-        showNotification("Debes ingresar un precio válido", "error");
+        toast.error("Debes ingresar un precio válido");
         setIsLoading(false);
         return;
       }
 
       if (!requestedDate) {
-        showNotification("La fecha de servicio es obligatoria", "error");
+        toast.error("La fecha de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!requestedTime) {
-        showNotification("La hora de servicio es obligatoria", "error");
+        toast.error("La hora de servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!serviceAddress.trim()) {
-        showNotification("La dirección del servicio es obligatoria", "error");
+        toast.error("La dirección del servicio es obligatoria");
         setIsLoading(false);
         return;
       }
 
       if (!propertyType) {
-        showNotification("Debes seleccionar el tipo de inmueble", "error");
+        toast.error("Debes seleccionar el tipo de inmueble");
         setIsLoading(false);
         return;
       }
 
       if (!neighborhood.trim()) {
-        showNotification("El barrio es obligatorio", "error");
+        toast.error("El barrio es obligatorio");
         setIsLoading(false);
         return;
       }
 
       let newPaymentMethod = paymentMethod;
-      if (paymentMethod === "tarjeta" || paymentMethod === "transferencia") {
+      if (
+        paymentMethod === "tarjeta" ||
+        paymentMethod === "transferencia" ||
+        paymentMethod === "efectivo"
+      ) {
         newPaymentMethod = "WOMPI";
       }
 
@@ -134,6 +139,7 @@ export default function ContractModal({
         requestedDate: new Date(requestedDate),
         requestedTime: requestedTime,
         paymentMethod: newPaymentMethod,
+        originalPaymentMethod: paymentMethod, // Preservar el método original seleccionado
         serviceAddress: serviceAddress.trim(),
         propertyType: propertyType,
         neighborhood: neighborhood.trim(),
@@ -160,9 +166,9 @@ export default function ContractModal({
       router.push("/contracts");
     } catch (error: any) {
       console.error("Error creating contract:", error?.response?.data || error);
-      showNotification(
-        `Error al crear la contratación: ${error?.response?.data?.message || "Error desconocido"}`,
-        "error",
+      toast.error(
+        "Error al crear la contratación: " +
+          (error?.response?.data?.message || "Error desconocido"),
       );
     } finally {
       setIsLoading(false);
@@ -395,6 +401,33 @@ export default function ContractModal({
                   );
                 })}
               </div>
+
+              {/* Cash Payment Advice */}
+              {paymentMethod === "efectivo" && (
+                <div className="mt-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                        <span className="text-amber-600 text-sm">💡</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-amber-800 mb-1">
+                        💰 Consejo para pago en efectivo
+                      </h4>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        Después de enviar esta solicitud, al momento de pagar
+                        selecciona{" "}
+                        <strong>
+                          &quot;Paga en efectivo en Corresponsal Bancario&quot;
+                        </strong>{" "}
+                        en la pasarela de Wompi para completar tu pago de forma
+                        segura.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Service Location */}

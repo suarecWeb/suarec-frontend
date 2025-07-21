@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { User, Camera, Loader2 } from "lucide-react";
 import SupabaseService from "@/services/supabase.service";
+import { ImageWithFallback } from "./ImageWithFallback";
 
 interface UserAvatarProps {
   user: {
@@ -116,19 +118,18 @@ export function UserAvatar({
         onClick={handleClick}
       >
         {user.profile_image ? (
-          <img
+          <ImageWithFallback
             src={user.profile_image}
             alt={`${user.name} avatar`}
+            width={96}
+            height={96}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Si la imagen falla, mostrar iniciales
-              const target = e.target as HTMLImageElement;
-              target.style.display = "none";
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `<span class="text-white font-semibold">${getInitials(user.name)}</span>`;
-              }
-            }}
+            fallbackIcon={
+              <span className="text-white font-semibold">
+                {getInitials(user.name)}
+              </span>
+            }
+            fallbackText=""
           />
         ) : (
           <User className={iconSizes[size]} />

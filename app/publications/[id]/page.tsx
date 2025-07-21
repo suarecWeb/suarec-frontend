@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
@@ -49,6 +50,7 @@ import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import RatingService from "@/services/RatingService";
 import { Star } from "lucide-react";
+import toast from "react-hot-toast";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -274,8 +276,8 @@ const PublicationDetailPage = () => {
     } else {
       navigator.clipboard
         .writeText(window.location.href)
-        .then(() => alert("Enlace copiado al portapapeles"))
-        .catch((error) => console.error("Error al copiar enlace:", error));
+        .then(() => toast.success("Enlace copiado al portapapeles"))
+        .catch((error) => toast.error("Error al copiar enlace:", error));
     }
   };
 
@@ -641,9 +643,11 @@ const PublicationDetailPage = () => {
                                       key={index}
                                       className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                                     >
-                                      <img
+                                      <Image
                                         src={imageUrl}
                                         alt={`${publication.title} - Imagen ${index + 1}`}
+                                        width={300}
+                                        height={300}
                                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                                       />
                                     </div>
@@ -654,9 +658,11 @@ const PublicationDetailPage = () => {
                           ) : publication.image_url ? (
                             // Mostrar imagen principal si no hay galería
                             <div className="rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-gray-50">
-                              <img
+                              <Image
                                 src={publication.image_url}
                                 alt={publication.title}
+                                width={800}
+                                height={600}
                                 className="w-full h-auto object-cover"
                               />
                             </div>
@@ -879,13 +885,39 @@ const PublicationDetailPage = () => {
                               >
                                 <div className="flex justify-between items-start">
                                   <div className="flex items-start gap-4">
-                                    <div className="bg-[#097EEC] rounded-full p-3 text-white">
-                                      <UserIcon className="h-5 w-5" />
-                                    </div>
+                                    {comment.user?.id &&
+                                    comment.user.id !== "" &&
+                                    comment.user.id !== "undefined" ? (
+                                      <Link
+                                        href={`/profile/${comment.user.id}`}
+                                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                                      >
+                                        <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                          <UserIcon className="h-5 w-5" />
+                                        </div>
+                                      </Link>
+                                    ) : (
+                                      <div className="bg-[#097EEC] rounded-full p-3 text-white">
+                                        <UserIcon className="h-5 w-5" />
+                                      </div>
+                                    )}
                                     <div className="flex-1">
-                                      <p className="font-semibold text-gray-800">
-                                        {comment.user?.name || "Usuario"}
-                                      </p>
+                                      {comment.user?.id &&
+                                      comment.user.id !== "" &&
+                                      comment.user.id !== "undefined" ? (
+                                        <Link
+                                          href={`/profile/${comment.user.id}`}
+                                          className="hover:text-[#097EEC] transition-colors cursor-pointer"
+                                        >
+                                          <p className="font-semibold text-gray-800">
+                                            {comment.user?.name || "Usuario"}
+                                          </p>
+                                        </Link>
+                                      ) : (
+                                        <p className="font-semibold text-gray-800">
+                                          {comment.user?.name || "Usuario"}
+                                        </p>
+                                      )}
                                       <p className="text-sm text-gray-500 mb-2">
                                         {formatDate(comment.created_at)} a las{" "}
                                         {formatTime(comment.created_at)}
@@ -962,7 +994,28 @@ const PublicationDetailPage = () => {
                         {author ? (
                           <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                              <Link href={`/profile/${author.id}`}>
+                              {author.id &&
+                              author.id !== "" &&
+                              author.id !== "undefined" ? (
+                                <Link
+                                  href={`/profile/${author.id}`}
+                                  className="hover:opacity-80 transition-opacity cursor-pointer"
+                                >
+                                  <UserAvatarDisplay
+                                    user={{
+                                      id: author.id
+                                        ? typeof author.id === "string"
+                                          ? parseInt(author.id)
+                                          : author.id
+                                        : 0,
+                                      name: author.name,
+                                      profile_image: author.profile_image,
+                                      email: author.email,
+                                    }}
+                                    size="lg"
+                                  />
+                                </Link>
+                              ) : (
                                 <UserAvatarDisplay
                                   user={{
                                     id: author.id
@@ -975,15 +1028,25 @@ const PublicationDetailPage = () => {
                                     email: author.email,
                                   }}
                                   size="lg"
-                                  className="cursor-pointer hover:opacity-80 transition-opacity"
                                 />
-                              </Link>
+                              )}
                               <div>
-                                <Link href={`/profile/${author.id}`}>
-                                  <p className="font-semibold text-gray-800 hover:text-[#097EEC] transition-colors cursor-pointer">
+                                {author.id &&
+                                author.id !== "" &&
+                                author.id !== "undefined" ? (
+                                  <Link
+                                    href={`/profile/${author.id}`}
+                                    className="hover:text-[#097EEC] transition-colors cursor-pointer"
+                                  >
+                                    <p className="font-semibold text-gray-800">
+                                      {author.name}
+                                    </p>
+                                  </Link>
+                                ) : (
+                                  <p className="font-semibold text-gray-800">
                                     {author.name}
                                   </p>
-                                </Link>
+                                )}
                                 {author.profession && (
                                   <p className="text-sm text-gray-600">
                                     {author.profession}

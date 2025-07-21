@@ -25,6 +25,8 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import Image from "next/image";
+import { toast } from "react-hot-toast";
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -51,7 +53,7 @@ const CompaniesPageContent = () => {
         setCurrentUserId(decoded.id);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error("Error al decodificar token:", error);
+        toast.error("Error al decodificar el token");
       }
     }
   }, []);
@@ -66,8 +68,7 @@ const CompaniesPageContent = () => {
       setCompanies(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar las empresas");
-      console.error("Error al obtener empresas:", err);
+      toast.error("Error al cargar las empresas");
     } finally {
       setLoading(false);
     }
@@ -86,6 +87,16 @@ const CompaniesPageContent = () => {
     return userRoles.includes("ADMIN");
   };
 
+  // Verificar si el usuario es dueño de la empresa
+  const isOwner = (company: Company) => {
+    return company.user && company.user.id === currentUserId?.toString();
+  };
+
+  // Verificar si el usuario puede gestionar la empresa (admin o dueño)
+  const canManageCompany = (company: Company) => {
+    return isAdmin() || isOwner(company);
+  };
+
   const handleDelete = async (id: string) => {
     if (!isAdmin()) {
       setError("No tienes permisos para eliminar empresas");
@@ -97,8 +108,7 @@ const CompaniesPageContent = () => {
         await CompanyService.deleteCompany(id);
         fetchCompanies({ page: pagination.page, limit: pagination.limit });
       } catch (err) {
-        console.error("Error al eliminar empresa:", err);
-        setError("Error al eliminar la empresa");
+        toast.error("Error al eliminar la empresa");
       }
     }
   };
@@ -193,9 +203,11 @@ const CompaniesPageContent = () => {
                           <div className="flex items-start gap-3 sm:gap-4">
                             {company.user?.profile_image ? (
                               <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden">
-                                <img
+                                <Image
                                   src={company.user.profile_image}
                                   alt={company.name}
+                                  width={48}
+                                  height={48}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -245,8 +257,17 @@ const CompaniesPageContent = () => {
                               </button>
                             </Link>
 
-                            {isAdmin() && (
+                            {canManageCompany(company) && (
                               <div className="flex gap-2 sm:gap-3">
+                                <Link
+                                  href={`/companies/${company.id}/employees`}
+                                >
+                                  <button className="text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 text-sm">
+                                    <User className="h-4 w-4" />
+                                    <span>Empleados</span>
+                                  </button>
+                                </Link>
+
                                 <Link
                                   href={`/companies/${company.id}/edit`}
                                   className="flex-1 sm:flex-initial"
@@ -257,15 +278,17 @@ const CompaniesPageContent = () => {
                                   </button>
                                 </Link>
 
-                                <button
-                                  onClick={() =>
-                                    company.id && handleDelete(company.id)
-                                  }
-                                  className="flex-1 sm:flex-initial text-red-600 hover:text-red-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1"
-                                >
-                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                                  <span>Eliminar</span>
-                                </button>
+                                {isAdmin() && (
+                                  <button
+                                    onClick={() =>
+                                      company.id && handleDelete(company.id)
+                                    }
+                                    className="flex-1 sm:flex-initial text-red-600 hover:text-red-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1"
+                                  >
+                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span>Eliminar</span>
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>

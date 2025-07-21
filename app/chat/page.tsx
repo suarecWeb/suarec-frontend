@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import MessageService from "@/services/MessageService";
@@ -28,6 +28,8 @@ import {
   User as UserIcon,
   Plus,
 } from "lucide-react";
+import Image from "next/image";
+import toast from "react-hot-toast";
 
 const ChatPageContent = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -87,20 +89,16 @@ const ChatPageContent = () => {
 
   useEffect(() => {
     const token = Cookies.get("token");
-    console.log("Token encontrado:", !!token);
 
     if (!token) {
-      console.log("No hay token, redirigiendo a login");
       router.push("/auth/login");
       return;
     }
 
     try {
       const decoded = jwtDecode<TokenPayload>(token);
-      console.log("Token decodificado, userId:", decoded.id);
       setCurrentUserId(decoded.id);
     } catch (error) {
-      console.error("Error al decodificar token:", error);
       router.push("/auth/login");
     }
   }, [router]);
@@ -133,7 +131,6 @@ const ChatPageContent = () => {
   // Escuchar confirmaciones de mensajes enviados
   useEffect(() => {
     const handleMessageSent = (event: CustomEvent) => {
-      console.log("✅ Mensaje enviado confirmado en chat:", event.detail);
       setSendingMessage(false);
     };
 
@@ -158,21 +155,6 @@ const ChatPageContent = () => {
       message: Message;
       conversationId: string;
     }) => {
-      console.log("Nuevo mensaje recibido en chat:", data);
-      console.log("Current user ID:", currentUserId);
-      console.log("Selected conversation:", selectedConversation?.user.id);
-      console.log("Debug datos del mensaje:", {
-        messageId: data.message.id,
-        senderId: data.message.senderId,
-        senderIdType: typeof data.message.senderId,
-        recipientId: data.message.recipientId,
-        recipientIdType: typeof data.message.recipientId,
-        senderObject: data.message.sender,
-        content: data.message.content,
-        currentUserId: currentUserId,
-        currentUserIdType: typeof currentUserId,
-      });
-
       const { message } = data;
 
       // Solo procesar el mensaje si es relevante para el usuario actual
@@ -180,21 +162,16 @@ const ChatPageContent = () => {
         message.recipientId === currentUserId ||
         message.senderId === currentUserId
       ) {
-        console.log("Mensaje relevante para el usuario actual");
-
         // Actualizar mensajes si estamos en la conversación correcta
         if (
           selectedConversation &&
           (message.senderId === selectedConversation.user.id ||
             message.recipientId === selectedConversation.user.id)
         ) {
-          console.log("Actualizando mensajes en conversación activa");
-
           setMessages((prev) => {
             // Evitar duplicados
             const existingMessage = prev.find((msg) => msg.id === message.id);
             if (existingMessage) {
-              console.log("Mensaje duplicado, saltando");
               return prev;
             }
 
@@ -213,9 +190,7 @@ const ChatPageContent = () => {
               filteredMessages = prev.filter(
                 (_, index) => index !== tempMessageIndex,
               );
-              console.log("Reemplazando mensaje temporal específico");
             } else {
-              console.log("Agregando nuevo mensaje sin remover temporales");
             }
 
             // Hacer scroll automático solo si estamos cerca del final del contenedor
@@ -244,7 +219,6 @@ const ChatPageContent = () => {
             message.id &&
             !message.read
           ) {
-            console.log("📖 Marcando mensaje como leído automáticamente");
             setTimeout(() => {
               if (message.id) {
                 markAsReadWebSocket?.(message.id);
@@ -252,7 +226,6 @@ const ChatPageContent = () => {
             }, 500); // Pequeño delay para simular que el usuario "vio" el mensaje
           }
         } else {
-          console.log("Mensaje no es para la conversación activa");
         }
 
         // Actualizar lista de conversaciones
@@ -281,10 +254,6 @@ const ChatPageContent = () => {
             return sortConversationsByLastMessage(updatedConversations);
           } else {
             // Crear nueva conversación (esto requeriría más lógica para obtener datos del usuario)
-            console.log(
-              "Nueva conversación necesaria para usuario:",
-              otherUserId,
-            );
             return prev;
           }
         });
@@ -292,8 +261,6 @@ const ChatPageContent = () => {
     };
 
     const handleMessageRead = (data: { messageId: string; readAt: Date }) => {
-      console.log("👁️ Mensaje marcado como leído:", data);
-
       // Actualizar el estado de leído del mensaje
       setMessages((prev) =>
         prev.map((msg) =>
@@ -302,20 +269,12 @@ const ChatPageContent = () => {
             : msg,
         ),
       );
-
-      console.log(
-        "✅ Estado de lectura actualizado para mensaje:",
-        data.messageId,
-      );
     };
 
     const handleConversationUpdated = (data: {
       conversationId: string;
       lastMessage: Message;
-    }) => {
-      console.log("Conversación actualizada:", data);
-      // La lógica ya está manejada en handleNewMessage
-    };
+    }) => {};
 
     // Obtener el contexto WebSocket y configurar listeners
     // Los hooks ya están disponibles en el scope superior
@@ -330,10 +289,7 @@ const ChatPageContent = () => {
       handleConversationUpdated,
     );
 
-    console.log("Listeners registrados exitosamente");
-
     return () => {
-      console.log("🧹 Limpiando listeners de WebSocket en chat");
       // Limpiar listeners cuando el componente se desmonte
       removeNewMessageListener();
       removeMessageReadListener();
@@ -367,8 +323,7 @@ const ChatPageContent = () => {
       const sortedConversations = sortConversationsByLastMessage(response.data);
       setConversations(sortedConversations);
     } catch (err) {
-      console.error("Error al cargar conversaciones:", err);
-      setError("Error al cargar las conversaciones");
+      toast.error("Error al cargar las conversaciones");
     } finally {
       setLoading(false);
     }
@@ -439,8 +394,7 @@ const ChatPageContent = () => {
           }
         }
       } catch (err) {
-        console.error("Error al cargar mensajes:", err);
-        setError("Error al cargar los mensajes");
+        toast.error("Error al cargar los mensajes");
       } finally {
         setLoadingMessages(false);
       }
@@ -463,13 +417,8 @@ const ChatPageContent = () => {
       );
 
       if (conversation) {
-        console.log(
-          "🔍 Abriendo conversación específica para sender:",
-          senderIdNum,
-        );
         loadMessages(conversation);
       } else {
-        console.log("❌ No se encontró conversación para sender:", senderIdNum);
       }
     }
   }, [
@@ -496,8 +445,6 @@ const ChatPageContent = () => {
         senderId: currentUserId,
         recipientId: selectedConversation.user.id,
       };
-
-      console.log("📤 Enviando mensaje a través de WebSocket:", messageData);
       console.log("🔌 WebSocket conectado:", isConnected);
 
       // Enviar mensaje a través de WebSocket
@@ -545,8 +492,7 @@ const ChatPageContent = () => {
         setSendingMessage(false);
       }, 1000);
     } catch (err) {
-      console.error("Error al enviar mensaje:", err);
-      setError("Error al enviar el mensaje");
+      toast.error("Error al enviar el mensaje");
       setSendingMessage(false);
     }
   };
@@ -717,9 +663,11 @@ const ChatPageContent = () => {
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             {conversation.user.profile_image ? (
-                              <img
+                              <Image
                                 src={conversation.user.profile_image}
                                 alt={conversation.user.name}
+                                width={48}
+                                height={48}
                                 className="w-12 h-12 rounded-full object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;

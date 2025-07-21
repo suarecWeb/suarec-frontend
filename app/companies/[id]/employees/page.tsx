@@ -31,6 +31,7 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 const EmployeesPageContent = () => {
   const params = useParams();
@@ -63,7 +64,7 @@ const EmployeesPageContent = () => {
         setCurrentUserId(decoded.id);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
-        console.error("Error al decodificar token:", error);
+        toast.error("Error al decodificar el token");
       }
     }
   }, []);
@@ -81,8 +82,7 @@ const EmployeesPageContent = () => {
         setEmployees(response.data.data);
         setPagination(response.data.meta);
       } catch (err) {
-        console.error("Error al cargar empleados:", err);
-        setError("Error al cargar los empleados");
+        toast.error("Error al cargar los empleados");
       } finally {
         setLoadingEmployees(false);
       }
@@ -102,8 +102,8 @@ const EmployeesPageContent = () => {
       // Obtener empleados de la empresa
       await fetchEmployees();
     } catch (err) {
-      console.error("Error al cargar datos de la empresa:", err);
-      setError("Error al cargar la información de la empresa");
+      toast.error("Error al cargar la empresa");
+      setError("Error al cargar la empresa");
     } finally {
       setLoading(false);
     }
@@ -134,13 +134,20 @@ const EmployeesPageContent = () => {
 
       setAvailableUsers(available);
     } catch (err) {
-      console.error("Error al cargar usuarios disponibles:", err);
-      setError("Error al cargar usuarios disponibles");
+      toast.error("Error al cargar usuarios disponibles");
     }
   };
 
   const addEmployee = async (userId: string) => {
     try {
+      // Validate that userId is a valid number
+      const userIdNumber = Number(userId);
+      if (isNaN(userIdNumber)) {
+        setError("ID de usuario inválido");
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.addEmployee(companyId, userId);
@@ -154,8 +161,7 @@ const EmployeesPageContent = () => {
 
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error("Error al agregar empleado:", err);
-      setError("Error al agregar el empleado");
+      toast.error("Error al agregar el empleado");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -165,6 +171,14 @@ const EmployeesPageContent = () => {
       return;
 
     try {
+      // Validate that userId is a valid number
+      const userIdNumber = Number(userId);
+      if (isNaN(userIdNumber)) {
+        setError("ID de usuario inválido");
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.removeEmployee(companyId, userId);
@@ -175,8 +189,7 @@ const EmployeesPageContent = () => {
 
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error("Error al remover empleado:", err);
-      setError("Error al remover el empleado");
+      toast.error("Error al remover el empleado");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -372,7 +385,7 @@ const EmployeesPageContent = () => {
                   <UserPlus className="h-6 w-6 text-[#097EEC]" />
                   Agregar Nuevo Empleado
                 </h2>
-
+                ) : ( ) : (
                 {filteredAvailableUsers.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredAvailableUsers.map((user) => (
@@ -447,7 +460,6 @@ const EmployeesPageContent = () => {
                 )}
               </div>
             ) : (
-              /* Employees List Section */
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <Users className="h-6 w-6 text-[#097EEC]" />

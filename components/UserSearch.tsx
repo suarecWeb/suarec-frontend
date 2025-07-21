@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Search, User as UserIcon, MessageSquare, X } from "lucide-react";
 import { UserService } from "@/services/UsersService";
 import { User } from "@/interfaces/user.interface";
@@ -116,9 +117,11 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
                       {user.profile_image ? (
-                        <img
+                        <Image
                           src={user.profile_image}
                           alt={user.name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;

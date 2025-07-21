@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CommentService from "@/services/CommentsService";
 import Navbar from "@/components/navbar";
+import toast from "react-hot-toast";
 
 const CreateCommentPage = () => {
   const router = useRouter();
@@ -27,11 +28,10 @@ const CreateCommentPage = () => {
         ...formData,
         created_at: new Date(formData.created_at), // Convertir a Date
       });
-      alert("Comentario creado correctamente");
+      toast.success("Comentario creado correctamente");
       router.push("/comments");
     } catch (error) {
-      console.error("Error al crear el comentario:", error);
-      alert("Error al crear el comentario");
+      toast.error("Error al crear el comentario");
     }
   };
 
