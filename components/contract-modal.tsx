@@ -153,7 +153,7 @@ export default function ContractModal({
       showContractNotification(
         "Solicitud enviada al proveedor por mensaje interno",
         "created",
-        priceText
+        priceText,
       );
 
       onClose();
@@ -162,7 +162,7 @@ export default function ContractModal({
       console.error("Error creating contract:", error?.response?.data || error);
       showNotification(
         `Error al crear la contratación: ${error?.response?.data?.message || "Error desconocido"}`,
-        "error"
+        "error",
       );
     } finally {
       setIsLoading(false);

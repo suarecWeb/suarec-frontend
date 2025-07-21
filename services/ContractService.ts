@@ -25,18 +25,19 @@ export class ContractService {
     // Enviar notificación interna después de crear el contrato exitosamente
     try {
       const currentUserId = this.getCurrentUserId();
-      
+
       if (currentUserId && contract && contract.provider) {
         const clientName = contract.client?.name || "Un cliente";
-        const serviceTitle = contract.publication?.title || "Servicio solicitado";
-        
+        const serviceTitle =
+          contract.publication?.title || "Servicio solicitado";
+
         // Notificación interna para el proveedor
         const internalMessage = `🔔 Nueva solicitud de servicio: ${clientName} ha solicitado tu servicio "${serviceTitle}". Revisa los detalles y responde en la sección de contratos.`;
-        
+
         await this.sendInternalNotification(
           currentUserId, // ID del cliente (quien envía)
           contract.provider.id, // ID del proveedor (quien recibe)
-          internalMessage
+          internalMessage,
         );
 
         // Enviar notificación por email al proveedor sobre la nueva solicitud
@@ -51,13 +52,16 @@ export class ContractService {
               clientName: clientName,
               agreedPrice: contract.totalPrice,
               currency: "COP",
-              customMessage: contract.clientMessage
-            }
+              customMessage: contract.clientMessage,
+            },
           });
         }
       }
     } catch (notificationError) {
-      console.error("Error sending contract creation notification:", notificationError);
+      console.error(
+        "Error sending contract creation notification:",
+        notificationError,
+      );
       // No lanzamos el error para no afectar la creación del contrato
     }
 
@@ -112,12 +116,13 @@ export class ContractService {
       // Enviar notificación interna después de responder exitosamente
       try {
         const currentUserId = this.getCurrentUserId();
-        
+
         if (currentUserId && updatedContract && updatedContract.client) {
           const clientName = updatedContract.client.name;
           const providerName = updatedContract.provider?.name || "El proveedor";
-          const serviceTitle = updatedContract.publication?.title || "Tu servicio solicitado";
-          
+          const serviceTitle =
+            updatedContract.publication?.title || "Tu servicio solicitado";
+
           let internalMessage: string;
           let emailNotificationType: "ACCEPTED" | "REJECTED" | "IN_PROGRESS";
 
@@ -144,7 +149,7 @@ export class ContractService {
           await this.sendInternalNotification(
             currentUserId, // ID del proveedor (quien envía)
             updatedContract.client.id, // ID del cliente (quien recibe)
-            internalMessage
+            internalMessage,
           );
 
           // Enviar notificación por email al cliente sobre la respuesta del proveedor
@@ -157,15 +162,19 @@ export class ContractService {
                 contractId: updatedContract.id,
                 serviceTitle: serviceTitle,
                 providerName: providerName,
-                agreedPrice: updatedContract.currentPrice || updatedContract.totalPrice,
+                agreedPrice:
+                  updatedContract.currentPrice || updatedContract.totalPrice,
                 currency: "COP",
-                customMessage: data.providerMessage
-              }
+                customMessage: data.providerMessage,
+              },
             });
           }
         }
       } catch (notificationError) {
-        console.error("Error sending provider response notification:", notificationError);
+        console.error(
+          "Error sending provider response notification:",
+          notificationError,
+        );
         // No lanzamos el error para no afectar la respuesta del proveedor
       }
 
@@ -180,7 +189,7 @@ export class ContractService {
   private static async sendInternalNotification(
     senderId: number,
     recipientId: number,
-    message: string
+    message: string,
   ): Promise<void> {
     try {
       const messageData: CreateMessageDto = {
@@ -188,7 +197,7 @@ export class ContractService {
         senderId,
         recipientId,
       };
-      
+
       await MessageService.createMessage(messageData);
     } catch (error) {
       console.error("Error sending internal notification:", error);
@@ -200,13 +209,13 @@ export class ContractService {
   private static getCurrentUserId(): number | null {
     try {
       const token = Cookies.get("token");
-      
+
       if (token) {
         const decoded = jwtDecode<TokenPayload>(token);
         const userId = decoded.id ? Number(decoded.id) : null;
         return userId;
       }
-      
+
       return null;
     } catch (error) {
       console.error("❌ Error decoding token:", error);

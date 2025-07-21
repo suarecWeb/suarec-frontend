@@ -32,14 +32,14 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
           reject(new Error("Could not get canvas context"));
           return;
         }
-        
+
         canvas.width = img.width;
         canvas.height = img.height;
-        
+
         // NO rellenar el canvas con ningún color de fondo para mantener transparencia
         // Simplemente dibujar la imagen sobre el canvas transparente
         ctx.drawImage(img, 0, 0);
-        
+
         // Usar PNG para mantener la transparencia, con calidad máxima
         const dataURL = canvas.toDataURL("image/png");
         resolve(dataURL);
@@ -61,7 +61,7 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
     const headerHeight = 22;
     doc.setFillColor(9, 126, 236); // #097EEC
     doc.rect(0, 0, 210, headerHeight, "F");
-    
+
     // Texto del encabezado
     doc.setFont("helvetica", "bolditalic");
     doc.setFontSize(30);
@@ -80,7 +80,7 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
       const logoHeight = 10; // Alto del logo en mm (mantener proporción)
       const logoX = textX + suarecWidth + 4; // Posición después del texto con un poco de espacio
       const logoY = (headerHeight - logoHeight) / 2 + 1; // Centrar verticalmente
-      
+
       // Agregar el logo directamente sin fondo para mantener transparencia
       doc.addImage(logoBase64, "PNG", logoX, logoY, logoWidth, logoHeight);
     } catch (error) {

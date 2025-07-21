@@ -188,10 +188,14 @@ export default function CompanyDetailsPage({
                 className="inline-flex items-center text-blue-100 hover:text-white transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-                <span className="font-eras text-sm md:text-base">Volver a compañías</span>
+                <span className="font-eras text-sm md:text-base">
+                  Volver a compañías
+                </span>
               </Link>
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-eras-bold break-words">{company.name}</h1>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-eras-bold break-words">
+              {company.name}
+            </h1>
             <p className="mt-2 text-blue-100 font-eras text-sm md:text-base">
               Información detallada de la empresa
             </p>

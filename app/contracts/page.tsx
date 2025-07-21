@@ -149,17 +149,23 @@ export default function ContractsPage() {
       if (!acceptPolicy || !acceptPersonal) {
         showNotification(
           "Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.",
-          "error"
+          "error",
         );
         return;
       }
 
       if (!contract.provider || !contract.provider.id) {
-        showNotification("No se encontró el proveedor para este contrato.", "error");
+        showNotification(
+          "No se encontró el proveedor para este contrato.",
+          "error",
+        );
         return;
       }
       if (!acceptanceTokens) {
-        showNotification("No se pudieron obtener los contratos de Wompi.", "error");
+        showNotification(
+          "No se pudieron obtener los contratos de Wompi.",
+          "error",
+        );
         return;
       }
       const paymentData = {

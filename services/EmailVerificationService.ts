@@ -83,14 +83,18 @@ const sendApplicationStatusEmail = (data: ApplicationStatusEmailRequest) =>
   );
 
 // Enviar notificación de contrato de servicio
-const sendServiceContractNotification = (data: ServiceContractNotificationRequest) =>
+const sendServiceContractNotification = (
+  data: ServiceContractNotificationRequest,
+) =>
   api.post<ServiceContractNotificationResponse>(
     `/suarec/email-verification/send-service-contract-notification`,
     data,
   );
 
 // Enviar notificación de remoción de empleado
-const sendEmployeeRemovalNotification = (data: EmployeeRemovalNotificationRequest) =>
+const sendEmployeeRemovalNotification = (
+  data: EmployeeRemovalNotificationRequest,
+) =>
   api.post<EmployeeRemovalNotificationResponse>(
     `suarec/email-verification/send-employee-removal-notification`,
     data,

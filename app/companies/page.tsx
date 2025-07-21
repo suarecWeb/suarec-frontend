@@ -215,7 +215,9 @@ const CompaniesPageContent = () => {
                               <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
-                                  <span className="truncate">{company.email}</span>
+                                  <span className="truncate">
+                                    {company.email}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
@@ -233,7 +235,10 @@ const CompaniesPageContent = () => {
 
                           {/* Actions */}
                           <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
-                            <Link href={`/companies/${company.id}`} className="w-full sm:w-auto">
+                            <Link
+                              href={`/companies/${company.id}`}
+                              className="w-full sm:w-auto"
+                            >
                               <button className="w-full sm:w-auto text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center justify-center sm:justify-start gap-1 text-xs sm:text-sm py-1">
                                 <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                                 <span>Ver detalles</span>
@@ -242,7 +247,10 @@ const CompaniesPageContent = () => {
 
                             {isAdmin() && (
                               <div className="flex gap-2 sm:gap-3">
-                                <Link href={`/companies/${company.id}/edit`} className="flex-1 sm:flex-initial">
+                                <Link
+                                  href={`/companies/${company.id}/edit`}
+                                  className="flex-1 sm:flex-initial"
+                                >
                                   <button className="w-full sm:w-auto text-amber-600 hover:text-amber-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1">
                                     <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                     <span>Editar</span>

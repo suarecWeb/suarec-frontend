@@ -358,7 +358,6 @@ const PublicProfilePage = () => {
               <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left Column - Personal Info */}
                 <div className="lg:w-1/3">
-
                   {/* Información personal */}
                   <div className="bg-gray-50 rounded-lg p-6 mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -430,14 +429,15 @@ const PublicProfilePage = () => {
                         <div className="flex items-start gap-3">
                           <Clock className="h-5 w-5 text-[#097EEC] mt-0.5" />
                           <div>
-                            <p className="text-sm text-gray-500">Miembro desde</p>
+                            <p className="text-sm text-gray-500">
+                              Miembro desde
+                            </p>
                             <p className="text-gray-800">
                               {formatDate(user.created_at)}
                             </p>
                           </div>
                         </div>
                       )}
-
 
                       {/* REDES SOCIALES */}
                       <div className="flex items-start gap-3 mt-4">
@@ -448,8 +448,7 @@ const PublicProfilePage = () => {
                               Redes sociales
                             </p>
                           </div>
-                          {user.socialLinks &&
-                          user.socialLinks.length > 0 ? (
+                          {user.socialLinks && user.socialLinks.length > 0 ? (
                             <div className="flex flex-wrap gap-2 mt-1">
                               {user.socialLinks.map((link, idx) => (
                                 <a
@@ -494,7 +493,6 @@ const PublicProfilePage = () => {
                           </div>
                         </div>
                       )}
-
                     </div>
                   </div>
                 </div>

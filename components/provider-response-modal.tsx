@@ -93,8 +93,10 @@ export default function ProviderResponseModal({
       // Mostrar mensaje de éxito según la acción con información específica
       const priceText = formatCurrency(
         calculatePriceWithTax(
-          action === ContractStatus.NEGOTIATING ? counterOffer : contract.initialPrice
-        ).toLocaleString()
+          action === ContractStatus.NEGOTIATING
+            ? counterOffer
+            : contract.initialPrice,
+        ).toLocaleString(),
       );
 
       switch (action) {
@@ -102,20 +104,20 @@ export default function ProviderResponseModal({
           showContractNotification(
             "Tarifa original aceptada - Cliente notificado",
             "accepted",
-            priceText
+            priceText,
           );
           break;
         case ContractStatus.REJECTED:
           showContractNotification(
             "Oferta rechazada - Cliente notificado",
-            "rejected"
+            "rejected",
           );
           break;
         case ContractStatus.NEGOTIATING:
           showContractNotification(
             "Contraoferta enviada - Cliente notificado",
             "negotiating",
-            priceText
+            priceText,
           );
           break;
         default:
@@ -135,7 +137,7 @@ export default function ProviderResponseModal({
       console.error("Error responding to contract:", error);
       showNotification(
         `Error al responder: ${error?.response?.data?.message || "Error desconocido"}`,
-        "error"
+        "error",
       );
     } finally {
       setIsLoading(false);

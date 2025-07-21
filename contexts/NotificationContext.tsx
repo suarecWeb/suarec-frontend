@@ -158,7 +158,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     toast(
       <div className="flex items-center gap-3">
-        <div 
+        <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
           style={{ backgroundColor: getColor() }}
         >
@@ -166,9 +166,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         </div>
         <div className="flex-1">
           <p className="font-medium text-sm text-gray-900">{message}</p>
-          {amount && (
-            <p className="text-xs text-gray-600">Monto: {amount}</p>
-          )}
+          {amount && <p className="text-xs text-gray-600">Monto: {amount}</p>}
         </div>
       </div>,
       {
@@ -188,7 +186,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   return (
     <NotificationContext.Provider
-      value={{ showNotification, showMessageNotification, showContractNotification }}
+      value={{
+        showNotification,
+        showMessageNotification,
+        showContractNotification,
+      }}
     >
       {children}
       <Toaster />
