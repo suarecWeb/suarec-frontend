@@ -375,6 +375,7 @@ export default function FeedPage() {
                     publication={publication}
                     userRole={userRoles[0]}
                     publicationBids={publicationBids[publication.id!]}
+                    onPublicationDeleted={fetchPublications}
                   />
                 ))
               ) : (
