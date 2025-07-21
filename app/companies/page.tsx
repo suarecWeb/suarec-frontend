@@ -87,6 +87,16 @@ const CompaniesPageContent = () => {
     return userRoles.includes("ADMIN");
   };
 
+  // Verificar si el usuario es dueño de la empresa
+  const isOwner = (company: Company) => {
+    return company.user && company.user.id === currentUserId?.toString();
+  };
+
+  // Verificar si el usuario puede gestionar la empresa (admin o dueño)
+  const canManageCompany = (company: Company) => {
+    return isAdmin() || isOwner(company);
+  };
+
   const handleDelete = async (id: string) => {
     if (!isAdmin()) {
       setError("No tienes permisos para eliminar empresas");
@@ -243,8 +253,15 @@ const CompaniesPageContent = () => {
                               </button>
                             </Link>
 
-                            {isAdmin() && (
+                            {canManageCompany(company) && (
                               <div className="flex gap-3">
+                                <Link href={`/companies/${company.id}/employees`}>
+                                  <button className="text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 text-sm">
+                                    <User className="h-4 w-4" />
+                                    <span>Empleados</span>
+                                  </button>
+                                </Link>
+
                                 <Link href={`/companies/${company.id}/edit`}>
                                   <button className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm">
                                     <Edit className="h-4 w-4" />
@@ -252,15 +269,17 @@ const CompaniesPageContent = () => {
                                   </button>
                                 </Link>
 
-                                <button
-                                  onClick={() =>
-                                    company.id && handleDelete(company.id)
-                                  }
-                                  className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span>Eliminar</span>
-                                </button>
+                                {isAdmin() && (
+                                  <button
+                                    onClick={() =>
+                                      company.id && handleDelete(company.id)
+                                    }
+                                    className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span>Eliminar</span>
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+
 const EmployeesPageContent = () => {
   const params = useParams();
   const router = useRouter();
@@ -141,6 +142,14 @@ const EmployeesPageContent = () => {
 
   const addEmployee = async (userId: string) => {
     try {
+      // Validate that userId is a valid number
+      const userIdNumber = Number(userId);
+      if (isNaN(userIdNumber)) {
+        setError("ID de usuario inválido");
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.addEmployee(companyId, userId);
@@ -165,6 +174,14 @@ const EmployeesPageContent = () => {
       return;
 
     try {
+      // Validate that userId is a valid number
+      const userIdNumber = Number(userId);
+      if (isNaN(userIdNumber)) {
+        setError("ID de usuario inválido");
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.removeEmployee(companyId, userId);
@@ -372,7 +389,8 @@ const EmployeesPageContent = () => {
                   <UserPlus className="h-6 w-6 text-[#097EEC]" />
                   Agregar Nuevo Empleado
                 </h2>
-
+            ) : (
+                          ) : (
                 {filteredAvailableUsers.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredAvailableUsers.map((user) => (
@@ -447,7 +465,6 @@ const EmployeesPageContent = () => {
                 )}
               </div>
             ) : (
-              /* Employees List Section */
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <Users className="h-6 w-6 text-[#097EEC]" />
