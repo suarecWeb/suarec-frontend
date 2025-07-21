@@ -19,13 +19,13 @@ import {
   Calendar,
   Eye,
   User,
-  Info
-} from "lucide-react"
-import Link from "next/link"
-import Cookies from "js-cookie"
-import { jwtDecode } from "jwt-decode"
-import { TokenPayload } from "@/interfaces/auth.interface"
-import Image from "next/image"
+  Info,
+} from "lucide-react";
+import Link from "next/link";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
+import Image from "next/image";
 import { toast } from "react-hot-toast";
 
 const CompaniesPageContent = () => {
@@ -149,8 +149,8 @@ const CompaniesPageContent = () => {
         <div className="container mx-auto px-4 -mt-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             {/* Actions Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="relative flex-1 max-w-full sm:max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
@@ -164,8 +164,8 @@ const CompaniesPageContent = () => {
               </div>
 
               {isAdmin() && (
-                <Link href="/companies/create">
-                  <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
+                <Link href="/companies/create" className="w-full sm:w-auto">
+                  <button className="w-full sm:w-auto bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center justify-center gap-2">
                     <PlusCircle className="h-5 w-5" />
                     <span>Crear Empresa</span>
                   </button>
@@ -193,49 +193,51 @@ const CompaniesPageContent = () => {
               <>
                 {/* Companies Cards */}
                 {filteredCompanies.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                     {filteredCompanies.map((company) => (
                       <div
                         key={company.id}
                         className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                       >
-                        <div className="p-6">
-                          <div className="flex items-start gap-4">
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-start gap-3 sm:gap-4">
                             {company.user?.profile_image ? (
-                              <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden">
-                                <Image 
-                                  src={company.user.profile_image} 
-                                  alt={company.name} 
+                              <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden">
+                                <Image
+                                  src={company.user.profile_image}
+                                  alt={company.name}
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
                             ) : (
-                              <div className="flex-shrink-0 h-12 w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                                <Building2 className="h-6 w-6 text-[#097EEC]" />
+                              <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
+                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#097EEC]" />
                               </div>
                             )}
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 truncate">
                                 {company.name}
                               </h3>
-                              <p className="text-sm text-gray-500 font-medium">
+                              <p className="text-xs sm:text-sm text-gray-500 font-medium">
                                 NIT: {company.nit}
                               </p>
 
-                              <div className="mt-4 space-y-2">
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Mail className="h-4 w-4 text-gray-400" />
-                                  <span>{company.email}</span>
+                              <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {company.email}
+                                  </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Phone className="h-4 w-4 text-gray-400" />
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                                   <span>{company.cellphone}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Calendar className="h-4 w-4 text-gray-400" />
-                                  <span>
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">
                                     Fundada: {formatDate(company.born_at)}
                                   </span>
                                 </div>
@@ -244,26 +246,34 @@ const CompaniesPageContent = () => {
                           </div>
 
                           {/* Actions */}
-                          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
-                            <Link href={`/companies/${company.id}`}>
-                              <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1 text-sm">
-                                <Eye className="h-4 w-4" />
+                          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                            <Link
+                              href={`/companies/${company.id}`}
+                              className="w-full sm:w-auto"
+                            >
+                              <button className="w-full sm:w-auto text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center justify-center sm:justify-start gap-1 text-xs sm:text-sm py-1">
+                                <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                                 <span>Ver detalles</span>
                               </button>
                             </Link>
 
                             {canManageCompany(company) && (
-                              <div className="flex gap-3">
-                                <Link href={`/companies/${company.id}/employees`}>
+                              <div className="flex gap-2 sm:gap-3">
+                                <Link
+                                  href={`/companies/${company.id}/employees`}
+                                >
                                   <button className="text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 text-sm">
                                     <User className="h-4 w-4" />
                                     <span>Empleados</span>
                                   </button>
                                 </Link>
 
-                                <Link href={`/companies/${company.id}/edit`}>
-                                  <button className="text-amber-600 hover:text-amber-700 transition-colors flex items-center gap-1 text-sm">
-                                    <Edit className="h-4 w-4" />
+                                <Link
+                                  href={`/companies/${company.id}/edit`}
+                                  className="flex-1 sm:flex-initial"
+                                >
+                                  <button className="w-full sm:w-auto text-amber-600 hover:text-amber-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1">
+                                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                     <span>Editar</span>
                                   </button>
                                 </Link>
@@ -273,9 +283,9 @@ const CompaniesPageContent = () => {
                                     onClick={() =>
                                       company.id && handleDelete(company.id)
                                     }
-                                    className="text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 text-sm"
+                                    className="flex-1 sm:flex-initial text-red-600 hover:text-red-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                     <span>Eliminar</span>
                                   </button>
                                 )}

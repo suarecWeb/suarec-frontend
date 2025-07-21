@@ -70,9 +70,7 @@ const updateApplication = async (
       if (userId && companyId && !isNaN(Number(userId))) {
         try {
           // Agregar el usuario como empleado de la empresa
-          await api.post(
-            `suarec/companies/${companyId}/employees/${userId}`,
-          );
+          await api.post(`suarec/companies/${companyId}/employees/${userId}`);
           console.log(
             `Usuario ${userId} agregado como empleado de la empresa ${companyId}`,
           );

@@ -33,7 +33,6 @@ import {
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-
 const EmployeesPageContent = () => {
   const params = useParams();
   const router = useRouter();
@@ -386,8 +385,7 @@ const EmployeesPageContent = () => {
                   <UserPlus className="h-6 w-6 text-[#097EEC]" />
                   Agregar Nuevo Empleado
                 </h2>
-            ) : (
-                          ) : (
+                ) : ( ) : (
                 {filteredAvailableUsers.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredAvailableUsers.map((user) => (

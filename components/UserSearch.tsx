@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
-import { Search, User as UserIcon, MessageSquare, X } from 'lucide-react';
-import { UserService } from '@/services/UsersService';
-import { User } from '@/interfaces/user.interface';
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import { Search, User as UserIcon, MessageSquare, X } from "lucide-react";
+import { UserService } from "@/services/UsersService";
+import { User } from "@/interfaces/user.interface";
 
 interface UserSearchProps {
   onSelectUser: (user: User) => void;

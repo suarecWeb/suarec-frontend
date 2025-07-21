@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import Image from 'next/image';
-import { Button } from './button';
-import { Input } from './input';
-import { Loader2, Upload, X, Image as ImageIcon } from 'lucide-react';
-import SupabaseService from '@/services/supabase.service';
+import React, { useState, useRef } from "react";
+import Image from "next/image";
+import { Button } from "./button";
+import { Input } from "./input";
+import { Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
+import SupabaseService from "@/services/supabase.service";
 
 interface ImageUploadProps {
   onImagesUploaded: (results: { url: string; path: string }[]) => void;

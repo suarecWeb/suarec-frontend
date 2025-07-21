@@ -20,7 +20,36 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
   className = "",
   isPublicProfile = false,
 }) => {
-  const exportToPDF = () => {
+  // Función para convertir imagen a base64 manteniendo transparencia
+  const getImageAsBase64 = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // NO rellenar el canvas con ningún color de fondo para mantener transparencia
+        // Simplemente dibujar la imagen sobre el canvas transparente
+        ctx.drawImage(img, 0, 0);
+
+        // Usar PNG para mantener la transparencia, con calidad máxima
+        const dataURL = canvas.toDataURL("image/png");
+        resolve(dataURL);
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = url;
+    });
+  };
+
+  const exportToPDF = async () => {
     if (!user) return;
     const doc = new jsPDF({
       orientation: "portrait",
@@ -32,14 +61,31 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
     const headerHeight = 22;
     doc.setFillColor(9, 126, 236); // #097EEC
     doc.rect(0, 0, 210, headerHeight, "F");
+
+    // Texto del encabezado
     doc.setFont("helvetica", "bolditalic");
     doc.setFontSize(30);
     doc.setTextColor(255, 255, 255);
     const suarecText = isPublicProfile
-      ? "Perfil de candidato - SUAREC"
-      : "Hoja de vida SUAREC";
+      ? "Perfil de candidato -"
+      : "Hoja de vida -";
     const suarecWidth = doc.getTextWidth(suarecText);
-    doc.text(suarecText, (210 - suarecWidth) / 2, headerHeight - 7);
+    const textX = (210 - suarecWidth) / 2 - 15; // Centrar pero dejar espacio para el logo
+    doc.text(suarecText, textX, headerHeight - 7);
+
+    // Agregar logo SUAREC al lado derecho del texto
+    try {
+      const logoBase64 = await getImageAsBase64("/suarec-logo.png");
+      const logoWidth = 50; // Ancho del logo en mm
+      const logoHeight = 10; // Alto del logo en mm (mantener proporción)
+      const logoX = textX + suarecWidth + 4; // Posición después del texto con un poco de espacio
+      const logoY = (headerHeight - logoHeight) / 2 + 1; // Centrar verticalmente
+
+      // Agregar el logo directamente sin fondo para mantener transparencia
+      doc.addImage(logoBase64, "PNG", logoX, logoY, logoWidth, logoHeight);
+    } catch (error) {
+      console.warn("No se pudo cargar el logo de SUAREC:", error);
+    }
 
     // Dimensiones de columnas
     const leftColWidth = 85; // Reducido un poco para más espacio
@@ -51,9 +97,22 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
     doc.setLineWidth(0.5);
     doc.line(100, headerHeight + 5, 100, 290);
 
-    // --- Columna izquierda: Nombre, Contacto, Referencias, Redes ---
+    // --- Columna izquierda: Foto, Nombre, Contacto, Referencias, Redes ---
     let yLeft = headerHeight + 15;
     const xLeft = 15;
+
+    // Foto de perfil
+    if (user.profile_image) {
+      try {
+        const imageBase64 = await getImageAsBase64(user.profile_image);
+        const imgSize = 30; // Tamaño de la imagen en mm
+        doc.addImage(imageBase64, "JPEG", xLeft, yLeft, imgSize, imgSize);
+        yLeft += imgSize + 8; // Espacio después de la imagen
+      } catch (error) {
+        console.warn("No se pudo cargar la imagen de perfil:", error);
+        // Continuar sin la imagen
+      }
+    }
 
     // Nombre del usuario en la columna izquierda
     doc.setFont("helvetica", "bold");
@@ -244,7 +303,7 @@ const DownloadCVButton: React.FC<DownloadCVButtonProps> = ({
 
   return (
     <Button
-      onClick={exportToPDF}
+      onClick={() => exportToPDF()}
       variant={variant}
       size={size}
       className={`flex items-center gap-2 ${className}`}

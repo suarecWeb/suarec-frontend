@@ -25,6 +25,38 @@ export interface ApplicationStatusEmailResponse {
   message: string;
 }
 
+export interface ServiceContractNotificationRequest {
+  recipientEmail: string;
+  recipientName: string;
+  notificationType: "ACCEPTED" | "REJECTED" | "IN_PROGRESS";
+  contractData: {
+    contractId: string;
+    serviceTitle: string;
+    clientName?: string;
+    providerName?: string;
+    agreedPrice?: number;
+    currency?: string;
+    customMessage?: string;
+  };
+}
+
+export interface ServiceContractNotificationResponse {
+  message: string;
+}
+
+export interface EmployeeRemovalNotificationRequest {
+  employeeEmail: string;
+  employeeName: string;
+  companyName: string;
+  removalReason?: "TERMINATION";
+  customMessage?: string;
+  endDate?: string;
+}
+
+export interface EmployeeRemovalNotificationResponse {
+  message: string;
+}
+
 const baseURL = "/suarec/email-verification";
 
 // Enviar email de verificación
@@ -50,12 +82,32 @@ const sendApplicationStatusEmail = (data: ApplicationStatusEmailRequest) =>
     data,
   );
 
+// Enviar notificación de contrato de servicio
+const sendServiceContractNotification = (
+  data: ServiceContractNotificationRequest,
+) =>
+  api.post<ServiceContractNotificationResponse>(
+    `/suarec/email-verification/send-service-contract-notification`,
+    data,
+  );
+
+// Enviar notificación de remoción de empleado
+const sendEmployeeRemovalNotification = (
+  data: EmployeeRemovalNotificationRequest,
+) =>
+  api.post<EmployeeRemovalNotificationResponse>(
+    `suarec/email-verification/send-employee-removal-notification`,
+    data,
+  );
+
 const EmailVerificationService = {
   sendVerificationEmail,
   verifyEmail,
   resendVerificationEmail,
   getUserVerificationStatus,
   sendApplicationStatusEmail,
+  sendServiceContractNotification,
+  sendEmployeeRemovalNotification,
 };
 
 export default EmailVerificationService;

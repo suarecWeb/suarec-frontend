@@ -1,6 +1,6 @@
 import api from "./axios_config";
 
-const baseURL = '/suarec/companies';
+const baseURL = "/suarec/companies";
 
 export interface BulkEmployeeUploadResponse {
   totalProcessed: number;
@@ -20,18 +20,21 @@ export interface BulkEmployeeUploadResponse {
 
 class BulkEmployeeService {
   // Subir archivo Excel con datos de empleados
-  async uploadEmployees(companyId: string, file: File): Promise<BulkEmployeeUploadResponse> {
+  async uploadEmployees(
+    companyId: string,
+    file: File,
+  ): Promise<BulkEmployeeUploadResponse> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const response = await api.post<BulkEmployeeUploadResponse>(
       `${baseURL}/${companyId}/employees/bulk-upload`,
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
 
     return response.data;
@@ -39,15 +42,18 @@ class BulkEmployeeService {
 
   // Descargar plantilla Excel
   async downloadTemplate(companyId: string): Promise<void> {
-    const response = await api.get(`${baseURL}/${companyId}/employees/template`, {
-      responseType: 'blob',
-    });
+    const response = await api.get(
+      `${baseURL}/${companyId}/employees/template`,
+      {
+        responseType: "blob",
+      },
+    );
 
     // Crear un enlace temporal para descargar el archivo
     const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', 'plantilla-empleados.xlsx');
+    link.setAttribute("download", "plantilla-empleados.xlsx");
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -55,4 +61,4 @@ class BulkEmployeeService {
   }
 }
 
-export default new BulkEmployeeService(); 
+export default new BulkEmployeeService();

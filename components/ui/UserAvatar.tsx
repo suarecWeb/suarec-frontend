@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { User, Camera, Loader2 } from 'lucide-react';
-import SupabaseService from '@/services/supabase.service';
-import { ImageWithFallback } from './ImageWithFallback';
+import React, { useState } from "react";
+import Image from "next/image";
+import { User, Camera, Loader2 } from "lucide-react";
+import SupabaseService from "@/services/supabase.service";
+import { ImageWithFallback } from "./ImageWithFallback";
 
 interface UserAvatarProps {
   user: {
@@ -124,7 +124,11 @@ export function UserAvatar({
             width={96}
             height={96}
             className="w-full h-full object-cover"
-            fallbackIcon={<span className="text-white font-semibold">{getInitials(user.name)}</span>}
+            fallbackIcon={
+              <span className="text-white font-semibold">
+                {getInitials(user.name)}
+              </span>
+            }
             fallbackText=""
           />
         ) : (
