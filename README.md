@@ -7,6 +7,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 ## 🌟 Características Principales
 
 ### 👥 **Para Profesionales (PERSON)**
+
 - **Perfil Profesional Completo**: Crea un perfil detallado con experiencia, habilidades y portfolio
 - **Publicaciones de Servicios**: Ofrece tus servicios profesionales con precios y descripciones
 - **Sistema de Calificaciones**: Construye tu reputación con calificaciones de clientes
@@ -14,6 +15,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 - **Dashboard de Estadísticas**: Monitorea tus ingresos, contratos y crecimiento profesional
 
 ### 🏢 **Para Empresas (BUSINESS)**
+
 - **Gestión de Empleados**: Administra tu equipo con sistema de asistencia integrado
 - **Publicaciones de Oportunidades**: Publica ofertas de trabajo y proyectos
 - **Evaluación de Candidatos**: Revisa aplicaciones y califica a los profesionales
@@ -21,6 +23,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 - **Análisis de Rendimiento**: Estadísticas detalladas de tu empresa
 
 ### 🔐 **Sistema de Autenticación Avanzado**
+
 - **Verificación de Email Automática**: Flujo completo de verificación
 - **Roles y Permisos**: Sistema granular de permisos por tipo de usuario
 - **Recuperación de Contraseña**: Proceso seguro de recuperación
@@ -29,6 +32,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 ## 🛠️ Tecnologías Utilizadas
 
 ### **Frontend**
+
 - **Next.js 14** - Framework React con App Router
 - **TypeScript** - Tipado estático para mayor seguridad
 - **Tailwind CSS** - Framework de estilos utility-first
@@ -38,6 +42,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 - **Socket.io** - Comunicación en tiempo real
 
 ### **Backend**
+
 - **NestJS** - Framework Node.js para APIs
 - **TypeORM** - ORM para PostgreSQL
 - **PostgreSQL** - Base de datos principal
@@ -46,6 +51,7 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 - **Wompi** - Procesamiento de pagos
 
 ### **Infraestructura**
+
 - **Docker** - Containerización
 - **Railway** - Despliegue y hosting
 - **Supabase** - Storage de archivos
@@ -54,7 +60,8 @@ SUAREC es una plataforma innovadora que revoluciona la forma en que profesionale
 ## 🚀 Getting Started
 
 ### **Prerrequisitos**
-- Node.js 18+ 
+
+- Node.js 18+
 - npm, yarn, pnpm o bun
 - PostgreSQL (para desarrollo local)
 
@@ -141,6 +148,7 @@ suarec-frontend/
    - Redirección al login con confirmación
 
 ### **Características del Sistema**
+
 ✅ **Automático**: Sin intervención manual
 ✅ **Intuitivo**: Guía clara al usuario
 ✅ **Robusto**: Manejo de errores completo
@@ -149,6 +157,7 @@ suarec-frontend/
 ## 🎯 Funcionalidades Principales
 
 ### **Sistema de Publicaciones**
+
 - Creación de publicaciones con imágenes
 - Categorización por tipo de servicio
 - Sistema de likes y comentarios
@@ -156,36 +165,42 @@ suarec-frontend/
 - Filtros avanzados de búsqueda
 
 ### **Sistema de Aplicaciones**
+
 - Aplicación directa a publicaciones
 - Mensajes personalizados
 - Seguimiento de estado de aplicación
 - Notificaciones en tiempo real
 
 ### **Sistema de Contratos**
+
 - Creación de contratos de trabajo
 - Negociación de términos y precios
 - Sistema de ofertas múltiples
 - Integración con pagos
 
 ### **Sistema de Calificaciones**
+
 - Calificación bidireccional (cliente-servidor)
 - Promedios y estadísticas
 - Comentarios detallados
 - Sistema de reputación
 
 ### **Sistema de Mensajería**
+
 - Chat en tiempo real
 - Notificaciones push
 - Historial de conversaciones
 - Archivos adjuntos
 
 ### **Sistema de Asistencia**
+
 - Registro de entrada/salida
 - Configuración de horarios por empresa
 - Reportes de asistencia
 - Notificaciones de tardanzas
 
 ### **Sistema de Pagos**
+
 - Integración con Wompi
 - Múltiples métodos de pago
 - Historial de transacciones
@@ -194,6 +209,7 @@ suarec-frontend/
 ## 🎨 Componentes UI
 
 ### **Componentes Base**
+
 - `Button` - Botones con variantes
 - `Input` - Campos de entrada
 - `Dialog` - Modales y diálogos
@@ -202,6 +218,7 @@ suarec-frontend/
 - `ImageWithFallback` - Imágenes con fallback
 
 ### **Componentes Específicos**
+
 - `UserAvatar` - Avatar con carga de imagen
 - `ImageGallery` - Galería de imágenes
 - `RatingModal` - Modal de calificaciones
@@ -221,12 +238,14 @@ npm run type-check   # Verificación de tipos TypeScript
 ## 🚀 Deploy
 
 ### **Vercel (Recomendado)**
+
 ```bash
 npm run build
 vercel --prod
 ```
 
 ### **Otros Plataformas**
+
 - **Netlify**: Compatible con Next.js
 - **Railway**: Despliegue full-stack
 - **Docker**: Containerización completa
@@ -276,4 +295,4 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **Desarrollado con ❤️ en Colombia para el mundo**
 
-*SUAREC - Conectando talento, construyendo futuro*
+_SUAREC - Conectando talento, construyendo futuro_

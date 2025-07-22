@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const FormLogin = () => {
   const [error, setError] = useState<string | undefined>("");
@@ -72,7 +73,7 @@ const FormLogin = () => {
         Cookies.set("email", res.data.email);
         Cookies.set("role", res.data.roles[0].name);
 
-        setSuccess("Inicio de sesión exitoso");
+        toast.success("Inicio de sesión exitoso");
 
         // Pequeña pausa para mostrar el mensaje de éxito
         setTimeout(() => {
