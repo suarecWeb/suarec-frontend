@@ -76,8 +76,6 @@ const AdminPaymentsPage = () => {
           page,
         };
 
-        console.log("Enviando parámetros:", params); // Debug
-
         const response: PaginationResponse<PaymentTransaction> =
           await PaymentService.getAllPaymentsForAdmin(params);
 
@@ -96,13 +94,7 @@ const AdminPaymentsPage = () => {
 
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
-
-  useEffect(() => {
-    if (!loading) {
-      fetchPayments();
-    }
-  }, [filters, fetchPayments, loading]);
+  }, [filters]);
 
   // Effect para delay en filtros de monto
   useEffect(() => {

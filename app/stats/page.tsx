@@ -18,6 +18,7 @@ import {
   ChevronDown,
   AlertCircle,
   RefreshCw,
+  TrendingUp,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -196,7 +197,7 @@ const StatsPage = () => {
                     </span>
                   </div>
                   <h3 className="text-sm font-medium text-gray-600 mb-1">
-                    💰 Dinero Generado
+                    Dinero Generado
                   </h3>
                   <p className="text-xs text-green-600 font-medium">
                     ¡Esto es lo que has ganado con SUAREC!
@@ -214,7 +215,7 @@ const StatsPage = () => {
                     </span>
                   </div>
                   <h3 className="text-sm font-medium text-gray-600 mb-1">
-                    🎯 Contratos Exitosos
+                    Contratos Exitosos
                   </h3>
                   <p className="text-xs text-blue-600 font-medium">
                     ¡Cada proyecto completado es un éxito más!
@@ -232,7 +233,7 @@ const StatsPage = () => {
                     </span>
                   </div>
                   <h3 className="text-sm font-medium text-gray-600 mb-1">
-                    📢 Servicios Publicados
+                    Servicios Publicados
                   </h3>
                   <p className="text-xs text-purple-600 font-medium">
                     ¡Tu presencia en SUAREC está creciendo!
@@ -246,13 +247,13 @@ const StatsPage = () => {
                 <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 shadow-sm border border-green-200">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <Award className="h-5 w-5 text-green-600" />
-                    🏆 Tu Éxito en SUAREC
+                    Tu Éxito en SUAREC
                   </h3>
                   <div className="space-y-4">
                     <div className="bg-white/70 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-gray-700 font-medium">
-                          💵 Ingresos promedio por contrato:
+                          Ingresos promedio por contrato:
                         </span>
                         <span className="font-bold text-green-600 text-lg">
                           {stats.totalContractsCompleted > 0
@@ -272,7 +273,7 @@ const StatsPage = () => {
                     <div className="bg-white/70 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-gray-700 font-medium">
-                          📊 Tasa de éxito:
+                          Tasa de éxito:
                         </span>
                         <span className="font-bold text-blue-600 text-lg">
                           {stats.totalPublications > 0
@@ -299,12 +300,12 @@ const StatsPage = () => {
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm border border-purple-200">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <Target className="h-5 w-5 text-purple-600" />
-                    🚀 Tu Crecimiento
+                    Tu Crecimiento
                   </h3>
                   <div className="space-y-4">
                     <div className="text-center p-4 bg-white/70 rounded-lg">
                       <div className="text-3xl mb-2">
-                        {stats.totalEarnings > 0 ? "🌟" : "💪"}
+                        <TrendingUp className="h-8 w-8 text-purple-600 inline-block" />
                       </div>
                       <h4 className="font-bold text-purple-800 mb-2">
                         {stats.totalEarnings > 0
@@ -356,18 +357,34 @@ const StatsPage = () => {
                     </p>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
-                      {stats.totalContractsCompleted > 0
-                        ? "🟢 Activo"
-                        : "🟡 Preparándote"}
+                    <div className="text-2xl font-bold text-green-600 mb-1 flex items-center justify-center gap-2">
+                      {stats.totalContractsCompleted > 0 ? (
+                        <>
+                          <Award className="h-6 w-6 text-green-600" />
+                          Activo
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="h-6 w-6 text-yellow-500" />
+                          Preparándote
+                        </>
+                      )}
                     </div>
                     <p className="text-sm text-green-700">Estado en SUAREC</p>
                   </div>
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {stats.totalPublications > 0
-                        ? "📈 Creciendo"
-                        : "🌱 Comenzando"}
+                    <div className="text-2xl font-bold text-blue-600 mb-1 flex items-center justify-center gap-2">
+                      {stats.totalPublications > 0 ? (
+                        <>
+                          <TrendingUp className="h-6 w-6 text-blue-600" />
+                          Creciendo
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 className="h-6 w-6 text-blue-600" />
+                          Comenzando
+                        </>
+                      )}
                     </div>
                     <p className="text-sm text-blue-700">Tu progreso</p>
                   </div>
@@ -378,8 +395,8 @@ const StatsPage = () => {
               <div className="bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] rounded-xl p-8 text-white text-center">
                 <h3 className="text-2xl font-bold mb-4">
                   {stats.totalEarnings > 0
-                    ? "¡Sigue Creciendo con SUAREC! 🎉"
-                    : "¡Tu Potencial te Espera! ✨"}
+                    ? "¡Sigue Creciendo con SUAREC!"
+                    : "¡Tu Potencial te Espera!"}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   <div className="bg-white/10 rounded-lg p-4">

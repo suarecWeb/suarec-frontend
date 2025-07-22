@@ -114,16 +114,16 @@ const EditPublicationPage = () => {
         // Verificar si el usuario puede editar esta publicación
         // Verificar si el usuario puede editar esta publicación
         const publicationUserId = publication.user?.id || publication.userId;
-        
+
         console.log("🔍 Debug autorización (editar):", {
           currentUserId,
           publicationUserId,
           publicationUser: publication.user,
           userRoles,
           isOwner: publicationUserId == currentUserId,
-          isAdmin: userRoles.includes("ADMIN")
+          isAdmin: userRoles.includes("ADMIN"),
         });
-        
+
         if (
           currentUserId &&
           publicationUserId != currentUserId &&
@@ -133,7 +133,9 @@ const EditPublicationPage = () => {
           return;
         }
 
-        console.log("✅ Acceso permitido - Continuando con la carga del formulario");
+        console.log(
+          "✅ Acceso permitido - Continuando con la carga del formulario",
+        );
 
         // Establecer valores en el formulario
         setValue("title", publication.title);
@@ -212,7 +214,7 @@ const EditPublicationPage = () => {
       };
 
       // Solo agregar image_url si hay una imagen válida
-      if (imageUrl && imageUrl.trim() !== '') {
+      if (imageUrl && imageUrl.trim() !== "") {
         updatedData.image_url = imageUrl;
       }
 
