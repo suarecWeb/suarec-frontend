@@ -209,15 +209,15 @@ const PublicationDetailPage = () => {
 
   const canEditPublication = () => {
     if (!publication || !currentUserId) return false;
-    
+
     // Obtener el ID del propietario de la publicación
     const publicationUserId = publication.user?.id || publication.userId;
     if (!publicationUserId) return false;
-    
+
     // Asegurar que ambos IDs sean números para comparación correcta
     const currentUserIdNumber = Number(currentUserId);
     const publicationUserIdNumber = Number(publicationUserId);
-    
+
     // Debug logs
     console.log("🔍 Debug autorización (detalle):", {
       currentUserId,
@@ -227,20 +227,17 @@ const PublicationDetailPage = () => {
       publicationUser: publication.user,
       userRoles,
       isOwner: publicationUserId == currentUserId,
-      isAdmin: userRoles.includes("ADMIN")
+      isAdmin: userRoles.includes("ADMIN"),
     });
-    
-    return (
-      publicationUserId == currentUserId ||
-      userRoles.includes("ADMIN")
-    );
+
+    return publicationUserId == currentUserId || userRoles.includes("ADMIN");
   };
 
   // Función para determinar si la publicación es de una empresa
   const isCompanyPublication = () => {
     console.log("🔍 Debug empresa:", {
       author: author,
-      hasCompany: author?.company !== undefined && author?.company !== null
+      hasCompany: author?.company !== undefined && author?.company !== null,
     });
     return author?.company !== undefined && author?.company !== null;
   };

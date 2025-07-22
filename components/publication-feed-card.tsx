@@ -81,14 +81,14 @@ const PublicationFeedCard = ({
   // Verificar si el usuario puede editar/eliminar la publicación
   const canEditPublication = () => {
     if (!currentUserId) return false;
-    
+
     // Obtener el ID del propietario de la publicación
     const publicationUserId = publication.user?.id || publication.userId;
-    
+
     // Asegurar que ambos IDs sean números para comparación correcta
     const currentUserIdNumber = Number(currentUserId);
     const publicationUserIdNumber = Number(publicationUserId);
-    
+
     // Debug logs
     console.log("🔍 Debug autorización:", {
       currentUserId,
@@ -98,9 +98,9 @@ const PublicationFeedCard = ({
       publicationUser: publication.user,
       userRoles,
       isOwner: publicationUserId == currentUserId,
-      isAdmin: userRoles.includes("ADMIN")
+      isAdmin: userRoles.includes("ADMIN"),
     });
-    
+
     return publicationUserId == currentUserId || userRoles.includes("ADMIN");
   };
 
