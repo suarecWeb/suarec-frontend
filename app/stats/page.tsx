@@ -22,6 +22,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 const StatsPage = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -42,8 +43,7 @@ const StatsPage = () => {
       });
       setStats(data);
     } catch (err) {
-      console.error("Error loading stats:", err);
-      setError("Error al cargar las estadísticas");
+      toast.error("Error al cargar las estadísticas");
     } finally {
       setLoading(false);
       setRefreshing(false);

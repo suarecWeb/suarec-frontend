@@ -11,6 +11,7 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const UserTypeForm = () => {
   const [userType, setUserType] = useState<string | null>(null);
@@ -26,7 +27,7 @@ const UserTypeForm = () => {
       setRoles(res.data.data);
     } catch (err) {
       console.error("Error al cargar roles:", err);
-      setError("No se pudieron cargar las opciones de registro");
+      toast.error("No se pudieron cargar las opciones de registro");
     } finally {
       setLoading(false);
     }

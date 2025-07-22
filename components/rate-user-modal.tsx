@@ -7,6 +7,7 @@ import StarRating from "./star-rating";
 import RatingService from "@/services/RatingService";
 import { RatingCategory } from "@/interfaces/rating.interface";
 import { X, Star, Send, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface RateUserModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export default function RateUserModal({
     e.preventDefault();
 
     if (rating === 0) {
-      setError("Por favor selecciona una calificación");
+      toast.error("Por favor selecciona una calificación");
       return;
     }
 
@@ -67,7 +68,7 @@ export default function RateUserModal({
       setRating(0);
       setComment("");
     } catch (err: any) {
-      setError(
+      toast.error(
         err.response?.data?.message || "Error al enviar la calificación",
       );
     } finally {

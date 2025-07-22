@@ -103,7 +103,6 @@ const EmployeesPageContent = () => {
       await fetchEmployees();
     } catch (err) {
       toast.error("Error al cargar la empresa");
-      setError("Error al cargar la empresa");
     } finally {
       setLoading(false);
     }
@@ -143,15 +142,14 @@ const EmployeesPageContent = () => {
       // Validate that userId is a valid number
       const userIdNumber = Number(userId);
       if (isNaN(userIdNumber)) {
-        setError("ID de usuario inválido");
-        setTimeout(() => setError(null), 3000);
+        toast.error("ID de usuario inválido");
         return;
       }
 
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.addEmployee(companyId, userId);
-      setSuccess("Empleado agregado correctamente");
+      toast.success("Empleado agregado correctamente");
 
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });
@@ -174,15 +172,14 @@ const EmployeesPageContent = () => {
       // Validate that userId is a valid number
       const userIdNumber = Number(userId);
       if (isNaN(userIdNumber)) {
-        setError("ID de usuario inválido");
-        setTimeout(() => setError(null), 3000);
+        toast.error("ID de usuario inválido");
         return;
       }
 
       const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
       await CompanyService.removeEmployee(companyId, userId);
-      setSuccess("Empleado removido correctamente");
+      toast.success("Empleado removido correctamente");
 
       // Recargar empleados
       fetchEmployees({ page: pagination.page, limit: pagination.limit });

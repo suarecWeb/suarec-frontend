@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { calculatePriceWithTax } from "../lib/utils";
 import { formatCurrency } from "../lib/formatCurrency";
+import { toast } from "react-hot-toast";
 
 interface CreatePublicationModalProps {
   isOpen: boolean;
@@ -182,7 +183,7 @@ export default function CreatePublicationModal({
       const response =
         await PublicationService.createPublication(publicationData);
 
-      setSuccess("Publicación creada exitosamente");
+      toast.success("Publicación creada exitosamente");
       setIsLoading(false);
 
       // Resetear formulario

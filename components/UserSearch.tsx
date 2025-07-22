@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Search, User as UserIcon, MessageSquare, X } from "lucide-react";
 import { UserService } from "@/services/UsersService";
 import { User } from "@/interfaces/user.interface";
+import toast from "react-hot-toast";
 
 interface UserSearchProps {
   onSelectUser: (user: User) => void;
@@ -43,8 +44,7 @@ const UserSearch = ({ onSelectUser, onClose, isOpen }: UserSearchProps) => {
         const response = await UserService.searchUsers(searchQuery, 10);
         setUsers(response.data);
       } catch (err) {
-        console.error("Error searching users:", err);
-        setError("Error al buscar usuarios");
+        toast.error("Error al buscar usuarios");
       } finally {
         setLoading(false);
       }

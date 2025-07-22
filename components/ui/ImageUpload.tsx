@@ -6,6 +6,7 @@ import { Button } from "./button";
 import { Input } from "./input";
 import { Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
 import SupabaseService from "@/services/supabase.service";
+import toast from "react-hot-toast";
 
 interface ImageUploadProps {
   onImagesUploaded: (results: { url: string; path: string }[]) => void;
@@ -52,7 +53,7 @@ export function ImageUpload({
     );
 
     if (invalidFiles.length > 0) {
-      setError("Solo se permiten archivos JPG, PNG y WebP");
+      toast.error("Solo se permiten archivos JPG, PNG y WebP");
       return;
     }
 
@@ -61,7 +62,7 @@ export function ImageUpload({
     const oversizedFiles = files.filter((file) => file.size > maxSize);
 
     if (oversizedFiles.length > 0) {
-      setError("Cada archivo debe tener un tamaño máximo de 5MB");
+      toast.error("Cada archivo debe tener un tamaño máximo de 5MB");
       return;
     }
 
@@ -103,7 +104,7 @@ export function ImageUpload({
         fileInputRef.current.value = "";
       }
     } catch (error: any) {
-      setError(error.message || "Error al subir las imágenes");
+      toast.error(error.message || "Error al subir las imágenes");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

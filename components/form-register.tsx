@@ -26,6 +26,7 @@ import {
 import Link from "next/link";
 import TermsModal from "./terms-modal";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 // Interfaces para los DTOs
 interface CreateUserDto {
@@ -106,16 +107,13 @@ const FormRegister = () => {
         const result = await SupabaseService.uploadImage(file, folder);
 
         if (result.error) {
-          console.error("Error uploading image:", result.error);
-          setError("Error al subir la imagen. Inténtalo de nuevo.");
+          toast.error("Error al subir la imagen. Inténtalo de nuevo.");
           return;
         }
 
         setUploadedImageUrl(result.url);
-        console.log("Image uploaded successfully:", result.url);
       } catch (error) {
-        console.error("Error uploading image:", error);
-        setError("Error al subir la imagen. Inténtalo de nuevo.");
+        toast.error("Error al subir la imagen. Inténtalo de nuevo.");
       } finally {
         setIsUploadingImage(false);
       }
@@ -240,7 +238,7 @@ const FormRegister = () => {
     setFormErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      setError("Por favor corrige los errores en el formulario");
+      toast.error("Por favor corrige los errores en el formulario");
       return;
     }
 
@@ -272,11 +270,8 @@ const FormRegister = () => {
 
           // Para usuarios tipo PERSON, simplemente creamos el usuario
           const response = await UserService.createUser(userData);
-          console.log("👤 Respuesta de creación de usuario:", response);
-          console.log("🆔 ID del usuario creado:", response.data.id);
           createdUserId = response.data.id ? Number(response.data.id) : null;
-          console.log("🆔 createdUserId después de conversión:", createdUserId);
-          setSuccess("Usuario creado correctamente");
+          toast.success("Usuario creado correctamente");
         } else if (userType === "BUSINESS") {
           // Para empresas, usamos el nombre y email de la empresa para el usuario
           const companyName = formData.get("company_name") as string;
@@ -292,7 +287,7 @@ const FormRegister = () => {
           // Validar el formato del teléfono
           const phoneRegex = /^\+\d{1,3}\s?\d{1,14}$/;
           if (!phoneRegex.test(companyPhone)) {
-            setError(
+            toast.error(
               "El formato del teléfono debe ser: +código país número (Ej: +57 3001234567)",
             );
             return;
@@ -300,7 +295,7 @@ const FormRegister = () => {
 
           // Validar longitud del NIT
           if (companyNit.length < 8 || companyNit.length > 15) {
-            setError("El NIT debe tener entre 8 y 15 caracteres");
+            toast.error("El NIT debe tener entre 8 y 15 caracteres");
             return;
           }
 
@@ -370,19 +365,19 @@ const FormRegister = () => {
                 const companyResponse =
                   await CompanyService.createCompany(companyData);
 
-                setSuccess("Usuario y empresa creados correctamente");
+                toast.success("Usuario y empresa creados correctamente");
               } catch (error: any) {
                 const res = UserService.deleteUser(createdUserId.toString());
                 console.error("Error específico:", error);
                 if (error.response?.data?.message) {
                   // Si el backend devuelve un mensaje específico
-                  setError(error.response.data.message);
+                  toast.error(error.response.data.message);
                 } else if (error.message) {
                   // Si es un error generado en el frontend
-                  setError(error.message);
+                  toast.error(error.message);
                 } else {
                   // Mensaje genérico
-                  setError("Error al crear la empresa");
+                  toast.error("Error al crear la empresa");
                 }
                 return;
               }
@@ -391,13 +386,13 @@ const FormRegister = () => {
             console.error("Error específico:", error);
             if (error.response?.data?.message) {
               // Si el backend devuelve un mensaje específico
-              setError(error.response.data.message);
+              toast.error(error.response.data.message);
             } else if (error.message) {
               // Si es un error generado en el frontend
-              setError(error.message);
+              toast.error(error.message);
             } else {
               // Mensaje genérico
-              setError("Error al crear la empresa");
+              toast.error("Error al crear la empresa");
             }
             return;
           }
@@ -449,7 +444,9 @@ const FormRegister = () => {
         }
       } catch (error: any) {
         console.error("Error durante el registro:", error);
-        setError(error.response?.data?.message || "Error al crear el usuario");
+        toast.error(
+          error.response?.data?.message || "Error al crear el usuario",
+        );
       }
     });
   };

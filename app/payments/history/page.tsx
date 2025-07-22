@@ -31,6 +31,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { formatCurrency } from "@/lib/formatCurrency";
+import toast from "react-hot-toast";
 
 interface PaymentHistoryFilters {
   type: PaymentHistoryType;
@@ -99,7 +100,7 @@ const PaymentHistoryPage = () => {
         setError(null);
       } catch (err) {
         console.error("Error al cargar historial de pagos:", err);
-        setError("Error al cargar el historial de pagos");
+        toast.error("Error al cargar el historial de pagos");
       } finally {
         setLoading(false);
         setRefreshing(false);

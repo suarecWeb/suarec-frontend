@@ -33,6 +33,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 const UserRatingsPageContent = () => {
   const params = useParams();
@@ -75,8 +76,7 @@ const UserRatingsPageContent = () => {
       const response = await UserService.getUserById(userId);
       setUser(response.data);
     } catch (err) {
-      console.error("Error al cargar usuario:", err);
-      setError("Error al cargar la información del usuario");
+      toast.error("Error al cargar la información del usuario");
     }
   }, [userId]);
 

@@ -19,6 +19,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 // Interfaces
 interface FormData {
@@ -160,7 +161,7 @@ const CreatePublicationPage = () => {
       const response =
         await PublicationService.createPublication(publicationData);
 
-      setSuccess("Publicación creada exitosamente");
+      toast.success("Publicación creada exitosamente");
       setIsLoading(false);
 
       // Resetear formulario
@@ -177,7 +178,7 @@ const CreatePublicationPage = () => {
       const errorMessage =
         err.response?.data?.message ||
         "Error al crear la publicación. Inténtalo de nuevo.";
-      setError(errorMessage);
+      toast.error(errorMessage);
       console.error("Error al crear publicación:", err);
     }
   };
