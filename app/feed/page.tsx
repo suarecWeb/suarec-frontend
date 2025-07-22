@@ -37,6 +37,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import Link from "next/link";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
+import toast from "react-hot-toast";
 
 export default function FeedPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -133,8 +134,7 @@ export default function FeedPage() {
         );
         await loadPublicationBids(publicationIds);
       } catch (err) {
-        setError("Error al cargar las publicaciones");
-        console.error("Error al obtener publicaciones:", err);
+        toast.error("Error al cargar las publicaciones");
       } finally {
         setLoading(false);
       }

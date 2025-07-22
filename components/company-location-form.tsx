@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Company } from "@/interfaces/company.interface";
 import CompanyService from "@/services/CompanyService";
+import toast from "react-hot-toast";
 
 interface CompanyLocationFormProps {
   companyId: string;
@@ -46,8 +47,7 @@ export default function CompanyLocationForm({
       setSuccess(true);
       onSave?.();
     } catch (err) {
-      setError("Error al actualizar la ubicación");
-      console.error("Error:", err);
+      toast.error("Error al actualizar la ubicación");
     } finally {
       setLoading(false);
     }

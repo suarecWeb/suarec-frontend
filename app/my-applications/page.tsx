@@ -29,6 +29,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 const MyApplicationsPageContent = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -74,8 +75,7 @@ const MyApplicationsPageContent = () => {
       setApplications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar tus aplicaciones");
-      console.error("Error al obtener aplicaciones:", err);
+      toast.error("Error al cargar tus aplicaciones");
     } finally {
       setLoading(false);
     }
@@ -105,8 +105,7 @@ const MyApplicationsPageContent = () => {
       setError(null);
     } catch (err) {
       console.error("Error al eliminar aplicación:", err);
-      setError("No se pudo retirar la aplicación. Inténtalo de nuevo.");
-      setTimeout(() => setError(null), 5000);
+      toast.error("No se pudo retirar la aplicación. Inténtalo de nuevo.");
     }
   };
 

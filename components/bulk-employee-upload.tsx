@@ -14,6 +14,7 @@ import BulkEmployeeService, {
   BulkEmployeeUploadResponse,
 } from "@/services/BulkEmployeeService";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 interface BulkEmployeeUploadProps {
   companyId: string;
@@ -41,13 +42,13 @@ export default function BulkEmployeeUpload({
   const handleFileUpload = async (file: File) => {
     // Validar tipo de archivo
     if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      setError("Por favor selecciona un archivo Excel (.xlsx o .xls)");
+      toast.error("Por favor selecciona un archivo Excel (.xlsx o .xls)");
       return;
     }
 
     // Validar tamaño del archivo (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("El archivo es demasiado grande. El tamaño máximo es 5MB.");
+      toast.error("El archivo es demasiado grande. El tamaño máximo es 5MB.");
       return;
     }
 
@@ -84,7 +85,7 @@ export default function BulkEmployeeUpload({
     try {
       await BulkEmployeeService.downloadTemplate(companyId);
     } catch (err: any) {
-      setError("Error al descargar la plantilla");
+      toast.error("Error al descargar la plantilla");
     } finally {
       setIsDownloading(false);
     }

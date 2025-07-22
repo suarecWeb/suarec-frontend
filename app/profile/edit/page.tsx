@@ -24,6 +24,7 @@ import {
   Education,
 } from "@/interfaces/user.interface";
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
+import toast from "react-hot-toast";
 
 // Interfaces para el token
 interface TokenPayload {
@@ -280,7 +281,7 @@ const ProfileEditPage = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener perfil:", err);
-        setError("No se pudo cargar la información del perfil");
+        toast.error("No se pudo cargar la información del perfil");
         setLoading(false);
       }
     };
@@ -425,14 +426,14 @@ const ProfileEditPage = () => {
       };
 
       await UserService.updateUser(user.id, userData);
-      setSuccess("Perfil actualizado correctamente");
+      toast.success("Perfil actualizado correctamente");
 
       setTimeout(() => {
         router.push("/profile");
       }, 2000);
     } catch (err) {
       console.error("Error al actualizar perfil:", err);
-      setError("No se pudo actualizar la información del perfil");
+      toast.error("No se pudo actualizar la información del perfil");
     } finally {
       setSaving(false);
     }

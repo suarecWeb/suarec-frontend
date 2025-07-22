@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CompanyCheckinTime } from "@/interfaces/attendance.interface";
+import toast from "react-hot-toast";
 
 const RegisterAttendancePageContent = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -76,11 +77,10 @@ const RegisterAttendancePageContent = () => {
         fetchEmployees(userCompany.id);
         fetchCompanyCheckinTime();
       } else {
-        setError("No se encontró una empresa asociada a tu usuario");
+        toast.error("No se encontró una empresa asociada a tu usuario");
       }
     } catch (err) {
-      console.error("Error al cargar información de la empresa:", err);
-      setError("Error al cargar la información de la empresa");
+      toast.error("Error al cargar la información de la empresa");
     }
   }, [currentUserId]);
 
@@ -104,8 +104,7 @@ const RegisterAttendancePageContent = () => {
       });
       setEmployees(response.data.data);
     } catch (err) {
-      console.error("Error al cargar empleados:", err);
-      setError("Error al cargar los empleados");
+      toast.error("Error al cargar los empleados");
     } finally {
       setLoading(false);
     }
@@ -123,15 +122,15 @@ const RegisterAttendancePageContent = () => {
 
   const handleRegisterAttendance = async () => {
     if (!selectedEmployee || !selectedEmployee.id) {
-      setError("Por favor selecciona un empleado válido.");
+      toast.error("Por favor selecciona un empleado válido.");
       return;
     }
     if (!checkInTime) {
-      setError("Por favor ingresa la hora de llegada");
+      toast.error("Por favor ingresa la hora de llegada");
       return;
     }
     if (!date) {
-      setError("Por favor selecciona la fecha");
+      toast.error("Por favor selecciona la fecha");
       return;
     }
     try {
@@ -162,14 +161,14 @@ const RegisterAttendancePageContent = () => {
       );
 
       const lateMessage = isLate ? " (marcado como tarde)" : "";
-      setSuccess(`Asistencia registrada correctamente${lateMessage}`);
+      toast.success(`Asistencia registrada correctamente${lateMessage}`);
       setCheckInTime("");
       setTimeout(() => {
         setSuccess(null);
         router.push("/attendance");
       }, 3000);
     } catch (err) {
-      setError("Error al registrar la asistencia");
+      toast.error("Error al registrar la asistencia");
       setTimeout(() => setError(null), 3000);
     } finally {
       setLoadingRegister(false);

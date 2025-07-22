@@ -29,6 +29,7 @@ import {
 import { BankInfoService } from "@/services/bank-info.service";
 import { BankInfo } from "@/interfaces/bank-info";
 import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const UsersPageContent = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -66,8 +67,7 @@ const UsersPageContent = () => {
 
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar los usuarios");
-      console.error("Error al obtener usuarios:", err);
+      toast.error("Error al cargar los usuarios");
     } finally {
       setLoading(false);
     }
@@ -88,8 +88,7 @@ const UsersPageContent = () => {
         // Recargar la página actual después de eliminar
         fetchUsers({ page: pagination.page, limit: pagination.limit });
       } catch (err) {
-        console.error("Error al eliminar usuario:", err);
-        setError("Error al eliminar el usuario");
+        toast.error("Error al eliminar el usuario");
       }
     }
   };
@@ -162,7 +161,7 @@ const UsersPageContent = () => {
         ),
       );
     } catch (err) {
-      setError("Error al actualizar la verificación del usuario");
+      toast.error("Error al actualizar la verificación del usuario");
     }
   };
 

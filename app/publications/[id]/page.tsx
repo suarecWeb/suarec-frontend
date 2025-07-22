@@ -98,7 +98,7 @@ const PublicationDetailPage = () => {
         setIsLoading(true);
 
         if (!params.id) {
-          setError("ID de publicación no encontrado");
+          toast.error("ID de publicación no encontrado");
           setIsLoading(false);
           return;
         }
@@ -163,7 +163,7 @@ const PublicationDetailPage = () => {
         setIsLoading(false);
       } catch (err) {
         console.error("Error al cargar los detalles de la publicación:", err);
-        setError("No se pudo cargar la publicación");
+        toast.error("No se pudo cargar la publicación");
         setIsLoading(false);
       }
     };
@@ -186,7 +186,7 @@ const PublicationDetailPage = () => {
       router.push("/feed");
     } catch (err) {
       console.error("Error al eliminar la publicación:", err);
-      setError("No se pudo eliminar la publicación");
+      toast.error("No se pudo eliminar la publicación");
     }
   };
 
@@ -248,11 +248,10 @@ const PublicationDetailPage = () => {
       // Podrías mostrar un toast de éxito aquí
     } catch (err: any) {
       console.error("Error al aplicar:", err);
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "No se pudo enviar la aplicación. Inténtalo de nuevo.",
       );
-      setTimeout(() => setError(null), 5000);
     } finally {
       setIsApplying(false);
     }
@@ -309,8 +308,7 @@ const PublicationDetailPage = () => {
       setCommentText("");
     } catch (err) {
       console.error("Error al enviar comentario:", err);
-      setError("No se pudo enviar el comentario. Inténtalo de nuevo.");
-      setTimeout(() => setError(null), 3000);
+      toast.error("No se pudo enviar el comentario. Inténtalo de nuevo.");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -958,16 +956,9 @@ const PublicationDetailPage = () => {
                                 const basePrice = publication.price;
                                 const priceWithTax =
                                   calculatePriceWithTax(basePrice);
-                                console.log("🔍 Debug precio tarjeta:", {
-                                  basePrice,
-                                  priceWithTax,
+                                return formatCurrency(priceWithTax, {
+                                  showCurrency: true,
                                 });
-                                return formatCurrency(
-                                  priceWithTax.toLocaleString(),
-                                  {
-                                    showCurrency: true,
-                                  },
-                                );
                               })()}
                             </div>
                             <div className="text-sm text-gray-600 mb-4">

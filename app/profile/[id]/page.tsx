@@ -63,7 +63,7 @@ const PublicProfilePage = () => {
     const fetchUserProfile = async () => {
       try {
         if (!userId) {
-          setError("ID de usuario no válido");
+          toast.error("ID de usuario no válido");
           setLoading(false);
           return;
         }
@@ -88,9 +88,9 @@ const PublicProfilePage = () => {
       } catch (err: any) {
         console.error("Error al obtener perfil:", err);
         if (err.response?.status === 404) {
-          setError("Usuario no encontrado");
+          toast.error("Usuario no encontrado");
         } else {
-          setError("No se pudo cargar la información del perfil");
+          toast.error("No se pudo cargar la información del perfil");
         }
         setLoading(false);
       }

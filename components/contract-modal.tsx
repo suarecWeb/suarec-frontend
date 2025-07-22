@@ -211,12 +211,9 @@ export default function ContractModal({
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
                 <span className="text-lg">
-                  {formatCurrency(
-                    calculatePriceWithTax(publication.price!).toLocaleString(),
-                    {
-                      showCurrency: true,
-                    },
-                  )}
+                  {formatCurrency(calculatePriceWithTax(publication.price!), {
+                    showCurrency: true,
+                  })}
                 </span>
                 <span className="text-sm text-gray-600">
                   por {translatePriceUnit(publication.priceUnit || "")}
@@ -251,9 +248,7 @@ export default function ContractModal({
                     </div>
                     <p className="text-sm text-gray-600">
                       {formatCurrency(
-                        calculatePriceWithTax(
-                          publication.price!,
-                        ).toLocaleString(),
+                        calculatePriceWithTax(publication.price!),
                       )}{" "}
                       {translatePriceUnit(publication.priceUnit || "")}
                     </p>
@@ -540,20 +535,18 @@ export default function ContractModal({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Precio base:</span>
                   <span className="font-medium">
-                    {formatCurrency(basePrice.toLocaleString())}
+                    {formatCurrency(basePrice)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">IVA (19%):</span>
-                  <span className="font-medium">
-                    {formatCurrency(iva.toLocaleString())}
-                  </span>
+                  <span className="font-medium">{formatCurrency(iva)}</span>
                 </div>
                 <hr className="border-gray-300" />
                 <div className="flex justify-between items-center text-lg font-bold text-green-600">
                   <span>Total a pagar:</span>
                   <span>
-                    {formatCurrency(totalPrice.toLocaleString(), {
+                    {formatCurrency(totalPrice, {
                       showCurrency: true,
                     })}
                   </span>
@@ -592,7 +585,7 @@ export default function ContractModal({
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
                     Contratar por{" "}
-                    {formatCurrency(totalPrice.toLocaleString(), {
+                    {formatCurrency(totalPrice, {
                       showCurrency: true,
                     })}
                   </div>

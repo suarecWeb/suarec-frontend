@@ -99,7 +99,7 @@ const CompaniesPageContent = () => {
 
   const handleDelete = async (id: string) => {
     if (!isAdmin()) {
-      setError("No tienes permisos para eliminar empresas");
+      toast.error("No tienes permisos para eliminar empresas");
       return;
     }
 

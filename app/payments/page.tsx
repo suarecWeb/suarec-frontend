@@ -34,6 +34,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { formatCurrency } from "@/lib/formatCurrency";
+import toast from "react-hot-toast";
 
 const AdminPaymentsPage = () => {
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
@@ -84,8 +85,7 @@ const AdminPaymentsPage = () => {
         setPagination(response.meta);
         setError(null);
       } catch (err) {
-        console.error("Error al cargar pagos:", err);
-        setError("Error al cargar los pagos");
+        toast.error("Error al cargar los pagos");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -150,8 +150,7 @@ const AdminPaymentsPage = () => {
         ),
       );
     } catch (error) {
-      console.error("Error al actualizar estado del pago:", error);
-      setError("Error al actualizar el estado del pago");
+      toast.error("Error al actualizar el estado del pago");
     }
   };
 

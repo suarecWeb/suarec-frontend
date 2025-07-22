@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import DownloadCVButton from "@/components/download-cv-button";
 import BulkEmployeeUpload from "@/components/bulk-employee-upload";
+import toast from "react-hot-toast";
 
 // Modal de confirmación
 const RemoveEmployeeModal = ({
@@ -190,11 +191,10 @@ const MyEmployeesPageContent = () => {
           setCompanyId(userCompany.id);
           setCompanyInfo(userCompany);
         } else {
-          setError("No se encontró una empresa asociada a tu usuario");
+          toast.error("No se encontró una empresa asociada a tu usuario");
         }
       } catch (err) {
-        console.error("Error al obtener información de la empresa:", err);
-        setError("Error al cargar la información de la empresa");
+        toast.error("Error al cargar la información de la empresa");
       }
     };
 
@@ -220,8 +220,7 @@ const MyEmployeesPageContent = () => {
       setEmployees(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar los empleados");
-      console.error("Error al obtener empleados:", err);
+      toast.error("Error al cargar los empleados");
     } finally {
       setLoading(false);
     }
@@ -255,7 +254,7 @@ const MyEmployeesPageContent = () => {
     employeeName: string,
   ) => {
     if (!currentUserId) {
-      setError("Error: No se pudo identificar el usuario actual");
+      toast.error("Error: No se pudo identificar el usuario actual");
       return;
     }
 
@@ -317,7 +316,7 @@ const MyEmployeesPageContent = () => {
         // No bloqueamos el proceso si falla el correo
       }
 
-      setSuccess(
+      toast.success(
         `${employeeToRemove.name} ha sido removido de la empresa y se le ha enviado una notificación por mensaje y correo electrónico`,
       );
 
@@ -327,8 +326,7 @@ const MyEmployeesPageContent = () => {
       setTimeout(() => setSuccess(null), 4000);
     } catch (err) {
       console.error("Error al remover empleado:", err);
-      setError("Error al remover el empleado");
-      setTimeout(() => setError(null), 3000);
+      toast.error("Error al remover el empleado");
     } finally {
       setRemovingEmployee(null);
       setIsModalOpen(false);

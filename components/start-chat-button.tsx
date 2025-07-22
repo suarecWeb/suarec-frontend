@@ -17,6 +17,7 @@ import {
   FileText,
   Send,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface StartChatButtonProps {
   recipientId: number;
@@ -150,14 +151,12 @@ const StartChatButton = ({
       const currentUserId = decoded.id;
 
       if (currentUserId === recipientId) {
-        setError("No puedes iniciar un chat contigo mismo");
-        setTimeout(() => setError(null), 5000);
+        toast.error("No puedes iniciar un chat contigo mismo");
         return;
       }
 
       if (!recipientId || isNaN(recipientId)) {
-        setError("ID de destinatario inválido");
-        setTimeout(() => setError(null), 5000);
+        toast.error("ID de destinatario inválido");
         return;
       }
 
