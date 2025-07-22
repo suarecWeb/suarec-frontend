@@ -956,16 +956,9 @@ const PublicationDetailPage = () => {
                                 const basePrice = publication.price;
                                 const priceWithTax =
                                   calculatePriceWithTax(basePrice);
-                                console.log("🔍 Debug precio tarjeta:", {
-                                  basePrice,
-                                  priceWithTax,
+                                return formatCurrency(priceWithTax, {
+                                  showCurrency: true,
                                 });
-                                return formatCurrency(
-                                  priceWithTax.toLocaleString(),
-                                  {
-                                    showCurrency: true,
-                                  },
-                                );
                               })()}
                             </div>
                             <div className="text-sm text-gray-600 mb-4">
