@@ -30,13 +30,15 @@ const FormLogin = () => {
     const expired = searchParams.get("expired");
 
     if (verified === "true") {
-      setSuccess(
+      toast.success(
         "¡Correo electrónico verificado exitosamente! Ya puedes iniciar sesión.",
       );
     }
 
     if (expired === "true") {
-      setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+      toast.error(
+        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+      );
     }
   }, [searchParams]);
 
@@ -65,7 +67,7 @@ const FormLogin = () => {
         });
 
         if (res.data.token === undefined || res.data.token === null) {
-          setError("Error iniciando sesión");
+          toast.error("Error iniciando sesión");
           return;
         }
 
@@ -88,7 +90,7 @@ const FormLogin = () => {
           errorMessage.toLowerCase().includes("verificar") ||
           errorMessage.toLowerCase().includes("verification")
         ) {
-          setError(
+          toast.error(
             "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.",
           );
 
@@ -100,7 +102,7 @@ const FormLogin = () => {
           }, 3000);
         } else {
           // Error genérico de credenciales
-          setError(
+          toast.error(
             "Email o contraseña incorrectos. Por favor, verifica tus credenciales.",
           );
         }
