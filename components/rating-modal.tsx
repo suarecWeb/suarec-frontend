@@ -8,6 +8,7 @@ import RatingService, {
   CreateRatingDto,
   RatingCategory,
 } from "@/services/RatingService";
+import toast from "react-hot-toast";
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      setError("Por favor selecciona una calificación");
+      toast.error("Por favor selecciona una calificación");
       return;
     }
 

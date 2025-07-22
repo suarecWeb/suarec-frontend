@@ -30,6 +30,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
+import toast from "react-hot-toast";
 
 const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -81,7 +82,7 @@ const PublicationsPageContent = () => {
       setPublications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar las publicaciones");
+      toast.error("Error al cargar las publicaciones");
       console.error("Error al obtener publicaciones:", err);
     } finally {
       setLoading(false);
@@ -121,7 +122,7 @@ const PublicationsPageContent = () => {
         hasPrevPage: params.page! > 1,
       });
     } catch (err) {
-      setError("Error al cargar tus publicaciones");
+      toast.error("Error al cargar tus publicaciones");
       console.error("Error al obtener publicaciones:", err);
     } finally {
       setLoading(false);
@@ -163,7 +164,7 @@ const PublicationsPageContent = () => {
         }
       } catch (err) {
         console.error("Error al eliminar publicación:", err);
-        setError("Error al eliminar la publicación");
+        toast.error("Error al eliminar la publicación");
       }
     }
   };

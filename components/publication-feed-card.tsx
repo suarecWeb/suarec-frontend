@@ -241,7 +241,7 @@ const PublicationFeedCard = ({
                       priceWithTax_type: typeof priceWithTax,
                       calculation: `${basePrice} + (${basePrice} * 0.19) = ${priceWithTax}`,
                     });
-                    return `${formatCurrency(priceWithTax.toLocaleString(), {
+                    return `${formatCurrency(priceWithTax, {
                       showCurrency: true,
                     })} ${translatePriceUnit(publication.priceUnit || "")}`;
                   })()
@@ -327,7 +327,7 @@ const PublicationFeedCard = ({
           <Share2 className="h-4 w-4" />
           <span>Compartir</span>
         </button>
-        
+
         {/* Botones de editar y eliminar para propietarios y admins */}
         {canEditPublication() && (
           <>

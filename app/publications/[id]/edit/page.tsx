@@ -20,6 +20,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 // Interfaces
 interface FormData {
@@ -128,8 +129,7 @@ const EditPublicationPage = () => {
           publicationUserId != currentUserId &&
           !userRoles.includes("ADMIN")
         ) {
-          console.log("🚫 Bloqueando acceso - No tienes permisos");
-          setError("No tienes permiso para editar esta publicación");
+          toast.error("No tienes permiso para editar esta publicación");
           return;
         }
 
@@ -145,8 +145,7 @@ const EditPublicationPage = () => {
           setPreviewUrl(publication.image_url);
         }
       } catch (err) {
-        console.error("Error al cargar la publicación:", err);
-        setError("No se pudo cargar la información de la publicación");
+        toast.error("No se pudo cargar la información de la publicación");
       } finally {
         setIsFetching(false);
       }
@@ -220,15 +219,14 @@ const EditPublicationPage = () => {
       // Actualizar publicación
       await PublicationService.updatePublication(publicationId, updatedData);
 
-      setSuccess("Publicación actualizada exitosamente");
+      toast.success("Publicación actualizada exitosamente");
 
       // Redirigir después de 1.5 segundos
       setTimeout(() => {
         router.push(`/publications/${publicationId}`);
       }, 1500);
     } catch (err) {
-      console.error("Error al actualizar la publicación:", err);
-      setError("Error al actualizar la publicación. Inténtalo de nuevo.");
+      toast.error("Error al actualizar la publicación. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }

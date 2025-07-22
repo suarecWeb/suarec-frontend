@@ -35,6 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import RateUserModal from "@/components/rate-user-modal";
+import toast from "react-hot-toast";
 
 const WorkContractsPageContent = () => {
   const router = useRouter();
@@ -102,8 +103,7 @@ const WorkContractsPageContent = () => {
         setContracts(response.data.data);
         setPagination(response.data.meta);
       } catch (err) {
-        setError("Error al cargar los contratos");
-        console.error("Error al obtener contratos:", err);
+        toast.error("Error al cargar los contratos");
       } finally {
         setLoading(false);
       }
@@ -129,8 +129,7 @@ const WorkContractsPageContent = () => {
       });
       fetchContracts({ page: pagination.page, limit: pagination.limit });
     } catch (err) {
-      console.error("Error al actualizar contrato:", err);
-      setError("Error al actualizar el contrato");
+      toast.error("Error al actualizar el contrato");
     }
   };
 

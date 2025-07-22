@@ -36,6 +36,7 @@ import {
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
 
 const ApplicationsPageContent = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -125,8 +126,7 @@ const ApplicationsPageContent = () => {
       setApplications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
-      setError("Error al cargar las aplicaciones");
-      console.error("Error al obtener aplicaciones:", err);
+      toast.error("Error al cargar las aplicaciones");
     } finally {
       setLoading(false);
     }
@@ -266,8 +266,7 @@ const ApplicationsPageContent = () => {
       setError(null);
       closeActionModal();
     } catch (err) {
-      console.error("Error al actualizar aplicación:", err);
-      setError("No se pudo actualizar la aplicación. Inténtalo de nuevo.");
+      toast.error("No se pudo actualizar la aplicación. Inténtalo de nuevo.");
       setTimeout(() => setError(null), 5000);
     } finally {
       setProcessingApplication(null);

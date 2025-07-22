@@ -25,6 +25,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import RoleGuard from "@/components/role-guard";
+import toast from "react-hot-toast";
 
 interface FormData {
   title: string;
@@ -213,12 +214,12 @@ const CreateWorkContractPageContent = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!currentUserId) {
-      setError("Usuario no autenticado");
+      toast.error("Usuario no autenticado");
       return;
     }
 
     if (!selectedProvider) {
-      setError("Debes seleccionar un proveedor");
+      toast.error("Debes seleccionar un proveedor");
       return;
     }
 
@@ -246,7 +247,7 @@ const CreateWorkContractPageContent = () => {
       const response =
         await WorkContractService.createWorkContract(contractData);
 
-      setSuccess("Contrato creado exitosamente");
+      toast.success("Contrato creado exitosamente");
 
       // Resetear formulario
       reset();

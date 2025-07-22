@@ -7,6 +7,7 @@ import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { GalleryService, GalleryImage } from "@/services/gallery.service";
 import { ImageUpload } from "./ImageUpload";
 import { ImageGallery } from "./ImageGallery";
+import toast from "react-hot-toast";
 
 interface UserGalleryProps {
   userId: number;
@@ -41,8 +42,7 @@ export function UserGallery({
       const galleryImages = await GalleryService.getUserGallery();
       setImages(galleryImages);
     } catch (error) {
-      console.error("Error loading gallery:", error);
-      setError("Error al cargar la galería");
+      toast.error("Error al cargar la galería");
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +65,7 @@ export function UserGallery({
       setImages([...images, ...newImages]);
       setShowUpload(false);
     } catch (error) {
-      console.error("Error uploading images:", error);
-      setError("Error al subir las imágenes");
+      toast.error("Error al subir las imágenes");
     } finally {
       setIsUploading(false);
     }
@@ -84,8 +83,7 @@ export function UserGallery({
         );
       }
     } catch (error) {
-      console.error("Error deleting image:", error);
-      setError("Error al eliminar la imagen");
+      toast.error("Error al eliminar la imagen");
     }
   };
 
@@ -101,7 +99,7 @@ export function UserGallery({
       } else {
         // Seleccionar (verificar límite)
         if (prev.length >= maxSelection) {
-          setError(`Puedes seleccionar máximo ${maxSelection} imágenes`);
+          toast.error(`Puedes seleccionar máximo ${maxSelection} imágenes`);
           return prev;
         }
         const newSelection = [...prev, imageUrl];

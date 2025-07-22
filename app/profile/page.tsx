@@ -86,8 +86,7 @@ const ProfilePage = () => {
         setUser(userData);
         setLoading(false);
       } catch (err) {
-        console.error("Error al obtener perfil:", err);
-        setError("No se pudo cargar la información del perfil");
+        toast.error("No se pudo cargar la información del perfil");
         setLoading(false);
       }
     };
@@ -184,7 +183,7 @@ const ProfilePage = () => {
     setError(null);
     try {
       await ExperienceService.deleteExperience(experienceToDelete);
-      setSuccess("Experiencia eliminada correctamente");
+      toast.success("Experiencia eliminada correctamente");
       // Recargar los datos del usuario
       const token = Cookies.get("token");
       if (token) {
@@ -194,7 +193,7 @@ const ProfilePage = () => {
       }
     } catch (error) {
       console.error("Error al eliminar la experiencia:", error);
-      setError("Ocurrió un error al eliminar la experiencia");
+      toast.error("Ocurrió un error al eliminar la experiencia");
     } finally {
       setExperienceToDelete(null);
     }
@@ -300,7 +299,9 @@ const ProfilePage = () => {
                               "Error updating profile image:",
                               error,
                             );
-                            setError("Error al actualizar la imagen de perfil");
+                            toast.error(
+                              "Error al actualizar la imagen de perfil",
+                            );
                           }
                         }}
                       />
@@ -981,7 +982,7 @@ const ProfilePage = () => {
         userId={Number(user?.id)}
         experience={selectedExperience}
         onSuccess={() => {
-          setSuccess("Experiencia agregada correctamente");
+          toast.success("Experiencia agregada correctamente");
           setError(null);
           // Recargar los datos del usuario
           const token = Cookies.get("token");

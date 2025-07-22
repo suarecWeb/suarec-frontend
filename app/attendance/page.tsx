@@ -36,6 +36,7 @@ import {
   CompanyCheckinTime,
   CompanyAttendanceStats,
 } from "@/interfaces/attendance.interface";
+import toast from "react-hot-toast";
 
 interface AttendanceStats {
   totalDays: number;
@@ -139,11 +140,10 @@ const AttendancePageContent = () => {
         fetchCompanyCheckinTime();
         fetchCompanyAttendanceStats();
       } else {
-        setError("No se encontró una empresa asociada a tu usuario");
+        toast.error("No se encontró una empresa asociada a tu usuario");
       }
     } catch (err) {
-      console.error("Error al cargar información de la empresa:", err);
-      setError("Error al cargar la información de la empresa");
+      toast.error("Error al cargar la información de la empresa");
     }
   }, [currentUserId, fetchCompanyAttendanceStats]);
 
@@ -161,8 +161,7 @@ const AttendancePageContent = () => {
       });
       setEmployees(response.data.data);
     } catch (err) {
-      console.error("Error al cargar empleados:", err);
-      setError("Error al cargar los empleados");
+      toast.error("Error al cargar los empleados");
     } finally {
       setLoading(false);
     }
@@ -182,8 +181,7 @@ const AttendancePageContent = () => {
       setAttendanceRecords(attendanceResponse);
       setAttendanceStats(statsResponse);
     } catch (err) {
-      console.error("Error al cargar asistencia:", err);
-      setError("Error al cargar el registro de asistencia");
+      toast.error("Error al cargar el registro de asistencia");
     } finally {
       setLoadingAttendance(false);
     }
@@ -191,7 +189,7 @@ const AttendancePageContent = () => {
 
   const handleEmployeeSelect = (employee: User) => {
     if (!employee.id) {
-      setError("ID de empleado no válido");
+      toast.error("ID de empleado no válido");
       return;
     }
     setSelectedEmployee(employee);
@@ -239,14 +237,14 @@ const AttendancePageContent = () => {
       setCompanyCheckinTime(response);
       setNewCheckinTime(response.checkInTime || "07:00");
     } catch (err) {
-      console.error("Error al obtener hora de check-in:", err);
+      toast.error("Error al obtener hora de check-in");
       // No mostrar error si no existe configuración
     }
   };
 
   const handleUpdateCheckinTime = async () => {
     if (!newCheckinTime) {
-      setError("Por favor ingresa una hora válida");
+      toast.error("Por favor ingresa una hora válida");
       return;
     }
 
@@ -255,12 +253,11 @@ const AttendancePageContent = () => {
       const response =
         await AttendanceService.updateCompanyCheckinTime(newCheckinTime);
       setCompanyCheckinTime(response);
-      setSuccess("Hora de check-in actualizada correctamente");
+      toast.success("Hora de check-in actualizada correctamente");
       setShowCheckinConfig(false);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error("Error al actualizar hora de check-in:", err);
-      setError("Error al actualizar la hora de check-in");
+      toast.error("Error al actualizar la hora de check-in");
       setTimeout(() => setError(null), 3000);
     } finally {
       setUpdatingCheckinTime(false);
@@ -281,7 +278,7 @@ const AttendancePageContent = () => {
 
   const saveEditRecord = async (record: AttendanceRecord) => {
     if (!record.employee?.id) {
-      setError("No se puede actualizar: el empleado no tiene ID válido.");
+      toast.error("No se puede actualizar: el empleado no tiene ID válido.");
       return;
     }
     try {
@@ -289,12 +286,12 @@ const AttendancePageContent = () => {
         checkInTime: editCheckInTime,
         notes: editNotes,
       });
-      setSuccess("Registro actualizado correctamente");
+      toast.success("Registro actualizado correctamente");
       setEditingRecordId(null);
       fetchEmployeeAttendance(record.employee.id.toString());
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError("Error al actualizar el registro");
+      toast.error("Error al actualizar el registro");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -305,17 +302,17 @@ const AttendancePageContent = () => {
 
   const deleteRecord = async (record: AttendanceRecord) => {
     if (!record.employee?.id) {
-      setError("No se puede eliminar: el empleado no tiene ID válido.");
+      toast.error("No se puede eliminar: el empleado no tiene ID válido.");
       return;
     }
     try {
       await AttendanceService.deleteAttendance(record.id.toString());
-      setSuccess("Registro eliminado correctamente");
+      toast.success("Registro eliminado correctamente");
       setDeletingRecordId(null);
       fetchEmployeeAttendance(record.employee.id.toString());
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError("Error al eliminar el registro");
+      toast.error("Error al eliminar el registro");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -325,11 +322,11 @@ const AttendancePageContent = () => {
     notes: string = "",
   ) => {
     if (!selectedEmployee || !selectedEmployee.id) {
-      setError("Selecciona un empleado válido.");
+      toast.error("Selecciona un empleado válido.");
       return;
     }
     if (!isAbsent && !editCheckInTime) {
-      setError("Por favor ingresa la hora de llegada");
+      toast.error("Por favor ingresa la hora de llegada");
       return;
     }
     try {
@@ -341,7 +338,7 @@ const AttendancePageContent = () => {
         isAbsent,
         notes,
       );
-      setSuccess(
+      toast.success(
         isAbsent
           ? "Ausencia registrada correctamente"
           : "Asistencia registrada correctamente",
@@ -349,7 +346,7 @@ const AttendancePageContent = () => {
       setEditCheckInTime("");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(
+      toast.error(
         isAbsent
           ? "Error al registrar la ausencia"
           : "Error al registrar la asistencia",
@@ -643,7 +640,7 @@ const AttendancePageContent = () => {
                                     today.toDateString(),
                                 );
                               if (isAlreadyRegistered) {
-                                setError("Ya existe un registro para hoy");
+                                toast.error("Ya existe un registro para hoy");
                                 return;
                               }
                               handleRegisterAttendance(true, "Ausencia manual");
