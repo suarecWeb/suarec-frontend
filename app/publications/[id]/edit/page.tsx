@@ -111,14 +111,29 @@ const EditPublicationPage = () => {
         setOriginalPublication(publication);
 
         // Verificar si el usuario puede editar esta publicación
+        // Verificar si el usuario puede editar esta publicación
+        const publicationUserId = publication.user?.id || publication.userId;
+        
+        console.log("🔍 Debug autorización (editar):", {
+          currentUserId,
+          publicationUserId,
+          publicationUser: publication.user,
+          userRoles,
+          isOwner: publicationUserId == currentUserId,
+          isAdmin: userRoles.includes("ADMIN")
+        });
+        
         if (
           currentUserId &&
-          publication.userId !== currentUserId &&
+          publicationUserId != currentUserId &&
           !userRoles.includes("ADMIN")
         ) {
+          console.log("🚫 Bloqueando acceso - No tienes permisos");
           setError("No tienes permiso para editar esta publicación");
           return;
         }
+
+        console.log("✅ Acceso permitido - Continuando con la carga del formulario");
 
         // Establecer valores en el formulario
         setValue("title", publication.title);
@@ -195,8 +210,12 @@ const EditPublicationPage = () => {
         title: data.title,
         description: data.description,
         category: data.category,
-        image_url: imageUrl,
       };
+
+      // Solo agregar image_url si hay una imagen válida
+      if (imageUrl && imageUrl.trim() !== '') {
+        updatedData.image_url = imageUrl;
+      }
 
       // Actualizar publicación
       await PublicationService.updatePublication(publicationId, updatedData);

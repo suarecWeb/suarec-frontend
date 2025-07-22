@@ -81,7 +81,27 @@ const PublicationFeedCard = ({
   // Verificar si el usuario puede editar/eliminar la publicación
   const canEditPublication = () => {
     if (!currentUserId) return false;
-    return publication.userId === currentUserId || userRoles.includes("ADMIN");
+    
+    // Obtener el ID del propietario de la publicación
+    const publicationUserId = publication.user?.id || publication.userId;
+    
+    // Asegurar que ambos IDs sean números para comparación correcta
+    const currentUserIdNumber = Number(currentUserId);
+    const publicationUserIdNumber = Number(publicationUserId);
+    
+    // Debug logs
+    console.log("🔍 Debug autorización:", {
+      currentUserId,
+      currentUserIdNumber,
+      publicationUserId: publicationUserId,
+      publicationUserIdNumber,
+      publicationUser: publication.user,
+      userRoles,
+      isOwner: publicationUserId == currentUserId,
+      isAdmin: userRoles.includes("ADMIN")
+    });
+    
+    return publicationUserId == currentUserId || userRoles.includes("ADMIN");
   };
 
   // Función para eliminar publicación
