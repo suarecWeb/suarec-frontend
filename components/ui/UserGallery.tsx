@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Button } from './button';
-import { Plus, Loader2, AlertCircle } from 'lucide-react';
-import { GalleryService, GalleryImage } from '@/services/gallery.service';
-import { ImageUpload } from './ImageUpload';
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { Button } from "./button";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
+import { GalleryService, GalleryImage } from "@/services/gallery.service";
+import { ImageUpload } from "./ImageUpload";
 import { ImageGallery } from "./ImageGallery";
 
 interface UserGalleryProps {
@@ -202,7 +202,7 @@ export function UserGallery({
             >
               <Image
                 src={image.image_url}
-                alt={image.description || 'Imagen de galería'}
+                alt={image.description || "Imagen de galería"}
                 width={300}
                 height={300}
                 className="w-full h-full object-cover"

@@ -28,7 +28,7 @@ import {
   User as UserIcon,
   Plus,
 } from "lucide-react";
-import Image from 'next/image';
+import Image from "next/image";
 import toast from "react-hot-toast";
 
 const ChatPageContent = () => {

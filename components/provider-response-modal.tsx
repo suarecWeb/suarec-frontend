@@ -155,9 +155,7 @@ export default function ProviderResponseModal({
                 </p>
                 <p className="font-medium text-green-600">
                   {formatCurrency(
-                    calculatePriceWithTax(
-                      contract.initialPrice!,
-                    ).toLocaleString(),
+                    calculatePriceWithTax(contract.initialPrice!),
                   )}{" "}
                   {translatePriceUnit(contract.priceUnit)}
                 </p>

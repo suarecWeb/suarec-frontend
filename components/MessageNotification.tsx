@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { X, MessageSquare, User } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import { X, MessageSquare, User } from "lucide-react";
 
 interface MessageNotificationProps {
   id: string;

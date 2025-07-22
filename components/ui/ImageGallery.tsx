@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Button } from './button';
-import { X, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
-import { getPublicUrl } from '@/lib/utils';
+import React, { useState } from "react";
+import Image from "next/image";
+import { Button } from "./button";
+import { X, Edit, Trash2, Image as ImageIcon } from "lucide-react";
+import { getPublicUrl } from "@/lib/utils";
 
 interface GalleryImage {
   id: number;

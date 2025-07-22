@@ -19,13 +19,13 @@ import {
   Calendar,
   Eye,
   User,
-  Info
-} from "lucide-react"
-import Link from "next/link"
-import Cookies from "js-cookie"
-import { jwtDecode } from "jwt-decode"
-import { TokenPayload } from "@/interfaces/auth.interface"
-import Image from "next/image"
+  Info,
+} from "lucide-react";
+import Link from "next/link";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
+import Image from "next/image";
 import { toast } from "react-hot-toast";
 
 const CompaniesPageContent = () => {
@@ -203,9 +203,9 @@ const CompaniesPageContent = () => {
                           <div className="flex items-start gap-4">
                             {company.user?.profile_image ? (
                               <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden">
-                                <Image 
-                                  src={company.user.profile_image} 
-                                  alt={company.name} 
+                                <Image
+                                  src={company.user.profile_image}
+                                  alt={company.name}
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover"
@@ -254,7 +254,9 @@ const CompaniesPageContent = () => {
 
                             {canManageCompany(company) && (
                               <div className="flex gap-3">
-                                <Link href={`/companies/${company.id}/employees`}>
+                                <Link
+                                  href={`/companies/${company.id}/employees`}
+                                >
                                   <button className="text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 text-sm">
                                     <User className="h-4 w-4" />
                                     <span>Empleados</span>

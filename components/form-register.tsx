@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import TermsModal from "./terms-modal";
-import Image from 'next/image';
+import Image from "next/image";
 
 // Interfaces para los DTOs
 interface CreateUserDto {

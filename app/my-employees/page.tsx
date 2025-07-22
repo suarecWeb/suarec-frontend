@@ -468,17 +468,22 @@ const MyEmployeesPageContent = () => {
                       Carga Masiva de Empleados
                     </h2>
                     {companyId ? (
-                      <BulkEmployeeUpload 
+                      <BulkEmployeeUpload
                         companyId={companyId}
                         onSuccess={() => {
-                          fetchEmployees({ page: pagination.page, limit: pagination.limit });
+                          fetchEmployees({
+                            page: pagination.page,
+                            limit: pagination.limit,
+                          });
                           setShowBulkUpload(false);
                         }}
                       />
                     ) : (
                       <div className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#097EEC] mx-auto mb-4"></div>
-                        <p className="text-gray-600">Cargando información de la empresa...</p>
+                        <p className="text-gray-600">
+                          Cargando información de la empresa...
+                        </p>
                       </div>
                     )}
                   </div>
@@ -486,265 +491,269 @@ const MyEmployeesPageContent = () => {
                   <>
                     {/* Employees Grid */}
                     {filteredEmployees.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredEmployees.map((employee) => (
-                      <div
-                        key={employee.id}
-                        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative"
-                      >
-                        {/* Menú de opciones */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenMenuId(
-                                openMenuId === employee.id
-                                  ? null
-                                  : employee.id!,
-                              );
-                            }}
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredEmployees.map((employee) => (
+                          <div
+                            key={employee.id}
+                            className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative"
                           >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-
-                          {/* Dropdown Menu */}
-                          {openMenuId === employee.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
+                            {/* Menú de opciones */}
+                            <div className="absolute top-2 right-2 z-10">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  router.push(`/profile/${employee.id}`);
-                                  setOpenMenuId(null);
+                                  setOpenMenuId(
+                                    openMenuId === employee.id
+                                      ? null
+                                      : employee.id!,
+                                  );
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                               >
-                                <UserIcon className="h-4 w-4" />
-                                Ver perfil
+                                <MoreVertical className="h-4 w-4" />
                               </button>
 
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.location.href = `mailto:${employee.email}`;
-                                  setOpenMenuId(null);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
-                              >
-                                <Mail className="h-4 w-4" />
-                                Contactar
-                              </button>
+                              {/* Dropdown Menu */}
+                              {openMenuId === employee.id && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/profile/${employee.id}`);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                                  >
+                                    <UserIcon className="h-4 w-4" />
+                                    Ver perfil
+                                  </button>
 
-                              {!employee.company && (
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="px-4 py-2 hover:bg-gray-50"
-                                >
-                                  <DownloadCVButton
-                                    user={employee}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-700 hover:text-gray-900 p-0 h-auto text-sm w-full justify-start"
-                                    isPublicProfile={true}
-                                  />
-                                </div>
-                              )}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.location.href = `mailto:${employee.email}`;
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full text-left"
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                    Contactar
+                                  </button>
 
-                              {/* Solo mostrar botón remover si el empleado está activo en la empresa */}
-                              {employee?.currentEmployment?.isActive && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveEmployeeClick(
-                                      employee.id!,
-                                      employee.name,
-                                    );
-                                  }}
-                                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Remover
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-6">
-                          {/* Employee Header */}
-                          <div className="flex items-start gap-4 mb-4 pr-10">
-                            <div className="w-16 h-16 bg-[#097EEC]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                              <UserIcon className="h-8 w-8 text-[#097EEC]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push(`/profile/${employee.id}`);
-                                }}
-                                className="font-semibold text-gray-800 hover:text-[#097EEC] transition-colors text-left cursor-pointer block w-full text-base md:text-lg"
-                              >
-                                {employee.name}
-                              </button>
-                              {employee.profession && (
-                                <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                                  <Briefcase className="h-3 w-3" />
-                                  {employee.profession}
-                                </p>
-                              )}
-
-                              {/* Roles */}
-                              {employee.roles && employee.roles.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {employee.roles.map((role, index) => (
-                                    <span
-                                      key={index}
-                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role)}`}
+                                  {!employee.company && (
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="px-4 py-2 hover:bg-gray-50"
                                     >
-                                      <Shield className="h-3 w-3 mr-1" />
-                                      {typeof role === "string"
-                                        ? role
-                                        : role.name}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                                      <DownloadCVButton
+                                        user={employee}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-gray-700 hover:text-gray-900 p-0 h-auto text-sm w-full justify-start"
+                                        isPublicProfile={true}
+                                      />
+                                    </div>
+                                  )}
 
-                          {/* Employee Details */}
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Mail className="h-4 w-4 text-gray-400" />
-                              <span className="truncate">{employee.email}</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Phone className="h-4 w-4 text-gray-400" />
-                              <span>{employee.cellphone}</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Calendar className="h-4 w-4 text-gray-400" />
-                              <span>
-                                Miembro desde:{" "}
-                                {employee.created_at
-                                  ? formatDate(employee.created_at)
-                                  : "N/A"}
-                              </span>
-                            </div>
-
-                            {employee?.currentEmployment && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    employee.currentEmployment.isActive
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
-                                >
-                                  {employee.currentEmployment.isActive
-                                    ? "Activo"
-                                    : "Inactivo"}
-                                </span>
-                                <span className="text-xs text-gray-600">
-                                  {employee.currentEmployment.isActive
-                                    ? `Desde ${formatDate(employee.currentEmployment.startDate)}`
-                                    : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${
-                                        employee.currentEmployment.endDate
-                                          ? formatDate(
-                                              employee.currentEmployment
-                                                .endDate,
-                                            )
-                                          : "presente"
-                                      }`}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Skills */}
-                            {employee.skills && employee.skills.length > 0 && (
-                              <div>
-                                <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                                  <Award className="h-4 w-4" />
-                                  Habilidades:
-                                </p>
-                                <div className="flex flex-wrap gap-1">
-                                  {employee.skills
-                                    .slice(0, 3)
-                                    .map((skill, index) => (
-                                      <span
-                                        key={index}
-                                        className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
-                                      >
-                                        {skill}
-                                      </span>
-                                    ))}
-                                  {employee.skills.length > 3 && (
-                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-                                      +{employee.skills.length - 3} más
-                                    </span>
+                                  {/* Solo mostrar botón remover si el empleado está activo en la empresa */}
+                                  {employee?.currentEmployment?.isActive && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveEmployeeClick(
+                                          employee.id!,
+                                          employee.name,
+                                        );
+                                      }}
+                                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      Remover
+                                    </button>
                                   )}
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
 
-                            {/* CV Link */}
-                            {employee.cv_url && (
-                              <div className="pt-2">
-                                <a
-                                  href={employee.cv_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-sm text-[#097EEC] hover:text-[#0A6BC7] transition-colors"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                  Ver CV
-                                </a>
+                            <div className="p-6">
+                              {/* Employee Header */}
+                              <div className="flex items-start gap-4 mb-4 pr-10">
+                                <div className="w-16 h-16 bg-[#097EEC]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <UserIcon className="h-8 w-8 text-[#097EEC]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/profile/${employee.id}`);
+                                    }}
+                                    className="font-semibold text-gray-800 hover:text-[#097EEC] transition-colors text-left cursor-pointer block w-full text-base md:text-lg"
+                                  >
+                                    {employee.name}
+                                  </button>
+                                  {employee.profession && (
+                                    <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                                      <Briefcase className="h-3 w-3" />
+                                      {employee.profession}
+                                    </p>
+                                  )}
+
+                                  {/* Roles */}
+                                  {employee.roles &&
+                                    employee.roles.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {employee.roles.map((role, index) => (
+                                          <span
+                                            key={index}
+                                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role)}`}
+                                          >
+                                            <Shield className="h-3 w-3 mr-1" />
+                                            {typeof role === "string"
+                                              ? role
+                                              : role.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                </div>
                               </div>
-                            )}
+
+                              {/* Employee Details */}
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Mail className="h-4 w-4 text-gray-400" />
+                                  <span className="truncate">
+                                    {employee.email}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="h-4 w-4 text-gray-400" />
+                                  <span>{employee.cellphone}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Calendar className="h-4 w-4 text-gray-400" />
+                                  <span>
+                                    Miembro desde:{" "}
+                                    {employee.created_at
+                                      ? formatDate(employee.created_at)
+                                      : "N/A"}
+                                  </span>
+                                </div>
+
+                                {employee?.currentEmployment && (
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        employee.currentEmployment.isActive
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      {employee.currentEmployment.isActive
+                                        ? "Activo"
+                                        : "Inactivo"}
+                                    </span>
+                                    <span className="text-xs text-gray-600">
+                                      {employee.currentEmployment.isActive
+                                        ? `Desde ${formatDate(employee.currentEmployment.startDate)}`
+                                        : `Desde ${formatDate(employee.currentEmployment.startDate)} - ${
+                                            employee.currentEmployment.endDate
+                                              ? formatDate(
+                                                  employee.currentEmployment
+                                                    .endDate,
+                                                )
+                                              : "presente"
+                                          }`}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Skills */}
+                                {employee.skills &&
+                                  employee.skills.length > 0 && (
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                                        <Award className="h-4 w-4" />
+                                        Habilidades:
+                                      </p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {employee.skills
+                                          .slice(0, 3)
+                                          .map((skill, index) => (
+                                            <span
+                                              key={index}
+                                              className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full"
+                                            >
+                                              {skill}
+                                            </span>
+                                          ))}
+                                        {employee.skills.length > 3 && (
+                                          <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
+                                            +{employee.skills.length - 3} más
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {/* CV Link */}
+                                {employee.cv_url && (
+                                  <div className="pt-2">
+                                    <a
+                                      href={employee.cv_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-sm text-[#097EEC] hover:text-[#0A6BC7] transition-colors"
+                                    >
+                                      <FileText className="h-4 w-4" />
+                                      Ver CV
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-16 text-center">
-                    <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
-                      <Users className="h-10 w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900">
-                      No hay empleados
-                    </h3>
-                    <p className="mt-2 text-gray-500">
-                      {searchTerm
-                        ? "No se encontraron empleados que coincidan con tu búsqueda."
-                        : "Tu empresa aún no tiene empleados registrados. Los empleados se agregarán automáticamente cuando aceptes aplicaciones."}
-                    </p>
-                  </div>
-                )}
+                    ) : (
+                      <div className="py-16 text-center">
+                        <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
+                          <Users className="h-10 w-10 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No hay empleados
+                        </h3>
+                        <p className="mt-2 text-gray-500">
+                          {searchTerm
+                            ? "No se encontraron empleados que coincidan con tu búsqueda."
+                            : "Tu empresa aún no tiene empleados registrados. Los empleados se agregarán automáticamente cuando aceptes aplicaciones."}
+                        </p>
+                      </div>
+                    )}
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="mt-8 flex justify-center">
-                    <Pagination
-                      currentPage={pagination.page}
-                      totalPages={pagination.totalPages}
-                      onPageChange={handlePageChange}
-                    />
-                  </div>
-                )}
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                      <div className="mt-8 flex justify-center">
+                        <Pagination
+                          currentPage={pagination.page}
+                          totalPages={pagination.totalPages}
+                          onPageChange={handlePageChange}
+                        />
+                      </div>
+                    )}
 
-                {/* Results Summary */}
-                {!loading && !error && filteredEmployees.length > 0 && (
-                  <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredEmployees.length} de {pagination.total}{" "}
-                    empleados
-                  </div>
-                )}
+                    {/* Results Summary */}
+                    {!loading && !error && filteredEmployees.length > 0 && (
+                      <div className="mt-6 text-sm text-gray-500 text-center">
+                        Mostrando {filteredEmployees.length} de{" "}
+                        {pagination.total} empleados
+                      </div>
+                    )}
                   </>
                 )}
               </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from 'lucide-react';
+import { Clock } from "lucide-react";
 
 const CountdownTimer = () => {
   return (

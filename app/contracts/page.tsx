@@ -483,9 +483,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              calculatePriceWithTax(
-                                contract.initialPrice || 0,
-                              ).toLocaleString(),
+                              calculatePriceWithTax(contract.initialPrice || 0),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -500,9 +498,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
                             {formatCurrency(
-                              calculatePriceWithTax(
-                                contract.currentPrice || 0,
-                              ).toLocaleString(),
+                              calculatePriceWithTax(contract.currentPrice || 0),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -521,12 +517,9 @@ export default function ContractsPage() {
                                     Total a pagar (incluye IVA)
                                   </p>
                                   <p className="text-2xl font-bold text-green-700">
-                                    {formatCurrency(
-                                      contract.totalPrice.toLocaleString(),
-                                      {
-                                        showCurrency: true,
-                                      },
-                                    )}
+                                    {formatCurrency(contract.totalPrice, {
+                                      showCurrency: true,
+                                    })}
                                   </p>
                                 </div>
                               </div>
@@ -836,12 +829,9 @@ export default function ContractsPage() {
                           >
                             <CreditCard className="h-4 w-4" />
                             Ir a Pagar{" "}
-                            {formatCurrency(
-                              contract.totalPrice?.toLocaleString(),
-                              {
-                                showCurrency: true,
-                              },
-                            )}
+                            {formatCurrency(contract.totalPrice, {
+                              showCurrency: true,
+                            })}
                             <ArrowRight className="h-4 w-4" />
                           </button>
                         ) : (
@@ -972,9 +962,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
                             {formatCurrency(
-                              calculatePriceWithTax(
-                                contract.initialPrice || 0,
-                              ).toLocaleString(),
+                              calculatePriceWithTax(contract.initialPrice || 0),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -989,9 +977,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-green-800">
                             {formatCurrency(
-                              calculatePriceWithTax(
-                                contract.currentPrice || 0,
-                              ).toLocaleString(),
+                              calculatePriceWithTax(contract.currentPrice || 0),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>

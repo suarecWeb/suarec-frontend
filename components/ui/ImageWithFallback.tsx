@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { ImageIcon } from 'lucide-react';
+import React, { useState } from "react";
+import Image from "next/image";
+import { ImageIcon } from "lucide-react";
 
 interface ImageWithFallbackProps {
   src: string;
@@ -17,9 +17,9 @@ export function ImageWithFallback({
   alt,
   width,
   height,
-  className = '',
+  className = "",
   fallbackIcon,
-  fallbackText = 'Imagen no disponible'
+  fallbackText = "Imagen no disponible",
 }: ImageWithFallbackProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +35,7 @@ export function ImageWithFallback({
 
   if (hasError) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center bg-gray-100 text-gray-500 ${className}`}
         style={{ width, height }}
       >
@@ -48,7 +48,7 @@ export function ImageWithFallback({
   return (
     <div className={`relative ${className}`}>
       {isLoading && (
-        <div 
+        <div
           className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center"
           style={{ width, height }}
         >
@@ -60,10 +60,10 @@ export function ImageWithFallback({
         alt={alt}
         width={width}
         height={height}
-        className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`${className} ${isLoading ? "opacity-0" : "opacity-100"}`}
         onError={handleError}
         onLoad={handleLoad}
       />
     </div>
   );
-} 
+}
