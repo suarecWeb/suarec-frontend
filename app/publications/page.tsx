@@ -173,8 +173,26 @@ const PublicationsPageContent = () => {
   const canEditPublication = (publication: Publication) => {
     if (!currentUserId) return false;
 
+    // Obtener el ID del propietario de la publicación
+    const publicationUserId = publication.user?.id || publication.userId;
+
+    // Asegurar que ambos IDs sean números para comparación correcta
+    const currentUserIdNumber = Number(currentUserId);
+    const publicationUserIdNumber = Number(publicationUserId);
+    
+    // Debug logs
+    console.log("🔍 Debug autorización (lista):", {
+      currentUserId,
+      currentUserIdNumber,
+      publicationUserId: publicationUserId,
+      publicationUserIdNumber,
+      userRoles,
+      isOwner: publicationUserId == currentUserId,
+      isAdmin: userRoles.includes("ADMIN")
+    });
+
     // El propietario o un administrador pueden editar
-    return publication.userId === currentUserId || userRoles.includes("ADMIN");
+    return publicationUserId == currentUserId || userRoles.includes("ADMIN");
   };
 
   // Filtrar publicaciones según el término de búsqueda

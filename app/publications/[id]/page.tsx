@@ -209,16 +209,39 @@ const PublicationDetailPage = () => {
 
   const canEditPublication = () => {
     if (!publication || !currentUserId) return false;
-    if (!publication.user?.id) return false;
+    
+    // Obtener el ID del propietario de la publicación
+    const publicationUserId = publication.user?.id || publication.userId;
+    if (!publicationUserId) return false;
+    
+    // Asegurar que ambos IDs sean números para comparación correcta
+    const currentUserIdNumber = Number(currentUserId);
+    const publicationUserIdNumber = Number(publicationUserId);
+    
+    // Debug logs
+    console.log("🔍 Debug autorización (detalle):", {
+      currentUserId,
+      currentUserIdNumber,
+      publicationUserId: publicationUserId,
+      publicationUserIdNumber,
+      publicationUser: publication.user,
+      userRoles,
+      isOwner: publicationUserId == currentUserId,
+      isAdmin: userRoles.includes("ADMIN")
+    });
+    
     return (
-      parseInt(publication.user?.id) === currentUserId ||
+      publicationUserId == currentUserId ||
       userRoles.includes("ADMIN")
     );
   };
 
   // Función para determinar si la publicación es de una empresa
   const isCompanyPublication = () => {
-    console.log(author + " autoroorrr");
+    console.log("🔍 Debug empresa:", {
+      author: author,
+      hasCompany: author?.company !== undefined && author?.company !== null
+    });
     return author?.company !== undefined && author?.company !== null;
   };
 
