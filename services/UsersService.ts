@@ -15,6 +15,8 @@ const getUserById = (id: number) => api.get<User>(`${baseURL}/${id}`);
 const createUser = (userData: User) => api.post<User>(baseURL, userData);
 const updateUser = (id: string, userData: Partial<User>) =>
   api.put<User>(`${baseURL}/${id}`, userData);
+const partialUpdateUser = (id: string, userData: Partial<User>) =>
+  api.patch<User>(`${baseURL}/${id}`, userData);
 const deleteUser = (id: string) => api.delete(`${baseURL}/${id}`);
 
 // Obtener todos los usuarios (solo admin)
@@ -42,6 +44,7 @@ export const UserService = {
   getUserById,
   createUser,
   updateUser,
+  partialUpdateUser,
   getUserCompany,
   deleteUser,
   getAllUsers,

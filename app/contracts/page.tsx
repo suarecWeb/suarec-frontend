@@ -27,6 +27,7 @@ import {
 import ProviderResponseModal from "@/components/provider-response-modal";
 import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { useNotification } from "@/contexts/NotificationContext";
 import {
   PaymentService,
   PaymentStatusByContractDto,
@@ -51,6 +52,7 @@ export default function ContractsPage() {
   const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] =
     useState(false);
   const router = useRouter();
+  const { showNotification } = useNotification();
   const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
   const [acceptPolicy, setAcceptPolicy] = useState(false);
   const [acceptPersonal, setAcceptPersonal] = useState(false);
@@ -58,7 +60,7 @@ export default function ContractsPage() {
     [contractId: string]: PaymentStatusByContractDto;
   }>({});
   const [activeTab, setActiveTab] = useState<"client" | "provider" | "all">(
-    "all",
+    "provider",
   );
 
   useEffect(() => {

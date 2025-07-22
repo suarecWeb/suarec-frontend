@@ -5,6 +5,7 @@ import { Publication } from "../interfaces/publication.interface";
 import { ContractService } from "../services/ContractService";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useNotification } from "@/contexts/NotificationContext";
 import {
   X,
   DollarSign,
@@ -70,6 +71,7 @@ export default function ContractModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { showNotification, showContractNotification } = useNotification();
 
   // Calcular precios
   const basePrice = Number(
@@ -152,7 +154,14 @@ export default function ContractModal({
 
       await ContractService.createContract(contractData);
 
-      toast.success("¡Contratación creada exitosamente!");
+      // Mostrar mensaje de éxito informando sobre las notificaciones
+      const priceText = formatCurrency(totalPrice.toLocaleString());
+      showContractNotification(
+        "Solicitud enviada al proveedor por mensaje interno",
+        "created",
+        priceText,
+      );
+
       onClose();
       router.push("/contracts");
     } catch (error: any) {

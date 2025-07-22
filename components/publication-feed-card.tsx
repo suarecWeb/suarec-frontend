@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -20,6 +20,8 @@ import {
   Eye,
   Tag,
   TrendingUp,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
@@ -29,19 +31,41 @@ import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
 import { formatCurrency } from "@/lib/formatCurrency";
 import StartChatButton from "./start-chat-button";
+import PublicationService from "@/services/PublicationsService";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
 
 interface PublicationFeedCardProps {
   publication: Publication;
   userRole?: string;
   publicationBids?: { contracts: any[]; totalBids: number };
+  onPublicationDeleted?: () => void;
 }
 
 const PublicationFeedCard = ({
   publication,
   userRole,
   publicationBids,
+  onPublicationDeleted,
 }: PublicationFeedCardProps) => {
   const [showComments, setShowComments] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+
+  // Obtener información del usuario al cargar
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode<TokenPayload>(token);
+        setCurrentUserId(decoded.id);
+        setUserRoles(decoded.roles.map((role) => role.name));
+      } catch (error) {
+        console.error("Error al decodificar token:", error);
+      }
+    }
+  }, []);
 
   const {
     likesCount,
@@ -53,6 +77,25 @@ const PublicationFeedCard = ({
     initialLikesCount: publication.likesCount || 0,
     initialHasLiked: publication.hasLiked || false,
   });
+
+  // Verificar si el usuario puede editar/eliminar la publicación
+  const canEditPublication = () => {
+    if (!currentUserId) return false;
+    return publication.userId === currentUserId || userRoles.includes("ADMIN");
+  };
+
+  // Función para eliminar publicación
+  const handleDelete = async () => {
+    if (confirm("¿Estás seguro de que deseas eliminar esta publicación?")) {
+      try {
+        await PublicationService.deletePublication(publication.id!);
+        onPublicationDeleted?.();
+      } catch (err) {
+        console.error("Error al eliminar publicación:", err);
+        alert("Error al eliminar la publicación");
+      }
+    }
+  };
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
@@ -264,6 +307,25 @@ const PublicationFeedCard = ({
           <Share2 className="h-4 w-4" />
           <span>Compartir</span>
         </button>
+
+        {/* Botones de editar y eliminar para propietarios y admins */}
+        {canEditPublication() && (
+          <>
+            <Link href={`/publications/${publication.id}/edit`}>
+              <button className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 transition-colors">
+                <Edit className="h-4 w-4" />
+                <span>Editar</span>
+              </button>
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Eliminar</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Comments Section (Collapsible) */}

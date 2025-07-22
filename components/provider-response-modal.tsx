@@ -18,6 +18,7 @@ import { Contract, ContractStatus } from "@/interfaces/contract.interface";
 import { ContractService } from "@/services/ContractService";
 import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { useNotification } from "@/contexts/NotificationContext";
 
 interface ProviderResponseModalProps {
   contract: Contract;
@@ -42,6 +43,7 @@ export default function ProviderResponseModal({
   const [proposedDate, setProposedDate] = useState("");
   const [proposedTime, setProposedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { showNotification, showContractNotification } = useNotification();
 
   const getPaymentMethodText = (method: string) => {
     const methods: { [key: string]: string } = {
@@ -88,6 +90,40 @@ export default function ProviderResponseModal({
 
       await ContractService.providerResponse(responseData);
 
+      // Mostrar mensaje de éxito según la acción con información específica
+      const priceText = formatCurrency(
+        calculatePriceWithTax(
+          action === ContractStatus.NEGOTIATING
+            ? counterOffer
+            : contract.initialPrice,
+        ).toLocaleString(),
+      );
+
+      switch (action) {
+        case ContractStatus.ACCEPTED:
+          showContractNotification(
+            "Tarifa original aceptada - Cliente notificado",
+            "accepted",
+            priceText,
+          );
+          break;
+        case ContractStatus.REJECTED:
+          showContractNotification(
+            "Oferta rechazada - Cliente notificado",
+            "rejected",
+          );
+          break;
+        case ContractStatus.NEGOTIATING:
+          showContractNotification(
+            "Contraoferta enviada - Cliente notificado",
+            "negotiating",
+            priceText,
+          );
+          break;
+        default:
+          showNotification("Respuesta enviada exitosamente", "success");
+      }
+
       onResponseSubmitted();
       onClose();
 
@@ -99,9 +135,9 @@ export default function ProviderResponseModal({
       setProposedTime("");
     } catch (error: any) {
       console.error("Error responding to contract:", error);
-      alert(
-        "Error al responder: " +
-          (error?.response?.data?.message || "Error desconocido"),
+      showNotification(
+        `Error al responder: ${error?.response?.data?.message || "Error desconocido"}`,
+        "error",
       );
     } finally {
       setIsLoading(false);
