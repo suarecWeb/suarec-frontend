@@ -196,7 +196,6 @@ const EditPublicationPage = () => {
         description: data.description,
         category: data.category,
         image_url: imageUrl,
-        modified_at: new Date(),
       };
 
       // Actualizar publicación
