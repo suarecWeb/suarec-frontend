@@ -46,7 +46,7 @@ import ContractModal from "@/components/contract-modal";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
-import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
+import { translatePriceUnit, getPublicationDisplayPrice } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import RatingService from "@/services/RatingService";
 import { Star } from "lucide-react";
@@ -542,13 +542,17 @@ const PublicationDetailPage = () => {
                               <span className="font-semibold">
                                 {(() => {
                                   const basePrice = publication.price;
-                                  const priceWithTax =
-                                    calculatePriceWithTax(basePrice);
+                                  const priceInfo = getPublicationDisplayPrice(
+                                    basePrice,
+                                    publication.type,
+                                    publication.priceUnit,
+                                  );
                                   console.log("🔍 Debug precio header:", {
                                     basePrice,
-                                    priceWithTax,
+                                    displayPrice: priceInfo.price,
+                                    showsTax: priceInfo.showsTax,
                                   });
-                                  return formatCurrency(priceWithTax);
+                                  return formatCurrency(priceInfo.price);
                                 })()}
                               </span>
                               <span className="ml-1">
@@ -968,15 +972,27 @@ const PublicationDetailPage = () => {
                         <div className="bg-green-50 border border-green-200 rounded-xl p-6 shadow-sm">
                           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                             <span className="w-1 h-5 bg-green-500 rounded-full"></span>
-                            Tarifa del Servicio
+                            {(() => {
+                              const priceInfo = getPublicationDisplayPrice(
+                                publication.price,
+                                publication.type,
+                                publication.priceUnit,
+                              );
+                              return priceInfo.showsTax
+                                ? "Tarifa del Servicio"
+                                : "Salario Ofrecido";
+                            })()}
                           </h3>
                           <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
                               {(() => {
                                 const basePrice = publication.price;
-                                const priceWithTax =
-                                  calculatePriceWithTax(basePrice);
-                                return formatCurrency(priceWithTax, {
+                                const priceInfo = getPublicationDisplayPrice(
+                                  basePrice,
+                                  publication.type,
+                                  publication.priceUnit,
+                                );
+                                return formatCurrency(priceInfo.price, {
                                   showCurrency: true,
                                 });
                               })()}
@@ -987,8 +1003,16 @@ const PublicationDetailPage = () => {
                             </div>
                             <div className="bg-white rounded-lg p-3 border border-green-200">
                               <p className="text-xs text-gray-600">
-                                💡 Precio con IVA incluido. Puedes negociar
-                                durante el proceso de contratación.
+                                {(() => {
+                                  const priceInfo = getPublicationDisplayPrice(
+                                    publication.price,
+                                    publication.type,
+                                    publication.priceUnit,
+                                  );
+                                  return priceInfo.showsTax
+                                    ? "💡 Precio con IVA incluido. Puedes negociar durante el proceso de contratación."
+                                    : "💼 Salario bruto mensual. Negociable según experiencia y habilidades.";
+                                })()}
                               </p>
                             </div>
                           </div>

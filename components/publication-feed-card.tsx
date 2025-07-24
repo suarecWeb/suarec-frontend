@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
-import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
+import { translatePriceUnit, getPublicationDisplayPrice } from "@/lib/utils";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
@@ -233,15 +233,22 @@ const PublicationFeedCard = ({
               {publication.price
                 ? (() => {
                     const basePrice = publication.price;
-                    const priceWithTax = calculatePriceWithTax(basePrice);
-                    console.log("🔍 Debug precio ACTUALIZADO:", {
+                    const priceInfo = getPublicationDisplayPrice(
                       basePrice,
-                      basePrice_type: typeof basePrice,
-                      priceWithTax,
-                      priceWithTax_type: typeof priceWithTax,
-                      calculation: `${basePrice} + (${basePrice} * 0.19) = ${priceWithTax}`,
+                      publication.type,
+                      publication.priceUnit,
+                    );
+
+                    console.log("🔍 Debug precio ESCALABLE:", {
+                      basePrice,
+                      displayPrice: priceInfo.price,
+                      showsTax: priceInfo.showsTax,
+                      taxApplied: priceInfo.taxApplied,
+                      publicationType: publication.type,
+                      priceUnit: publication.priceUnit,
                     });
-                    return `${formatCurrency(priceWithTax, {
+
+                    return `${formatCurrency(priceInfo.price, {
                       showCurrency: true,
                     })} ${translatePriceUnit(publication.priceUnit || "")}`;
                   })()
