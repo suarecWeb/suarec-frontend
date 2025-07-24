@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
-import CreatePublicationModal from "@/components/create-publication-modal";
+import PublicationModalManager from "@/components/publication-modal-manager";
 import PublicationService from "@/services/PublicationsService";
 import { Publication } from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
@@ -413,7 +413,7 @@ export default function FeedPage() {
       </div>
 
       {/* Modal de crear publicación */}
-      <CreatePublicationModal
+      <PublicationModalManager
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onPublicationCreated={handlePublicationCreated}
