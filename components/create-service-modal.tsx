@@ -22,8 +22,9 @@ import {
 import { calculatePriceWithTax } from "../lib/utils";
 import { formatCurrency } from "../lib/formatCurrency";
 import { toast } from "react-hot-toast";
+import { PublicationType } from "../interfaces/publication.interface";
 
-interface CreatePublicationModalProps {
+interface CreateServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPublicationCreated?: () => void;
@@ -39,8 +40,8 @@ interface FormData {
   priceUnit?: string;
 }
 
-// Categorías disponibles
-const CATEGORIES = [
+// Categorías disponibles para servicios
+const SERVICE_CATEGORIES = [
   "Tecnología",
   "Construcción",
   "Salud",
@@ -65,11 +66,11 @@ const PRICE_UNITS = [
   "service", // Por servicio
 ];
 
-export default function CreatePublicationModal({
+export default function CreateServiceModal({
   isOpen,
   onClose,
   onPublicationCreated,
-}: CreatePublicationModalProps) {
+}: CreateServiceModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -169,6 +170,7 @@ export default function CreatePublicationModal({
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
+        type: PublicationType.SERVICE, // Marcar explícitamente como servicio
         image_url: imageUrl || undefined,
         gallery_images:
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
@@ -229,9 +231,11 @@ export default function CreatePublicationModal({
         <div className="bg-[#097EEC] text-white p-4 rounded-t-xl">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-bold mb-1">Crear Publicación</h2>
+              <h2 className="text-xl font-bold mb-1">
+                Crear Publicación de Servicio
+              </h2>
               <p className="text-blue-100 text-sm">
-                Comparte tus servicios o búsquedas con la comunidad
+                Comparte tus servicios con la comunidad
               </p>
             </div>
             <button
@@ -323,7 +327,7 @@ export default function CreatePublicationModal({
                     disabled={isLoading}
                   >
                     <option value="">Selecciona una categoría</option>
-                    {CATEGORIES.map((category) => (
+                    {SERVICE_CATEGORIES.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
@@ -626,7 +630,7 @@ export default function CreatePublicationModal({
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Crear Publicación
+                    Crear Servicio
                   </div>
                 )}
               </button>
