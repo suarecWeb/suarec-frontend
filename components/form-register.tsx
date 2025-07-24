@@ -190,7 +190,26 @@ const FormRegister = () => {
         errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
     } else if (userType === "BUSINESS") {
       // Validaciones para empresas
-      if (!formData.get("nit")) errors.nit = "El NIT es obligatorio";
+
+      // Validación NIT simple
+      const nit = formData.get("nit") as string;
+      if (!nit) {
+        errors.nit = "El NIT es obligatorio";
+      } else if (!nit.includes("-")) {
+        errors.nit =
+          "El NIT debe incluir el dígito de verificación después del guión (ejemplo: 123456789-0)";
+      } else {
+        const parts = nit.split("-");
+        if (
+          parts.length !== 2 ||
+          parts[1].length !== 1 ||
+          !/^\d+$/.test(parts[1])
+        ) {
+          errors.nit =
+            "El dígito de verificación debe ser un solo número después del guión";
+        }
+      }
+
       if (!formData.get("company_name"))
         errors.company_name = "El nombre de la empresa es obligatorio";
 
@@ -293,9 +312,23 @@ const FormRegister = () => {
             return;
           }
 
-          // Validar longitud del NIT
-          if (companyNit.length < 8 || companyNit.length > 15) {
-            toast.error("El NIT debe tener entre 8 y 15 caracteres");
+          // Validar formato del NIT (debe tener guión y número de verificación)
+          if (!companyNit.includes("-")) {
+            toast.error(
+              "El NIT debe incluir el número de verificación después del guión. Ejemplo: 123456789-0",
+            );
+            return;
+          }
+
+          const nitParts = companyNit.split("-");
+          if (
+            nitParts.length !== 2 ||
+            nitParts[1].length !== 1 ||
+            !/^\d$/.test(nitParts[1])
+          ) {
+            toast.error(
+              "El número de verificación debe ser un solo dígito después del guión. Ejemplo: 123456789-0",
+            );
             return;
           }
 
@@ -839,12 +872,16 @@ const FormRegister = () => {
                         id="nit"
                         name="nit"
                         type="text"
-                        placeholder="1234567890"
+                        placeholder="123456789-0"
                         className="pl-10 w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
                         disabled={isPending}
                         required
                       />
                     </div>
+                    <p className="text-xs text-gray-500">
+                      Incluye el dígito de verificación después del guión (ej:
+                      900123456-7)
+                    </p>
                     {formErrors.nit && (
                       <p className="text-red-600 text-sm">{formErrors.nit}</p>
                     )}
