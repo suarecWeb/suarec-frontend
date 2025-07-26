@@ -68,6 +68,22 @@ const ChatPageContent = () => {
     onConversationUpdated,
   } = useWebSocketContext();
 
+  // Verificar conexión WebSocket al cargar la página
+  useEffect(() => {
+    if (!isConnected && !isConnecting) {
+      console.log("🔌 WebSocket no conectado en chat, verificando en 2 segundos...");
+      const connectionCheck = setTimeout(() => {
+        if (!isConnected && !isConnecting) {
+          console.log("🔌 WebSocket aún no conectado, forzando reconexión...");
+          // Forzar reconexión si no está conectado después de 2 segundos
+          window.location.reload();
+        }
+      }, 2000);
+
+      return () => clearTimeout(connectionCheck);
+    }
+  }, [isConnected, isConnecting]);
+
   // Detectar vista móvil
   useEffect(() => {
     const checkMobileView = () => {
@@ -213,18 +229,18 @@ const ChatPageContent = () => {
             return [...filteredMessages, message];
           });
 
-          // Marcar como leído automáticamente si soy el destinatario y estoy viendo la conversación
-          if (
-            message.recipientId === currentUserId &&
-            message.id &&
-            !message.read
-          ) {
-            setTimeout(() => {
-              if (message.id) {
-                markAsReadWebSocket?.(message.id);
-              }
-            }, 500); // Pequeño delay para simular que el usuario "vio" el mensaje
-          }
+          // Comentado: Marcado como leído automático
+          // if (
+          //   message.recipientId === currentUserId &&
+          //   message.id &&
+          //   !message.read
+          // ) {
+          //   setTimeout(() => {
+          //     if (message.id) {
+          //       markAsReadWebSocket?.(message.id);
+          //     }
+          //   }, 500);
+          // }
         } else {
         }
 
@@ -253,23 +269,46 @@ const ChatPageContent = () => {
             // Reordenar conversaciones por último mensaje
             return sortConversationsByLastMessage(updatedConversations);
           } else {
-            // Crear nueva conversación (esto requeriría más lógica para obtener datos del usuario)
-            return prev;
+            // Crear nueva conversación cuando es la primera vez que hablan
+            console.log("🆕 Creando nueva conversación para usuario:", otherUserId);
+            
+            // Crear objeto de usuario básico para la nueva conversación
+            const newConversationUser = {
+              id: otherUserId,
+              name: message.sender?.name || `Usuario ${otherUserId}`,
+              email: "", // Email no disponible en message.sender, se actualizará cuando se recargue la lista
+              profile_image: message.sender?.profile_image,
+            };
+
+            const newConversation: Conversation = {
+              user: newConversationUser,
+              lastMessage: message,
+              unreadCount: message.recipientId === currentUserId ? 1 : 0,
+            };
+
+            // Agregar la nueva conversación al inicio de la lista
+            const updatedConversations = [newConversation, ...prev];
+            
+            // La información completa del usuario se obtendrá cuando se recargue la lista de conversaciones
+            console.log("✅ Nueva conversación agregada a la lista");
+            
+            return sortConversationsByLastMessage(updatedConversations);
           }
         });
       }
     };
 
-    const handleMessageRead = (data: { messageId: string; readAt: Date }) => {
-      // Actualizar el estado de leído del mensaje
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === data.messageId
-            ? { ...msg, read: true, read_at: data.readAt }
-            : msg,
-        ),
-      );
-    };
+    // Comentado: Listener de mensajes leídos
+    // const handleMessageRead = (data: { messageId: string; readAt: Date }) => {
+    //   console.log("📖 Evento message_read recibido:", data);
+    //   setMessages((prev) =>
+    //     prev.map((msg) =>
+    //       msg.id === data.messageId
+    //         ? { ...msg, read: true, read_at: data.readAt }
+    //         : msg,
+    //     ),
+    //   );
+    // };
 
     const handleConversationUpdated = (data: {
       conversationId: string;
@@ -284,7 +323,7 @@ const ChatPageContent = () => {
 
     // Configurar los listeners y obtener funciones de limpieza
     const removeNewMessageListener = onNewMessage(handleNewMessage);
-    const removeMessageReadListener = onMessageRead(handleMessageRead);
+    // const removeMessageReadListener = onMessageRead(handleMessageRead); // Comentado
     const removeConversationUpdatedListener = onConversationUpdated(
       handleConversationUpdated,
     );
@@ -292,15 +331,15 @@ const ChatPageContent = () => {
     return () => {
       // Limpiar listeners cuando el componente se desmonte
       removeNewMessageListener();
-      removeMessageReadListener();
+      // removeMessageReadListener(); // Comentado
       removeConversationUpdatedListener();
     };
   }, [
     currentUserId,
     selectedConversation,
-    markAsReadWebSocket,
+    // markAsReadWebSocket, // Comentado
     onNewMessage,
-    onMessageRead,
+    // onMessageRead, // Comentado
     onConversationUpdated,
     isConnected,
   ]);
@@ -358,18 +397,12 @@ const ChatPageContent = () => {
         const conversationId = `${Math.min(currentUserId, conversation.user.id)}_${Math.max(currentUserId, conversation.user.id)}`;
         // joinConversation(conversationId); // Comentado temporalmente
 
-        // Marcar mensajes como leídos
-        const unreadMessages = response.data.data.filter(
-          (msg) => !msg.read && msg.recipientId === currentUserId,
-        );
+        // Comentado: Funcionalidad de marcado como leído
+        // const unreadMessages = response.data.data.filter(
+        //   (msg) => !msg.read && msg.recipientId === currentUserId,
+        // );
 
-        for (const msg of unreadMessages) {
-          if (msg.id) {
-            await MessageService.markAsRead(msg.id);
-          }
-        }
-
-        // Actualizar el conteo de no leídos en la conversación
+        // Actualizar el conteo de no leídos en la conversación (mantener en 0 por ahora)
         setConversations((prev) =>
           prev.map((conv) =>
             conv.user.id === conversation.user.id
@@ -377,29 +410,13 @@ const ChatPageContent = () => {
               : conv,
           ),
         );
-
-        // También actualizar los mensajes para marcarlos como leídos localmente
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.recipientId === currentUserId
-              ? { ...msg, read: true, read_at: new Date() }
-              : msg,
-          ),
-        );
-
-        // Enviar eventos de "marcado como leído" para todos los mensajes no leídos
-        for (const msg of unreadMessages) {
-          if (msg.id && markAsReadWebSocket) {
-            markAsReadWebSocket(msg.id);
-          }
-        }
       } catch (err) {
         toast.error("Error al cargar los mensajes");
       } finally {
         setLoadingMessages(false);
       }
     },
-    [currentUserId, isMobileView, markAsReadWebSocket],
+    [currentUserId, isMobileView], // markAsReadWebSocket removido
   );
 
   // Abrir conversación específica si se recibe parámetro sender
@@ -598,6 +615,10 @@ const ChatPageContent = () => {
               <ConnectionStatus
                 isConnected={isConnected}
                 isConnecting={isConnecting}
+                onRetry={() => {
+                  console.log("🔄 Reintentando conexión WebSocket manualmente...");
+                  window.location.reload();
+                }}
               />
             </div>
           </div>
@@ -793,6 +814,7 @@ const ChatPageContent = () => {
                                 >
                                   {formatTime(message.sent_at)}
                                 </span>
+                                {/* Comentado: Indicadores de leído/enviado
                                 {message.sender?.id === currentUserId && (
                                   <div className="w-4 h-4 flex items-center justify-center ml-1">
                                     {message.read ? (
@@ -808,6 +830,7 @@ const ChatPageContent = () => {
                                     )}
                                   </div>
                                 )}
+                                */}
                               </div>
                             </div>
                             {/* Removed profile images for receiver */}
