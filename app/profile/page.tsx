@@ -776,9 +776,11 @@ const ProfilePage = () => {
                             Mis publicaciones
                           </h3>
 
-                          {user.publications && user.publications.length > 0 ? (
+                          {user.publications && user.publications.filter((pub: any) => !pub.deleted_at).length > 0 ? (
                             <div className="space-y-4">
-                              {user.publications.map((pub: any) => (
+                              {user.publications
+                                .filter((pub: any) => !pub.deleted_at) // Filtrar publicaciones eliminadas
+                                .map((pub: any) => (
                                 <div
                                   key={pub.id}
                                   className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"

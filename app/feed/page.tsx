@@ -155,6 +155,11 @@ export default function FeedPage() {
 
   // Filtrar publicaciones
   const filteredPublications = publications.filter((pub) => {
+    // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
+    if (pub.deleted_at) {
+      return false; // Excluir publicaciones eliminadas
+    }
+
     const matchesSearch =
       pub.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (pub.description &&
