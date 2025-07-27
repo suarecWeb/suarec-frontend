@@ -12,6 +12,7 @@ export interface Publication {
   description?: string;
   created_at: string | Date;
   modified_at: Date;
+  deleted_at?: Date;
   category: string;
   type?: PublicationType; // Nuevo campo para distinguir el tipo
   image_url?: string;

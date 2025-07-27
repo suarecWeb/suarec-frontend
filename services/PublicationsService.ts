@@ -26,8 +26,19 @@ const updatePublication = (
   return api.patch<Publication>(`${baseURL}/${id}`, publicationData);
 };
 
+// Soft delete - ahora marca como eliminada en lugar de eliminar físicamente
 const deletePublication = (id: string) => {
   return api.delete(`${baseURL}/${id}`);
+};
+
+// Obtener publicaciones eliminadas (solo para admins)
+const getDeletedPublications = (params?: PaginationParams) => {
+  return api.get<PaginationResponse<Publication>>(`${baseURL}/deleted`, { params });
+};
+
+// Restaurar publicación eliminada (solo para admins)
+const restorePublication = (id: string) => {
+  return api.post<Publication>(`${baseURL}/${id}/restore`);
 };
 
 const PublicationService = {
@@ -36,6 +47,8 @@ const PublicationService = {
   createPublication,
   updatePublication,
   deletePublication,
+  getDeletedPublications,
+  restorePublication,
 };
 
 export default PublicationService;

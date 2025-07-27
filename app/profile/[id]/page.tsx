@@ -602,7 +602,10 @@ const PublicProfilePage = () => {
                         Publicaciones de {user.name}
                       </h3>
                       <div className="space-y-4">
-                        {user.publications.slice(0, 3).map((pub: any) => {
+                        {user.publications
+                          .filter((pub: any) => !pub.deleted_at) // Filtrar publicaciones eliminadas
+                          .slice(0, 3)
+                          .map((pub: any) => {
                           const isOwnPublication =
                             currentUser && currentUser.id === parseInt(userId);
                           const canEdit =
@@ -684,10 +687,10 @@ const PublicProfilePage = () => {
                             </div>
                           );
                         })}
-                        {user.publications.length > 3 && (
+                        {user.publications.filter((pub: any) => !pub.deleted_at).length > 3 && (
                           <div className="text-center mt-4">
                             <p className="text-sm text-gray-500">
-                              y {user.publications.length - 3} publicación(es)
+                              y {user.publications.filter((pub: any) => !pub.deleted_at).length - 3} publicación(es)
                               más
                             </p>
                           </div>
