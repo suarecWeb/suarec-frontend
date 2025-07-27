@@ -291,14 +291,10 @@ const ProfilePage = () => {
                               );
                               setUser(response.data);
                             }
-                            setSuccess(
+                            toast.success(
                               "Imagen de perfil actualizada correctamente",
                             );
                           } catch (error) {
-                            console.error(
-                              "Error updating profile image:",
-                              error,
-                            );
                             toast.error(
                               "Error al actualizar la imagen de perfil",
                             );

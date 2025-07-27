@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
-import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
+import { translatePriceUnit, getPublicationDisplayPrice } from "@/lib/utils";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
@@ -84,14 +84,14 @@ const PublicationFeedCard = ({
   // Verificar si el usuario puede editar/eliminar la publicación
   const canEditPublication = () => {
     if (!currentUserId) return false;
-    
+
     // Obtener el ID del propietario de la publicación
     const publicationUserId = publication.user?.id || publication.userId;
-    
+
     // Asegurar que ambos IDs sean números para comparación correcta
     const currentUserIdNumber = Number(currentUserId);
     const publicationUserIdNumber = Number(publicationUserId);
-    
+
     // Debug logs
     console.log("🔍 Debug autorización:", {
       currentUserId,
@@ -101,9 +101,9 @@ const PublicationFeedCard = ({
       publicationUser: publication.user,
       userRoles,
       isOwner: publicationUserId == currentUserId,
-      isAdmin: userRoles.includes("ADMIN")
+      isAdmin: userRoles.includes("ADMIN"),
     });
-    
+
     return publicationUserId == currentUserId || userRoles.includes("ADMIN");
   };
 
@@ -259,23 +259,58 @@ const PublicationFeedCard = ({
           )}
         </div>
 
-        {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
-        <div className="space-y-4">
-          {/* Galería de imágenes */}
-          {publication.image_url ||
-          (publication.gallery_images &&
-            publication.gallery_images.length > 0) ? (
-            <GalleryPreview
-              images={
-                publication.image_url
-                  ? [publication.image_url]
-                  : publication.gallery_images || []
-              }
-              title={publication.title}
-              maxDisplay={4}
-              className="mb-3"
-            />
-          ) : null}
+      {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
+      <div className="space-y-4">
+        {/* Galería de imágenes */}
+        {publication.image_url ||
+        (publication.gallery_images &&
+          publication.gallery_images.length > 0) ? (
+          <GalleryPreview
+            images={
+              publication.image_url
+                ? [publication.image_url]
+                : publication.gallery_images || []
+            }
+            title={publication.title}
+            maxDisplay={4}
+            className="mb-3"
+          />
+        ) : null}
+
+        {/* Contenido principal */}
+        <div className="w-full">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            {publication.title}
+          </h2>
+
+          <div className="flex items-center gap-2 mb-2">
+            {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
+            <span className="text-green-700 font-semibold text-base">
+              {publication.price
+                ? (() => {
+                    const basePrice = publication.price;
+                    const priceInfo = getPublicationDisplayPrice(
+                      basePrice,
+                      publication.type,
+                      publication.priceUnit,
+                    );
+
+                    console.log("🔍 Debug precio ESCALABLE:", {
+                      basePrice,
+                      displayPrice: priceInfo.price,
+                      showsTax: priceInfo.showsTax,
+                      taxApplied: priceInfo.taxApplied,
+                      publicationType: publication.type,
+                      priceUnit: publication.priceUnit,
+                    });
+
+                    return `${formatCurrency(priceInfo.price, {
+                      showCurrency: true,
+                    })} ${translatePriceUnit(publication.priceUnit || "")}`;
+                  })()
+                : "Precio a convenir"}
+            </span>
+          </div>
 
           {/* Contenido principal */}
           <div className="w-full">

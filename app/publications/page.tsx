@@ -179,7 +179,7 @@ const PublicationsPageContent = () => {
     // Asegurar que ambos IDs sean números para comparación correcta
     const currentUserIdNumber = Number(currentUserId);
     const publicationUserIdNumber = Number(publicationUserId);
-    
+
     // Debug logs
     console.log("🔍 Debug autorización (lista):", {
       currentUserId,
@@ -188,7 +188,7 @@ const PublicationsPageContent = () => {
       publicationUserIdNumber,
       userRoles,
       isOwner: publicationUserId == currentUserId,
-      isAdmin: userRoles.includes("ADMIN")
+      isAdmin: userRoles.includes("ADMIN"),
     });
 
     // El propietario o un administrador pueden editar

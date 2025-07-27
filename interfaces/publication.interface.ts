@@ -1,6 +1,11 @@
 import { User } from "./user.interface";
 import { Comment } from "./comment.interface";
 
+export enum PublicationType {
+  SERVICE = "SERVICE",
+  JOB = "JOB",
+}
+
 export interface Publication {
   id?: string;
   title: string;
@@ -9,6 +14,7 @@ export interface Publication {
   modified_at: Date;
   deleted_at?: Date;
   category: string;
+  type?: PublicationType; // Nuevo campo para distinguir el tipo
   image_url?: string;
   visitors?: number;
   price?: number;
