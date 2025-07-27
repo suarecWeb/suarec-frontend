@@ -457,17 +457,17 @@ const ChatPageContent = () => {
           }
         } else {
           // Conversación normal con otro usuario
-          const response = await MessageService.getMessagesBetweenUsers(
-            currentUserId,
-            conversation.user.id,
-            { page: 1, limit: 50 },
-          );
-          // Ordenar mensajes por fecha de enví (más antiguos primero)
-          const sortedMessages = response.data.data.sort((a, b) => 
-            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
-          );
-          console.log("📥 Cargando mensajes desde API. Count:", sortedMessages.length);
-          setMessages(sortedMessages);
+        const response = await MessageService.getMessagesBetweenUsers(
+          currentUserId,
+          conversation.user.id,
+          { page: 1, limit: 50 },
+        );
+        // Ordenar mensajes por fecha de enví (más antiguos primero)
+        const sortedMessages = response.data.data.sort((a, b) => 
+          new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+        );
+        console.log("📥 Cargando mensajes desde API. Count:", sortedMessages.length);
+        setMessages(sortedMessages);
         }
         
         setSelectedConversation(conversation);
@@ -567,22 +567,22 @@ const ChatPageContent = () => {
           console.log("🎫 Agregando mensaje al ticket existente");
           
           // Crear mensaje temporal solo para mensajes a tickets existentes
-          const tempMessage: Message = {
-            id: `temp_${Date.now()}`,
-            content: newMessage,
-            senderId: currentUserId,
-            recipientId: selectedConversation.user.id,
-            sent_at: new Date(),
-            read: false,
-            sender: {
-              id: currentUserId,
-              name: "Tú",
+      const tempMessage: Message = {
+        id: `temp_${Date.now()}`,
+        content: newMessage,
+        senderId: currentUserId,
+        recipientId: selectedConversation.user.id,
+        sent_at: new Date(),
+        read: false,
+        sender: {
+          id: currentUserId,
+          name: "Tú",
               profile_image: undefined,
-            },
-          };
+        },
+      };
 
-          setMessages((prev) => [...prev, tempMessage]);
-          setNewMessage("");
+      setMessages((prev) => [...prev, tempMessage]);
+      setNewMessage("");
           
           // Usar el endpoint específico para agregar mensaje a ticket existente
           if (socket) {

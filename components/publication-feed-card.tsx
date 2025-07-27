@@ -259,58 +259,58 @@ const PublicationFeedCard = ({
           )}
         </div>
 
-        {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
-        <div className="space-y-4">
-          {/* Galería de imágenes */}
-          {publication.image_url ||
-          (publication.gallery_images &&
-            publication.gallery_images.length > 0) ? (
-            <GalleryPreview
-              images={
-                publication.image_url
-                  ? [publication.image_url]
-                  : publication.gallery_images || []
-              }
-              title={publication.title}
-              maxDisplay={4}
-              className="mb-3"
-            />
-          ) : null}
+      {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
+      <div className="space-y-4">
+        {/* Galería de imágenes */}
+        {publication.image_url ||
+        (publication.gallery_images &&
+          publication.gallery_images.length > 0) ? (
+          <GalleryPreview
+            images={
+              publication.image_url
+                ? [publication.image_url]
+                : publication.gallery_images || []
+            }
+            title={publication.title}
+            maxDisplay={4}
+            className="mb-3"
+          />
+        ) : null}
 
-          {/* Contenido principal */}
-          <div className="w-full">
-            <h2 className="text-lg font-bold text-gray-900 mb-2">
-              {publication.title}
-            </h2>
+        {/* Contenido principal */}
+        <div className="w-full">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            {publication.title}
+          </h2>
 
-            <div className="flex items-center gap-2 mb-2">
-              {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
-              <span className="text-green-700 font-semibold text-base">
-                {publication.price
-                  ? (() => {
-                      const basePrice = publication.price;
-                      const priceInfo = getPublicationDisplayPrice(
-                        basePrice,
-                        publication.type,
-                        publication.priceUnit,
-                      );
+          <div className="flex items-center gap-2 mb-2">
+            {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
+            <span className="text-green-700 font-semibold text-base">
+              {publication.price
+                ? (() => {
+                    const basePrice = publication.price;
+                    const priceInfo = getPublicationDisplayPrice(
+                      basePrice,
+                      publication.type,
+                      publication.priceUnit,
+                    );
 
-                      console.log("🔍 Debug precio ESCALABLE:", {
-                        basePrice,
-                        displayPrice: priceInfo.price,
-                        showsTax: priceInfo.showsTax,
-                        taxApplied: priceInfo.taxApplied,
-                        publicationType: publication.type,
-                        priceUnit: publication.priceUnit,
-                      });
+                    console.log("🔍 Debug precio ESCALABLE:", {
+                      basePrice,
+                      displayPrice: priceInfo.price,
+                      showsTax: priceInfo.showsTax,
+                      taxApplied: priceInfo.taxApplied,
+                      publicationType: publication.type,
+                      priceUnit: publication.priceUnit,
+                    });
 
-                      return `${formatCurrency(priceInfo.price, {
-                        showCurrency: true,
-                      })} ${translatePriceUnit(publication.priceUnit || "")}`;
-                    })()
-                  : "Precio a convenir"}
-              </span>
-            </div>
+                    return `${formatCurrency(priceInfo.price, {
+                      showCurrency: true,
+                    })} ${translatePriceUnit(publication.priceUnit || "")}`;
+                  })()
+                : "Precio a convenir"}
+            </span>
+          </div>
 
             {publication.description && (
               <p
