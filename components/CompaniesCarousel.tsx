@@ -1,46 +1,35 @@
 "use client";
 
 import React from "react";
-import { InfiniteMovingCards } from "./ui/infinite-moving-cards";
-import { ImageWithFallback } from "./ui/ImageWithFallback";
-import { Building2 } from "lucide-react";
+import { Carousel } from "./ui/carousel";
 
 export function CompaniesCarousel() {
   const companies = [
     {
       title: "Café y Fogón",
-      image:
-        "https://xkwybhxcytfhnqrdvcel.supabase.co/storage/v1/object/public/suarec-media/empresas-aliadas/CafeYFogon.png",
-      description: "Gastronomía de calidad con los mejores sabores colombianos",
+      src: "/CafeYFogon.png",
+      button: "",
     },
     {
       title: "Enfacol",
-      image:
-        "https://xkwybhxcytfhnqrdvcel.supabase.co/storage/v1/object/public/suarec-media/empresas-aliadas/enfacol.png",
-      description: "Soluciones empresariales",
+      src: "/enfacol.png",
+      button: "",
     },
     {
       title: "Olimpo Cocktail",
-      image:
-        "https://xkwybhxcytfhnqrdvcel.supabase.co/storage/v1/object/public/suarec-media/empresas-aliadas/OlimpoCocktail.png",
-      description: "Cócteles únicos y deliciosos",
+      src: "/OlimpoCocktail.png",
+      button: "",
     },
     {
       title: "Veens",
-      image:
-        "https://xkwybhxcytfhnqrdvcel.supabase.co/storage/v1/object/public/suarec-media/empresas-aliadas/veens.png",
-      description: "",
+      src: "/veens.png",
+      button: "",
     },
   ];
 
   return (
-    <div className="h-[300px] rounded-md flex flex-col antialiased items-center justify-center relative overflow-hidden">
-      <InfiniteMovingCards
-        items={companies}
-        direction="right"
-        speed="slow"
-        className="w-full"
-      />
+    <div className="py-8 pb-16">
+      <Carousel slides={companies} />
     </div>
   );
 }
