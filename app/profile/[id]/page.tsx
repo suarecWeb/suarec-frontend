@@ -149,6 +149,19 @@ const PublicProfilePage = () => {
     });
   };
 
+  // Verificar si el usuario actual puede ver información privada
+  const canViewPrivateInfo = () => {
+    if (!currentUser) return false;
+    
+    // Si es el dueño del perfil
+    if (currentUser.id === parseInt(userId)) return true;
+    
+    // Si es admin
+    if (currentUser.roles?.some((role: any) => role.name === "ADMIN")) return true;
+    
+    return false;
+  };
+
   const handleContactUser = () => {
     if (user?.email) {
       window.location.href = `mailto:${user.email}`;
@@ -366,20 +379,34 @@ const PublicProfilePage = () => {
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                        <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="text-gray-800">{user.email}</p>
-                        </div>
-                      </div>
+                      {canViewPrivateInfo() ? (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500">Email</p>
+                              <p className="text-gray-800">{user.email}</p>
+                            </div>
+                          </div>
 
-                      {user.cellphone && (
+                          {user.cellphone && (
+                            <div className="flex items-start gap-3">
+                              <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                              <div>
+                                <p className="text-sm text-gray-500">Teléfono</p>
+                                <p className="text-gray-800">{user.cellphone}</p>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
                         <div className="flex items-start gap-3">
-                          <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                          <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
                           <div>
-                            <p className="text-sm text-gray-500">Teléfono</p>
-                            <p className="text-gray-800">{user.cellphone}</p>
+                            <p className="text-sm text-gray-500">Información de contacto</p>
+                            <p className="text-gray-600 text-sm">
+                              Para ver el email y teléfono, inicia sesión o contacta al usuario a través del chat.
+                            </p>
                           </div>
                         </div>
                       )}
@@ -732,27 +759,41 @@ const PublicProfilePage = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Email corporativo
-                          </p>
-                          <p className="text-gray-800">{user.company.email}</p>
-                        </div>
-                      </div>
+                      {canViewPrivateInfo() ? (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <Mail className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500">
+                                Email corporativo
+                              </p>
+                              <p className="text-gray-800">{user.company.email}</p>
+                            </div>
+                          </div>
 
-                      <div className="flex items-start gap-3">
-                        <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Teléfono corporativo
-                          </p>
-                          <p className="text-gray-800">
-                            {user.company.cellphone}
-                          </p>
+                          <div className="flex items-start gap-3">
+                            <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
+                            <div>
+                              <p className="text-sm text-gray-500">
+                                Teléfono corporativo
+                              </p>
+                              <p className="text-gray-800">
+                                {user.company.cellphone}
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
+                          <div>
+                            <p className="text-sm text-gray-500">Información de contacto</p>
+                            <p className="text-gray-600 text-sm">
+                              Para ver el email y teléfono corporativo, inicia sesión o contacta a la empresa a través del chat.
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 
