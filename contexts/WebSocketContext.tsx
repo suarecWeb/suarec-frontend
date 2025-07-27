@@ -131,7 +131,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     console.log("🔌 Iniciando conexión WebSocket...");
 
     // Verificar que el backend esté disponible
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.suarec.com";
+          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
     console.log("🔌 Intentando conectar a:", backendUrl);
 
     try {

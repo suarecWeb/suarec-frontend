@@ -220,6 +220,16 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
+                {hasRole(["ADMIN"]) && (
+                  <NavLink
+                    href="/admin/tickets"
+                    icon={<MessageSquare className="h-4 w-4" />}
+                    isScrolled={isScrolled}
+                  >
+                    Tickets
+                  </NavLink>
+                )}
+
                 {/* User Menu */}
                 <div className="ml-4 pl-4 border-l border-white/20">
                   <NavbarRole
@@ -381,6 +391,16 @@ const Navbar = () => {
                       onClick={closeMenu}
                     >
                       Pagos
+                    </MobileNavLink>
+                  )}
+
+                  {hasRole(["ADMIN"]) && (
+                    <MobileNavLink
+                      href="/admin/tickets"
+                      icon={<MessageSquare className="h-5 w-5" />}
+                      onClick={closeMenu}
+                    >
+                      Tickets de Soporte
                     </MobileNavLink>
                   )}
 

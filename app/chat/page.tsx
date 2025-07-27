@@ -10,6 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import RoleGuard from "@/components/role-guard";
 import { useWebSocketContext } from "@/contexts/WebSocketContext";
+import CreateTicketButton from "@/components/CreateTicketButton";
 
 // import MessageNotification from "@/components/MessageNotification";
 import UserSearch from "@/components/UserSearch";
@@ -47,6 +48,8 @@ const ChatPageContent = () => {
   const [showMobileConversations, setShowMobileConversations] = useState(true);
 
   const [showUserSearch, setShowUserSearch] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<any>(null);
+  const [loadingTicket, setLoadingTicket] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -59,6 +62,7 @@ const ChatPageContent = () => {
   const {
     isConnected,
     isConnecting,
+    socket,
     sendMessage: sendWebSocketMessage,
     markAsRead: markAsReadWebSocket,
     joinConversation,
@@ -83,6 +87,30 @@ const ChatPageContent = () => {
       return () => clearTimeout(connectionCheck);
     }
   }, [isConnected, isConnecting]);
+
+  // Escuchar cambios de estado de tickets
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTicketStatusChanged = (data: { ticketId: string; status: string }) => {
+      if (activeTicket && activeTicket.id === data.ticketId) {
+        if (data.status === "closed" || data.status === "resolved") {
+          setActiveTicket(null);
+          toast.success(
+            data.status === "closed" 
+              ? "Tu ticket ha sido cerrado" 
+              : "Tu ticket ha sido resuelto"
+          );
+        }
+      }
+    };
+
+    socket.on("ticket_status_changed", handleTicketStatusChanged);
+
+    return () => {
+      socket.off("ticket_status_changed", handleTicketStatusChanged);
+    };
+  }, [socket, activeTicket]);
 
   // Detectar vista móvil
   useEffect(() => {
@@ -172,61 +200,69 @@ const ChatPageContent = () => {
       conversationId: string;
     }) => {
       const { message } = data;
+      
+      // Extraer senderId y recipientId del mensaje o de las relaciones
+      const messageSenderId = message.senderId || message.sender?.id;
+      const messageRecipientId = message.recipientId || message.recipient?.id;
+      
+      console.log("📨 Nuevo mensaje recibido:", message);
+      console.log("📨 Mensaje completo:", JSON.stringify(message, null, 2));
+      console.log("👤 Usuario actual:", currentUserId);
+      console.log("💬 Conversación seleccionada:", selectedConversation?.user.id);
+      console.log("🔍 Verificando relevancia:", {
+        messageSenderId,
+        messageRecipientId,
+        selectedUserId: selectedConversation?.user.id,
+        isRelevantForUser: messageRecipientId === currentUserId || messageSenderId === currentUserId,
+        isRelevantForConversation: selectedConversation && (
+          messageSenderId === selectedConversation.user.id ||
+          messageRecipientId === selectedConversation.user.id
+        )
+      });
 
       // Solo procesar el mensaje si es relevante para el usuario actual
       if (
-        message.recipientId === currentUserId ||
-        message.senderId === currentUserId
+        messageRecipientId === currentUserId ||
+        messageSenderId === currentUserId
       ) {
         // Actualizar mensajes si estamos en la conversación correcta
         if (
           selectedConversation &&
-          (message.senderId === selectedConversation.user.id ||
-            message.recipientId === selectedConversation.user.id)
+          (messageSenderId === selectedConversation.user.id ||
+            messageRecipientId === selectedConversation.user.id)
         ) {
+          console.log("✅ Mensaje aplicado a conversación actual");
           setMessages((prev) => {
-            // Evitar duplicados
+            console.log("🔄 Actualizando mensajes. Prev count:", prev.length);
+            console.log("📨 Nuevo mensaje a agregar:", message.id, message.content);
+            console.log("📨 Mensaje ticket_id:", message.ticket_id);
+            
+            // Evitar duplicados por ID
             const existingMessage = prev.find((msg) => msg.id === message.id);
             if (existingMessage) {
+              console.log("🚫 Mensaje duplicado ignorado:", message.id);
               return prev;
             }
-
-            // Solo remover el mensaje temporal específico si este mensaje es la confirmación
-            // Buscar un mensaje temporal que coincida con el contenido y el sender
+            
+            // Remover mensaje temporal si existe
             const tempMessageIndex = prev.findIndex(
               (msg) =>
                 msg.id?.startsWith("temp_") &&
                 msg.content === message.content &&
                 msg.senderId === message.senderId,
             );
-
+            
             let filteredMessages = prev;
             if (tempMessageIndex !== -1) {
-              // Remover solo el mensaje temporal específico
-              filteredMessages = prev.filter(
-                (_, index) => index !== tempMessageIndex,
-              );
-            } else {
+              console.log("🗑️ Removiendo mensaje temporal:", tempMessageIndex);
+              filteredMessages = prev.filter((_, index) => index !== tempMessageIndex);
             }
-
-            // Hacer scroll automático solo si estamos cerca del final del contenedor
-            setTimeout(() => {
-              if (messagesContainerRef.current) {
-                const container = messagesContainerRef.current;
-                const isNearBottom =
-                  container.scrollHeight -
-                    container.scrollTop -
-                    container.clientHeight <
-                  100;
-
-                // Solo hacer scroll si estamos cerca del final
-                if (isNearBottom) {
-                  container.scrollTop = container.scrollHeight;
-                }
-              }
-            }, 100);
-
-            return [...filteredMessages, message];
+            
+            // Agregar el mensaje directamente al final
+            const newMessages = [...filteredMessages, message];
+            console.log("✅ Mensaje agregado. Nuevo count:", newMessages.length);
+            
+            return newMessages;
           });
 
           // Comentado: Marcado como leído automático
@@ -247,9 +283,14 @@ const ChatPageContent = () => {
         // Actualizar lista de conversaciones
         setConversations((prev) => {
           const otherUserId =
-            message.senderId === currentUserId
-              ? message.recipientId
-              : message.senderId;
+            messageSenderId === currentUserId
+              ? messageRecipientId
+              : messageSenderId;
+          
+          // Si no podemos determinar el otherUserId, no actualizar
+          if (!otherUserId) {
+            return prev;
+          }
           const existingConvIndex = prev.findIndex(
             (conv) => conv.user.id === otherUserId,
           );
@@ -376,16 +417,59 @@ const ChatPageContent = () => {
 
   const loadMessages = useCallback(
     async (conversation: Conversation) => {
+      console.log("📥 loadMessages llamado para conversación:", conversation.user.id);
       if (!currentUserId) return;
 
       try {
         setLoadingMessages(true);
-        const response = await MessageService.getMessagesBetweenUsers(
-          currentUserId,
-          conversation.user.id,
-          { page: 1, limit: 50 },
-        );
-        setMessages(response.data.data.reverse()); // Mostrar mensajes más antiguos primero
+        
+        // Si es conversación con Suarec, verificar ticket activo y cargar todos los mensajes del ticket
+        if (conversation.user.id === 0) {
+          console.log("🎫 Cargando conversación con Suarec...");
+          
+          // Obtener ticket activo
+          const ticketResponse = await MessageService.getActiveTicket(currentUserId);
+          const activeTicket = ticketResponse.data;
+          setActiveTicket(activeTicket);
+          console.log("🎫 Ticket activo al cargar conversación:", activeTicket);
+          
+          if (activeTicket) {
+            // Cargar todos los mensajes del ticket
+            console.log("🎫 Cargando mensajes del ticket:", activeTicket.id);
+            const ticketMessagesResponse = await MessageService.getTicketMessages(activeTicket.id!);
+            const ticketMessages = ticketMessagesResponse.data.sort((a, b) => 
+              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            );
+            console.log("🎫 Mensajes del ticket cargados:", ticketMessages.length);
+            setMessages(ticketMessages);
+          } else {
+            // No hay ticket activo, cargar mensajes normales
+            console.log("🎫 No hay ticket activo, cargando mensajes normales");
+            const response = await MessageService.getMessagesBetweenUsers(
+              currentUserId,
+              conversation.user.id,
+              { page: 1, limit: 50 },
+            );
+            const sortedMessages = response.data.data.sort((a, b) => 
+              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            );
+            setMessages(sortedMessages);
+          }
+        } else {
+          // Conversación normal con otro usuario
+          const response = await MessageService.getMessagesBetweenUsers(
+            currentUserId,
+            conversation.user.id,
+            { page: 1, limit: 50 },
+          );
+          // Ordenar mensajes por fecha de enví (más antiguos primero)
+          const sortedMessages = response.data.data.sort((a, b) => 
+            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+          );
+          console.log("📥 Cargando mensajes desde API. Count:", sortedMessages.length);
+          setMessages(sortedMessages);
+        }
+        
         setSelectedConversation(conversation);
 
         // En móvil, ocultar la lista de conversaciones cuando se selecciona una
@@ -411,6 +495,7 @@ const ChatPageContent = () => {
           ),
         );
       } catch (err) {
+        console.error("❌ Error al cargar mensajes:", err);
         toast.error("Error al cargar los mensajes");
       } finally {
         setLoadingMessages(false);
@@ -421,6 +506,11 @@ const ChatPageContent = () => {
 
   // Abrir conversación específica si se recibe parámetro sender
   useEffect(() => {
+    console.log("🔄 useEffect ejecutándose - Dependencias cambiaron");
+    console.log("🔄 conversations.length:", conversations.length);
+    console.log("🔄 currentUserId:", currentUserId);
+    console.log("🔄 selectedConversation:", selectedConversation?.user?.id);
+    
     const senderId = searchParams.get("sender");
     if (
       senderId &&
@@ -434,16 +524,19 @@ const ChatPageContent = () => {
       );
 
       if (conversation) {
+        console.log("🔄 Cargando mensajes para conversación:", conversation.user.id);
         loadMessages(conversation);
       } else {
+        console.log("🔄 No se encontró conversación para senderId:", senderIdNum);
       }
+    } else {
+      console.log("🔄 No se cumplen las condiciones para cargar mensajes");
     }
   }, [
-    conversations,
+    // conversations, // DESHABILITADO TEMPORALMENTE
     currentUserId,
     searchParams,
     selectedConversation,
-    loadMessages,
   ]);
 
   const sendMessage = async () => {
@@ -464,26 +557,91 @@ const ChatPageContent = () => {
       };
       console.log("🔌 WebSocket conectado:", isConnected);
 
-      // Enviar mensaje a través de WebSocket
-      sendWebSocketMessage(messageData);
+      // Si es un mensaje a Suarec, verificar si ya existe un ticket activo
+      if (selectedConversation.user.id === 0) {
+        console.log("🎫 Enviando mensaje a Suarec, verificando ticket activo...");
+        
+        // Verificar si ya existe un ticket activo
+        if (activeTicket) {
+          console.log("🎫 Ticket activo encontrado:", activeTicket.id);
+          console.log("🎫 Agregando mensaje al ticket existente");
+          
+          // Crear mensaje temporal solo para mensajes a tickets existentes
+          const tempMessage: Message = {
+            id: `temp_${Date.now()}`,
+            content: newMessage,
+            senderId: currentUserId,
+            recipientId: selectedConversation.user.id,
+            sent_at: new Date(),
+            read: false,
+            sender: {
+              id: currentUserId,
+              name: "Tú",
+              profile_image: undefined,
+            },
+          };
 
-      // Agregar el mensaje localmente (se actualizará cuando llegue la confirmación)
-      const tempMessage: Message = {
-        id: `temp_${Date.now()}`,
-        content: newMessage,
-        senderId: currentUserId,
-        recipientId: selectedConversation.user.id,
-        sent_at: new Date(),
-        read: false,
-        sender: {
-          id: currentUserId,
-          name: "Tú",
-          profile_image: undefined, // No usar foto para mensajes temporales
-        },
-      };
+          setMessages((prev) => [...prev, tempMessage]);
+          setNewMessage("");
+          
+          // Usar el endpoint específico para agregar mensaje a ticket existente
+          if (socket) {
+            console.log("🔌 Enviando evento add_message_to_ticket al WebSocket");
+            socket.emit("add_message_to_ticket", {
+              ticketId: activeTicket.id,
+              content: newMessage,
+            });
+            console.log("✅ Evento enviado al WebSocket");
+          } else {
+            console.log("🔌 WebSocket no disponible, usando método HTTP");
+            // Fallback al método HTTP
+            await MessageService.addMessageToTicket(activeTicket.id, currentUserId, newMessage);
+          }
+        } else {
+          console.log("🎫 No hay ticket activo, enviando mensaje normal");
+          // Crear mensaje temporal para nuevos tickets
+          const tempMessage: Message = {
+            id: `temp_${Date.now()}`,
+            content: newMessage,
+            senderId: currentUserId,
+            recipientId: selectedConversation.user.id,
+            sent_at: new Date(),
+            read: false,
+            sender: {
+              id: currentUserId,
+              name: "Tú",
+              profile_image: undefined,
+            },
+          };
 
-      setMessages((prev) => [...prev, tempMessage]);
-      setNewMessage("");
+          setMessages((prev) => [...prev, tempMessage]);
+          setNewMessage("");
+          
+          // Enviar mensaje normal (creará nuevo ticket)
+          sendWebSocketMessage(messageData);
+        }
+      } else {
+        // Mensaje normal a otro usuario
+        const tempMessage: Message = {
+          id: `temp_${Date.now()}`,
+          content: newMessage,
+          senderId: currentUserId,
+          recipientId: selectedConversation.user.id,
+          sent_at: new Date(),
+          read: false,
+          sender: {
+            id: currentUserId,
+            name: "Tú",
+            profile_image: undefined,
+          },
+        };
+
+        setMessages((prev) => [...prev, tempMessage]);
+        setNewMessage("");
+        
+        // Mensaje normal a otro usuario
+        sendWebSocketMessage(messageData);
+      }
 
       // Hacer scroll automático solo dentro del contenedor de mensajes
       setTimeout(() => {
@@ -497,7 +655,18 @@ const ChatPageContent = () => {
       setConversations((prev) => {
         const updatedConversations = prev.map((conv) =>
           conv.user.id === selectedConversation.user.id
-            ? { ...conv, lastMessage: tempMessage }
+            ? { 
+                ...conv, 
+                lastMessage: { 
+                  id: `temp_${Date.now()}`, 
+                  content: newMessage, 
+                  senderId: currentUserId, 
+                  recipientId: selectedConversation.user.id,
+                  read: false,
+                  sent_at: new Date(),
+                  status: "message"
+                } as Message
+              }
             : conv,
         );
         // Reordenar conversaciones por último mensaje
@@ -592,6 +761,67 @@ const ChatPageContent = () => {
     loadMessages(existingConversation || newConversation);
   };
 
+  const handleContactSuarec = async () => {
+    try {
+      if (!currentUserId) return;
+      
+      setLoadingTicket(true);
+      
+      // Verificar ticket activo
+      const response = await MessageService.getActiveTicket(currentUserId);
+      const ticket = response.data;
+      setActiveTicket(ticket);
+      
+      console.log("🎫 Ticket activo encontrado:", ticket);
+
+      // Crear conversación con Suarec
+      const suarecUser = {
+        id: 0,
+        name: "Suarec - Soporte",
+        email: "soporte@suarec.com",
+        profile_image: undefined,
+      };
+
+      const suarecConversation: Conversation = {
+        user: suarecUser,
+        lastMessage: {
+          id: "",
+          content: "",
+          senderId: 0,
+          recipientId: 0,
+          sent_at: new Date(),
+          read: false,
+        },
+        unreadCount: 0,
+      };
+
+      // Buscar si ya existe una conversación con Suarec
+      const existingSuarecConversation = conversations.find(
+        (conv) => conv.user.id === 0,
+      );
+
+      if (!existingSuarecConversation) {
+        setConversations((prev) => {
+          const updatedConversations = [suarecConversation, ...prev];
+          return sortConversationsByLastMessage(updatedConversations);
+        });
+      }
+
+      // Cargar los mensajes
+      loadMessages(existingSuarecConversation || suarecConversation);
+    } catch (error) {
+      console.error("Error al verificar ticket activo:", error);
+      toast.error("Error al verificar tickets activos");
+    } finally {
+      setLoadingTicket(false);
+    }
+  };
+
+  const handleTicketCreated = (ticket: any) => {
+    setActiveTicket(ticket);
+    toast.success("Ticket creado exitosamente");
+  };
+
   const filteredConversations = conversations.filter(
     (conv) =>
       conv.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -651,13 +881,23 @@ const ChatPageContent = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <button
-                      onClick={() => setShowUserSearch(true)}
-                      className="px-3 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2"
-                      title="Nuevo mensaje"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowUserSearch(true)}
+                        className="px-3 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2"
+                        title="Nuevo mensaje"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleContactSuarec()}
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                        title="Contactar a Suarec"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="hidden sm:inline">Soporte</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -849,6 +1089,25 @@ const ChatPageContent = () => {
 
                     {/* Message Input */}
                     <div className="chat-input p-4 border-t border-gray-200">
+                      {/* Mostrar botón de crear ticket solo si es conversación con Suarec y no hay ticket activo */}
+                      {selectedConversation?.user.id === 0 && !activeTicket && !loadingTicket && (
+                        <div className="mb-4">
+                          <CreateTicketButton onTicketCreated={handleTicketCreated} />
+                        </div>
+                      )}
+                      
+                      {/* Mostrar mensaje si hay ticket activo */}
+                      {selectedConversation?.user.id === 0 && activeTicket && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm text-blue-700">
+                              Ticket activo: #{activeTicket.id}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="flex gap-2">
                         <textarea
                           value={newMessage}
