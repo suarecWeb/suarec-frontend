@@ -25,6 +25,7 @@ import {
   Receipt,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
+import EditProviderMessageModal from "@/components/edit-provider-message-modal";
 import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -50,6 +51,8 @@ export default function ContractsPage() {
   );
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [isProviderResponseModalOpen, setIsProviderResponseModalOpen] =
+    useState(false);
+  const [isEditProviderMessageModalOpen, setIsEditProviderMessageModalOpen] =
     useState(false);
   const router = useRouter();
   const { showNotification } = useNotification();
@@ -618,9 +621,22 @@ export default function ContractsPage() {
                               <p className="text-sm font-medium text-blue-800 mb-1">
                                 Respuesta del proveedor:
                               </p>
-                              <p className="text-sm text-blue-700">
-                                {contract.providerMessage}
-                              </p>
+                              {contract.propertyType === "virtual" &&
+                              contract.providerMessage &&
+                              contract.providerMessage.startsWith("http") ? (
+                                <a
+                                  href={contract.providerMessage}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-700 underline break-all"
+                                >
+                                  {contract.providerMessage}
+                                </a>
+                              ) : (
+                                <p className="text-sm text-blue-700">
+                                  {contract.providerMessage}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1059,16 +1075,27 @@ export default function ContractsPage() {
                       {/* Mensaje del proveedor */}
                       {contract.providerMessage && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-blue-800 mb-1">
-                                Tu respuesta:
-                              </p>
-                              <p className="text-sm text-blue-700">
-                                {contract.providerMessage}
-                              </p>
+                          <div className="flex items-start gap-2 justify-between">
+                            <div className="flex gap-2">
+                              <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-blue-800 mb-1">
+                                  Tu respuesta:
+                                </p>
+                                <p className="text-sm text-blue-700">
+                                  {contract.providerMessage}
+                                </p>
+                              </div>
                             </div>
+                            <button
+                              className="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                              onClick={() => {
+                                setSelectedContract(contract);
+                                setIsEditProviderMessageModalOpen(true);
+                              }}
+                            >
+                              Editar
+                            </button>
                           </div>
                         </div>
                       )}
@@ -1134,6 +1161,23 @@ export default function ContractsPage() {
               setSelectedContract(null);
             }}
             onResponseSubmitted={loadContracts}
+          />
+        )}
+
+        {/* Edit Provider Message Modal */}
+        {isEditProviderMessageModalOpen && selectedContract && (
+          <EditProviderMessageModal
+            contract={selectedContract}
+            isOpen={isEditProviderMessageModalOpen}
+            onClose={() => {
+              setIsEditProviderMessageModalOpen(false);
+              setSelectedContract(null);
+            }}
+            onMessageUpdated={() => {
+              setIsEditProviderMessageModalOpen(false);
+              setSelectedContract(null);
+              loadContracts();
+            }}
           />
         )}
       </div>
