@@ -406,13 +406,19 @@ const ProfileEditPage = () => {
         (link) => link.type && link.url,
       );
 
+      // Función auxiliar para crear fecha sin problemas de zona horaria
+      const createLocalDate = (dateString: string): Date => {
+        const date = new Date(dateString + "T12:00:00");
+        return date;
+      };
+
       // Convertir born_at a Date antes de enviarlo y limpiar el payload
       const userData: Partial<UserType> = {
         name: formData.name || undefined,
         email: formData.email ? formData.email.toLowerCase() : undefined,
         genre: formData.genre || undefined,
         cellphone: formData.cellphone || undefined,
-        born_at: formData.born_at ? new Date(formData.born_at) : undefined,
+        born_at: createLocalDate(formData.born_at) || undefined,
         cv_url: formData.cv_url || undefined,
         profession: finalProfession || undefined,
         skills:

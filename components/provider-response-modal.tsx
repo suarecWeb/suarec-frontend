@@ -388,14 +388,42 @@ export default function ProviderResponseModal({
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
-                    type="number"
-                    value={counterOffer}
-                    onChange={(e) => setCounterOffer(Number(e.target.value))}
+                    type="text"
+                    value={counterOffer === 0 ? "" : counterOffer}
+                    onChange={(e) => {
+                      // Solo permite números enteros (sin puntos, comas, ni decimales)
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+
+                      if (value === "") {
+                        setCounterOffer(0);
+                      } else {
+                        // Elimina ceros al inicio (ej: "007" -> "7")
+                        const numberValue = parseInt(value, 10);
+                        setCounterOffer(numberValue);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Previene la entrada de caracteres no numéricos
+                      if (
+                        !/[0-9]/.test(e.key) &&
+                        ![
+                          "Backspace",
+                          "Delete",
+                          "Tab",
+                          "Escape",
+                          "Enter",
+                          "ArrowLeft",
+                          "ArrowRight",
+                        ].includes(e.key)
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder={`Ej: ${contract.initialPrice}`}
+                    placeholder={`Ej: ${Math.floor(contract.initialPrice)}`}
                     required
-                    min="1"
-                    step="0.01"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                   />
                 </div>
                 <p className="text-xs text-blue-600 mt-2">
