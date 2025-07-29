@@ -12,6 +12,7 @@ export interface Comment {
   id?: string;
   description: string;
   created_at: Date;
+  deleted_at?: Date;
   publicationId?: string;
   userId?: string | number;
 

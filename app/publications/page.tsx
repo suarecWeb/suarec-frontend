@@ -197,9 +197,15 @@ const PublicationsPageContent = () => {
 
   // Filtrar publicaciones según el término de búsqueda
   const getFilteredPublications = (publications: Publication[]) => {
-    if (!searchTerm) return publications;
+    // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
+    const activePublications = publications.filter(
+      (pub) => !pub.deleted_at // Solo publicaciones que NO tienen deleted_at
+    );
 
-    return publications.filter(
+    // Luego aplicar filtro de búsqueda si hay término de búsqueda
+    if (!searchTerm) return activePublications;
+
+    return activePublications.filter(
       (pub) =>
         pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (pub.description &&

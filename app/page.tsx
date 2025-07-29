@@ -253,16 +253,6 @@ export default function Home() {
 
           {/* Carousel de Empresas Aliadas */}
           <CompaniesCarousel />
-
-          <div className="text-center mt-8">
-            <Link
-              href="/companies"
-              className="inline-flex items-center gap-3 bg-[#097EEC] text-white px-8 py-4 rounded-full text-lg font-eras-bold hover:bg-[#097EEC]/90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Ver todas nuestras empresas aliadas
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
         </div>
       </section>
 

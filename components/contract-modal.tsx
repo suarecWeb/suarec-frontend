@@ -61,6 +61,9 @@ export default function ContractModal({
     "accept",
   );
   const [customPrice, setCustomPrice] = useState(0);
+  const [serviceMode, setServiceMode] = useState<"presencial" | "virtual">(
+    "presencial",
+  );
   const [serviceAddress, setServiceAddress] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -103,22 +106,22 @@ export default function ContractModal({
         return;
       }
 
-      if (!serviceAddress.trim()) {
-        toast.error("La dirección del servicio es obligatoria");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!propertyType) {
-        toast.error("Debes seleccionar el tipo de inmueble");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!neighborhood.trim()) {
-        toast.error("El barrio es obligatorio");
-        setIsLoading(false);
-        return;
+      if (serviceMode === "presencial") {
+        if (!serviceAddress.trim()) {
+          toast.error("La dirección del servicio es obligatoria");
+          setIsLoading(false);
+          return;
+        }
+        if (!propertyType) {
+          toast.error("Debes seleccionar el tipo de inmueble");
+          setIsLoading(false);
+          return;
+        }
+        if (!neighborhood.trim()) {
+          toast.error("El barrio es obligatorio");
+          setIsLoading(false);
+          return;
+        }
       }
 
       let newPaymentMethod = paymentMethod;
@@ -140,9 +143,10 @@ export default function ContractModal({
         requestedTime: requestedTime,
         paymentMethod: newPaymentMethod,
         originalPaymentMethod: paymentMethod, // Preservar el método original seleccionado
-        serviceAddress: serviceAddress.trim(),
-        propertyType: propertyType,
-        neighborhood: neighborhood.trim(),
+        serviceAddress:
+          serviceMode === "presencial" ? serviceAddress.trim() : "",
+        propertyType: serviceMode === "presencial" ? propertyType : "virtual",
+        neighborhood: serviceMode === "presencial" ? neighborhood.trim() : "",
         locationDescription: locationDescription.trim() || undefined,
       };
 
@@ -425,84 +429,125 @@ export default function ContractModal({
               )}
             </div>
 
-            {/* Service Location */}
+            {/* Service Mode Selection */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                <Building className="inline h-4 w-4 mr-1" />
-                Información del lugar <span className="text-red-500">*</span>
+                <Smartphone className="inline h-4 w-4 mr-1" />
+                Modalidad del servicio <span className="text-red-500">*</span>
               </label>
-
-              <div className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                {/* Dirección */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Dirección completa:
-                  </label>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <label
+                  className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer ${serviceMode === "presencial" ? "border-[#097EEC] bg-blue-50" : "border-gray-200"}`}
+                >
                   <input
-                    type="text"
-                    value={serviceAddress}
-                    onChange={(e) => setServiceAddress(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder="Ej: Calle 123 #45-67"
-                    required
+                    type="radio"
+                    value="presencial"
+                    checked={serviceMode === "presencial"}
+                    onChange={() => setServiceMode("presencial")}
+                    className="accent-[#097EEC]"
                   />
-                </div>
+                  <span className="font-medium text-gray-800">Presencial</span>
+                </label>
+                <label
+                  className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer ${serviceMode === "virtual" ? "border-[#097EEC] bg-blue-50" : "border-gray-200"}`}
+                >
+                  <input
+                    type="radio"
+                    value="virtual"
+                    checked={serviceMode === "virtual"}
+                    onChange={() => setServiceMode("virtual")}
+                    className="accent-[#097EEC]"
+                  />
+                  <span className="font-medium text-gray-800">Virtual</span>
+                </label>
+              </div>
 
-                {/* Tipo de inmueble y Barrio */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {serviceMode === "presencial" ? (
+                <div className="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  {/* Dirección */}
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-2">
-                      Tipo de inmueble:
-                    </label>
-                    <select
-                      value={propertyType}
-                      onChange={(e) => setPropertyType(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                      required
-                    >
-                      <option value="">Seleccionar tipo</option>
-                      <option value="casa">Casa</option>
-                      <option value="apartamento">Apartamento</option>
-                      <option value="local">Local comercial</option>
-                      <option value="oficina">Oficina</option>
-                      <option value="bodega">Bodega</option>
-                      <option value="finca">Finca</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-2">
-                      Barrio:
+                      Dirección completa:
                     </label>
                     <input
                       type="text"
-                      value={neighborhood}
-                      onChange={(e) => setNeighborhood(e.target.value)}
+                      value={serviceAddress}
+                      onChange={(e) => setServiceAddress(e.target.value)}
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                      placeholder="Ej: Chapinero, Zona Rosa"
-                      required
+                      placeholder="Ej: Calle 123 #45-67"
+                      required={serviceMode === "presencial"}
                     />
                   </div>
-                </div>
 
-                {/* Descripción del lugar */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">
-                    Descripción del lugar:
-                  </label>
-                  <textarea
-                    value={locationDescription}
-                    onChange={(e) => setLocationDescription(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
-                    rows={3}
-                    placeholder="Describe características importantes del lugar: acceso, pisos, puntos de referencia, instrucciones especiales..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Ayuda al proveedor a conocer mejor el lugar de trabajo
+                  {/* Tipo de inmueble y Barrio */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-2">
+                        Tipo de inmueble:
+                      </label>
+                      <select
+                        value={propertyType}
+                        onChange={(e) => setPropertyType(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        required={serviceMode === "presencial"}
+                      >
+                        <option value="">Seleccionar tipo</option>
+                        <option value="casa">Casa</option>
+                        <option value="apartamento">Apartamento</option>
+                        <option value="local">Local comercial</option>
+                        <option value="oficina">Oficina</option>
+                        <option value="bodega">Bodega</option>
+                        <option value="finca">Finca</option>
+                        <option value="otro">Otro</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-2">
+                        Barrio:
+                      </label>
+                      <input
+                        type="text"
+                        value={neighborhood}
+                        onChange={(e) => setNeighborhood(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        placeholder="Ej: Chapinero, Zona Rosa"
+                        required={serviceMode === "presencial"}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Descripción del lugar */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">
+                      Descripción del lugar:
+                    </label>
+                    <textarea
+                      value={locationDescription}
+                      onChange={(e) => setLocationDescription(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
+                      rows={3}
+                      placeholder="Describe características importantes del lugar: acceso, pisos, puntos de referencia, instrucciones especiales..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ayuda al proveedor a conocer mejor el lugar de trabajo
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Smartphone className="h-5 w-5 text-blue-600" />
+                    <span className="font-semibold text-blue-700">
+                      Servicio virtual
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Este servicio se realizará de forma virtual. No se requiere
+                    información de ubicación física.
                   </p>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Message Input */}
