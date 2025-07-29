@@ -90,6 +90,7 @@ export default function CreateServiceModal({
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<FormData>({
     defaultValues: {
       title: "",
@@ -100,6 +101,19 @@ export default function CreateServiceModal({
       priceUnit: "",
     },
   });
+
+  // Función simple para limpiar el precio
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remover todo excepto números
+    const cleaned = e.target.value.replace(/[^\d]/g, "");
+
+    // Actualizar el valor del input
+    e.target.value = cleaned;
+
+    // Convertir a número y actualizar el formulario
+    const numericValue = parseFloat(cleaned);
+    setValue("price", isNaN(numericValue) ? undefined : numericValue);
+  };
 
   // Validar que el usuario esté autenticado
   useEffect(() => {
@@ -391,21 +405,18 @@ export default function CreateServiceModal({
                       Precio <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       id="price"
-                      step="0.01"
-                      min="0"
-                      required
-                      {...register("price", {
-                        valueAsNumber: true,
-                        min: {
-                          value: 0,
-                          message: "El precio debe ser mayor a 0",
-                        },
-                      })}
+                      onChange={handlePriceChange}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                      placeholder="Ej: 50.00"
+                      placeholder="Ej: 10000"
                     />
+
+                    {/* Mensaje simple */}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Solo números. Ejemplo: 10000
+                    </p>
+
                     {errors.price && (
                       <p className="mt-1 text-xs text-red-600">
                         {errors.price.message}
@@ -416,12 +427,10 @@ export default function CreateServiceModal({
                     {(() => {
                       const priceValue = watch("price");
 
-                      // Validación robusta del precio
                       if (!priceValue && priceValue !== 0) return null;
 
                       const numericPrice = Number(priceValue);
 
-                      // Solo mostrar si es un número válido y mayor que 0
                       if (isNaN(numericPrice) || numericPrice <= 0) return null;
 
                       return (
@@ -447,7 +456,7 @@ export default function CreateServiceModal({
                     <select
                       id="priceUnit"
                       {...register("priceUnit")}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-colors outline-none text-sm"
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>

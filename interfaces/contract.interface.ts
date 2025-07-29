@@ -69,12 +69,14 @@ export interface CreateContractDto {
 
 export interface CreateBidDto {
   contractId: string;
+  bidderId: number;
   amount: number;
   message?: string;
 }
 
 export interface AcceptBidDto {
   bidId: string;
+  acceptorId: number;
 }
 
 export interface ProviderResponseDto {
