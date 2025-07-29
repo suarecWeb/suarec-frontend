@@ -167,7 +167,16 @@ const RegisterAttendancePageContent = () => {
         setSuccess(null);
         router.push("/attendance");
       }, 3000);
-    } catch (err) {
+    } catch (err: any) {
+      if (
+        err?.response?.data?.message ===
+        "Attendance record already exists for this date"
+      ) {
+        toast.error(
+          "Ya existe un registro de asistencia o ausencia para esta fecha",
+        );
+        return;
+      }
       toast.error("Error al registrar la asistencia");
       setTimeout(() => setError(null), 3000);
     } finally {

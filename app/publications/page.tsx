@@ -199,7 +199,7 @@ const PublicationsPageContent = () => {
   const getFilteredPublications = (publications: Publication[]) => {
     // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
     const activePublications = publications.filter(
-      (pub) => !pub.deleted_at // Solo publicaciones que NO tienen deleted_at
+      (pub) => !pub.deleted_at, // Solo publicaciones que NO tienen deleted_at
     );
 
     // Luego aplicar filtro de búsqueda si hay término de búsqueda

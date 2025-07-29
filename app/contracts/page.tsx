@@ -36,6 +36,9 @@ import {
 import { WompiService } from "../../services/WompiService";
 import StartChatButton from "@/components/start-chat-button";
 import toast from "react-hot-toast";
+import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
+import { TokenPayload } from "@/interfaces/auth.interface";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -65,12 +68,25 @@ export default function ContractsPage() {
   const [activeTab, setActiveTab] = useState<"client" | "provider" | "all">(
     "provider",
   );
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     loadContracts();
     const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || "";
     if (publicKey) {
       WompiService.getAcceptanceTokens(publicKey).then(setAcceptanceTokens);
+    }
+  }, []);
+
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode<TokenPayload>(token);
+        setCurrentUserId(decoded.id);
+      } catch (error) {
+        toast.error("Error al decodificar el token");
+      }
     }
   }, []);
 
@@ -136,9 +152,9 @@ export default function ContractsPage() {
     }
   };
 
-  const handleAcceptBid = async (bidId: string) => {
+  const handleAcceptBid = async (bidId: string, acceptorId: number) => {
     try {
-      await ContractService.acceptBid({ bidId });
+      await ContractService.acceptBid({ bidId, acceptorId });
       loadContracts(); // Recargar para ver los cambios
     } catch (error) {
       toast.error("Error al aceptar la oferta");
@@ -729,43 +745,69 @@ export default function ContractsPage() {
                         <div className="mb-4">
                           <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-blue-600" />
-                            Ofertas Recibidas ({contract.bids.length})
+                            Ofertas Recibidas (
+                            {
+                              contract.bids.filter(
+                                (bid) =>
+                                  Number(bid.bidder?.id) !== currentUserId,
+                              ).length
+                            }
+                            )
                           </h4>
                           <div className="space-y-3">
-                            {contract.bids.map((bid) => (
-                              <div
-                                key={bid.id}
-                                className="bg-gray-50 border border-gray-200 rounded-lg p-4"
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <DollarSign className="h-4 w-4 text-green-600" />
-                                      <span className="font-semibold text-green-700">
-                                        ${bid.amount?.toLocaleString()}{" "}
-                                        {translatePriceUnit(contract.priceUnit)}
-                                      </span>
+                            {contract.bids.map((bid) =>
+                              Number(bid.bidder?.id) !== currentUserId ? (
+                                <div
+                                  key={bid.id}
+                                  className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <DollarSign className="h-4 w-4 text-green-600" />
+                                        <span className="font-semibold text-green-700">
+                                          ${bid.amount?.toLocaleString()}{" "}
+                                          {translatePriceUnit(
+                                            contract.priceUnit,
+                                          )}
+                                        </span>
+                                      </div>
+                                      {bid.message && (
+                                        <p className="text-sm text-gray-600">
+                                          {bid.message}
+                                        </p>
+                                      )}
                                     </div>
-                                    {bid.message && (
-                                      <p className="text-sm text-gray-600">
-                                        {bid.message}
-                                      </p>
-                                    )}
+                                    {!bid.isAccepted &&
+                                      contract.status ===
+                                        ContractStatus.NEGOTIATING && (
+                                        <button
+                                          onClick={() => {
+                                            if (
+                                              contract.client &&
+                                              typeof contract.client.id ===
+                                                "number"
+                                            ) {
+                                              handleAcceptBid(
+                                                bid.id,
+                                                contract.client.id,
+                                              );
+                                            } else {
+                                              toast.error(
+                                                "No se encontró el cliente para este contrato.",
+                                              );
+                                            }
+                                          }}
+                                          className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                        >
+                                          <CheckCircle className="h-4 w-4" />
+                                          Aceptar
+                                        </button>
+                                      )}
                                   </div>
-                                  {!bid.isAccepted &&
-                                    contract.status ===
-                                      ContractStatus.NEGOTIATING && (
-                                      <button
-                                        onClick={() => handleAcceptBid(bid.id)}
-                                        className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-                                      >
-                                        <CheckCircle className="h-4 w-4" />
-                                        Aceptar
-                                      </button>
-                                    )}
                                 </div>
-                              </div>
-                            ))}
+                              ) : null,
+                            )}
                           </div>
                         </div>
                       )}
@@ -1096,6 +1138,77 @@ export default function ContractsPage() {
                             >
                               Editar
                             </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {contract.bids.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-blue-600" />
+                            Ofertas Recibidas (
+                            {
+                              contract.bids.filter(
+                                (bid) =>
+                                  Number(bid.bidder?.id) !== currentUserId,
+                              ).length
+                            }
+                            )
+                          </h4>
+                          <div className="space-y-3">
+                            {contract.bids.map((bid) =>
+                              Number(bid.bidder?.id) !== currentUserId ? (
+                                <div
+                                  key={bid.id}
+                                  className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <DollarSign className="h-4 w-4 text-green-600" />
+                                        <span className="font-semibold text-green-700">
+                                          ${bid.amount?.toLocaleString()}{" "}
+                                          {translatePriceUnit(
+                                            contract.priceUnit,
+                                          )}
+                                        </span>
+                                      </div>
+                                      {bid.message && (
+                                        <p className="text-sm text-gray-600">
+                                          {bid.message}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {!bid.isAccepted &&
+                                      contract.status ===
+                                        ContractStatus.NEGOTIATING && (
+                                        <button
+                                          onClick={() => {
+                                            if (
+                                              contract.client &&
+                                              typeof contract.client.id ===
+                                                "number"
+                                            ) {
+                                              handleAcceptBid(
+                                                bid.id,
+                                                contract.client.id,
+                                              );
+                                            } else {
+                                              toast.error(
+                                                "No se encontró el cliente para este contrato.",
+                                              );
+                                            }
+                                          }}
+                                          className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                        >
+                                          <CheckCircle className="h-4 w-4" />
+                                          Aceptar
+                                        </button>
+                                      )}
+                                  </div>
+                                </div>
+                              ) : null,
+                            )}
                           </div>
                         </div>
                       )}
