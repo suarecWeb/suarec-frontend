@@ -28,7 +28,7 @@ export function CompaniesCarousel() {
   ];
 
   return (
-    <div className="py-8 pb-16">
+    <div className="py-8 pb-20 overflow-hidden">
       <Carousel slides={companies} />
     </div>
   );
