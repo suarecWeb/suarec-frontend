@@ -66,7 +66,7 @@ const AdminTicketsPage = () => {
 
     try {
       const decoded = jwtDecode<TokenPayload>(token);
-      const isAdmin = decoded.roles.some(role => role.name === "ADMIN");
+      const isAdmin = decoded.roles.some((role) => role.name === "ADMIN");
       if (!isAdmin) {
         router.push("/access-denied");
         return;
@@ -105,21 +105,21 @@ const AdminTicketsPage = () => {
 
     try {
       setSendingReply(true);
-      
+
       // Enviar respuesta usando WebSocket
       console.log("🎫 Ticket seleccionado:", selectedTicket);
-      
+
       const messageData = {
         ticketId: selectedTicket.id,
         content: replyMessage,
       };
-      
+
       console.log("📤 Enviando datos por WebSocket:", messageData);
-      
+
       // Usar WebSocket para enviar la respuesta
       if (socket) {
         socket.emit("admin_reply", messageData);
-        
+
         // Escuchar confirmación
         socket.once("admin_reply_sent", (data: any) => {
           console.log("✅ Respuesta de admin enviada:", data);
@@ -127,7 +127,7 @@ const AdminTicketsPage = () => {
           setReplyMessage("");
           loadTicketMessages(selectedTicket.id);
         });
-        
+
         socket.once("error", (error: any) => {
           console.error("❌ Error al enviar respuesta:", error);
           toast.error("Error al enviar la respuesta");
@@ -139,7 +139,7 @@ const AdminTicketsPage = () => {
         setReplyMessage("");
         await loadTicketMessages(selectedTicket.id);
       }
-      
+
       console.log("📤 Respuesta enviada a usuario:", selectedTicket.senderId);
     } catch (error) {
       console.error("Error al enviar respuesta:", error);
@@ -153,15 +153,21 @@ const AdminTicketsPage = () => {
     try {
       setLoadingMessages(true);
       const response = await MessageService.getTicketMessages(ticketId);
-      
-      console.log("📋 Mensajes recibidos del backend:", response.data.map(m => `${m.id}: ${m.content} (${m.sent_at})`));
-      
-      // Verificar el orden de los mensajes
-      const sortedByDate = response.data.sort((a, b) => 
-        new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+
+      console.log(
+        "📋 Mensajes recibidos del backend:",
+        response.data.map((m) => `${m.id}: ${m.content} (${m.sent_at})`),
       );
-      console.log("📋 Mensajes ordenados por fecha:", sortedByDate.map(m => `${m.id}: ${m.content} (${m.sent_at})`));
-      
+
+      // Verificar el orden de los mensajes
+      const sortedByDate = response.data.sort(
+        (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+      );
+      console.log(
+        "📋 Mensajes ordenados por fecha:",
+        sortedByDate.map((m) => `${m.id}: ${m.content} (${m.sent_at})`),
+      );
+
       // Usar los mensajes ordenados por fecha
       setTicketMessages(sortedByDate);
     } catch (error) {
@@ -190,15 +196,19 @@ const AdminTicketsPage = () => {
   };
 
   const getStatusIcon = (ticket: Ticket) => {
-    if (ticket.status === "resolved") return <CheckCircle className="h-4 w-4 text-green-600" />;
-    if (ticket.status === "closed") return <X className="h-4 w-4 text-gray-600" />;
+    if (ticket.status === "resolved")
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    if (ticket.status === "closed")
+      return <X className="h-4 w-4 text-gray-600" />;
     return <Clock className="h-4 w-4 text-amber-600" />;
   };
 
   const handleUpdateStatus = async (ticketId: string, newStatus: string) => {
     try {
       await MessageService.updateTicketStatus(ticketId, newStatus);
-      toast.success(`Ticket marcado como ${newStatus === "resolved" ? "resuelto" : "cerrado"}`);
+      toast.success(
+        `Ticket marcado como ${newStatus === "resolved" ? "resuelto" : "cerrado"}`,
+      );
       fetchTickets(); // Recargar tickets
     } catch (error) {
       console.error("Error al actualizar estado:", error);
@@ -229,11 +239,11 @@ const AdminTicketsPage = () => {
       (statusFilter === "responded" && ticket.status === "resolved") ||
       (statusFilter === "closed" && ticket.status === "closed");
 
-    console.log("🎫 Filtrando ticket:", { 
-      id: ticket.id, 
-      status: ticket.status, 
-      statusFilter, 
-      matchesStatus 
+    console.log("🎫 Filtrando ticket:", {
+      id: ticket.id,
+      status: ticket.status,
+      statusFilter,
+      matchesStatus,
     });
 
     return matchesSearch && matchesStatus;
@@ -248,9 +258,12 @@ const AdminTicketsPage = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">Tickets de Soporte</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">
+                  Tickets de Soporte
+                </h1>
                 <p className="mt-2 text-blue-100">
-                  Gestiona las consultas y solicitudes de soporte de los usuarios
+                  Gestiona las consultas y solicitudes de soporte de los
+                  usuarios
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -311,7 +324,9 @@ const AdminTicketsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           {getStatusIcon(ticket)}
-                          <span className={`text-sm font-medium ${getStatusColor(ticket)}`}>
+                          <span
+                            className={`text-sm font-medium ${getStatusColor(ticket)}`}
+                          >
                             {getStatusText(ticket)}
                           </span>
                           <span className="text-xs text-gray-500">
@@ -325,11 +340,15 @@ const AdminTicketsPage = () => {
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">{ticket.sender.name}</span>
+                            <span className="truncate">
+                              {ticket.sender.name}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Mail className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">{ticket.sender.email}</span>
+                            <span className="truncate">
+                              {ticket.sender.email}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4 flex-shrink-0" />
@@ -337,7 +356,7 @@ const AdminTicketsPage = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Botones de acción - Responsive */}
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-4 min-w-0 flex-shrink-0">
                         <button
@@ -349,29 +368,30 @@ const AdminTicketsPage = () => {
                         >
                           Responder
                         </button>
-                        
-                        {ticket.status !== "resolved" && ticket.status !== "closed" && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(ticket.id, "resolved");
-                              }}
-                              className="px-2 sm:px-3 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors whitespace-nowrap"
-                            >
-                              Resolver
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateStatus(ticket.id, "closed");
-                              }}
-                              className="px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap"
-                            >
-                              Cerrar
-                            </button>
-                          </>
-                        )}
+
+                        {ticket.status !== "resolved" &&
+                          ticket.status !== "closed" && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(ticket.id, "resolved");
+                                }}
+                                className="px-2 sm:px-3 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors whitespace-nowrap"
+                              >
+                                Resolver
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(ticket.id, "closed");
+                                }}
+                                className="px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap"
+                              >
+                                Cerrar
+                              </button>
+                            </>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -407,7 +427,8 @@ const AdminTicketsPage = () => {
                     </button>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Usuario: {selectedTicket.sender.name} ({selectedTicket.sender.email})
+                    Usuario: {selectedTicket.sender.name} (
+                    {selectedTicket.sender.email})
                   </p>
                 </div>
 
@@ -415,12 +436,16 @@ const AdminTicketsPage = () => {
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Historial de mensajes */}
                   <div className="flex-1 p-6 overflow-hidden">
-                    <h4 className="font-medium text-gray-900 mb-4">Historial de mensajes:</h4>
+                    <h4 className="font-medium text-gray-900 mb-4">
+                      Historial de mensajes:
+                    </h4>
                     <div className="h-full overflow-y-auto space-y-4 pr-2 pb-4">
                       {loadingMessages ? (
                         <div className="text-center py-4">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#097EEC] mx-auto"></div>
-                          <p className="text-sm text-gray-500 mt-2">Cargando mensajes...</p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Cargando mensajes...
+                          </p>
                         </div>
                       ) : ticketMessages.length > 0 ? (
                         ticketMessages.map((message, index) => (
@@ -434,7 +459,9 @@ const AdminTicketsPage = () => {
                           >
                             <div className="flex items-start justify-between mb-2">
                               <span className="text-sm font-medium text-gray-700">
-                                {message.sender?.id === 0 ? "Suarec" : selectedTicket.sender.name}
+                                {message.sender?.id === 0
+                                  ? "Suarec"
+                                  : selectedTicket.sender.name}
                               </span>
                               <span className="text-xs text-gray-500">
                                 {formatDate(message.sent_at)}
@@ -447,7 +474,9 @@ const AdminTicketsPage = () => {
                         ))
                       ) : (
                         <div className="text-center py-4">
-                          <p className="text-sm text-gray-500">No hay mensajes en este ticket</p>
+                          <p className="text-sm text-gray-500">
+                            No hay mensajes en este ticket
+                          </p>
                         </div>
                       )}
                     </div>
@@ -505,4 +534,4 @@ const AdminTicketsPageWithGuard = () => {
   );
 };
 
-export default AdminTicketsPageWithGuard; 
+export default AdminTicketsPageWithGuard;

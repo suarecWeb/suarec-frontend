@@ -775,50 +775,57 @@ const ProfilePage = () => {
                             Mis publicaciones
                           </h3>
 
-                          {user.publications && user.publications.filter((pub: any) => !pub.deleted_at).length > 0 ? (
+                          {user.publications &&
+                          user.publications.filter(
+                            (pub: any) => !pub.deleted_at,
+                          ).length > 0 ? (
                             <div className="space-y-4">
                               {user.publications
                                 .filter((pub: any) => !pub.deleted_at) // Filtrar publicaciones eliminadas
                                 .map((pub: any) => (
-                                <div
-                                  key={pub.id}
-                                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                                >
-                                  <div className="flex justify-between">
-                                    <h4 className="text-lg font-medium text-gray-800">
-                                      {pub.title}
-                                    </h4>
-                                    <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
-                                      {pub.category}
-                                    </span>
-                                  </div>
-
-                                  {pub.description && (
-                                    <p className="text-gray-600 mt-2">
-                                      {pub.description}
-                                    </p>
-                                  )}
-
-                                  <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100 text-sm text-gray-500">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-4 w-4" />
-                                      <span>{formatDate(pub.created_at)}</span>
+                                  <div
+                                    key={pub.id}
+                                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                  >
+                                    <div className="flex justify-between">
+                                      <h4 className="text-lg font-medium text-gray-800">
+                                        {pub.title}
+                                      </h4>
+                                      <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                                        {pub.category}
+                                      </span>
                                     </div>
 
-                                    <div className="flex items-center gap-1">
-                                      <Eye className="h-4 w-4" />
-                                      <span>{pub.visitors || 0} visitas</span>
-                                    </div>
+                                    {pub.description && (
+                                      <p className="text-gray-600 mt-2">
+                                        {pub.description}
+                                      </p>
+                                    )}
 
-                                    <Link href={`/publications/${pub.id}/edit`}>
-                                      <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1">
-                                        <Edit className="h-4 w-4" />
-                                        <span>Editar</span>
-                                      </button>
-                                    </Link>
+                                    <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100 text-sm text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>
+                                          {formatDate(pub.created_at)}
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center gap-1">
+                                        <Eye className="h-4 w-4" />
+                                        <span>{pub.visitors || 0} visitas</span>
+                                      </div>
+
+                                      <Link
+                                        href={`/publications/${pub.id}/edit`}
+                                      >
+                                        <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1">
+                                          <Edit className="h-4 w-4" />
+                                          <span>Editar</span>
+                                        </button>
+                                      </Link>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
                             </div>
                           ) : (
                             <div className="bg-gray-50 rounded-lg p-8 text-center">

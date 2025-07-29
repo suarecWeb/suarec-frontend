@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useAuth } from "../hooks/useAuth";
@@ -21,32 +27,34 @@ interface Ticket {
   sent_at: string;
 }
 
-export default function CreateTicketButton({ onTicketCreated }: CreateTicketButtonProps) {
+export default function CreateTicketButton({
+  onTicketCreated,
+}: CreateTicketButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { socket } = useWebSocket();
   const { user } = useAuth();
 
-  console.log("🎫 CreateTicketButton renderizado:", { 
-    socket: !!socket, 
-    user: !!user, 
-    isOpen, 
-    isLoading 
+  console.log("🎫 CreateTicketButton renderizado:", {
+    socket: !!socket,
+    user: !!user,
+    isOpen,
+    isLoading,
   });
 
   const handleCreateTicket = async () => {
-    console.log("🎫 handleCreateTicket llamado:", { 
-      content: content.trim(), 
-      socket: !!socket, 
-      user: !!user 
+    console.log("🎫 handleCreateTicket llamado:", {
+      content: content.trim(),
+      socket: !!socket,
+      user: !!user,
     });
 
     if (!content.trim() || !socket || !user) {
-      console.log("❌ Validación fallida:", { 
-        hasContent: !!content.trim(), 
-        hasSocket: !!socket, 
-        hasUser: !!user 
+      console.log("❌ Validación fallida:", {
+        hasContent: !!content.trim(),
+        hasSocket: !!socket,
+        hasUser: !!user,
       });
       return;
     }
@@ -86,7 +94,7 @@ export default function CreateTicketButton({ onTicketCreated }: CreateTicketButt
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
+        <Button
           className="w-full bg-[#097EEC] hover:bg-[#0A6BC7] text-white"
           onClick={() => console.log("🎫 Botón CreateTicketButton clickeado")}
         >
@@ -115,8 +123,8 @@ export default function CreateTicketButton({ onTicketCreated }: CreateTicketButt
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleCreateTicket} 
+          <Button
+            onClick={handleCreateTicket}
             disabled={!content.trim() || isLoading}
             className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white"
           >
@@ -126,4 +134,4 @@ export default function CreateTicketButton({ onTicketCreated }: CreateTicketButt
       </DialogContent>
     </Dialog>
   );
-} 
+}

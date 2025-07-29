@@ -131,7 +131,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     console.log("🔌 Iniciando conexión WebSocket...");
 
     // Verificar que el backend esté disponible
-          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
     console.log("🔌 Intentando conectar a:", backendUrl);
 
     try {
@@ -142,22 +143,19 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         socketRef.current = null;
       }
 
-      const socket = io(
-        `${backendUrl}/messages`,
-        {
-          auth: { token },
-          transports: ["polling", "websocket"], // Polling primero como fallback
-          autoConnect: true,
-          forceNew: true, // Forzar nueva conexión para evitar problemas de caché
-          reconnection: true,
-          reconnectionAttempts: 5, // Aumentar intentos de reconexión
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          timeout: 20000,
-          upgrade: true,
-          rememberUpgrade: false,
-        },
-      );
+      const socket = io(`${backendUrl}/messages`, {
+        auth: { token },
+        transports: ["polling", "websocket"], // Polling primero como fallback
+        autoConnect: true,
+        forceNew: true, // Forzar nueva conexión para evitar problemas de caché
+        reconnection: true,
+        reconnectionAttempts: 5, // Aumentar intentos de reconexión
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        upgrade: true,
+        rememberUpgrade: false,
+      });
 
       socket.on("connect", () => {
         console.log("✅ WebSocket global conectado exitosamente");
@@ -202,7 +200,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         });
         setIsConnecting(false);
         setIsConnected(false);
-        
+
         // Retry automático persistente cada 3 segundos
         if (!isManualDisconnect) {
           if (!reconnectTimeoutRef.current) {
@@ -284,7 +282,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
         // Distribuir a listeners específicos
         const listeners = eventListenersRef.current.get("message_read") || [];
-        console.log("👁️ Distribuyendo a", listeners.length, "listeners de message_read");
+        console.log(
+          "👁️ Distribuyendo a",
+          listeners.length,
+          "listeners de message_read",
+        );
         listeners.forEach((callback, index) => {
           try {
             console.log(`👁️ Ejecutando listener ${index + 1} de message_read`);
@@ -393,7 +395,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const markAsRead = useCallback((messageId: string) => {
     console.log("📖 markAsRead llamado con messageId:", messageId);
     console.log("📖 Estado de conexión:", socketRef.current?.connected);
-    
+
     if (socketRef.current?.connected) {
       console.log("📖 Enviando mark_as_read al backend");
       socketRef.current.emit("mark_as_read", { messageId });

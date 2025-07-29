@@ -7,7 +7,10 @@ import { useForm } from "react-hook-form";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import PublicationService from "@/services/PublicationsService";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import {
   AlertCircle,
   ArrowLeft,
@@ -63,12 +66,7 @@ const PRICE_UNITS = [
 ];
 
 // Tipos de publicación
-const PUBLICATION_TYPES = [
-  "Servicio",
-  "Búsqueda",
-  "Oferta",
-  "Demanda",
-];
+const PUBLICATION_TYPES = ["Servicio", "Búsqueda", "Oferta", "Demanda"];
 
 const EditPublicationPage = () => {
   const params = useParams();
@@ -476,7 +474,9 @@ const EditPublicationPage = () => {
                       <select
                         id="priceUnit"
                         className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
-                          errors.priceUnit ? "border-red-500" : "border-gray-200"
+                          errors.priceUnit
+                            ? "border-red-500"
+                            : "border-gray-200"
                         }`}
                         {...register("priceUnit")}
                         disabled={isLoading}
