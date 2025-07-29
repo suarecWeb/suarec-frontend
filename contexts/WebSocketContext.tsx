@@ -128,19 +128,34 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     getCurrentUserId();
 
     setIsConnecting(true);
+    console.log("🔌 Iniciando conexión WebSocket...");
+
+    // Verificar que el backend esté disponible
+          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+    console.log("🔌 Intentando conectar a:", backendUrl);
 
     try {
+      // Limpiar conexión anterior si existe
+      if (socketRef.current) {
+        console.log("🧹 Limpiando conexión anterior...");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+
       const socket = io(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.suarec.com"}/messages`,
+        `${backendUrl}/messages`,
         {
           auth: { token },
-          transports: ["websocket", "polling"],
+          transports: ["polling", "websocket"], // Polling primero como fallback
           autoConnect: true,
-          forceNew: false,
+          forceNew: true, // Forzar nueva conexión para evitar problemas de caché
           reconnection: true,
-          reconnectionAttempts: 3,
+          reconnectionAttempts: 5, // Aumentar intentos de reconexión
           reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
           timeout: 20000,
+          upgrade: true,
+          rememberUpgrade: false,
         },
       );
 
@@ -179,9 +194,30 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       });
 
       socket.on("connect_error", (error) => {
-        console.error("❌ Error de conexión WebSocket global:", error);
-        setIsConnected(false);
+        console.error("❌ Error de conexión WebSocket:", error);
+        console.error("❌ Detalles del error:", {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        });
         setIsConnecting(false);
+        setIsConnected(false);
+        
+        // Retry automático persistente cada 3 segundos
+        if (!isManualDisconnect) {
+          if (!reconnectTimeoutRef.current) {
+            const retry = () => {
+              if (!isManualDisconnect && !socketRef.current?.connected) {
+                console.log("🔄 Reintentando conexión automática...");
+                connect();
+                reconnectTimeoutRef.current = setTimeout(retry, 3000);
+              } else {
+                reconnectTimeoutRef.current = null;
+              }
+            };
+            reconnectTimeoutRef.current = setTimeout(retry, 3000);
+          }
+        }
       });
 
       // Eventos de mensajes - GLOBAL
@@ -248,8 +284,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
         // Distribuir a listeners específicos
         const listeners = eventListenersRef.current.get("message_read") || [];
-        listeners.forEach((callback) => {
+        console.log("👁️ Distribuyendo a", listeners.length, "listeners de message_read");
+        listeners.forEach((callback, index) => {
           try {
+            console.log(`👁️ Ejecutando listener ${index + 1} de message_read`);
             callback(data);
           } catch (error) {
             console.error("Error en listener message_read:", error);
@@ -353,7 +391,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   }, []);
 
   const markAsRead = useCallback((messageId: string) => {
+    console.log("📖 markAsRead llamado con messageId:", messageId);
+    console.log("📖 Estado de conexión:", socketRef.current?.connected);
+    
     if (socketRef.current?.connected) {
+      console.log("📖 Enviando mark_as_read al backend");
       socketRef.current.emit("mark_as_read", { messageId });
     } else {
       console.error("❌ No hay conexión WebSocket global");

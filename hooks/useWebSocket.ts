@@ -208,6 +208,7 @@ export const useWebSocket = (props: UseWebSocketProps = {}) => {
   return {
     isConnected,
     isConnecting,
+    socket: socketRef.current,
     sendMessage,
     markAsRead,
     sendTypingStatus,

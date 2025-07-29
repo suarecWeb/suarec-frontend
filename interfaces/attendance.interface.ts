@@ -4,6 +4,7 @@ export interface AttendanceRecord {
   checkInTime: string;
   isLate: boolean;
   isAbsent: boolean;
+  deleted_at?: Date;
   employee: {
     id: number;
     name: string;

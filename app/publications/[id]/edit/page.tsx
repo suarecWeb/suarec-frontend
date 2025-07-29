@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import PublicationService from "@/services/PublicationsService";
-import { Publication } from "@/interfaces/publication.interface";
+import { Publication, PublicationType } from "@/interfaces/publication.interface";
 import {
   AlertCircle,
   ArrowLeft,
@@ -27,6 +27,9 @@ interface FormData {
   title: string;
   description: string;
   category: string;
+  price?: number;
+  priceUnit?: string;
+  type?: string;
   image_url?: string;
 }
 
@@ -43,6 +46,28 @@ const CATEGORIES = [
   "Finanzas",
   "Agricultura",
   "Otro",
+];
+
+// Unidades de precio disponibles
+const PRICE_UNITS = [
+  "Por hora",
+  "Por día",
+  "Por semana",
+  "Por mes",
+  "Por proyecto",
+  "Por servicio",
+  "Por unidad",
+  "Por metro cuadrado",
+  "Por kilómetro",
+  "Otro",
+];
+
+// Tipos de publicación
+const PUBLICATION_TYPES = [
+  "Servicio",
+  "Búsqueda",
+  "Oferta",
+  "Demanda",
 ];
 
 const EditPublicationPage = () => {
@@ -72,6 +97,9 @@ const EditPublicationPage = () => {
       title: "",
       description: "",
       category: "",
+      price: undefined,
+      priceUnit: "",
+      type: "",
       image_url: "",
     },
   });
@@ -141,6 +169,9 @@ const EditPublicationPage = () => {
         setValue("title", publication.title);
         setValue("description", publication.description || "");
         setValue("category", publication.category);
+        setValue("price", publication.price);
+        setValue("priceUnit", publication.priceUnit || "");
+        setValue("type", publication.type || "");
         setValue("image_url", publication.image_url || "");
 
         if (publication.image_url) {
@@ -211,6 +242,9 @@ const EditPublicationPage = () => {
         title: data.title,
         description: data.description,
         category: data.category,
+        price: data.price,
+        priceUnit: data.priceUnit,
+        type: data.type as PublicationType,
       };
 
       // Solo agregar image_url si hay una imagen válida
@@ -365,6 +399,98 @@ const EditPublicationPage = () => {
                       {errors.category && (
                         <p className="text-red-500 text-sm mt-1">
                           {errors.category.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Type field */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="type"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Tipo de publicación
+                      </label>
+                      <select
+                        id="type"
+                        className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                          errors.type ? "border-red-500" : "border-gray-200"
+                        }`}
+                        {...register("type")}
+                        disabled={isLoading}
+                      >
+                        <option value="">Selecciona un tipo</option>
+                        {PUBLICATION_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.type && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.type.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Price field */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="price"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Precio (opcional)
+                      </label>
+                      <input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                          errors.price ? "border-red-500" : "border-gray-200"
+                        }`}
+                        placeholder="Ej. 50000"
+                        {...register("price", {
+                          min: {
+                            value: 0,
+                            message: "El precio no puede ser negativo",
+                          },
+                        })}
+                        disabled={isLoading}
+                      />
+                      {errors.price && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.price.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Price Unit field */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="priceUnit"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Unidad de precio
+                      </label>
+                      <select
+                        id="priceUnit"
+                        className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                          errors.priceUnit ? "border-red-500" : "border-gray-200"
+                        }`}
+                        {...register("priceUnit")}
+                        disabled={isLoading}
+                      >
+                        <option value="">Selecciona una unidad</option>
+                        {PRICE_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.priceUnit && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.priceUnit.message}
                         </p>
                       )}
                     </div>

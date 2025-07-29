@@ -48,6 +48,7 @@ export interface Contract {
   agreedTime?: string;
   createdAt: Date;
   updatedAt: Date;
+  deleted_at?: Date;
   bids: ContractBid[];
 }
 
