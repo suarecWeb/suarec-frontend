@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import Link from "next/link";
 import PublicationService from "@/services/PublicationsService";
 import SupabaseService from "@/services/supabase.service";
+import { PublicationType } from "@/interfaces/publication.interface";
 import {
   AlertCircle,
   ArrowLeft,
@@ -26,6 +27,7 @@ interface FormData {
   title: string;
   description: string;
   category: string;
+  type: string; // Agregar tipo de publicación
   image_url?: string;
   price?: number;
   priceUnit?: string;
@@ -78,6 +80,7 @@ const CreatePublicationPage = () => {
       title: "",
       description: "",
       category: "",
+      type: "", // Cambiar a vacío para forzar la selección
       image_url: "",
       price: 0,
       priceUnit: "",
@@ -121,7 +124,8 @@ const CreatePublicationPage = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    console.log(typeof data.price);
+    console.log("Form data:", data);
+    console.log("Type selected:", data.type);
 
     try {
       setIsLoading(true);
@@ -149,6 +153,7 @@ const CreatePublicationPage = () => {
         title: data.title,
         description: data.description || "", // Asegurar que no sea undefined
         category: data.category.toUpperCase(),
+        type: data.type === "offer" ? PublicationType.SERVICE_OFFER : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined, // Opcional
         price: data.price || 0, // Precio opcional
         priceUnit: data.priceUnit || undefined, // Unidad de precio opcional
@@ -235,6 +240,35 @@ const CreatePublicationPage = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Left column - Form fields */}
                 <div className="space-y-6">
+                  {/* Type field - Mover al principio */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="type"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Tipo de publicación <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="type"
+                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                        errors.type ? "border-red-500" : "border-gray-200"
+                      }`}
+                      {...register("type", {
+                        required: "El tipo de publicación es obligatorio",
+                      })}
+                      disabled={isLoading}
+                    >
+                      <option value="">Selecciona el tipo</option>
+                      <option value="offer">Oferta de Servicio (Ofrezco un servicio)</option>
+                      <option value="request">Solicitud de Servicio (Busco un servicio)</option>
+                    </select>
+                    {errors.type && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.type.message}
+                      </p>
+                    )}
+                  </div>
+
                   {/* Title field */}
                   <div className="space-y-2">
                     <label

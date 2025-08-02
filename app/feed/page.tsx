@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
@@ -57,7 +58,7 @@ export default function FeedPage() {
     hasPrevPage: boolean;
   }>({
     page: 1,
-    limit: 10,
+    limit: 5, // Cambiar a 5 publicaciones por página
     total: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -116,6 +117,10 @@ export default function FeedPage() {
         setLoading(true);
         const response = await PublicationService.getPublications(params);
 
+        console.log("🔍 Debug - Respuesta del backend:", response);
+        console.log("🔍 Debug - Publicaciones recibidas:", response.data.data);
+        console.log("🔍 Debug - Meta info:", response.data.meta);
+
         // Ordenar publicaciones por fecha (más recientes primero)
         const sortedPublications = response.data.data.sort(
           (a: Publication, b: Publication) => {
@@ -124,6 +129,8 @@ export default function FeedPage() {
             return dateB.getTime() - dateA.getTime(); // Orden descendente (más reciente primero)
           },
         );
+
+        console.log("🔍 Debug - Publicaciones ordenadas:", sortedPublications);
 
         setPublications(sortedPublications);
         setPagination(response.data.meta);
@@ -134,6 +141,7 @@ export default function FeedPage() {
         );
         await loadPublicationBids(publicationIds);
       } catch (err) {
+        console.error("🔍 Debug - Error al cargar publicaciones:", err);
         toast.error("Error al cargar las publicaciones");
       } finally {
         setLoading(false);
@@ -155,8 +163,16 @@ export default function FeedPage() {
 
   // Filtrar publicaciones
   const filteredPublications = publications.filter((pub) => {
+    console.log("🔍 Debug - Filtrando publicación:", {
+      id: pub.id,
+      title: pub.title,
+      deleted_at: pub.deleted_at,
+      hasDeletedAt: !!pub.deleted_at
+    });
+
     // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
     if (pub.deleted_at) {
+      console.log("🔍 Debug - Excluyendo publicación eliminada:", pub.id);
       return false; // Excluir publicaciones eliminadas
     }
 
@@ -169,7 +185,15 @@ export default function FeedPage() {
     const matchesCategory =
       selectedCategory === "all" || pub.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    const shouldInclude = matchesSearch && matchesCategory;
+    console.log("🔍 Debug - Resultado del filtro:", {
+      id: pub.id,
+      matchesSearch,
+      matchesCategory,
+      shouldInclude
+    });
+
+    return shouldInclude;
   });
 
   // Obtener categorías únicas
@@ -396,21 +420,22 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Load More Button */}
-            {filteredPublications.length > 0 && pagination.hasNextPage && (
-              <div className="text-center mt-8">
-                <Button
-                  variant="outline"
-                  className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white font-eras"
-                  onClick={() =>
+            {/* Pagination */}
+            {filteredPublications.length > 0 && pagination.totalPages > 1 && (
+              <div className="mt-8">
+                <div className="text-center mb-4 text-sm text-gray-600">
+                  Página {pagination.page} de {pagination.totalPages}
+                </div>
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(page) =>
                     fetchPublications({
-                      page: pagination.page + 1,
+                      page,
                       limit: pagination.limit,
                     })
                   }
-                >
-                  Cargar más publicaciones
-                </Button>
+                />
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@ import StartChatButton from "@/components/start-chat-button";
 
 import { useEffect, useState } from "react";
 import PublicationService from "@/services/PublicationsService";
-import { Publication } from "@/interfaces/publication.interface";
+import { Publication, PublicationType } from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
@@ -24,6 +24,9 @@ import {
   FileText,
   User2Icon,
   Building2,
+  Filter,
+  Briefcase,
+  Handshake,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -31,6 +34,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import toast from "react-hot-toast";
+import { SimpleSelect, SimpleSelectItem } from "@/components/ui/simple-select";
 
 const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -41,10 +45,11 @@ const PublicationsPageContent = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [publicationType, setPublicationType] = useState<PublicationType | "">("");
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 12,
+    limit: 5, // Cambiar a 5 publicaciones por página
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
@@ -52,7 +57,7 @@ const PublicationsPageContent = () => {
   const [myPagination, setMyPagination] = useState({
     total: 0,
     page: 1,
-    limit: 12,
+    limit: 5, // Cambiar a 5 publicaciones por página
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
@@ -78,7 +83,10 @@ const PublicationsPageContent = () => {
   ) => {
     try {
       setLoading(true);
-      const response = await PublicationService.getPublications(params);
+      const response = await PublicationService.getPublications({
+        ...params,
+        type: publicationType || undefined,
+      });
       setPublications(response.data.data);
       setPagination(response.data.meta);
     } catch (err) {
@@ -101,6 +109,7 @@ const PublicationsPageContent = () => {
       // Pero por ahora podemos filtrar las publicaciones en el cliente
       const response = await PublicationService.getPublications({
         ...params,
+        type: publicationType || undefined,
         // Si tu API soporta filtrado por userId, deberías agregarlo aquí:
         // userId: currentUserId
       });
@@ -129,14 +138,14 @@ const PublicationsPageContent = () => {
     }
   };
 
-  // Cargar datos cuando cambia la pestaña activa o el ID del usuario
+  // Cargar datos cuando cambia la pestaña activa, el ID del usuario o el tipo de publicación
   useEffect(() => {
     if (activeTab === "all") {
       fetchPublications();
     } else if (activeTab === "my" && currentUserId) {
       fetchMyPublications();
     }
-  }, [activeTab, currentUserId]);
+  }, [activeTab, currentUserId, publicationType]);
 
   // Manejadores para cambio de página
   const handlePageChange = (page: number) => {
@@ -227,6 +236,32 @@ const PublicationsPageContent = () => {
     });
   };
 
+  // Obtener el tipo de publicación en español
+  const getPublicationTypeText = (type: PublicationType) => {
+    switch (type) {
+      case PublicationType.SERVICE:
+      case PublicationType.SERVICE_OFFER:
+        return "Oferta de Servicio";
+      case PublicationType.SERVICE_REQUEST:
+        return "Solicitud de Servicio";
+      default:
+        return "Publicación";
+    }
+  };
+
+  // Obtener el icono del tipo de publicación
+  const getPublicationTypeIcon = (type: PublicationType) => {
+    switch (type) {
+      case PublicationType.SERVICE:
+      case PublicationType.SERVICE_OFFER:
+        return <Briefcase className="h-4 w-4" />;
+      case PublicationType.SERVICE_REQUEST:
+        return <Handshake className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
   // Renderizar tarjeta de publicación
   const renderPublicationCard = (publication: Publication) => {
     const isEditable = canEditPublication(publication);
@@ -281,11 +316,21 @@ const PublicationsPageContent = () => {
 
           {/* Publication Content */}
           <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Tag className="h-4 w-4 text-[#097EEC]" />
-              <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
-                {publication.category}
-              </span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-[#097EEC]" />
+                <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                  {publication.category}
+                </span>
+              </div>
+              
+              {/* Tipo de publicación */}
+              {publication.type && (
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  {getPublicationTypeIcon(publication.type)}
+                  <span>{getPublicationTypeText(publication.type)}</span>
+                </div>
+              )}
             </div>
 
             <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
@@ -378,25 +423,49 @@ const PublicationsPageContent = () => {
           <div className="bg-white rounded-lg shadow-lg p-6">
             {/* Actions Bar */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div className="relative flex-1 max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+              <div className="flex flex-col md:flex-row gap-4 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar publicaciones..."
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Buscar publicaciones..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+
+                <div className="flex gap-2">
+                  <SimpleSelect 
+                    value={publicationType} 
+                    onValueChange={(value: string) => setPublicationType(value as PublicationType | "")}
+                    placeholder="Tipo de publicación"
+                    className="w-48"
+                  >
+                    <SimpleSelectItem value="">Todos los tipos</SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE_OFFER}>Ofertas de Servicio</SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE_REQUEST}>Solicitudes de Servicio</SimpleSelectItem>
+                  </SimpleSelect>
+                </div>
               </div>
 
-              <Link href="/publications/create">
-                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
-                  <PlusCircle className="h-5 w-5" />
-                  <span>Crear publicación</span>
-                </button>
-              </Link>
+              <div className="flex gap-2">
+                <Link href="/service-requests/create">
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <Handshake className="h-5 w-5" />
+                    <span>Solicitar Servicio</span>
+                  </button>
+                </Link>
+                
+                <Link href="/publications/create">
+                  <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
+                    <PlusCircle className="h-5 w-5" />
+                    <span>Crear publicación</span>
+                  </button>
+                </Link>
+              </div>
             </div>
 
             {/* Error Message */}
@@ -461,17 +530,6 @@ const PublicationsPageContent = () => {
                       </div>
                     )}
 
-                    {/* Pagination */}
-                    {pagination.totalPages > 1 && (
-                      <div className="mt-8 flex justify-center">
-                        <Pagination
-                          currentPage={pagination.page}
-                          totalPages={pagination.totalPages}
-                          onPageChange={handlePageChange}
-                        />
-                      </div>
-                    )}
-
                     {/* Results Summary */}
                     {!loading &&
                       !error &&
@@ -481,6 +539,20 @@ const PublicationsPageContent = () => {
                           {pagination.total} publicaciones
                         </div>
                       )}
+
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                      <div className="mt-8">
+                        <div className="text-center mb-4 text-sm text-gray-600">
+                          Página {pagination.page} de {pagination.totalPages}
+                        </div>
+                        <Pagination
+                          currentPage={pagination.page}
+                          totalPages={pagination.totalPages}
+                          onPageChange={handlePageChange}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </TabsContent>
@@ -529,23 +601,20 @@ const PublicationsPageContent = () => {
                           Crea tu primera publicación para ofrecer tus servicios
                           o buscar oportunidades.
                         </p>
-                        <Link href="/publications/create">
-                          <button className="mt-4 bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
-                            <PlusCircle className="h-5 w-5" />
-                            <span>Crear publicación</span>
-                          </button>
-                        </Link>
-                      </div>
-                    )}
-
-                    {/* Pagination for My Publications */}
-                    {myPagination.totalPages > 1 && (
-                      <div className="mt-8 flex justify-center">
-                        <Pagination
-                          currentPage={myPagination.page}
-                          totalPages={myPagination.totalPages}
-                          onPageChange={handlePageChange}
-                        />
+                        <div className="flex gap-2 justify-center mt-4">
+                          <Link href="/service-requests/create">
+                            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                              <Handshake className="h-5 w-5" />
+                              <span>Solicitar Servicio</span>
+                            </button>
+                          </Link>
+                          <Link href="/publications/create">
+                            <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
+                              <PlusCircle className="h-5 w-5" />
+                              <span>Crear publicación</span>
+                            </button>
+                          </Link>
+                        </div>
                       </div>
                     )}
 
@@ -559,6 +628,20 @@ const PublicationsPageContent = () => {
                           {myPagination.total} publicaciones
                         </div>
                       )}
+
+                    {/* Pagination for My Publications */}
+                    {myPagination.totalPages > 1 && (
+                      <div className="mt-8">
+                        <div className="text-center mb-4 text-sm text-gray-600">
+                          Página {myPagination.page} de {myPagination.totalPages}
+                        </div>
+                        <Pagination
+                          currentPage={myPagination.page}
+                          totalPages={myPagination.totalPages}
+                          onPageChange={handlePageChange}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </TabsContent>
