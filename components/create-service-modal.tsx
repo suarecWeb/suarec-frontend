@@ -122,6 +122,19 @@ export default function CreateServiceModal({
     setSelectedType(watchedType);
   }, [watchedType]);
 
+  // Función simple para limpiar el precio
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remover todo excepto números
+    const cleaned = e.target.value.replace(/[^\d]/g, "");
+
+    // Actualizar el valor del input
+    e.target.value = cleaned;
+
+    // Convertir a número y actualizar el formulario
+    const numericValue = parseFloat(cleaned);
+    setValue("price", isNaN(numericValue) ? undefined : numericValue);
+  };
+
   // Validar que el usuario esté autenticado
   useEffect(() => {
     if (isOpen) {
@@ -191,7 +204,7 @@ export default function CreateServiceModal({
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
-        type: data.type === "offer" ? PublicationType.SERVICE_OFFER : PublicationType.SERVICE_REQUEST, // Convertir string a enum
+        type: data.type === "offer" ? PublicationType.SERVICE : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined,
         gallery_images:
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
@@ -635,7 +648,7 @@ export default function CreateServiceModal({
                     <select
                       id="priceUnit"
                       {...register("priceUnit")}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-colors outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>

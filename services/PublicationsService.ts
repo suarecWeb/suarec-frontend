@@ -7,7 +7,7 @@ import { Publication, PublicationType } from "@/interfaces/publication.interface
 const baseURL = "/suarec/publications";
 
 // Estructura de respuesta de publicación
-const getPublications = (params?: PaginationParams & { type?: PublicationType }) => {
+const getPublications = (params?: PaginationParams & { type?: PublicationType; category?: string }) => {
   return api.get<PaginationResponse<Publication>>(baseURL, { params });
 };
 

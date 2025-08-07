@@ -153,7 +153,7 @@ const CreatePublicationPage = () => {
         title: data.title,
         description: data.description || "", // Asegurar que no sea undefined
         category: data.category.toUpperCase(),
-        type: data.type === "offer" ? PublicationType.SERVICE_OFFER : PublicationType.SERVICE_REQUEST, // Convertir string a enum
+        type: data.type === "offer" ? PublicationType.SERVICE : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined, // Opcional
         price: data.price || 0, // Precio opcional
         priceUnit: data.priceUnit || undefined, // Unidad de precio opcional

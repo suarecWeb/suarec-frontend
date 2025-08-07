@@ -167,7 +167,7 @@ export default function CreateJobOfferModal({
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
-        type: PublicationType.SERVICE_OFFER, // Marcar explícitamente como oferta de servicio
+        type: PublicationType.SERVICE, // Marcar explícitamente como oferta de servicio
         image_url: imageUrl || undefined,
         gallery_images:
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,

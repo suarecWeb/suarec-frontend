@@ -36,6 +36,21 @@ import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import toast from "react-hot-toast";
 import { SimpleSelect, SimpleSelectItem } from "@/components/ui/simple-select";
 
+// Categorías disponibles para filtrado
+const PUBLICATION_CATEGORIES = [
+  "Tecnología",
+  "Construcción",
+  "Salud",
+  "Educación",
+  "Servicios",
+  "Gastronomía",
+  "Transporte",
+  "Manufactura",
+  "Finanzas",
+  "Agricultura",
+  "Otro",
+];
+
 const PublicationsPageContent = () => {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [myPublications, setMyPublications] = useState<Publication[]>([]);
@@ -46,6 +61,7 @@ const PublicationsPageContent = () => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [publicationType, setPublicationType] = useState<PublicationType | "">("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -77,6 +93,11 @@ const PublicationsPageContent = () => {
     }
   }, []);
 
+  // Recargar publicaciones cuando cambien los filtros
+  useEffect(() => {
+    fetchPublications();
+  }, [publicationType, selectedCategory]);
+
   // Función para cargar todas las publicaciones
   const fetchPublications = async (
     params: PaginationParams = { page: 1, limit: pagination.limit },
@@ -86,6 +107,7 @@ const PublicationsPageContent = () => {
       const response = await PublicationService.getPublications({
         ...params,
         type: publicationType || undefined,
+        category: selectedCategory || undefined,
       });
       setPublications(response.data.data);
       setPagination(response.data.meta);
@@ -110,6 +132,7 @@ const PublicationsPageContent = () => {
       const response = await PublicationService.getPublications({
         ...params,
         type: publicationType || undefined,
+        category: selectedCategory || undefined,
         // Si tu API soporta filtrado por userId, deberías agregarlo aquí:
         // userId: currentUserId
       });
@@ -240,10 +263,11 @@ const PublicationsPageContent = () => {
   const getPublicationTypeText = (type: PublicationType) => {
     switch (type) {
       case PublicationType.SERVICE:
-      case PublicationType.SERVICE_OFFER:
-        return "Oferta de Servicio";
+        return "Servicio Ofrecido";
       case PublicationType.SERVICE_REQUEST:
-        return "Solicitud de Servicio";
+        return "Servicio Solicitado";
+      case PublicationType.JOB:
+        return "Vacante de Trabajo";
       default:
         return "Publicación";
     }
@@ -253,10 +277,11 @@ const PublicationsPageContent = () => {
   const getPublicationTypeIcon = (type: PublicationType) => {
     switch (type) {
       case PublicationType.SERVICE:
-      case PublicationType.SERVICE_OFFER:
         return <Briefcase className="h-4 w-4" />;
       case PublicationType.SERVICE_REQUEST:
         return <Handshake className="h-4 w-4" />;
+      case PublicationType.JOB:
+        return <Building2 className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -445,10 +470,40 @@ const PublicationsPageContent = () => {
                     className="w-48"
                   >
                     <SimpleSelectItem value="">Todos los tipos</SimpleSelectItem>
-                    <SimpleSelectItem value={PublicationType.SERVICE_OFFER}>Ofertas de Servicio</SimpleSelectItem>
-                    <SimpleSelectItem value={PublicationType.SERVICE_REQUEST}>Solicitudes de Servicio</SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE}>Servicios Ofrecidos</SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE_REQUEST}>Servicios Solicitados</SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.JOB}>Vacantes de Trabajo</SimpleSelectItem>
+                  </SimpleSelect>
+
+                  <SimpleSelect 
+                    value={selectedCategory} 
+                    onValueChange={(value: string) => setSelectedCategory(value)}
+                    placeholder="Categoría"
+                    className="w-48"
+                  >
+                    <SimpleSelectItem value="">Todas las categorías</SimpleSelectItem>
+                    {PUBLICATION_CATEGORIES.map((category) => (
+                      <SimpleSelectItem key={category} value={category}>
+                        {category}
+                      </SimpleSelectItem>
+                    ))}
                   </SimpleSelect>
                 </div>
+
+                {/* Botón para limpiar filtros */}
+                {(publicationType || selectedCategory || searchTerm) && (
+                  <button
+                    onClick={() => {
+                      setPublicationType("");
+                      setSelectedCategory("");
+                      setSearchTerm("");
+                    }}
+                    className="text-sm text-gray-600 hover:text-[#097EEC] flex items-center gap-1 transition-colors"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Limpiar filtros
+                  </button>
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -467,6 +522,33 @@ const PublicationsPageContent = () => {
                 </Link>
               </div>
             </div>
+
+            {/* Filtros activos */}
+            {(publicationType || selectedCategory || searchTerm) && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Filter className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800">Filtros activos:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {publicationType && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {getPublicationTypeText(publicationType)}
+                    </span>
+                  )}
+                  {selectedCategory && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {selectedCategory}
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      "{searchTerm}"
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (
