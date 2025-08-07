@@ -542,6 +542,10 @@ export default function ContractsPage() {
                                       showCurrency: true,
                                     })}
                                   </p>
+                                  {/* Debug log */}
+                                  <p className="text-xs text-gray-500">
+                                    Debug: totalPrice={contract.totalPrice}, initialPrice={contract.initialPrice}
+                                  </p>
                                 </div>
                               </div>
                               <div className="text-right">

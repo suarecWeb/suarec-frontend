@@ -20,15 +20,17 @@ import {
   Share2,
   Send,
   MoreHorizontal,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
 import PublicationService from "@/services/PublicationsService";
-import { Publication } from "@/interfaces/publication.interface";
+import { Publication, PublicationType } from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import Cookies from "js-cookie";
@@ -39,12 +41,28 @@ import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import toast from "react-hot-toast";
 
+// Categorías disponibles para filtrado
+const PUBLICATION_CATEGORIES = [
+  "Tecnología",
+  "Construcción",
+  "Salud",
+  "Educación",
+  "Servicios",
+  "Gastronomía",
+  "Transporte",
+  "Manufactura",
+  "Finanzas",
+  "Agricultura",
+  "Otro",
+];
+
 export default function FeedPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPublicationType, setSelectedPublicationType] = useState<PublicationType | "">("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -57,7 +75,7 @@ export default function FeedPage() {
     hasPrevPage: boolean;
   }>({
     page: 1,
-    limit: 10,
+    limit: 5, // Cambiar a 5 publicaciones por página
     total: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -114,7 +132,11 @@ export default function FeedPage() {
     async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
       try {
         setLoading(true);
-        const response = await PublicationService.getPublications(params);
+        console.log("🔍 Frontend - Sending type:", selectedPublicationType);
+        const response = await PublicationService.getPublications({
+          ...params,
+          type: selectedPublicationType || undefined,
+        });
 
         // Ordenar publicaciones por fecha (más recientes primero)
         const sortedPublications = response.data.data.sort(
@@ -134,15 +156,16 @@ export default function FeedPage() {
         );
         await loadPublicationBids(publicationIds);
       } catch (err) {
+        console.error("Error fetching publications:", err);
         toast.error("Error al cargar las publicaciones");
       } finally {
         setLoading(false);
       }
     },
-    [pagination.limit],
+    [pagination.limit, selectedPublicationType],
   );
 
-  // Cargar datos al montar el componente
+  // Cargar datos al montar el componente y cuando cambien los filtros
   useEffect(() => {
     fetchPublications();
   }, [fetchPublications]);
@@ -177,6 +200,34 @@ export default function FeedPage() {
     "all",
     ...Array.from(new Set(publications.map((pub) => pub.category))),
   ];
+
+  // Función para obtener el texto del tipo de publicación
+  const getPublicationTypeText = (type: PublicationType) => {
+    switch (type) {
+      case PublicationType.SERVICE:
+        return "Servicios Ofrecidos";
+      case PublicationType.SERVICE_REQUEST:
+        return "Servicios Solicitados";
+      case PublicationType.JOB:
+        return "Vacantes de Trabajo";
+      default:
+        return "Publicación";
+    }
+  };
+
+  // Función para obtener el icono del tipo de publicación
+  const getPublicationTypeIcon = (type: PublicationType) => {
+    switch (type) {
+      case PublicationType.SERVICE:
+        return <Briefcase className="h-4 w-4" />;
+      case PublicationType.SERVICE_REQUEST:
+        return <Handshake className="h-4 w-4" />;
+      case PublicationType.JOB:
+        return <Building2 className="h-4 w-4" />;
+      default:
+        return <Tag className="h-4 w-4" />;
+    }
+  };
 
   // Formatear fecha
   const formatDate = (dateString: Date | string) => {
@@ -233,6 +284,72 @@ export default function FeedPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 font-eras"
                   />
+                </div>
+              </div>
+
+              {/* Tipo de publicación */}
+              <div className="mb-6">
+                <label className="block text-sm font-eras-medium text-gray-700 mb-2">
+                  Tipo de publicación
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      id="type-all"
+                      type="radio"
+                      name="publicationType"
+                      value=""
+                      checked={selectedPublicationType === ""}
+                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                      className="text-[#097EEC] focus:ring-[#097EEC]"
+                    />
+                    <span className="text-sm font-eras">Todos los tipos</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      id="type-service"
+                      type="radio"
+                      name="publicationType"
+                      value={PublicationType.SERVICE}
+                      checked={selectedPublicationType === PublicationType.SERVICE}
+                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      className="text-[#097EEC] focus:ring-[#097EEC]"
+                    />
+                    <span className="text-sm font-eras flex items-center gap-1">
+                      <Briefcase className="h-3 w-3" />
+                      Servicios Ofrecidos
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      id="type-service-request"
+                      type="radio"
+                      name="publicationType"
+                      value={PublicationType.SERVICE_REQUEST}
+                      checked={selectedPublicationType === PublicationType.SERVICE_REQUEST}
+                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      className="text-[#097EEC] focus:ring-[#097EEC]"
+                    />
+                    <span className="text-sm font-eras flex items-center gap-1">
+                      <Handshake className="h-3 w-3" />
+                      Servicios Solicitados
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      id="type-job"
+                      type="radio"
+                      name="publicationType"
+                      value={PublicationType.JOB}
+                      checked={selectedPublicationType === PublicationType.JOB}
+                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      className="text-[#097EEC] focus:ring-[#097EEC]"
+                    />
+                    <span className="text-sm font-eras flex items-center gap-1">
+                      <Building2 className="h-3 w-3" />
+                      Vacantes de Trabajo
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -306,6 +423,23 @@ export default function FeedPage() {
                       className="pl-10 font-eras"
                     />
                   </div>
+                </div>
+
+                {/* Tipo de publicación móvil */}
+                <div>
+                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">
+                    Tipo de publicación
+                  </label>
+                  <select
+                    value={selectedPublicationType}
+                    onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                  >
+                    <option value="">Todos los tipos</option>
+                    <option value={PublicationType.SERVICE}>Servicios Ofrecidos</option>
+                    <option value={PublicationType.SERVICE_REQUEST}>Servicios Solicitados</option>
+                    <option value={PublicationType.JOB}>Vacantes de Trabajo</option>
+                  </select>
                 </div>
 
                 {/* Categoría móvil */}
@@ -396,21 +530,22 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Load More Button */}
-            {filteredPublications.length > 0 && pagination.hasNextPage && (
-              <div className="text-center mt-8">
-                <Button
-                  variant="outline"
-                  className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white font-eras"
-                  onClick={() =>
+            {/* Pagination */}
+            {filteredPublications.length > 0 && pagination.totalPages > 1 && (
+              <div className="mt-8">
+                <div className="text-center mb-4 text-sm text-gray-600">
+                  Página {pagination.page} de {pagination.totalPages}
+                </div>
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(page) =>
                     fetchPublications({
-                      page: pagination.page + 1,
+                      page,
                       limit: pagination.limit,
                     })
                   }
-                >
-                  Cargar más publicaciones
-                </Button>
+                />
               </div>
             )}
           </div>
