@@ -97,6 +97,7 @@ export default function CreateServiceModal({
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<FormData>({
     defaultValues: {
       title: "",

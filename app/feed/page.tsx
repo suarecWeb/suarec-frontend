@@ -117,10 +117,6 @@ export default function FeedPage() {
         setLoading(true);
         const response = await PublicationService.getPublications(params);
 
-        console.log("🔍 Debug - Respuesta del backend:", response);
-        console.log("🔍 Debug - Publicaciones recibidas:", response.data.data);
-        console.log("🔍 Debug - Meta info:", response.data.meta);
-
         // Ordenar publicaciones por fecha (más recientes primero)
         const sortedPublications = response.data.data.sort(
           (a: Publication, b: Publication) => {
@@ -129,8 +125,6 @@ export default function FeedPage() {
             return dateB.getTime() - dateA.getTime(); // Orden descendente (más reciente primero)
           },
         );
-
-        console.log("🔍 Debug - Publicaciones ordenadas:", sortedPublications);
 
         setPublications(sortedPublications);
         setPagination(response.data.meta);
@@ -141,7 +135,6 @@ export default function FeedPage() {
         );
         await loadPublicationBids(publicationIds);
       } catch (err) {
-        console.error("🔍 Debug - Error al cargar publicaciones:", err);
         toast.error("Error al cargar las publicaciones");
       } finally {
         setLoading(false);
@@ -163,16 +156,8 @@ export default function FeedPage() {
 
   // Filtrar publicaciones
   const filteredPublications = publications.filter((pub) => {
-    console.log("🔍 Debug - Filtrando publicación:", {
-      id: pub.id,
-      title: pub.title,
-      deleted_at: pub.deleted_at,
-      hasDeletedAt: !!pub.deleted_at
-    });
-
     // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
     if (pub.deleted_at) {
-      console.log("🔍 Debug - Excluyendo publicación eliminada:", pub.id);
       return false; // Excluir publicaciones eliminadas
     }
 
@@ -185,15 +170,7 @@ export default function FeedPage() {
     const matchesCategory =
       selectedCategory === "all" || pub.category === selectedCategory;
 
-    const shouldInclude = matchesSearch && matchesCategory;
-    console.log("🔍 Debug - Resultado del filtro:", {
-      id: pub.id,
-      matchesSearch,
-      matchesCategory,
-      shouldInclude
-    });
-
-    return shouldInclude;
+    return matchesSearch && matchesCategory;
   });
 
   // Obtener categorías únicas
