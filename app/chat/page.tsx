@@ -75,7 +75,9 @@ const ChatPageContent = () => {
   // Verificar conexión WebSocket al cargar la página
   useEffect(() => {
     if (!isConnected && !isConnecting) {
-      console.log("🔌 WebSocket no conectado en chat, verificando en 2 segundos...");
+      console.log(
+        "🔌 WebSocket no conectado en chat, verificando en 2 segundos...",
+      );
       const connectionCheck = setTimeout(() => {
         if (!isConnected && !isConnecting) {
           console.log("🔌 WebSocket aún no conectado, forzando reconexión...");
@@ -92,14 +94,17 @@ const ChatPageContent = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleTicketStatusChanged = (data: { ticketId: string; status: string }) => {
+    const handleTicketStatusChanged = (data: {
+      ticketId: string;
+      status: string;
+    }) => {
       if (activeTicket && activeTicket.id === data.ticketId) {
         if (data.status === "closed" || data.status === "resolved") {
           setActiveTicket(null);
           toast.success(
-            data.status === "closed" 
-              ? "Tu ticket ha sido cerrado" 
-              : "Tu ticket ha sido resuelto"
+            data.status === "closed"
+              ? "Tu ticket ha sido cerrado"
+              : "Tu ticket ha sido resuelto",
           );
         }
       }
@@ -200,24 +205,29 @@ const ChatPageContent = () => {
       conversationId: string;
     }) => {
       const { message } = data;
-      
+
       // Extraer senderId y recipientId del mensaje o de las relaciones
       const messageSenderId = message.senderId || message.sender?.id;
       const messageRecipientId = message.recipientId || message.recipient?.id;
-      
+
       console.log("📨 Nuevo mensaje recibido:", message);
       console.log("📨 Mensaje completo:", JSON.stringify(message, null, 2));
       console.log("👤 Usuario actual:", currentUserId);
-      console.log("💬 Conversación seleccionada:", selectedConversation?.user.id);
+      console.log(
+        "💬 Conversación seleccionada:",
+        selectedConversation?.user.id,
+      );
       console.log("🔍 Verificando relevancia:", {
         messageSenderId,
         messageRecipientId,
         selectedUserId: selectedConversation?.user.id,
-        isRelevantForUser: messageRecipientId === currentUserId || messageSenderId === currentUserId,
-        isRelevantForConversation: selectedConversation && (
-          messageSenderId === selectedConversation.user.id ||
-          messageRecipientId === selectedConversation.user.id
-        )
+        isRelevantForUser:
+          messageRecipientId === currentUserId ||
+          messageSenderId === currentUserId,
+        isRelevantForConversation:
+          selectedConversation &&
+          (messageSenderId === selectedConversation.user.id ||
+            messageRecipientId === selectedConversation.user.id),
       });
 
       // Solo procesar el mensaje si es relevante para el usuario actual
@@ -234,16 +244,20 @@ const ChatPageContent = () => {
           console.log("✅ Mensaje aplicado a conversación actual");
           setMessages((prev) => {
             console.log("🔄 Actualizando mensajes. Prev count:", prev.length);
-            console.log("📨 Nuevo mensaje a agregar:", message.id, message.content);
+            console.log(
+              "📨 Nuevo mensaje a agregar:",
+              message.id,
+              message.content,
+            );
             console.log("📨 Mensaje ticket_id:", message.ticket_id);
-            
+
             // Evitar duplicados por ID
             const existingMessage = prev.find((msg) => msg.id === message.id);
             if (existingMessage) {
               console.log("🚫 Mensaje duplicado ignorado:", message.id);
               return prev;
             }
-            
+
             // Remover mensaje temporal si existe
             const tempMessageIndex = prev.findIndex(
               (msg) =>
@@ -251,17 +265,22 @@ const ChatPageContent = () => {
                 msg.content === message.content &&
                 msg.senderId === message.senderId,
             );
-            
+
             let filteredMessages = prev;
             if (tempMessageIndex !== -1) {
               console.log("🗑️ Removiendo mensaje temporal:", tempMessageIndex);
-              filteredMessages = prev.filter((_, index) => index !== tempMessageIndex);
+              filteredMessages = prev.filter(
+                (_, index) => index !== tempMessageIndex,
+              );
             }
-            
+
             // Agregar el mensaje directamente al final
             const newMessages = [...filteredMessages, message];
-            console.log("✅ Mensaje agregado. Nuevo count:", newMessages.length);
-            
+            console.log(
+              "✅ Mensaje agregado. Nuevo count:",
+              newMessages.length,
+            );
+
             return newMessages;
           });
 
@@ -286,7 +305,7 @@ const ChatPageContent = () => {
             messageSenderId === currentUserId
               ? messageRecipientId
               : messageSenderId;
-          
+
           // Si no podemos determinar el otherUserId, no actualizar
           if (!otherUserId) {
             return prev;
@@ -311,8 +330,11 @@ const ChatPageContent = () => {
             return sortConversationsByLastMessage(updatedConversations);
           } else {
             // Crear nueva conversación cuando es la primera vez que hablan
-            console.log("🆕 Creando nueva conversación para usuario:", otherUserId);
-            
+            console.log(
+              "🆕 Creando nueva conversación para usuario:",
+              otherUserId,
+            );
+
             // Crear objeto de usuario básico para la nueva conversación
             const newConversationUser = {
               id: otherUserId,
@@ -329,10 +351,10 @@ const ChatPageContent = () => {
 
             // Agregar la nueva conversación al inicio de la lista
             const updatedConversations = [newConversation, ...prev];
-            
+
             // La información completa del usuario se obtendrá cuando se recargue la lista de conversaciones
             console.log("✅ Nueva conversación agregada a la lista");
-            
+
             return sortConversationsByLastMessage(updatedConversations);
           }
         });
@@ -417,30 +439,39 @@ const ChatPageContent = () => {
 
   const loadMessages = useCallback(
     async (conversation: Conversation) => {
-      console.log("📥 loadMessages llamado para conversación:", conversation.user.id);
+      console.log(
+        "📥 loadMessages llamado para conversación:",
+        conversation.user.id,
+      );
       if (!currentUserId) return;
 
       try {
         setLoadingMessages(true);
-        
+
         // Si es conversación con Suarec, verificar ticket activo y cargar todos los mensajes del ticket
         if (conversation.user.id === 0) {
           console.log("🎫 Cargando conversación con Suarec...");
-          
+
           // Obtener ticket activo
-          const ticketResponse = await MessageService.getActiveTicket(currentUserId);
+          const ticketResponse =
+            await MessageService.getActiveTicket(currentUserId);
           const activeTicket = ticketResponse.data;
           setActiveTicket(activeTicket);
           console.log("🎫 Ticket activo al cargar conversación:", activeTicket);
-          
+
           if (activeTicket) {
             // Cargar todos los mensajes del ticket
             console.log("🎫 Cargando mensajes del ticket:", activeTicket.id);
-            const ticketMessagesResponse = await MessageService.getTicketMessages(activeTicket.id!);
-            const ticketMessages = ticketMessagesResponse.data.sort((a, b) => 
-              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            const ticketMessagesResponse =
+              await MessageService.getTicketMessages(activeTicket.id!);
+            const ticketMessages = ticketMessagesResponse.data.sort(
+              (a, b) =>
+                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
             );
-            console.log("🎫 Mensajes del ticket cargados:", ticketMessages.length);
+            console.log(
+              "🎫 Mensajes del ticket cargados:",
+              ticketMessages.length,
+            );
             setMessages(ticketMessages);
           } else {
             // No hay ticket activo, cargar mensajes normales
@@ -450,26 +481,31 @@ const ChatPageContent = () => {
               conversation.user.id,
               { page: 1, limit: 50 },
             );
-            const sortedMessages = response.data.data.sort((a, b) => 
-              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            const sortedMessages = response.data.data.sort(
+              (a, b) =>
+                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
             );
             setMessages(sortedMessages);
           }
         } else {
           // Conversación normal con otro usuario
-        const response = await MessageService.getMessagesBetweenUsers(
-          currentUserId,
-          conversation.user.id,
-          { page: 1, limit: 50 },
-        );
-        // Ordenar mensajes por fecha de enví (más antiguos primero)
-        const sortedMessages = response.data.data.sort((a, b) => 
-          new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
-        );
-        console.log("📥 Cargando mensajes desde API. Count:", sortedMessages.length);
-        setMessages(sortedMessages);
+          const response = await MessageService.getMessagesBetweenUsers(
+            currentUserId,
+            conversation.user.id,
+            { page: 1, limit: 50 },
+          );
+          // Ordenar mensajes por fecha de enví (más antiguos primero)
+          const sortedMessages = response.data.data.sort(
+            (a, b) =>
+              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+          );
+          console.log(
+            "📥 Cargando mensajes desde API. Count:",
+            sortedMessages.length,
+          );
+          setMessages(sortedMessages);
         }
-        
+
         setSelectedConversation(conversation);
 
         // En móvil, ocultar la lista de conversaciones cuando se selecciona una
@@ -510,7 +546,7 @@ const ChatPageContent = () => {
     console.log("🔄 conversations.length:", conversations.length);
     console.log("🔄 currentUserId:", currentUserId);
     console.log("🔄 selectedConversation:", selectedConversation?.user?.id);
-    
+
     const senderId = searchParams.get("sender");
     if (
       senderId &&
@@ -524,10 +560,16 @@ const ChatPageContent = () => {
       );
 
       if (conversation) {
-        console.log("🔄 Cargando mensajes para conversación:", conversation.user.id);
+        console.log(
+          "🔄 Cargando mensajes para conversación:",
+          conversation.user.id,
+        );
         loadMessages(conversation);
       } else {
-        console.log("🔄 No se encontró conversación para senderId:", senderIdNum);
+        console.log(
+          "🔄 No se encontró conversación para senderId:",
+          senderIdNum,
+        );
       }
     } else {
       console.log("🔄 No se cumplen las condiciones para cargar mensajes");
@@ -559,34 +601,38 @@ const ChatPageContent = () => {
 
       // Si es un mensaje a Suarec, verificar si ya existe un ticket activo
       if (selectedConversation.user.id === 0) {
-        console.log("🎫 Enviando mensaje a Suarec, verificando ticket activo...");
-        
+        console.log(
+          "🎫 Enviando mensaje a Suarec, verificando ticket activo...",
+        );
+
         // Verificar si ya existe un ticket activo
         if (activeTicket) {
           console.log("🎫 Ticket activo encontrado:", activeTicket.id);
           console.log("🎫 Agregando mensaje al ticket existente");
-          
-          // Crear mensaje temporal solo para mensajes a tickets existentes
-      const tempMessage: Message = {
-        id: `temp_${Date.now()}`,
-        content: newMessage,
-        senderId: currentUserId,
-        recipientId: selectedConversation.user.id,
-        sent_at: new Date(),
-        read: false,
-        sender: {
-          id: currentUserId,
-          name: "Tú",
-              profile_image: undefined,
-        },
-      };
 
-      setMessages((prev) => [...prev, tempMessage]);
-      setNewMessage("");
-          
+          // Crear mensaje temporal solo para mensajes a tickets existentes
+          const tempMessage: Message = {
+            id: `temp_${Date.now()}`,
+            content: newMessage,
+            senderId: currentUserId,
+            recipientId: selectedConversation.user.id,
+            sent_at: new Date(),
+            read: false,
+            sender: {
+              id: currentUserId,
+              name: "Tú",
+              profile_image: undefined,
+            },
+          };
+
+          setMessages((prev) => [...prev, tempMessage]);
+          setNewMessage("");
+
           // Usar el endpoint específico para agregar mensaje a ticket existente
           if (socket) {
-            console.log("🔌 Enviando evento add_message_to_ticket al WebSocket");
+            console.log(
+              "🔌 Enviando evento add_message_to_ticket al WebSocket",
+            );
             socket.emit("add_message_to_ticket", {
               ticketId: activeTicket.id,
               content: newMessage,
@@ -595,7 +641,11 @@ const ChatPageContent = () => {
           } else {
             console.log("🔌 WebSocket no disponible, usando método HTTP");
             // Fallback al método HTTP
-            await MessageService.addMessageToTicket(activeTicket.id, currentUserId, newMessage);
+            await MessageService.addMessageToTicket(
+              activeTicket.id,
+              currentUserId,
+              newMessage,
+            );
           }
         } else {
           console.log("🎫 No hay ticket activo, enviando mensaje normal");
@@ -616,7 +666,7 @@ const ChatPageContent = () => {
 
           setMessages((prev) => [...prev, tempMessage]);
           setNewMessage("");
-          
+
           // Enviar mensaje normal (creará nuevo ticket)
           sendWebSocketMessage(messageData);
         }
@@ -638,7 +688,7 @@ const ChatPageContent = () => {
 
         setMessages((prev) => [...prev, tempMessage]);
         setNewMessage("");
-        
+
         // Mensaje normal a otro usuario
         sendWebSocketMessage(messageData);
       }
@@ -655,17 +705,17 @@ const ChatPageContent = () => {
       setConversations((prev) => {
         const updatedConversations = prev.map((conv) =>
           conv.user.id === selectedConversation.user.id
-            ? { 
-                ...conv, 
-                lastMessage: { 
-                  id: `temp_${Date.now()}`, 
-                  content: newMessage, 
-                  senderId: currentUserId, 
+            ? {
+                ...conv,
+                lastMessage: {
+                  id: `temp_${Date.now()}`,
+                  content: newMessage,
+                  senderId: currentUserId,
                   recipientId: selectedConversation.user.id,
                   read: false,
                   sent_at: new Date(),
-                  status: "message"
-                } as Message
+                  status: "message",
+                } as Message,
               }
             : conv,
         );
@@ -764,14 +814,14 @@ const ChatPageContent = () => {
   const handleContactSuarec = async () => {
     try {
       if (!currentUserId) return;
-      
+
       setLoadingTicket(true);
-      
+
       // Verificar ticket activo
       const response = await MessageService.getActiveTicket(currentUserId);
       const ticket = response.data;
       setActiveTicket(ticket);
-      
+
       console.log("🎫 Ticket activo encontrado:", ticket);
 
       // Crear conversación con Suarec
@@ -846,7 +896,9 @@ const ChatPageContent = () => {
                 isConnected={isConnected}
                 isConnecting={isConnecting}
                 onRetry={() => {
-                  console.log("🔄 Reintentando conexión WebSocket manualmente...");
+                  console.log(
+                    "🔄 Reintentando conexión WebSocket manualmente...",
+                  );
                   window.location.reload();
                 }}
               />
@@ -1090,12 +1142,16 @@ const ChatPageContent = () => {
                     {/* Message Input */}
                     <div className="chat-input p-4 border-t border-gray-200">
                       {/* Mostrar botón de crear ticket solo si es conversación con Suarec y no hay ticket activo */}
-                      {selectedConversation?.user.id === 0 && !activeTicket && !loadingTicket && (
-                        <div className="mb-4">
-                          <CreateTicketButton onTicketCreated={handleTicketCreated} />
-                        </div>
-                      )}
-                      
+                      {selectedConversation?.user.id === 0 &&
+                        !activeTicket &&
+                        !loadingTicket && (
+                          <div className="mb-4">
+                            <CreateTicketButton
+                              onTicketCreated={handleTicketCreated}
+                            />
+                          </div>
+                        )}
+
                       {/* Mostrar mensaje si hay ticket activo */}
                       {selectedConversation?.user.id === 0 && activeTicket && (
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1107,7 +1163,7 @@ const ChatPageContent = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       <div className="flex gap-2">
                         <textarea
                           value={newMessage}

@@ -39,6 +39,7 @@ export default function ProviderResponseModal({
     | ContractStatus.NEGOTIATING
   >(ContractStatus.ACCEPTED);
   const [message, setMessage] = useState("");
+  const [virtualLink, setVirtualLink] = useState("");
   const [counterOffer, setCounterOffer] = useState(contract.initialPrice);
   const [proposedDate, setProposedDate] = useState("");
   const [proposedTime, setProposedTime] = useState("");
@@ -75,13 +76,30 @@ export default function ProviderResponseModal({
     setIsLoading(true);
 
     try {
+      if (
+        contract.propertyType === "virtual" &&
+        action === ContractStatus.ACCEPTED &&
+        !virtualLink.trim()
+      ) {
+        showNotification(
+          "Debes ingresar el enlace de conexión virtual.",
+          "error",
+        );
+        setIsLoading(false);
+        return;
+      }
+      const providerMessage =
+        contract.propertyType === "virtual" &&
+        action === ContractStatus.ACCEPTED
+          ? virtualLink.trim()
+          : message || undefined;
       const responseData = {
         contractId: contract.id,
         action: action as
           | ContractStatus.ACCEPTED
           | ContractStatus.REJECTED
           | ContractStatus.NEGOTIATING,
-        providerMessage: message || undefined,
+        providerMessage,
         counterOffer:
           action === ContractStatus.NEGOTIATING ? counterOffer : undefined,
         proposedDate: proposedDate ? new Date(proposedDate) : undefined,
@@ -370,14 +388,42 @@ export default function ProviderResponseModal({
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
-                    type="number"
-                    value={counterOffer}
-                    onChange={(e) => setCounterOffer(Number(e.target.value))}
+                    type="text"
+                    value={counterOffer === 0 ? "" : counterOffer}
+                    onChange={(e) => {
+                      // Solo permite números enteros (sin puntos, comas, ni decimales)
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+
+                      if (value === "") {
+                        setCounterOffer(0);
+                      } else {
+                        // Elimina ceros al inicio (ej: "007" -> "7")
+                        const numberValue = parseInt(value, 10);
+                        setCounterOffer(numberValue);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Previene la entrada de caracteres no numéricos
+                      if (
+                        !/[0-9]/.test(e.key) &&
+                        ![
+                          "Backspace",
+                          "Delete",
+                          "Tab",
+                          "Escape",
+                          "Enter",
+                          "ArrowLeft",
+                          "ArrowRight",
+                        ].includes(e.key)
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder={`Ej: ${contract.initialPrice}`}
+                    placeholder={`Ej: ${Math.floor(contract.initialPrice)}`}
                     required
-                    min="1"
-                    step="0.01"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                   />
                 </div>
                 <p className="text-xs text-blue-600 mt-2">
@@ -386,28 +432,50 @@ export default function ProviderResponseModal({
               </div>
             )}
 
-            {/* Message Input */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mensaje (opcional):
-              </label>
-              <div className="relative">
-                <MessageSquare className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
-                  rows={3}
-                  placeholder={
-                    action === ContractStatus.ACCEPTED
-                      ? "Mensaje de confirmación..."
-                      : action === ContractStatus.REJECTED
-                        ? "Explica por qué no puedes realizar el servicio..."
-                        : "Explica tu contraoferta y condiciones..."
-                  }
+            {/* Mensaje o enlace virtual */}
+            {contract.propertyType === "virtual" &&
+            action === ContractStatus.ACCEPTED ? (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Enlace de conexión virtual{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={virtualLink}
+                  onChange={(e) => setVirtualLink(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  placeholder="Ej: https://meet.google.com/abc-defg-hij"
+                  required
                 />
+                <p className="text-xs text-blue-600 mt-2">
+                  Comparte el enlace de Zoom, Meet, Teams, etc.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mensaje{" "}
+                  {action === ContractStatus.ACCEPTED ? "(opcional)" : ""}:
+                </label>
+                <div className="relative">
+                  <MessageSquare className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
+                    rows={3}
+                    placeholder={
+                      action === ContractStatus.ACCEPTED
+                        ? "Mensaje de confirmación..."
+                        : action === ContractStatus.REJECTED
+                          ? "Explica por qué no puedes realizar el servicio..."
+                          : "Explica tu contraoferta y condiciones..."
+                    }
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Proposed Date and Time (only for negotiate) */}
             {action === ContractStatus.NEGOTIATING && (

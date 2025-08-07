@@ -41,7 +41,9 @@ const deletePublication = (id: string) => {
 
 // Obtener publicaciones eliminadas (solo para admins)
 const getDeletedPublications = (params?: PaginationParams) => {
-  return api.get<PaginationResponse<Publication>>(`${baseURL}/deleted`, { params });
+  return api.get<PaginationResponse<Publication>>(`${baseURL}/deleted`, {
+    params,
+  });
 };
 
 // Restaurar publicación eliminada (solo para admins)

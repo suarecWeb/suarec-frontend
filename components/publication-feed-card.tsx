@@ -113,7 +113,7 @@ const PublicationFeedCard = ({
       publicationId: publication.id,
       currentUserId,
       userRoles,
-      canEdit: canEditPublication()
+      canEdit: canEditPublication(),
     });
 
     setIsDeleting(true);
@@ -166,19 +166,19 @@ const PublicationFeedCard = ({
   // Manejar tecla Escape
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showDeleteModal) {
+      if (event.key === "Escape" && showDeleteModal) {
         closeModal();
       }
     };
 
     if (showDeleteModal) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
     };
   }, [showDeleteModal, isDeleting]);
 
@@ -259,58 +259,58 @@ const PublicationFeedCard = ({
           )}
         </div>
 
-      {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
-      <div className="space-y-4">
-        {/* Galería de imágenes */}
-        {publication.image_url ||
-        (publication.gallery_images &&
-          publication.gallery_images.length > 0) ? (
-          <GalleryPreview
-            images={
-              publication.image_url
-                ? [publication.image_url]
-                : publication.gallery_images || []
-            }
-            title={publication.title}
-            maxDisplay={4}
-            className="mb-3"
-          />
-        ) : null}
+        {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
+        <div className="space-y-4">
+          {/* Galería de imágenes */}
+          {publication.image_url ||
+          (publication.gallery_images &&
+            publication.gallery_images.length > 0) ? (
+            <GalleryPreview
+              images={
+                publication.image_url
+                  ? [publication.image_url]
+                  : publication.gallery_images || []
+              }
+              title={publication.title}
+              maxDisplay={4}
+              className="mb-3"
+            />
+          ) : null}
 
-        {/* Contenido principal */}
-        <div className="w-full">
-          <h2 className="text-lg font-bold text-gray-900 mb-2">
-            {publication.title}
-          </h2>
+          {/* Contenido principal */}
+          <div className="w-full">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">
+              {publication.title}
+            </h2>
 
-          <div className="flex items-center gap-2 mb-2">
-            {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
-            <span className="text-green-700 font-semibold text-base">
-              {publication.price
-                ? (() => {
-                    const basePrice = publication.price;
-                    const priceInfo = getPublicationDisplayPrice(
-                      basePrice,
-                      publication.type,
-                      publication.priceUnit,
-                    );
+            <div className="flex items-center gap-2 mb-2">
+              {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
+              <span className="text-green-700 font-semibold text-base">
+                {publication.price
+                  ? (() => {
+                      const basePrice = publication.price;
+                      const priceInfo = getPublicationDisplayPrice(
+                        basePrice,
+                        publication.type,
+                        publication.priceUnit,
+                      );
 
-                    console.log("🔍 Debug precio ESCALABLE:", {
-                      basePrice,
-                      displayPrice: priceInfo.price,
-                      showsTax: priceInfo.showsTax,
-                      taxApplied: priceInfo.taxApplied,
-                      publicationType: publication.type,
-                      priceUnit: publication.priceUnit,
-                    });
+                      console.log("🔍 Debug precio ESCALABLE:", {
+                        basePrice,
+                        displayPrice: priceInfo.price,
+                        showsTax: priceInfo.showsTax,
+                        taxApplied: priceInfo.taxApplied,
+                        publicationType: publication.type,
+                        priceUnit: publication.priceUnit,
+                      });
 
-                    return `${formatCurrency(priceInfo.price, {
-                      showCurrency: true,
-                    })} ${translatePriceUnit(publication.priceUnit || "")}`;
-                  })()
-                : "Precio a convenir"}
-            </span>
-          </div>
+                      return `${formatCurrency(priceInfo.price, {
+                        showCurrency: true,
+                      })} ${translatePriceUnit(publication.priceUnit || "")}`;
+                    })()
+                  : "Precio a convenir"}
+              </span>
+            </div>
 
             {publication.description && (
               <p
@@ -477,11 +477,11 @@ const PublicationFeedCard = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
-          <div 
+          <div
             className="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100"
             onClick={(e) => e.stopPropagation()}
           >
@@ -500,7 +500,7 @@ const PublicationFeedCard = ({
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={closeModal}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -516,7 +516,9 @@ const PublicationFeedCard = ({
                 </h4>
                 <p className="text-sm text-gray-600">
                   {publication.description?.substring(0, 100)}
-                  {publication.description && publication.description.length > 100 && "..."}
+                  {publication.description &&
+                    publication.description.length > 100 &&
+                    "..."}
                 </p>
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                   <Tag className="h-3 w-3" />
@@ -534,7 +536,8 @@ const PublicationFeedCard = ({
                       ¿Estás seguro?
                     </p>
                     <p className="text-sm text-amber-700 mt-1">
-                      Esta publicación será eliminada permanentemente. Los comentarios y ofertas asociadas también se eliminarán.
+                      Esta publicación será eliminada permanentemente. Los
+                      comentarios y ofertas asociadas también se eliminarán.
                     </p>
                   </div>
                 </div>

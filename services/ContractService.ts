@@ -16,6 +16,14 @@ import Cookies from "js-cookie";
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"}/suarec`;
 
 export class ContractService {
+  static async updateContract(
+    contractId: string,
+    update: Partial<Contract>,
+  ): Promise<Contract> {
+    // PATCH endpoint: /suarec/contracts/:id
+    const response = await api.patch(`/suarec/contracts/${contractId}`, update);
+    return response.data;
+  }
   static async createContract(
     contractData: CreateContractDto,
   ): Promise<Contract> {
