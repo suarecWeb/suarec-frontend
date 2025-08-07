@@ -101,6 +101,11 @@ export function getPublicationDisplayPrice(
     }
   }
 
+  // Mapear tipos de servicio a SERVICE para compatibilidad
+  if (resolvedType === "SERVICE_REQUEST") {
+    resolvedType = "SERVICE";
+  }
+
   const config =
     PUBLICATION_PRICE_CONFIG[resolvedType] || PUBLICATION_PRICE_CONFIG.JOB;
 

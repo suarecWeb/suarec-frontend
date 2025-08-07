@@ -1,6 +1,5 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PaginationProps extends React.HTMLAttributes<HTMLDivElement> {
   currentPage: number;
@@ -32,12 +31,11 @@ const Pagination = ({
         <button
           key={1}
           onClick={() => onPageChange(1)}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center",
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
             1 === currentPage
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-muted",
-          )}
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+          }`}
         >
           1
         </button>,
@@ -48,7 +46,7 @@ const Pagination = ({
         pageNumbers.push(
           <span
             key="start-ellipsis"
-            className="h-8 w-8 flex items-center justify-center"
+            className="h-10 w-10 flex items-center justify-center text-gray-500"
           >
             ...
           </span>,
@@ -62,12 +60,11 @@ const Pagination = ({
         <button
           key={i}
           onClick={() => onPageChange(i)}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center",
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
             i === currentPage
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-muted",
-          )}
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+          }`}
         >
           {i}
         </button>,
@@ -81,7 +78,7 @@ const Pagination = ({
         pageNumbers.push(
           <span
             key="end-ellipsis"
-            className="h-8 w-8 flex items-center justify-center"
+            className="h-10 w-10 flex items-center justify-center text-gray-500"
           >
             ...
           </span>,
@@ -92,12 +89,11 @@ const Pagination = ({
         <button
           key={totalPages}
           onClick={() => onPageChange(totalPages)}
-          className={cn(
-            "h-8 w-8 rounded-md flex items-center justify-center",
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
             totalPages === currentPage
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-muted",
-          )}
+              ? "bg-blue-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+          }`}
         >
           {totalPages}
         </button>,
@@ -109,19 +105,17 @@ const Pagination = ({
 
   return (
     <div
-      className={cn(
-        "flex items-center justify-center space-x-2 py-4",
-        className,
-      )}
+      className={`flex items-center justify-center space-x-2 py-6 ${className || ""}`}
       {...props}
     >
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className={cn(
-          "h-8 w-8 rounded-md flex items-center justify-center",
-          currentPage <= 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted",
-        )}
+        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors ${
+          currentPage <= 1 
+            ? "opacity-50 cursor-not-allowed bg-gray-100" 
+            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+        }`}
         aria-label="Go to previous page"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -132,12 +126,11 @@ const Pagination = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className={cn(
-          "h-8 w-8 rounded-md flex items-center justify-center",
+        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors ${
           currentPage >= totalPages
-            ? "opacity-50 cursor-not-allowed"
-            : "hover:bg-muted",
-        )}
+            ? "opacity-50 cursor-not-allowed bg-gray-100"
+            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+        }`}
         aria-label="Go to next page"
       >
         <ChevronRight className="h-4 w-4" />

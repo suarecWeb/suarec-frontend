@@ -34,10 +34,16 @@ interface FormData {
   title: string;
   description: string;
   category: string;
+  type: string; // Agregar tipo de publicación
   image_url?: string;
   gallery_images?: string[];
   price?: number;
   priceUnit?: string;
+  // Campos específicos para solicitudes de servicio
+  requirements?: string;
+  location?: string;
+  urgency?: string;
+  preferredSchedule?: string;
 }
 
 // Categorías disponibles para servicios
@@ -82,6 +88,7 @@ export default function CreateServiceModal({
   );
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<string>("");
   const router = useRouter();
 
   const {
@@ -96,11 +103,24 @@ export default function CreateServiceModal({
       title: "",
       description: "",
       category: "",
+      type: "", // Agregar tipo vacío por defecto
       image_url: "",
       price: undefined,
       priceUnit: "",
+      requirements: "",
+      location: "",
+      urgency: "",
+      preferredSchedule: "",
     },
   });
+
+  // Watcher para el tipo de publicación
+  const watchedType = watch("type");
+  
+  // Actualizar el estado cuando cambie el tipo
+  useEffect(() => {
+    setSelectedType(watchedType);
+  }, [watchedType]);
 
   // Función simple para limpiar el precio
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,12 +204,17 @@ export default function CreateServiceModal({
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
-        type: PublicationType.SERVICE, // Marcar explícitamente como servicio
+        type: data.type === "offer" ? PublicationType.SERVICE : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined,
         gallery_images:
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
         price: data.price ? Number(data.price) : undefined, // Convertir explícitamente a número
         priceUnit: data.priceUnit || undefined,
+        // Campos específicos para solicitudes
+        requirements: data.requirements || undefined,
+        location: data.location || undefined,
+        urgency: data.urgency || undefined,
+        preferredSchedule: data.preferredSchedule || undefined,
         created_at: new Date(),
         modified_at: new Date(),
         userId: Number(decoded.id),
@@ -246,10 +271,20 @@ export default function CreateServiceModal({
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">
-                Crear Publicación de Servicio
+                {selectedType === "offer" 
+                  ? "Crear Oferta de Servicio" 
+                  : selectedType === "request" 
+                    ? "Crear Solicitud de Servicio"
+                    : "Crear Publicación de Servicio"
+                }
               </h2>
               <p className="text-blue-100 text-sm">
-                Comparte tus servicios con la comunidad
+                {selectedType === "offer" 
+                  ? "Ofrece tus servicios a la comunidad"
+                  : selectedType === "request" 
+                    ? "Busca profesionales para tus necesidades"
+                    : "Comparte tus servicios con la comunidad"
+                }
               </p>
             </div>
             <button
@@ -290,6 +325,35 @@ export default function CreateServiceModal({
             <div className="grid lg:grid-cols-2 gap-4">
               {/* Left column - Form fields */}
               <div className="space-y-4">
+                {/* Type field - Agregar al principio */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="type"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Tipo de publicación <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="type"
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                      errors.type ? "border-red-500" : "border-gray-200"
+                    }`}
+                    {...register("type", {
+                      required: "El tipo de publicación es obligatorio",
+                    })}
+                    disabled={isLoading}
+                  >
+                    <option value="">Selecciona el tipo</option>
+                    <option value="offer">Oferta de Servicio (Ofrezco un servicio)</option>
+                    <option value="request">Solicitud de Servicio (Busco un servicio)</option>
+                  </select>
+                  {errors.type && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.type.message}
+                    </p>
+                  )}
+                </div>
+
                 {/* Title field */}
                 <div className="space-y-2">
                   <label
@@ -304,7 +368,12 @@ export default function CreateServiceModal({
                     className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
                       errors.title ? "border-red-500" : "border-gray-200"
                     }`}
-                    placeholder="Ej. Servicio de plomería profesional"
+                    placeholder={selectedType === "offer" 
+                      ? "Ej. Servicio de plomería profesional"
+                      : selectedType === "request" 
+                        ? "Ej. Necesito un plomero para arreglar una fuga"
+                        : "Ej. Servicio de plomería profesional"
+                    }
                     {...register("title", {
                       required: "El título es obligatorio",
                       maxLength: {
@@ -368,7 +437,12 @@ export default function CreateServiceModal({
                     className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
                       errors.description ? "border-red-500" : "border-gray-200"
                     }`}
-                    placeholder="Describe tu servicio o lo que estás buscando..."
+                    placeholder={selectedType === "offer" 
+                      ? "Describe tu servicio, experiencia y lo que ofreces..."
+                      : selectedType === "request" 
+                        ? "Describe qué necesitas, el problema a resolver..."
+                        : "Describe tu servicio o lo que estás buscando..."
+                    }
                     {...register("description", {
                       required: "La descripción es obligatoria",
                       minLength: {
@@ -395,8 +469,126 @@ export default function CreateServiceModal({
                   )}
                 </div>
 
-                {/* Precio */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Campos específicos para solicitudes de servicio */}
+                {selectedType === "request" && (
+                  <>
+                    {/* Requisitos */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="requirements"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Requisitos específicos <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        id="requirements"
+                        rows={3}
+                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                          errors.requirements ? "border-red-500" : "border-gray-200"
+                        }`}
+                        placeholder="Describe exactamente qué necesitas..."
+                        {...register("requirements", {
+                          required: selectedType === "request" ? "Los requisitos son obligatorios" : false,
+                          minLength: {
+                            value: 10,
+                            message: "Los requisitos deben tener al menos 10 caracteres",
+                          },
+                        })}
+                        disabled={isLoading}
+                      ></textarea>
+                      {errors.requirements && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.requirements.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Ubicación */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="location"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Ubicación <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="location"
+                        type="text"
+                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                          errors.location ? "border-red-500" : "border-gray-200"
+                        }`}
+                        placeholder="Ej. Bogotá, Medellín, Cali..."
+                        {...register("location", {
+                          required: selectedType === "request" ? "La ubicación es obligatoria" : false,
+                        })}
+                        disabled={isLoading}
+                      />
+                      {errors.location && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.location.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Urgencia */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="urgency"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Urgencia <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="urgency"
+                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                          errors.urgency ? "border-red-500" : "border-gray-200"
+                        }`}
+                        {...register("urgency", {
+                          required: selectedType === "request" ? "La urgencia es obligatoria" : false,
+                        })}
+                        disabled={isLoading}
+                      >
+                        <option value="">Selecciona la urgencia</option>
+                        <option value="low">Baja (1-2 semanas)</option>
+                        <option value="medium">Media (3-5 días)</option>
+                        <option value="high">Alta (1-2 días)</option>
+                        <option value="urgent">Urgente (Hoy/Mañana)</option>
+                      </select>
+                      {errors.urgency && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.urgency.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Horario preferido */}
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="preferredSchedule"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Horario preferido
+                      </label>
+                      <select
+                        id="preferredSchedule"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                        {...register("preferredSchedule")}
+                        disabled={isLoading}
+                      >
+                        <option value="">Sin preferencia</option>
+                        <option value="morning">Mañana (8:00 AM - 12:00 PM)</option>
+                        <option value="afternoon">Tarde (12:00 PM - 6:00 PM)</option>
+                        <option value="evening">Noche (6:00 PM - 10:00 PM)</option>
+                        <option value="weekend">Fines de semana</option>
+                        <option value="flexible">Horario flexible</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* Precio - Solo mostrar para ofertas de servicio */}
+                {selectedType === "offer" && (
+                  <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label
                       htmlFor="price"
@@ -456,7 +648,7 @@ export default function CreateServiceModal({
                     <select
                       id="priceUnit"
                       {...register("priceUnit")}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-colors outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                     >
                       <option value="">Seleccionar</option>
                       <option value="hour">Por hora</option>
@@ -467,34 +659,56 @@ export default function CreateServiceModal({
                     </select>
                   </div>
                 </div>
+                )}
 
-                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                  <div className="flex">
-                    <Info className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-yellow-700">
-                        <strong>Importante:</strong> El precio que ingreses es
-                        el precio base. Se aplicará automáticamente un 19% de
-                        IVA que será visible para los usuarios en el precio
-                        final mostrado en tu publicación.
-                      </p>
+                {/* Información sobre precio - Solo mostrar para ofertas */}
+                {selectedType === "offer" && (
+                  <>
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                      <div className="flex">
+                        <Info className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-yellow-700">
+                            <strong>Importante:</strong> El precio que ingreses es
+                            el precio base. Se aplicará automáticamente un 19% de
+                            IVA que será visible para los usuarios en el precio
+                            final mostrado en tu publicación.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                      <div className="flex">
+                        <Info className="h-4 w-4 text-blue-400 mr-2 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-blue-700">
+                            <strong>Consejo:</strong> Si especificas un precio, los
+                            usuarios podrán contratar tu servicio directamente. Si
+                            no lo especificas, los usuarios te contactarán para
+                            negociar el precio.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Información para solicitudes */}
+                {selectedType === "request" && (
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                    <div className="flex">
+                      <Info className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-green-700">
+                          <strong>Consejo:</strong> Al solicitar un servicio, los trabajadores 
+                          podrán ver tus requisitos y aplicar con sus propuestas. 
+                          Podrás revisar y aceptar la mejor oferta.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                  <div className="flex">
-                    <Info className="h-4 w-4 text-blue-400 mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-blue-700">
-                        <strong>Consejo:</strong> Si especificas un precio, los
-                        usuarios podrán contratar tu servicio directamente. Si
-                        no lo especificas, los usuarios te contactarán para
-                        negociar el precio.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Right column - Image upload and preview */}
@@ -639,7 +853,12 @@ export default function CreateServiceModal({
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Crear Servicio
+                    {selectedType === "offer" 
+                      ? "Crear Oferta"
+                      : selectedType === "request" 
+                        ? "Crear Solicitud"
+                        : "Crear Servicio"
+                    }
                   </div>
                 )}
               </button>

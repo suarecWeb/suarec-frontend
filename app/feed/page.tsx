@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
@@ -57,7 +58,7 @@ export default function FeedPage() {
     hasPrevPage: boolean;
   }>({
     page: 1,
-    limit: 10,
+    limit: 5, // Cambiar a 5 publicaciones por página
     total: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -396,21 +397,22 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Load More Button */}
-            {filteredPublications.length > 0 && pagination.hasNextPage && (
-              <div className="text-center mt-8">
-                <Button
-                  variant="outline"
-                  className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white font-eras"
-                  onClick={() =>
+            {/* Pagination */}
+            {filteredPublications.length > 0 && pagination.totalPages > 1 && (
+              <div className="mt-8">
+                <div className="text-center mb-4 text-sm text-gray-600">
+                  Página {pagination.page} de {pagination.totalPages}
+                </div>
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(page) =>
                     fetchPublications({
-                      page: pagination.page + 1,
+                      page,
                       limit: pagination.limit,
                     })
                   }
-                >
-                  Cargar más publicaciones
-                </Button>
+                />
               </div>
             )}
           </div>

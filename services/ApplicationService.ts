@@ -34,7 +34,7 @@ const getPublicationApplications = (
   params?: PaginationParams,
 ) =>
   api.get<PaginationResponse<Application>>(
-    `/publications/${publicationId}/applications`,
+    `/suarec/publications/${publicationId}/applications`,
     { params },
   );
 
