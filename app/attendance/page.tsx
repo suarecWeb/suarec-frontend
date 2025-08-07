@@ -96,6 +96,9 @@ const AttendancePageContent = () => {
   const [companyAttendanceStats, setCompanyAttendanceStats] =
     useState<CompanyAttendanceStats | null>(null);
 
+  // Nuevo estado para controlar la carga del botón "Marcar Ausente"
+  const [markingAbsent, setMarkingAbsent] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -213,7 +216,10 @@ const AttendancePageContent = () => {
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
+    const localDate = new Date(
+      date.getTime() + date.getTimezoneOffset() * 60000,
+    );
+    return localDate.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -288,7 +294,13 @@ const AttendancePageContent = () => {
       });
       toast.success("Registro actualizado correctamente");
       setEditingRecordId(null);
-      fetchEmployeeAttendance(record.employee.id.toString());
+
+      // Actualizar automáticamente los datos del empleado
+      await fetchEmployeeAttendance(record.employee.id.toString());
+
+      // También actualizar las estadísticas de la empresa
+      await fetchCompanyAttendanceStats();
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       toast.error("Error al actualizar el registro");
@@ -309,7 +321,13 @@ const AttendancePageContent = () => {
       await AttendanceService.deleteAttendance(record.id.toString());
       toast.success("Registro eliminado correctamente");
       setDeletingRecordId(null);
-      fetchEmployeeAttendance(record.employee.id.toString());
+
+      // Actualizar automáticamente los datos del empleado
+      await fetchEmployeeAttendance(record.employee.id.toString());
+
+      // También actualizar las estadísticas de la empresa
+      await fetchCompanyAttendanceStats();
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       toast.error("Error al eliminar el registro");
@@ -317,43 +335,45 @@ const AttendancePageContent = () => {
     }
   };
 
-  const handleRegisterAttendance = async (
-    isAbsent: boolean = false,
-    notes: string = "",
-  ) => {
-    if (!selectedEmployee || !selectedEmployee.id) {
+  // Función mejorada para marcar ausencia con actualización automática
+  const handleMarkAbsent = async () => {
+    if (!selectedEmployee?.id) {
       toast.error("Selecciona un empleado válido.");
       return;
     }
-    if (!isAbsent && !editCheckInTime) {
-      toast.error("Por favor ingresa la hora de llegada");
-      return;
-    }
+
     try {
-      setLoadingAttendance(true);
+      setMarkingAbsent(true);
+
+      // Registrar la ausencia
       await AttendanceService.registerAttendance(
         Number(selectedEmployee.id),
-        isAbsent ? "00:00" : editCheckInTime,
+        "00:00",
         new Date(),
-        isAbsent,
-        notes,
+        true,
+        "Ausencia manual",
       );
-      toast.success(
-        isAbsent
-          ? "Ausencia registrada correctamente"
-          : "Asistencia registrada correctamente",
-      );
-      setEditCheckInTime("");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      toast.error(
-        isAbsent
-          ? "Error al registrar la ausencia"
-          : "Error al registrar la asistencia",
-      );
-      setTimeout(() => setError(null), 3000);
+
+      toast.success("Ausencia registrada correctamente");
+
+      // Actualizar automáticamente los datos del empleado
+      await fetchEmployeeAttendance(selectedEmployee.id.toString());
+
+      // También actualizar las estadísticas de la empresa
+      await fetchCompanyAttendanceStats();
+    } catch (err: any) {
+      if (
+        err?.response?.data?.message ===
+        "Attendance record already exists for this date"
+      ) {
+        toast.error(
+          "Ya existe un registro de asistencia o ausencia para esta fecha",
+        );
+        return;
+      }
+      toast.error("Error al registrar la ausencia");
     } finally {
-      setLoadingAttendance(false);
+      setMarkingAbsent(false);
     }
   };
 
@@ -630,28 +650,29 @@ const AttendancePageContent = () => {
                             Registro de Asistencia
                           </h3>
                           <button
-                            onClick={() => {
-                              if (!selectedEmployee?.id) return;
-                              const today = new Date();
-                              const isAlreadyRegistered =
-                                attendanceRecords.some(
-                                  (record) =>
-                                    new Date(record.date).toDateString() ===
-                                    today.toDateString(),
-                                );
-                              if (isAlreadyRegistered) {
-                                toast.error("Ya existe un registro para hoy");
-                                return;
-                              }
-                              handleRegisterAttendance(true, "Ausencia manual");
-                            }}
-                            className="text-red-600 hover:text-red-800 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base"
+                            onClick={handleMarkAbsent}
+                            disabled={markingAbsent}
+                            className="text-red-600 hover:text-red-800 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <CalendarX className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <span className="hidden sm:inline">
-                              Marcar Ausente
-                            </span>
-                            <span className="sm:hidden">Ausente</span>
+                            {markingAbsent ? (
+                              <>
+                                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                                <span className="hidden sm:inline">
+                                  Registrando...
+                                </span>
+                                <span className="sm:hidden">
+                                  Registrando...
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <CalendarX className="h-4 w-4 sm:h-5 sm:w-5" />
+                                <span className="hidden sm:inline">
+                                  Marcar Ausente
+                                </span>
+                                <span className="sm:hidden">Ausente</span>
+                              </>
+                            )}
                           </button>
                         </div>
                         {loadingAttendance ? (

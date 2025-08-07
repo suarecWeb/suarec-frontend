@@ -49,7 +49,9 @@ const deleteMessage = (id: string) => api.delete(`${baseURL}/${id}`);
 
 // Obtener tickets de soporte (solo admin)
 const getSupportTickets = (params?: PaginationParams) =>
-  api.get<PaginationResponse<Message>>(`${baseURL}/support-tickets`, { params });
+  api.get<PaginationResponse<Message>>(`${baseURL}/support-tickets`, {
+    params,
+  });
 
 // Obtener ticket activo de un usuario
 const getActiveTicket = (userId: number) =>
@@ -64,7 +66,11 @@ const getTicketMessages = (ticketId: string) =>
   api.get<Message[]>(`${baseURL}/ticket/${ticketId}/messages`);
 
 // Agregar mensaje a un ticket existente
-const addMessageToTicket = (ticketId: string, userId: number, content: string) =>
+const addMessageToTicket = (
+  ticketId: string,
+  userId: number,
+  content: string,
+) =>
   api.post<Message>(`${baseURL}/add-to-ticket`, { ticketId, userId, content });
 
 const MessageService = {

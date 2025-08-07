@@ -152,13 +152,14 @@ const PublicProfilePage = () => {
   // Verificar si el usuario actual puede ver información privada
   const canViewPrivateInfo = () => {
     if (!currentUser) return false;
-    
+
     // Si es el dueño del perfil
     if (currentUser.id === parseInt(userId)) return true;
-    
+
     // Si es admin
-    if (currentUser.roles?.some((role: any) => role.name === "ADMIN")) return true;
-    
+    if (currentUser.roles?.some((role: any) => role.name === "ADMIN"))
+      return true;
+
     return false;
   };
 
@@ -393,8 +394,12 @@ const PublicProfilePage = () => {
                             <div className="flex items-start gap-3">
                               <Phone className="h-5 w-5 text-[#097EEC] mt-0.5" />
                               <div>
-                                <p className="text-sm text-gray-500">Teléfono</p>
-                                <p className="text-gray-800">{user.cellphone}</p>
+                                <p className="text-sm text-gray-500">
+                                  Teléfono
+                                </p>
+                                <p className="text-gray-800">
+                                  {user.cellphone}
+                                </p>
                               </div>
                             </div>
                           )}
@@ -403,9 +408,12 @@ const PublicProfilePage = () => {
                         <div className="flex items-start gap-3">
                           <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
                           <div>
-                            <p className="text-sm text-gray-500">Información de contacto</p>
+                            <p className="text-sm text-gray-500">
+                              Información de contacto
+                            </p>
                             <p className="text-gray-600 text-sm">
-                              Para ver el email y teléfono, inicia sesión o contacta al usuario a través del chat.
+                              Para ver el email y teléfono, inicia sesión o
+                              contacta al usuario a través del chat.
                             </p>
                           </div>
                         </div>
@@ -633,92 +641,97 @@ const PublicProfilePage = () => {
                           .filter((pub: any) => !pub.deleted_at) // Filtrar publicaciones eliminadas
                           .slice(0, 3)
                           .map((pub: any) => {
-                          const isOwnPublication =
-                            currentUser && currentUser.id === parseInt(userId);
-                          const canEdit =
-                            isOwnPublication ||
-                            (currentUser &&
-                              currentUser.roles?.some(
-                                (role: any) => role.name === "ADMIN",
-                              ));
+                            const isOwnPublication =
+                              currentUser &&
+                              currentUser.id === parseInt(userId);
+                            const canEdit =
+                              isOwnPublication ||
+                              (currentUser &&
+                                currentUser.roles?.some(
+                                  (role: any) => role.name === "ADMIN",
+                                ));
 
-                          return (
-                            <div
-                              key={pub.id}
-                              className="bg-gray-50 rounded-lg p-4"
-                            >
-                              <div className="flex justify-between items-start">
-                                <h4 className="font-medium text-gray-800">
-                                  {pub.title}
-                                </h4>
-                                <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
-                                  {pub.category}
-                                </span>
-                              </div>
-                              {pub.description && (
-                                <p className="text-gray-600 mt-2 text-sm line-clamp-2">
-                                  {pub.description}
-                                </p>
-                              )}
-                              <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>{formatDate(pub.created_at)}</span>
+                            return (
+                              <div
+                                key={pub.id}
+                                className="bg-gray-50 rounded-lg p-4"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <h4 className="font-medium text-gray-800">
+                                    {pub.title}
+                                  </h4>
+                                  <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                                    {pub.category}
+                                  </span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Link href={`/feed/${pub.id}`}>
-                                    <button className="text-[#097EEC] hover:text-[#0A6BC7] text-xs flex items-center gap-1">
-                                      Ver más{" "}
-                                      <ExternalLink className="h-3 w-3" />
-                                    </button>
-                                  </Link>
-                                  {canEdit && (
-                                    <>
-                                      <Link
-                                        href={`/publications/${pub.id}/edit`}
-                                      >
-                                        <button className="text-amber-600 hover:text-amber-700 text-xs flex items-center gap-1">
-                                          <Edit className="h-3 w-3" />
-                                          Editar
-                                        </button>
-                                      </Link>
-                                      <button
-                                        onClick={async () => {
-                                          if (
-                                            confirm(
-                                              "¿Estás seguro de que deseas eliminar esta publicación?",
-                                            )
-                                          ) {
-                                            try {
-                                              await PublicationService.deletePublication(
-                                                pub.id,
-                                              );
-                                              // Recargar la página para actualizar la lista
-                                              window.location.reload();
-                                            } catch (error) {
-                                              toast.error(
-                                                "No se pudo eliminar la publicación.",
-                                              );
-                                            }
-                                          }
-                                        }}
-                                        className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                        Eliminar
+                                {pub.description && (
+                                  <p className="text-gray-600 mt-2 text-sm line-clamp-2">
+                                    {pub.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    <span>{formatDate(pub.created_at)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Link href={`/feed/${pub.id}`}>
+                                      <button className="text-[#097EEC] hover:text-[#0A6BC7] text-xs flex items-center gap-1">
+                                        Ver más{" "}
+                                        <ExternalLink className="h-3 w-3" />
                                       </button>
-                                    </>
-                                  )}
+                                    </Link>
+                                    {canEdit && (
+                                      <>
+                                        <Link
+                                          href={`/publications/${pub.id}/edit`}
+                                        >
+                                          <button className="text-amber-600 hover:text-amber-700 text-xs flex items-center gap-1">
+                                            <Edit className="h-3 w-3" />
+                                            Editar
+                                          </button>
+                                        </Link>
+                                        <button
+                                          onClick={async () => {
+                                            if (
+                                              confirm(
+                                                "¿Estás seguro de que deseas eliminar esta publicación?",
+                                              )
+                                            ) {
+                                              try {
+                                                await PublicationService.deletePublication(
+                                                  pub.id,
+                                                );
+                                                // Recargar la página para actualizar la lista
+                                                window.location.reload();
+                                              } catch (error) {
+                                                toast.error(
+                                                  "No se pudo eliminar la publicación.",
+                                                );
+                                              }
+                                            }
+                                          }}
+                                          className="text-red-600 hover:text-red-700 text-xs flex items-center gap-1"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                          Eliminar
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                        {user.publications.filter((pub: any) => !pub.deleted_at).length > 3 && (
+                            );
+                          })}
+                        {user.publications.filter((pub: any) => !pub.deleted_at)
+                          .length > 3 && (
                           <div className="text-center mt-4">
                             <p className="text-sm text-gray-500">
-                              y {user.publications.filter((pub: any) => !pub.deleted_at).length - 3} publicación(es)
-                              más
+                              y{" "}
+                              {user.publications.filter(
+                                (pub: any) => !pub.deleted_at,
+                              ).length - 3}{" "}
+                              publicación(es) más
                             </p>
                           </div>
                         )}
@@ -767,7 +780,9 @@ const PublicProfilePage = () => {
                               <p className="text-sm text-gray-500">
                                 Email corporativo
                               </p>
-                              <p className="text-gray-800">{user.company.email}</p>
+                              <p className="text-gray-800">
+                                {user.company.email}
+                              </p>
                             </div>
                           </div>
 
@@ -787,9 +802,12 @@ const PublicProfilePage = () => {
                         <div className="flex items-start gap-3">
                           <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
                           <div>
-                            <p className="text-sm text-gray-500">Información de contacto</p>
+                            <p className="text-sm text-gray-500">
+                              Información de contacto
+                            </p>
                             <p className="text-gray-600 text-sm">
-                              Para ver el email y teléfono corporativo, inicia sesión o contacta a la empresa a través del chat.
+                              Para ver el email y teléfono corporativo, inicia
+                              sesión o contacta a la empresa a través del chat.
                             </p>
                           </div>
                         </div>

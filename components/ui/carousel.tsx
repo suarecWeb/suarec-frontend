@@ -206,4 +206,4 @@ export function Carousel({ slides }: CarouselProps) {
       </div>
     </div>
   );
-} 
+}
