@@ -15,10 +15,10 @@ interface ServiceRequestCardProps {
   showApplyButton?: boolean;
 }
 
-export default function ServiceRequestCard({ 
-  publication, 
-  onApply, 
-  showApplyButton = true 
+export default function ServiceRequestCard({
+  publication,
+  onApply,
+  showApplyButton = true,
 }: ServiceRequestCardProps) {
   const getUrgencyColor = (urgency?: string) => {
     switch (urgency) {
@@ -64,7 +64,7 @@ export default function ServiceRequestCard({
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {publication.description && (
           <p className="text-gray-700 line-clamp-3">
@@ -79,7 +79,7 @@ export default function ServiceRequestCard({
               <span>{publication.location}</span>
             </div>
           )}
-          
+
           {publication.preferredSchedule && (
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-gray-500" />
@@ -110,10 +110,8 @@ export default function ServiceRequestCard({
                 )}
               </div>
             )}
-            
-            <Badge variant="secondary">
-              {publication.category}
-            </Badge>
+
+            <Badge variant="secondary">{publication.category}</Badge>
           </div>
 
           <div className="flex gap-2">
@@ -122,12 +120,9 @@ export default function ServiceRequestCard({
                 Ver detalles
               </Button>
             </Link>
-            
+
             {showApplyButton && onApply && (
-              <Button 
-                size="sm" 
-                onClick={() => onApply(publication.id!)}
-              >
+              <Button size="sm" onClick={() => onApply(publication.id!)}>
                 Aplicar
               </Button>
             )}
@@ -143,4 +138,4 @@ export default function ServiceRequestCard({
       </CardContent>
     </Card>
   );
-} 
+}

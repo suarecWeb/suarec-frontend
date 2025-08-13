@@ -116,7 +116,7 @@ export default function CreateServiceModal({
 
   // Watcher para el tipo de publicación
   const watchedType = watch("type");
-  
+
   // Actualizar el estado cuando cambie el tipo
   useEffect(() => {
     setSelectedType(watchedType);
@@ -204,7 +204,10 @@ export default function CreateServiceModal({
         title: data.title,
         description: data.description || "",
         category: data.category.toUpperCase(),
-        type: data.type === "offer" ? PublicationType.SERVICE : PublicationType.SERVICE_REQUEST, // Convertir string a enum
+        type:
+          data.type === "offer"
+            ? PublicationType.SERVICE
+            : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined,
         gallery_images:
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
@@ -271,20 +274,18 @@ export default function CreateServiceModal({
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">
-                {selectedType === "offer" 
-                  ? "Crear Oferta de Servicio" 
-                  : selectedType === "request" 
+                {selectedType === "offer"
+                  ? "Crear Oferta de Servicio"
+                  : selectedType === "request"
                     ? "Crear Solicitud de Servicio"
-                    : "Crear Publicación de Servicio"
-                }
+                    : "Crear Publicación de Servicio"}
               </h2>
               <p className="text-blue-100 text-sm">
-                {selectedType === "offer" 
+                {selectedType === "offer"
                   ? "Ofrece tus servicios a la comunidad"
-                  : selectedType === "request" 
+                  : selectedType === "request"
                     ? "Busca profesionales para tus necesidades"
-                    : "Comparte tus servicios con la comunidad"
-                }
+                    : "Comparte tus servicios con la comunidad"}
               </p>
             </div>
             <button
@@ -344,8 +345,12 @@ export default function CreateServiceModal({
                     disabled={isLoading}
                   >
                     <option value="">Selecciona el tipo</option>
-                    <option value="offer">Oferta de Servicio (Ofrezco un servicio)</option>
-                    <option value="request">Solicitud de Servicio (Busco un servicio)</option>
+                    <option value="offer">
+                      Oferta de Servicio (Ofrezco un servicio)
+                    </option>
+                    <option value="request">
+                      Solicitud de Servicio (Busco un servicio)
+                    </option>
                   </select>
                   {errors.type && (
                     <p className="text-red-500 text-xs mt-1">
@@ -368,11 +373,12 @@ export default function CreateServiceModal({
                     className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
                       errors.title ? "border-red-500" : "border-gray-200"
                     }`}
-                    placeholder={selectedType === "offer" 
-                      ? "Ej. Servicio de plomería profesional"
-                      : selectedType === "request" 
-                        ? "Ej. Necesito un plomero para arreglar una fuga"
-                        : "Ej. Servicio de plomería profesional"
+                    placeholder={
+                      selectedType === "offer"
+                        ? "Ej. Servicio de plomería profesional"
+                        : selectedType === "request"
+                          ? "Ej. Necesito un plomero para arreglar una fuga"
+                          : "Ej. Servicio de plomería profesional"
                     }
                     {...register("title", {
                       required: "El título es obligatorio",
@@ -437,11 +443,12 @@ export default function CreateServiceModal({
                     className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
                       errors.description ? "border-red-500" : "border-gray-200"
                     }`}
-                    placeholder={selectedType === "offer" 
-                      ? "Describe tu servicio, experiencia y lo que ofreces..."
-                      : selectedType === "request" 
-                        ? "Describe qué necesitas, el problema a resolver..."
-                        : "Describe tu servicio o lo que estás buscando..."
+                    placeholder={
+                      selectedType === "offer"
+                        ? "Describe tu servicio, experiencia y lo que ofreces..."
+                        : selectedType === "request"
+                          ? "Describe qué necesitas, el problema a resolver..."
+                          : "Describe tu servicio o lo que estás buscando..."
                     }
                     {...register("description", {
                       required: "La descripción es obligatoria",
@@ -478,20 +485,27 @@ export default function CreateServiceModal({
                         htmlFor="requirements"
                         className="block text-sm font-medium text-gray-700"
                       >
-                        Requisitos específicos <span className="text-red-500">*</span>
+                        Requisitos específicos{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         id="requirements"
                         rows={3}
                         className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
-                          errors.requirements ? "border-red-500" : "border-gray-200"
+                          errors.requirements
+                            ? "border-red-500"
+                            : "border-gray-200"
                         }`}
                         placeholder="Describe exactamente qué necesitas..."
                         {...register("requirements", {
-                          required: selectedType === "request" ? "Los requisitos son obligatorios" : false,
+                          required:
+                            selectedType === "request"
+                              ? "Los requisitos son obligatorios"
+                              : false,
                           minLength: {
                             value: 10,
-                            message: "Los requisitos deben tener al menos 10 caracteres",
+                            message:
+                              "Los requisitos deben tener al menos 10 caracteres",
                           },
                         })}
                         disabled={isLoading}
@@ -519,7 +533,10 @@ export default function CreateServiceModal({
                         }`}
                         placeholder="Ej. Bogotá, Medellín, Cali..."
                         {...register("location", {
-                          required: selectedType === "request" ? "La ubicación es obligatoria" : false,
+                          required:
+                            selectedType === "request"
+                              ? "La ubicación es obligatoria"
+                              : false,
                         })}
                         disabled={isLoading}
                       />
@@ -544,7 +561,10 @@ export default function CreateServiceModal({
                           errors.urgency ? "border-red-500" : "border-gray-200"
                         }`}
                         {...register("urgency", {
-                          required: selectedType === "request" ? "La urgencia es obligatoria" : false,
+                          required:
+                            selectedType === "request"
+                              ? "La urgencia es obligatoria"
+                              : false,
                         })}
                         disabled={isLoading}
                       >
@@ -576,9 +596,15 @@ export default function CreateServiceModal({
                         disabled={isLoading}
                       >
                         <option value="">Sin preferencia</option>
-                        <option value="morning">Mañana (8:00 AM - 12:00 PM)</option>
-                        <option value="afternoon">Tarde (12:00 PM - 6:00 PM)</option>
-                        <option value="evening">Noche (6:00 PM - 10:00 PM)</option>
+                        <option value="morning">
+                          Mañana (8:00 AM - 12:00 PM)
+                        </option>
+                        <option value="afternoon">
+                          Tarde (12:00 PM - 6:00 PM)
+                        </option>
+                        <option value="evening">
+                          Noche (6:00 PM - 10:00 PM)
+                        </option>
                         <option value="weekend">Fines de semana</option>
                         <option value="flexible">Horario flexible</option>
                       </select>
@@ -589,76 +615,77 @@ export default function CreateServiceModal({
                 {/* Precio - Solo mostrar para ofertas de servicio */}
                 {selectedType === "offer" && (
                   <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      htmlFor="price"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Precio <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="price"
-                      onChange={handlePriceChange}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                      placeholder="Ej: 10000"
-                    />
+                    <div>
+                      <label
+                        htmlFor="price"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Precio <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="price"
+                        onChange={handlePriceChange}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                        placeholder="Ej: 10000"
+                      />
 
-                    {/* Mensaje simple */}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Solo números. Ejemplo: 10000
-                    </p>
-
-                    {errors.price && (
-                      <p className="mt-1 text-xs text-red-600">
-                        {errors.price.message}
+                      {/* Mensaje simple */}
+                      <p className="mt-1 text-xs text-gray-500">
+                        Solo números. Ejemplo: 10000
                       </p>
-                    )}
 
-                    {/* Mostrar precio con IVA en tiempo real */}
-                    {(() => {
-                      const priceValue = watch("price");
+                      {errors.price && (
+                        <p className="mt-1 text-xs text-red-600">
+                          {errors.price.message}
+                        </p>
+                      )}
 
-                      if (!priceValue && priceValue !== 0) return null;
+                      {/* Mostrar precio con IVA en tiempo real */}
+                      {(() => {
+                        const priceValue = watch("price");
 
-                      const numericPrice = Number(priceValue);
+                        if (!priceValue && priceValue !== 0) return null;
 
-                      if (isNaN(numericPrice) || numericPrice <= 0) return null;
+                        const numericPrice = Number(priceValue);
 
-                      return (
-                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                          <p className="text-xs text-green-700">
-                            <strong>Precio con IVA (19%):</strong>{" "}
-                            {formatCurrency(
-                              calculatePriceWithTax(numericPrice),
-                            )}
-                          </p>
-                        </div>
-                      );
-                    })()}
+                        if (isNaN(numericPrice) || numericPrice <= 0)
+                          return null;
+
+                        return (
+                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                            <p className="text-xs text-green-700">
+                              <strong>Precio con IVA (19%):</strong>{" "}
+                              {formatCurrency(
+                                calculatePriceWithTax(numericPrice),
+                              )}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="priceUnit"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Unidad
+                      </label>
+                      <select
+                        id="priceUnit"
+                        {...register("priceUnit")}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                      >
+                        <option value="">Seleccionar</option>
+                        <option value="hour">Por hora</option>
+                        <option value="monthly">Por mes</option>
+                        <option value="daily">Por día</option>
+                        <option value="weekly">Por semana</option>
+                        <option value="service">Por servicio</option>
+                      </select>
+                    </div>
                   </div>
-
-                  <div>
-                    <label
-                      htmlFor="priceUnit"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Unidad
-                    </label>
-                    <select
-                      id="priceUnit"
-                      {...register("priceUnit")}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                    >
-                      <option value="">Seleccionar</option>
-                      <option value="hour">Por hora</option>
-                      <option value="monthly">Por mes</option>
-                      <option value="daily">Por día</option>
-                      <option value="weekly">Por semana</option>
-                      <option value="service">Por servicio</option>
-                    </select>
-                  </div>
-                </div>
                 )}
 
                 {/* Información sobre precio - Solo mostrar para ofertas */}
@@ -669,10 +696,10 @@ export default function CreateServiceModal({
                         <Info className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
                         <div>
                           <p className="text-xs text-yellow-700">
-                            <strong>Importante:</strong> El precio que ingreses es
-                            el precio base. Se aplicará automáticamente un 19% de
-                            IVA que será visible para los usuarios en el precio
-                            final mostrado en tu publicación.
+                            <strong>Importante:</strong> El precio que ingreses
+                            es el precio base. Se aplicará automáticamente un
+                            19% de IVA que será visible para los usuarios en el
+                            precio final mostrado en tu publicación.
                           </p>
                         </div>
                       </div>
@@ -683,10 +710,10 @@ export default function CreateServiceModal({
                         <Info className="h-4 w-4 text-blue-400 mr-2 mt-0.5" />
                         <div>
                           <p className="text-xs text-blue-700">
-                            <strong>Consejo:</strong> Si especificas un precio, los
-                            usuarios podrán contratar tu servicio directamente. Si
-                            no lo especificas, los usuarios te contactarán para
-                            negociar el precio.
+                            <strong>Consejo:</strong> Si especificas un precio,
+                            los usuarios podrán contratar tu servicio
+                            directamente. Si no lo especificas, los usuarios te
+                            contactarán para negociar el precio.
                           </p>
                         </div>
                       </div>
@@ -701,9 +728,10 @@ export default function CreateServiceModal({
                       <Info className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
                       <div>
                         <p className="text-xs text-green-700">
-                          <strong>Consejo:</strong> Al solicitar un servicio, los trabajadores 
-                          podrán ver tus requisitos y aplicar con sus propuestas. 
-                          Podrás revisar y aceptar la mejor oferta.
+                          <strong>Consejo:</strong> Al solicitar un servicio,
+                          los trabajadores podrán ver tus requisitos y aplicar
+                          con sus propuestas. Podrás revisar y aceptar la mejor
+                          oferta.
                         </p>
                       </div>
                     </div>
@@ -853,12 +881,11 @@ export default function CreateServiceModal({
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    {selectedType === "offer" 
+                    {selectedType === "offer"
                       ? "Crear Oferta"
-                      : selectedType === "request" 
+                      : selectedType === "request"
                         ? "Crear Solicitud"
-                        : "Crear Servicio"
-                    }
+                        : "Crear Servicio"}
                   </div>
                 )}
               </button>
