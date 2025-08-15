@@ -263,7 +263,7 @@ export default function FeedPage() {
       {/* Content con margen negativo para que se superponga */}
       <div className="container mx-auto px-4 -mt-6 pb-12">
         <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
-          {/* Sidebar - Filtros (oculto en móvil) */}
+          {/* Sidebar izquierdo - Filtros principales */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
               <h3 className="text-lg font-eras-bold text-gray-900 mb-4">
@@ -352,59 +352,11 @@ export default function FeedPage() {
                   </label>
                 </div>
               </div>
-
-              {/* Categoría */}
-              <div className="mb-6">
-                <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                  Categoría
-                </label>
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <label
-                      key={category}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="category"
-                        value={category}
-                        checked={selectedCategory === category}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="text-[#097EEC] focus:ring-[#097EEC]"
-                      />
-                      <span className="text-sm font-eras">
-                        {category === "all" ? "Todas" : category}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Estadísticas rápidas */}
-              <div className="border-t border-gray-100 pt-4">
-                <h4 className="text-sm font-eras-bold text-gray-900 mb-3">
-                  Estadísticas
-                </h4>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex justify-between">
-                    <span className="font-eras">Total publicaciones</span>
-                    <span className="font-eras-bold">
-                      {filteredPublications.length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-eras">Categorías</span>
-                    <span className="font-eras-bold">
-                      {categories.length - 1}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Main Content - Feed */}
-          <div className="lg:col-span-3 col-span-full">
+          {/* Main Content - Feed (centro) */}
+          <div className="lg:col-span-2 col-span-full">
             {/* Filtros móviles */}
             <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
               <div className="flex flex-col gap-4">
@@ -548,6 +500,60 @@ export default function FeedPage() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Sidebar derecho - Filtros de categoría y estadísticas */}
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
+              <h3 className="text-lg font-eras-bold text-gray-900 mb-4">
+                Categorías
+              </h3>
+
+              {/* Categoría */}
+              <div className="mb-6">
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <label
+                      key={category}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="category"
+                        value={category}
+                        checked={selectedCategory === category}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="text-[#097EEC] focus:ring-[#097EEC]"
+                      />
+                      <span className="text-sm font-eras">
+                        {category === "all" ? "Todas las categorías" : category}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Estadísticas rápidas */}
+              <div className="border-t border-gray-100 pt-4">
+                <h4 className="text-sm font-eras-bold text-gray-900 mb-3">
+                  Estadísticas
+                </h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="font-eras">Total publicaciones</span>
+                    <span className="font-eras-bold">
+                      {filteredPublications.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-eras">Categorías</span>
+                    <span className="font-eras-bold">
+                      {categories.length - 1}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
