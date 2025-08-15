@@ -165,11 +165,20 @@ const StartChatButton = ({
         customMessage ||
         `¡Hola ${recipientName}! Me interesa conocer más información.`;
 
-      await MessageService.createMessage({
+      const messageData = {
         content: finalMessage,
         senderId: currentUserId,
         recipientId: recipientId,
-      });
+      };
+
+      console.log("🔍 Datos que se van a enviar:", JSON.stringify(messageData, null, 2));
+
+      await MessageService.createMessage(messageData);
+
+      // Forzar recarga de conversaciones después de enviar el mensaje
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
 
       router.push("/chat");
     } catch (error: any) {
