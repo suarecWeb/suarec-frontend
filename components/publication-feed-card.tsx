@@ -36,6 +36,8 @@ import PublicationService from "@/services/PublicationsService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import toast from "react-hot-toast";
+import PublicationDetailModal from "./publication-detail-modal";
 
 interface PublicationFeedCardProps {
   publication: Publication;
@@ -55,6 +57,7 @@ const PublicationFeedCard = ({
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -186,177 +189,151 @@ const PublicationFeedCard = ({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 hover:shadow-md transition-shadow duration-300">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {hasValidUserId() ? (
-              <Link
-                href={`/profile/${getUserId()}`}
-                className="hover:opacity-80 transition-opacity cursor-pointer"
-              >
-                <UserAvatarDisplay
-                  user={{
-                    id: publication.userId,
-                    name: publication.user?.name || "Usuario",
-                    profile_image: publication.user?.profile_image,
-                    email: publication.user?.email,
-                  }}
-                  size="md"
-                />
-              </Link>
-            ) : (
-              <UserAvatarDisplay
-                user={{
-                  id: publication.userId,
-                  name: publication.user?.name || "Usuario",
-                  profile_image: publication.user?.profile_image,
-                  email: publication.user?.email,
-                }}
-                size="md"
-              />
-            )}
-            <div>
-              {hasValidUserId() ? (
-                <Link
-                  href={`/profile/${getUserId()}`}
-                  className="hover:text-[#097EEC] transition-colors cursor-pointer"
-                >
-                  <h3 className="font-bold text-gray-900 text-sm">
-                    {publication.user?.name || "Usuario"}
-                  </h3>
-                </Link>
-              ) : (
-                <h3 className="font-bold text-gray-900 text-sm">
-                  {publication.user?.name || "Usuario"}
-                </h3>
-              )}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Tag className="h-3 w-3" />
-                <span>{publication.category}</span>
-                <Calendar className="h-3 w-3 ml-2" />
-                <span>{formatDate(publication.created_at)}</span>
-              </div>
-            </div>
-          </div>
-          {/* Botones de acción solo si puede editar */}
-          {canEditPublication() && (
-            <div className="flex items-center gap-2">
-              <Link href={`/publications/${publication.id}/edit`}>
-                <button className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 transition-colors p-2 hover:bg-amber-50 rounded-lg">
-                  <Edit className="h-4 w-4" />
-                  <span>Editar</span>
-                </button>
-              </Link>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Eliminar</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* NUEVO LAYOUT: Imágenes más grandes arriba, contenido abajo */}
-        <div className="space-y-4">
-          {/* Galería de imágenes */}
-          {publication.image_url ||
-          (publication.gallery_images &&
-            publication.gallery_images.length > 0) ? (
-            <GalleryPreview
-              images={
-                publication.image_url
-                  ? [publication.image_url]
-                  : publication.gallery_images || []
-              }
-              title={publication.title}
-              maxDisplay={4}
-              className="mb-3"
+      <div 
+        className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group"
+        onClick={() => setShowDetailModal(true)}
+      >
+        {/* Imagen principal - Ahora más prominente */}
+        {publication.image_url && (
+          <div className="relative w-full h-48 md:h-56 lg:h-64 overflow-hidden">
+            <img
+              src={publication.image_url}
+              alt={publication.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
-          ) : null}
-
-          {/* Contenido principal */}
-          <div className="w-full">
-            <h2 className="text-lg font-bold text-gray-900 mb-2">
-              {publication.title}
-            </h2>
-
-            <div className="flex items-center gap-2 mb-2">
-              {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
-              <span className="text-green-700 font-semibold text-base">
-                {publication.price
-                  ? (() => {
+            {/* Overlay con información básica */}
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 via-black/20 to-transparent p-4">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                  <Tag className="h-3 w-3 mr-1" />
+                  {publication.category}
+                </span>
+                {publication.price && (
+                  <span className="inline-flex items-center px-2.5 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-white text-xs font-semibold">
+                    {(() => {
                       const basePrice = publication.price;
                       const priceInfo = getPublicationDisplayPrice(
                         basePrice,
                         publication.type,
                         publication.priceUnit,
                       );
-
-                      console.log("🔍 Debug precio ESCALABLE:", {
-                        basePrice,
-                        displayPrice: priceInfo.price,
-                        showsTax: priceInfo.showsTax,
-                        taxApplied: priceInfo.taxApplied,
-                        publicationType: publication.type,
-                        priceUnit: publication.priceUnit,
-                      });
-
-                      return `${formatCurrency(priceInfo.price, {
-                        showCurrency: true,
-                      })} ${translatePriceUnit(publication.priceUnit || "")}`;
-                    })()
-                  : "Precio a convenir"}
-              </span>
+                      return formatCurrency(priceInfo.price);
+                    })()}
+                  </span>
+                )}
+              </div>
             </div>
+          </div>
+        )}
 
-            {publication.description && (
-              <p
-                className="text-gray-700 text-sm mb-3"
-                style={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
+        {/* Contenido */}
+        <div className="p-4 space-y-3">
+          {/* Header con información del usuario */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <UserAvatarDisplay
+                user={{
+                  id: publication.userId,
+                  name: publication.user?.name || "Usuario",
+                  profile_image: publication.user?.profile_image,
+                  // email: publication.user?.email, // Ocultar email
                 }}
-              >
+                size="md"
+              />
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">
+                  {publication.user?.name || "Usuario"}
+                </h3>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Calendar className="h-3 w-3" />
+                  <span>{formatDate(publication.created_at)}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Botones de acción solo si puede editar */}
+            {canEditPublication() && (
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <Link href={`/publications/${publication.id}/edit`}>
+                  <button className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors">
+                    <Edit className="h-4 w-4" />
+                  </button>
+                </Link>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Título y descripción */}
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+              {publication.title}
+            </h2>
+            
+            {publication.description && (
+              <p className="text-gray-600 text-sm line-clamp-2 mb-3">
                 {publication.description}
               </p>
             )}
+          </div>
 
-            {/* Información de ofertas activas */}
-            {publicationBids && publicationBids.totalBids > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <TrendingUp className="h-3 w-3" />
-                  <span className="font-medium text-xs">
-                    {publicationBids.totalBids} oferta
-                    {publicationBids.totalBids > 1 ? "s" : ""} activa
-                    {publicationBids.totalBids > 1 ? "s" : ""}
-                  </span>
-                </div>
+          {/* Información de ofertas activas */}
+          {publicationBids && publicationBids.totalBids > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+              <div className="flex items-center gap-2 text-blue-700">
+                <TrendingUp className="h-3 w-3" />
+                <span className="font-medium text-xs">
+                  {publicationBids.totalBids} oferta
+                  {publicationBids.totalBids > 1 ? "s" : ""} activa
+                  {publicationBids.totalBids > 1 ? "s" : ""}
+                </span>
               </div>
-            )}
+            </div>
+          )}
 
-            <div className="flex gap-2">
-              <Link href={`/feed/${publication.id}`}>
-                <Button
-                  size="sm"
-                  className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1"
-                >
-                  Ver más
-                </Button>
-              </Link>
-              {/* <Button
-                variant="outline"
-                size="sm"
-                className="border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white text-xs px-3 py-1"
+          {/* Botones de acción */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLike();
+                }}
+                disabled={isLikeLoading}
+                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                  hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+                } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <Send className="h-3 w-3 mr-1" />
-                Mensaje
-              </Button> */}
+                <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
+                <span>{likesCount}</span>
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowComments(!showComments);
+                }}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>{publication.comments?.length || 0}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="sm"
+                className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1.5"
+                onClick={() => setShowDetailModal(true)}
+              >
+                Expandir
+              </Button>
+              
               <StartChatButton
                 recipientId={parseInt(publication.user?.id || "0")}
                 recipientName={publication.user?.name || ""}
@@ -365,52 +342,41 @@ const PublicationFeedCard = ({
               />
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-6 mt-4 pt-3 border-t border-gray-100">
-          <button
-            onClick={toggleLike}
-            disabled={isLikeLoading}
-            className={`flex items-center gap-2 text-sm transition-colors ${
-              hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
-            } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
-            <span>{likesCount}</span>
-          </button>
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span>{publication.comments?.length || 0}</span>
-          </button>
-          <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors">
-            <Share2 className="h-4 w-4" />
-            <span>Compartir</span>
-          </button>
-        </div>
+          {/* Comments Section (Collapsible) */}
+          {showComments && (
+            <div className="pt-3 border-t border-gray-100">
+              <div className="space-y-3">
+                {publication.comments && publication.comments.length > 0 ? (
+                  publication.comments.map((comment, index) => {
+                    const commentUserId = comment.user?.id || "";
+                    const hasValidCommentUserId =
+                      commentUserId &&
+                      commentUserId !== "" &&
+                      commentUserId !== "undefined";
 
-        {/* Comments Section (Collapsible) */}
-        {showComments && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="space-y-3">
-              {publication.comments && publication.comments.length > 0 ? (
-                publication.comments.map((comment, index) => {
-                  const commentUserId = comment.user?.id || "";
-                  const hasValidCommentUserId =
-                    commentUserId &&
-                    commentUserId !== "" &&
-                    commentUserId !== "undefined";
-
-                  return (
-                    <div key={index} className="flex items-start gap-3">
-                      {hasValidCommentUserId ? (
-                        <Link
-                          href={`/profile/${commentUserId}`}
-                          className="hover:opacity-80 transition-opacity cursor-pointer"
-                        >
+                    return (
+                      <div key={index} className="flex items-start gap-3">
+                        {hasValidCommentUserId ? (
+                          <Link
+                            href={`/profile/${commentUserId}`}
+                            className="hover:opacity-80 transition-opacity cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <UserAvatarDisplay
+                              user={{
+                                id:
+                                  typeof comment.user?.id === "string"
+                                    ? parseInt(comment.user.id)
+                                    : (comment.user?.id as number) || 0,
+                                name: comment.user?.name || "Usuario",
+                                profile_image: comment.user?.profile_image,
+                                // email: comment.user?.email, // Ocultar email
+                              }}
+                              size="sm"
+                            />
+                          </Link>
+                        ) : (
                           <UserAvatarDisplay
                             user={{
                               id:
@@ -419,61 +385,57 @@ const PublicationFeedCard = ({
                                   : (comment.user?.id as number) || 0,
                               name: comment.user?.name || "Usuario",
                               profile_image: comment.user?.profile_image,
-                              email: comment.user?.email,
+                              // email: comment.user?.email, // Ocultar email
                             }}
                             size="sm"
                           />
-                        </Link>
-                      ) : (
-                        <UserAvatarDisplay
-                          user={{
-                            id:
-                              typeof comment.user?.id === "string"
-                                ? parseInt(comment.user.id)
-                                : (comment.user?.id as number) || 0,
-                            name: comment.user?.name || "Usuario",
-                            profile_image: comment.user?.profile_image,
-                            email: comment.user?.email,
-                          }}
-                          size="sm"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            {hasValidCommentUserId ? (
-                              <Link
-                                href={`/profile/${commentUserId}`}
-                                className="hover:text-[#097EEC] transition-colors cursor-pointer"
-                              >
+                        )}
+                        <div className="flex-1">
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              {hasValidCommentUserId ? (
+                                <Link
+                                  href={`/profile/${commentUserId}`}
+                                  className="hover:text-[#097EEC] transition-colors cursor-pointer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {comment.user?.name || "Usuario"}
+                                  </span>
+                                </Link>
+                              ) : (
                                 <span className="text-sm font-medium text-gray-900">
                                   {comment.user?.name || "Usuario"}
                                 </span>
-                              </Link>
-                            ) : (
-                              <span className="text-sm font-medium text-gray-900">
-                                {comment.user?.name || "Usuario"}
+                              )}
+                              <span className="text-xs text-gray-500">
+                                {formatDate(comment.created_at)}
                               </span>
-                            )}
-                            <span className="text-xs text-gray-500">
-                              {formatDate(comment.created_at)}
-                            </span>
+                            </div>
+                            <p className="text-sm text-gray-700">
+                              {comment.description}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-700">
-                            {comment.description}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-gray-500 text-sm">No hay comentarios aún.</p>
-              )}
+                    );
+                  })
+                ) : (
+                  <p className="text-gray-500 text-sm">No hay comentarios aún.</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Publication Detail Modal */}
+      <PublicationDetailModal
+        publication={publication}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        onPublicationDeleted={onPublicationDeleted}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
