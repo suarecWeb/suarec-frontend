@@ -27,6 +27,7 @@ export interface CreateMessageDto {
   content: string;
   senderId: number;
   recipientId: number;
+  ticket_id?: string;
 }
 
 export interface Conversation {

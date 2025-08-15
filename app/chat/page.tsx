@@ -421,10 +421,14 @@ const ChatPageContent = () => {
 
     try {
       setLoading(true);
+      console.log("🔍 Cargando conversaciones para usuario:", currentUserId);
       const response = await MessageService.getConversations(currentUserId);
+      console.log("🔍 Conversaciones recibidas:", response.data);
       const sortedConversations = sortConversationsByLastMessage(response.data);
+      console.log("🔍 Conversaciones ordenadas:", sortedConversations);
       setConversations(sortedConversations);
     } catch (err) {
+      console.error("❌ Error al cargar conversaciones:", err);
       toast.error("Error al cargar las conversaciones");
     } finally {
       setLoading(false);
@@ -489,11 +493,13 @@ const ChatPageContent = () => {
           }
         } else {
           // Conversación normal con otro usuario
+          console.log("📥 Cargando conversación normal con usuario:", conversation.user.id);
           const response = await MessageService.getMessagesBetweenUsers(
             currentUserId,
             conversation.user.id,
             { page: 1, limit: 50 },
           );
+          console.log("📥 Respuesta de mensajes:", response.data);
           // Ordenar mensajes por fecha de enví (más antiguos primero)
           const sortedMessages = response.data.data.sort(
             (a, b) =>
@@ -503,6 +509,7 @@ const ChatPageContent = () => {
             "📥 Cargando mensajes desde API. Count:",
             sortedMessages.length,
           );
+          console.log("📥 Mensajes ordenados:", sortedMessages);
           setMessages(sortedMessages);
         }
 
@@ -971,7 +978,10 @@ const ChatPageContent = () => {
                             ? "bg-blue-50 border-l-4 border-l-[#097EEC]"
                             : ""
                         }`}
-                        onClick={() => loadMessages(conversation)}
+                        onClick={() => {
+                          console.log("🖱️ Clic en conversación:", conversation.user.name, conversation.user.id);
+                          loadMessages(conversation);
+                        }}
                       >
                         <div className="flex items-center gap-3">
                           <div className="relative">
