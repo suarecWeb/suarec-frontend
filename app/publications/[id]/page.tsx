@@ -1549,7 +1549,7 @@ const PublicationDetailPage = () => {
                                         : 0,
                                       name: author.name,
                                       profile_image: author.profile_image,
-                                      email: author.email,
+                                      // email: author.email, // Ocultar email
                                     }}
                                     size="lg"
                                   />
@@ -1564,7 +1564,7 @@ const PublicationDetailPage = () => {
                                       : 0,
                                     name: author.name,
                                     profile_image: author.profile_image,
-                                    email: author.email,
+                                    // email: author.email, // Ocultar email
                                   }}
                                   size="lg"
                                 />
@@ -1619,6 +1619,7 @@ const PublicationDetailPage = () => {
                               </div>
                             )}
 
+                            {/* Ocultar información privada del autor
                             <div className="space-y-2">
                               {author.email && (
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -1633,6 +1634,7 @@ const PublicationDetailPage = () => {
                                 </div>
                               )}
                             </div>
+                            */}
 
                             {/* Rating section */}
                             {userRatingStats &&
