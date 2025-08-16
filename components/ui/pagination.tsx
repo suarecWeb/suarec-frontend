@@ -31,7 +31,7 @@ const Pagination = ({
         <button
           key={1}
           onClick={() => onPageChange(1)}
-          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors flex-shrink-0 ${
             1 === currentPage
               ? "bg-blue-600 text-white"
               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
@@ -46,7 +46,7 @@ const Pagination = ({
         pageNumbers.push(
           <span
             key="start-ellipsis"
-            className="h-10 w-10 flex items-center justify-center text-gray-500"
+            className="h-10 w-10 flex items-center justify-center text-gray-500 flex-shrink-0"
           >
             ...
           </span>,
@@ -60,7 +60,7 @@ const Pagination = ({
         <button
           key={i}
           onClick={() => onPageChange(i)}
-          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors flex-shrink-0 ${
             i === currentPage
               ? "bg-blue-600 text-white"
               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
@@ -78,7 +78,7 @@ const Pagination = ({
         pageNumbers.push(
           <span
             key="end-ellipsis"
-            className="h-10 w-10 flex items-center justify-center text-gray-500"
+            className="h-10 w-10 flex items-center justify-center text-gray-500 flex-shrink-0"
           >
             ...
           </span>,
@@ -89,7 +89,7 @@ const Pagination = ({
         <button
           key={totalPages}
           onClick={() => onPageChange(totalPages)}
-          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors ${
+          className={`h-10 w-10 rounded-md flex items-center justify-center text-sm font-medium transition-colors flex-shrink-0 ${
             totalPages === currentPage
               ? "bg-blue-600 text-white"
               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
@@ -105,13 +105,13 @@ const Pagination = ({
 
   return (
     <div
-      className={`flex items-center justify-center space-x-2 py-6 ${className || ""}`}
+      className={`flex items-center justify-center space-x-2 py-6 w-full max-w-full overflow-x-auto ${className || ""}`}
       {...props}
     >
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors ${
+        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors flex-shrink-0 ${
           currentPage <= 1 
             ? "opacity-50 cursor-not-allowed bg-gray-100" 
             : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
@@ -121,12 +121,14 @@ const Pagination = ({
         <ChevronLeft className="h-4 w-4" />
       </button>
 
-      {renderPageNumbers()}
+      <div className="flex items-center space-x-2 flex-shrink-0">
+        {renderPageNumbers()}
+      </div>
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors ${
+        className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors flex-shrink-0 ${
           currentPage >= totalPages
             ? "opacity-50 cursor-not-allowed bg-gray-100"
             : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
