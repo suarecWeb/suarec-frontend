@@ -493,7 +493,10 @@ const ChatPageContent = () => {
           }
         } else {
           // Conversación normal con otro usuario
-          console.log("📥 Cargando conversación normal con usuario:", conversation.user.id);
+          console.log(
+            "📥 Cargando conversación normal con usuario:",
+            conversation.user.id,
+          );
           const response = await MessageService.getMessagesBetweenUsers(
             currentUserId,
             conversation.user.id,
@@ -979,7 +982,11 @@ const ChatPageContent = () => {
                             : ""
                         }`}
                         onClick={() => {
-                          console.log("🖱️ Clic en conversación:", conversation.user.name, conversation.user.id);
+                          console.log(
+                            "🖱️ Clic en conversación:",
+                            conversation.user.name,
+                            conversation.user.id,
+                          );
                           loadMessages(conversation);
                         }}
                       >

@@ -30,7 +30,10 @@ import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
 import PublicationService from "@/services/PublicationsService";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import Cookies from "js-cookie";
@@ -62,9 +65,12 @@ export default function FeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedPublicationType, setSelectedPublicationType] = useState<PublicationType | "">("");
+  const [selectedPublicationType, setSelectedPublicationType] = useState<
+    PublicationType | ""
+  >("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [isVerify, setIsVerify] = useState<Boolean | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pagination, setPagination] = useState<{
     page: number;
@@ -92,6 +98,7 @@ export default function FeedPage() {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
+        setIsVerify(decoded.isVerify);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
         console.error("Error al decodificar token:", error);
@@ -244,6 +251,20 @@ export default function FeedPage() {
     return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   };
 
+  function verifyCreatePublication() {
+    if (!User) {
+      toast.error("Debes iniciar sesión para crear una publicación");
+      return false;
+    }
+    if (!isVerify) {
+      toast.error(
+        "Debes verificar tu cuenta antes de crear una publicación. Por favor, realiza la verificación en tu perfil.",
+      );
+      return false;
+    }
+    return setIsCreateModalOpen(true);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Navbar />
@@ -300,7 +321,11 @@ export default function FeedPage() {
                       name="publicationType"
                       value=""
                       checked={selectedPublicationType === ""}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType | "",
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras">Todos los tipos</span>
@@ -311,8 +336,14 @@ export default function FeedPage() {
                       type="radio"
                       name="publicationType"
                       value={PublicationType.SERVICE}
-                      checked={selectedPublicationType === PublicationType.SERVICE}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      checked={
+                        selectedPublicationType === PublicationType.SERVICE
+                      }
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -326,8 +357,15 @@ export default function FeedPage() {
                       type="radio"
                       name="publicationType"
                       value={PublicationType.SERVICE_REQUEST}
-                      checked={selectedPublicationType === PublicationType.SERVICE_REQUEST}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      checked={
+                        selectedPublicationType ===
+                        PublicationType.SERVICE_REQUEST
+                      }
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -342,7 +380,11 @@ export default function FeedPage() {
                       name="publicationType"
                       value={PublicationType.JOB}
                       checked={selectedPublicationType === PublicationType.JOB}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -384,13 +426,23 @@ export default function FeedPage() {
                   </label>
                   <select
                     value={selectedPublicationType}
-                    onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                    onChange={(e) =>
+                      setSelectedPublicationType(
+                        e.target.value as PublicationType | "",
+                      )
+                    }
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                   >
                     <option value="">Todos los tipos</option>
-                    <option value={PublicationType.SERVICE}>Servicios Ofrecidos</option>
-                    <option value={PublicationType.SERVICE_REQUEST}>Servicios Solicitados</option>
-                    <option value={PublicationType.JOB}>Vacantes de Trabajo</option>
+                    <option value={PublicationType.SERVICE}>
+                      Servicios Ofrecidos
+                    </option>
+                    <option value={PublicationType.SERVICE_REQUEST}>
+                      Servicios Solicitados
+                    </option>
+                    <option value={PublicationType.JOB}>
+                      Vacantes de Trabajo
+                    </option>
                   </select>
                 </div>
 
@@ -421,7 +473,7 @@ export default function FeedPage() {
                   ¿Qué estás buscando hoy?
                 </div>
                 <Button
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => verifyCreatePublication()} // setIsCreateModalOpen(true)
                   className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />

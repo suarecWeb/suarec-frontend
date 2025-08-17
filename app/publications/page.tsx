@@ -4,7 +4,10 @@ import StartChatButton from "@/components/start-chat-button";
 
 import { useEffect, useState } from "react";
 import PublicationService from "@/services/PublicationsService";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
@@ -60,7 +63,9 @@ const PublicationsPageContent = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
-  const [publicationType, setPublicationType] = useState<PublicationType | "">("");
+  const [publicationType, setPublicationType] = useState<PublicationType | "">(
+    "",
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [pagination, setPagination] = useState({
     total: 0,
@@ -348,7 +353,7 @@ const PublicationsPageContent = () => {
                   {publication.category}
                 </span>
               </div>
-              
+
               {/* Tipo de publicación */}
               {publication.type && (
                 <div className="flex items-center gap-1 text-xs text-gray-600">
@@ -463,25 +468,39 @@ const PublicationsPageContent = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <SimpleSelect 
-                    value={publicationType} 
-                    onValueChange={(value: string) => setPublicationType(value as PublicationType | "")}
+                  <SimpleSelect
+                    value={publicationType}
+                    onValueChange={(value: string) =>
+                      setPublicationType(value as PublicationType | "")
+                    }
                     placeholder="Tipo de publicación"
                     className="w-48"
                   >
-                    <SimpleSelectItem value="">Todos los tipos</SimpleSelectItem>
-                    <SimpleSelectItem value={PublicationType.SERVICE}>Servicios Ofrecidos</SimpleSelectItem>
-                    <SimpleSelectItem value={PublicationType.SERVICE_REQUEST}>Servicios Solicitados</SimpleSelectItem>
-                    <SimpleSelectItem value={PublicationType.JOB}>Vacantes de Trabajo</SimpleSelectItem>
+                    <SimpleSelectItem value="">
+                      Todos los tipos
+                    </SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE}>
+                      Servicios Ofrecidos
+                    </SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.SERVICE_REQUEST}>
+                      Servicios Solicitados
+                    </SimpleSelectItem>
+                    <SimpleSelectItem value={PublicationType.JOB}>
+                      Vacantes de Trabajo
+                    </SimpleSelectItem>
                   </SimpleSelect>
 
-                  <SimpleSelect 
-                    value={selectedCategory} 
-                    onValueChange={(value: string) => setSelectedCategory(value)}
+                  <SimpleSelect
+                    value={selectedCategory}
+                    onValueChange={(value: string) =>
+                      setSelectedCategory(value)
+                    }
                     placeholder="Categoría"
                     className="w-48"
                   >
-                    <SimpleSelectItem value="">Todas las categorías</SimpleSelectItem>
+                    <SimpleSelectItem value="">
+                      Todas las categorías
+                    </SimpleSelectItem>
                     {PUBLICATION_CATEGORIES.map((category) => (
                       <SimpleSelectItem key={category} value={category}>
                         {category}
@@ -513,7 +532,7 @@ const PublicationsPageContent = () => {
                     <span>Solicitar Servicio</span>
                   </button>
                 </Link>
-                
+
                 <Link href="/publications/create">
                   <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
                     <PlusCircle className="h-5 w-5" />
@@ -528,7 +547,9 @@ const PublicationsPageContent = () => {
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Filter className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Filtros activos:</span>
+                  <span className="text-sm font-medium text-blue-800">
+                    Filtros activos:
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {publicationType && (
@@ -715,7 +736,8 @@ const PublicationsPageContent = () => {
                     {myPagination.totalPages > 1 && (
                       <div className="mt-8">
                         <div className="text-center mb-4 text-sm text-gray-600">
-                          Página {myPagination.page} de {myPagination.totalPages}
+                          Página {myPagination.page} de{" "}
+                          {myPagination.totalPages}
                         </div>
                         <Pagination
                           currentPage={myPagination.page}
