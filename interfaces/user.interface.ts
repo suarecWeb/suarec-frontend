@@ -64,6 +64,15 @@ export interface User {
   isVerify?: boolean;
 
   // Relaciones
+  idPhotos?: {
+    id: string;
+    image_url: string;
+    status: "pending" | "approved" | "rejected";
+    reviewed_by?: {
+      id: string;
+      name: string;
+    };
+  }[];
   company?: Company;
   publications?: Publication[];
   comments?: Comment[];

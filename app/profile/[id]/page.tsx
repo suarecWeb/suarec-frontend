@@ -5,6 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   User as UserIcon,
   Mail,
   Phone,
@@ -20,6 +26,7 @@ import {
   CheckCircle,
   MessageCircle,
   Download,
+  BadgeCheck,
   ExternalLink,
   Star,
   MapPin,
@@ -300,13 +307,30 @@ const PublicProfilePage = () => {
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-2xl font-bold">{user.name}</h2>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    {user.name}
+                    {user.isVerify && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="flex items-center gap-1 bg-white rounded-full p-1">
+                              <BadgeCheck className="h-5 w-5 text-blue-500" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-medium">
+                              Este usuario está verificado por Suarec
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </h2>{" "}
                   {user.profession && (
                     <p className="text-blue-100 text-lg mt-1">
                       {user.profession}
                     </p>
                   )}
-
                   {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
                                         {getRoleNames(user.roles).map((roleName, index) => (
                                             <span
@@ -318,7 +342,6 @@ const PublicProfilePage = () => {
                                             </span>
                                         ))}
                                     </div> */}
-
                   {/* Stats rápidas */}
                   <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm">
                     {user.born_at && (

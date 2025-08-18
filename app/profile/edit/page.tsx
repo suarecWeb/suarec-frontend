@@ -32,6 +32,8 @@ import {
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
 import toast from "react-hot-toast";
 import SupabaseService from "@/services/supabase.service";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 // Interfaces para el token
 interface TokenPayload {
@@ -227,7 +229,6 @@ const ProfileEditPage = () => {
       const photos = await IdPhotosService.getMyIdPhotos();
       setIdPhotos(photos);
     } catch (err) {
-      console.error("Error al cargar fotos de cédula:", err);
       toast.error("No se pudieron cargar las fotos de cédula");
     } finally {
       setLoadingIdPhotos(false);
@@ -300,8 +301,6 @@ const ProfileEditPage = () => {
       // Recargar las fotos para mostrar la nueva
       await fetchIdPhotos();
     } catch (err: any) {
-      console.error("Error al subir foto de cédula:", err);
-
       // Manejo específico de errores
       if (err.response?.status === 400) {
         toast.error(
@@ -326,7 +325,36 @@ const ProfileEditPage = () => {
     }
   };
 
-  // ========== FUNCIÓN AUXILIAR PARA ACTUALIZAR FOTO ==========
+  const handleDeleteIdPhoto = async (photoId: number) => {
+    try {
+      // Primero obtener la información de la foto para conseguir el image_path
+      const photoToDelete = idPhotos.find((photo) => photo.id === photoId);
+
+      if (!photoToDelete) {
+        toast.error("No se encontró la foto a eliminar");
+        return;
+      }
+
+      // Toast informativo
+      toast.loading("Eliminando foto...", { id: "deleteIdPhoto" });
+
+      // Eliminar la foto del backend
+      await IdPhotosService.deleteIdPhoto(photoId);
+
+      // Si hay un image_path, eliminar también del storage de Supabase
+      if (photoToDelete.image_path) {
+        await SupabaseService.deleteIdPhotoFromStorage(
+          photoToDelete.image_path,
+        );
+      }
+
+      toast.success("Foto eliminada exitosamente", { id: "deleteIdPhoto" });
+      await fetchIdPhotos();
+    } catch (err: any) {
+      toast.error("Error al eliminar la foto", { id: "deleteIdPhoto" });
+    }
+  };
+
   const handleUpdateIdPhoto = async (photoId: number, file: File) => {
     try {
       setUploadingIdPhoto(true);
@@ -356,6 +384,9 @@ const ProfileEditPage = () => {
         return;
       }
 
+      // Obtener la foto actual para eliminar la imagen anterior
+      const currentPhoto = idPhotos.find((photo) => photo.id === photoId);
+
       // Toast informativo
       toast.loading("Actualizando foto de cédula...", { id: "updateIdPhoto" });
 
@@ -376,13 +407,16 @@ const ProfileEditPage = () => {
         image_path: uploadResult.path,
       });
 
+      // Si había una imagen anterior y se actualizó exitosamente, eliminar la anterior del storage
+      if (currentPhoto?.image_path) {
+        await SupabaseService.deleteIdPhotoFromStorage(currentPhoto.image_path);
+      }
+
       toast.success("Foto actualizada exitosamente", { id: "updateIdPhoto" });
 
       // Recargar las fotos
       await fetchIdPhotos();
     } catch (err: any) {
-      console.error("Error al actualizar foto de cédula:", err);
-
       // Manejo específico de errores
       if (err.message?.includes("subir imagen")) {
         toast.error(`❌ Error de almacenamiento: ${err.message}`, {
@@ -399,18 +433,6 @@ const ProfileEditPage = () => {
       }
     } finally {
       setUploadingIdPhoto(false);
-    }
-  };
-
-  // Función para eliminar foto
-  const handleDeleteIdPhoto = async (photoId: number) => {
-    try {
-      await IdPhotosService.deleteIdPhoto(photoId);
-      toast.success("Foto eliminada exitosamente");
-      await fetchIdPhotos();
-    } catch (err) {
-      console.error("Error al eliminar foto:", err);
-      toast.error("Error al eliminar la foto");
     }
   };
 
@@ -517,7 +539,6 @@ const ProfileEditPage = () => {
 
         setLoading(false);
       } catch (err) {
-        console.error("Error al obtener perfil:", err);
         toast.error("No se pudo cargar la información del perfil");
         setLoading(false);
       }
@@ -675,7 +696,6 @@ const ProfileEditPage = () => {
         router.push("/profile");
       }, 2000);
     } catch (err) {
-      console.error("Error al actualizar perfil:", err);
       toast.error("No se pudo actualizar la información del perfil");
     } finally {
       setSaving(false);
@@ -759,8 +779,6 @@ const ProfileEditPage = () => {
         });
       }
     } catch (err: any) {
-      console.error("Error al cambiar contraseña:", err);
-
       // Manejar diferentes tipos de errores
       if (err.response?.status === 400) {
         toast.error(
@@ -829,11 +847,13 @@ const ProfileEditPage = () => {
         {existingPhoto ? (
           <div className="space-y-4">
             <div className="relative">
-              <img
-                src={existingPhoto.image_url}
-                alt={`Cédula ${photoType === "front" ? "frontal" : "posterior"}`}
-                className="w-full h-48 object-cover rounded-lg"
-              />
+              <Zoom>
+                <img
+                  src={existingPhoto.image_url}
+                  alt={`Cédula ${photoType === "front" ? "frontal" : "posterior"}`}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+              </Zoom>
               <div
                 className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(existingPhoto.status)}`}
               >
@@ -865,17 +885,12 @@ const ProfileEditPage = () => {
               </button>
             </div>
 
-            {existingPhoto.description && (
-              <p className="text-sm text-gray-600">
-                {existingPhoto.description}
-              </p>
-            )}
-
-            {existingPhoto.reviewedBy && (
-              <p className="text-xs text-gray-500">
-                Revisado por: {existingPhoto.reviewedBy.name}
-              </p>
-            )}
+            {existingPhoto.description &&
+              existingPhoto.status === "rejected" && (
+                <p className="text-sm text-gray-600">
+                  Motivo rechazo: {existingPhoto.description}
+                </p>
+              )}
           </div>
         ) : (
           <div className="space-y-4">
