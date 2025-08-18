@@ -973,7 +973,7 @@ const ProfileEditPage = () => {
             {user && (
               <form onSubmit={handleSubmit}>
                 <Tabs defaultValue="personal">
-                  <TabsList className="w-full mb-6">
+                  <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
                     <TabsTrigger value="personal" className="flex-1">
                       Información personal
                     </TabsTrigger>

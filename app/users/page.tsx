@@ -413,8 +413,8 @@ const UsersPageContent = () => {
               <>
                 {/* Users List */}
                 {filteredUsers.length > 0 ? (
-                  <div className="overflow-hidden rounded-lg border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200 overflow-x-scroll">
                       <thead className="bg-gray-50">
                         <tr>
                           <th
@@ -837,7 +837,7 @@ const UsersPageContent = () => {
                             {field.name === "profile_image" && (
                               <div className="bg-white p-3 rounded border">
                                 {field.isCompleted ? (
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-3 flex-wrap">
                                     <Zoom>
                                       <img
                                         src={field.value}
