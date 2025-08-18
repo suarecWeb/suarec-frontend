@@ -1,7 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type React from "react";
-
+import {
+  IdPhotosService,
+  type IdPhoto,
+  type CreateIdPhotoRequest,
+} from "@/services/IdPhotosService";
+import { Trash2, Eye, XCircle, Clock, FileImage } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -26,6 +31,7 @@ import {
 } from "@/interfaces/user.interface";
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
 import toast from "react-hot-toast";
+import SupabaseService from "@/services/supabase.service";
 
 // Interfaces para el token
 interface TokenPayload {
@@ -177,6 +183,9 @@ const ProfileEditPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [idPhotos, setIdPhotos] = useState<IdPhoto[]>([]);
+  const [uploadingIdPhoto, setUploadingIdPhoto] = useState(false);
+  const [loadingIdPhotos, setLoadingIdPhotos] = useState(true);
   const router = useRouter();
 
   // Form state
@@ -211,6 +220,225 @@ const ProfileEditPage = () => {
     confirmPassword: "",
   });
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const fetchIdPhotos = async () => {
+    try {
+      setLoadingIdPhotos(true);
+      const photos = await IdPhotosService.getMyIdPhotos();
+      setIdPhotos(photos);
+    } catch (err) {
+      console.error("Error al cargar fotos de cédula:", err);
+      toast.error("No se pudieron cargar las fotos de cédula");
+    } finally {
+      setLoadingIdPhotos(false);
+    }
+  };
+
+  const handleUploadIdPhoto = async (
+    photoType: "front" | "back",
+    file: File,
+  ) => {
+    try {
+      setUploadingIdPhoto(true);
+
+      // Validar el archivo antes de subirlo
+      if (!file) {
+        toast.error("No se ha seleccionado ningún archivo");
+        return;
+      }
+
+      // Validar tipo de archivo
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Formato de archivo no válido. Use JPG, PNG o WebP");
+        return;
+      }
+
+      // Validar tamaño de archivo (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("El archivo es muy grande. Máximo 5MB permitido");
+        return;
+      }
+
+      // Toast informativo mientras se sube
+      toast.loading("Subiendo foto de cédula...", { id: "uploadIdPhoto" });
+
+      // Subir imagen a Supabase Storage
+      const uploadResult = await SupabaseService.uploadImage(
+        file,
+        "id-photos", // Carpeta específica para fotos de cédula
+      );
+
+      // Verificar si hubo error en la subida
+      if (uploadResult.error || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Error al subir la imagen");
+      }
+
+      // Crear objeto con datos de la foto para enviar al backend
+      const photoData: CreateIdPhotoRequest = {
+        image_url: uploadResult.url,
+        image_path: uploadResult.path,
+        photo_type: photoType,
+        description: `Foto de cédula - ${photoType === "front" ? "frontal" : "posterior"}`,
+      };
+
+      // Guardar en la base de datos a través del backend
+      await IdPhotosService.addIdPhoto(photoData);
+
+      // Toast de éxito
+      toast.success(
+        `Foto ${photoType === "front" ? "frontal" : "posterior"} subida exitosamente`,
+        { id: "uploadIdPhoto" },
+      );
+
+      // Recargar las fotos para mostrar la nueva
+      await fetchIdPhotos();
+    } catch (err: any) {
+      console.error("Error al subir foto de cédula:", err);
+
+      // Manejo específico de errores
+      if (err.response?.status === 400) {
+        toast.error(
+          "Ya existe una foto de este tipo. Use la opción de actualizar.",
+          { id: "uploadIdPhoto" },
+        );
+      } else if (err.message?.includes("subir imagen")) {
+        toast.error(`Error de almacenamiento: ${err.message}`, {
+          id: "uploadIdPhoto",
+        });
+      } else if (err.response?.data?.message) {
+        toast.error(`Error: ${err.response.data.message}`, {
+          id: "uploadIdPhoto",
+        });
+      } else {
+        toast.error("Error al subir la foto de cédula. Intenta nuevamente", {
+          id: "uploadIdPhoto",
+        });
+      }
+    } finally {
+      setUploadingIdPhoto(false);
+    }
+  };
+
+  // ========== FUNCIÓN AUXILIAR PARA ACTUALIZAR FOTO ==========
+  const handleUpdateIdPhoto = async (photoId: number, file: File) => {
+    try {
+      setUploadingIdPhoto(true);
+
+      // Validar el archivo antes de subirlo
+      if (!file) {
+        toast.error("No se ha seleccionado ningún archivo");
+        return;
+      }
+
+      // Validar tipo de archivo
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Formato de archivo no válido. Use JPG, PNG o WebP");
+        return;
+      }
+
+      // Validar tamaño de archivo (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("El archivo es muy grande. Máximo 5MB permitido");
+        return;
+      }
+
+      // Toast informativo
+      toast.loading("Actualizando foto de cédula...", { id: "updateIdPhoto" });
+
+      // Subir nueva imagen a Supabase Storage
+      const uploadResult = await SupabaseService.uploadImage(
+        file,
+        "id-photos", // Carpeta específica para fotos de cédula
+      );
+
+      // Verificar si hubo error en la subida
+      if (uploadResult.error || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Error al subir la imagen");
+      }
+
+      // Actualizar la foto existente en el backend
+      await IdPhotosService.updateIdPhoto(photoId, {
+        image_url: uploadResult.url,
+        image_path: uploadResult.path,
+      });
+
+      toast.success("Foto actualizada exitosamente", { id: "updateIdPhoto" });
+
+      // Recargar las fotos
+      await fetchIdPhotos();
+    } catch (err: any) {
+      console.error("Error al actualizar foto de cédula:", err);
+
+      // Manejo específico de errores
+      if (err.message?.includes("subir imagen")) {
+        toast.error(`❌ Error de almacenamiento: ${err.message}`, {
+          id: "updateIdPhoto",
+        });
+      } else if (err.response?.data?.message) {
+        toast.error(`❌ Error: ${err.response.data.message}`, {
+          id: "updateIdPhoto",
+        });
+      } else {
+        toast.error("❌ Error al actualizar la foto. Intenta nuevamente", {
+          id: "updateIdPhoto",
+        });
+      }
+    } finally {
+      setUploadingIdPhoto(false);
+    }
+  };
+
+  // Función para eliminar foto
+  const handleDeleteIdPhoto = async (photoId: number) => {
+    try {
+      await IdPhotosService.deleteIdPhoto(photoId);
+      toast.success("Foto eliminada exitosamente");
+      await fetchIdPhotos();
+    } catch (err) {
+      console.error("Error al eliminar foto:", err);
+      toast.error("Error al eliminar la foto");
+    }
+  };
+
+  // Función para obtener el color del estado
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "text-green-600 bg-green-50";
+      case "rejected":
+        return "text-red-600 bg-red-50";
+      case "pending":
+      default:
+        return "text-yellow-600 bg-yellow-50";
+    }
+  };
+
+  // Función para obtener el icono del estado
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle className="h-4 w-4" />;
+      case "rejected":
+        return <XCircle className="h-4 w-4" />;
+      case "pending":
+      default:
+        return <Clock className="h-4 w-4" />;
+    }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -469,6 +697,10 @@ const ProfileEditPage = () => {
     ? getRoleNames(user.roles).includes("BUSINESS")
     : false;
 
+  const hasPersonRole = user?.roles
+    ? getRoleNames(user.roles).includes("PERSON")
+    : false;
+
   // Función para manejar cambios en los campos de contraseña
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -558,6 +790,121 @@ const ProfileEditPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      fetchIdPhotos();
+    }
+  }, [user]);
+
+  const IdPhotoUploadButton = ({
+    photoType,
+    existingPhoto,
+  }: {
+    photoType: "front" | "back";
+    existingPhoto?: IdPhoto;
+  }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        if (existingPhoto) {
+          handleUpdateIdPhoto(existingPhoto.id, file);
+        } else {
+          handleUploadIdPhoto(photoType, file);
+        }
+      }
+    };
+
+    return (
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+
+        {existingPhoto ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <img
+                src={existingPhoto.image_url}
+                alt={`Cédula ${photoType === "front" ? "frontal" : "posterior"}`}
+                className="w-full h-48 object-cover rounded-lg"
+              />
+              <div
+                className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(existingPhoto.status)}`}
+              >
+                {getStatusIcon(existingPhoto.status)}
+                {existingPhoto.status === "approved" && "Aprobada"}
+                {existingPhoto.status === "rejected" && "Rechazada"}
+                {existingPhoto.status === "pending" && "Pendiente"}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingIdPhoto}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploadingIdPhoto ? "Subiendo..." : "Cambiar"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteIdPhoto(existingPhoto.id)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+              </button>
+            </div>
+
+            {existingPhoto.description && (
+              <p className="text-sm text-gray-600">
+                {existingPhoto.description}
+              </p>
+            )}
+
+            {existingPhoto.reviewedBy && (
+              <p className="text-xs text-gray-500">
+                Revisado por: {existingPhoto.reviewedBy.name}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <FileImage className="h-12 w-12 text-gray-400 mx-auto" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Foto {photoType === "front" ? "frontal" : "posterior"} de cédula
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Sube la foto{" "}
+                {photoType === "front" ? "del frente" : "de la parte posterior"}{" "}
+                de tu cédula de ciudadanía
+              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingIdPhoto}
+                className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploadingIdPhoto ? "Subiendo..." : "Subir foto"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
@@ -618,6 +965,11 @@ const ProfileEditPage = () => {
                     {hasBusinessRole && (
                       <TabsTrigger value="company" className="flex-1">
                         Información de empresa
+                      </TabsTrigger>
+                    )}
+                    {hasPersonRole && (
+                      <TabsTrigger value="id-photos" className="flex-1">
+                        Fotos de cédula
                       </TabsTrigger>
                     )}
                     <TabsTrigger value="security" className="flex-1">
@@ -1371,6 +1723,97 @@ const ProfileEditPage = () => {
                       </div>
                     </div>
                   </TabsContent>
+
+                  {hasPersonRole && (
+                    <TabsContent value="id-photos">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Verificación de identidad
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-6">
+                            Sube las fotos de tu cédula de ciudadanía para
+                            verificar tu identidad. Las fotos serán revisadas
+                            por nuestro equipo.
+                          </p>
+                        </div>
+
+                        {loadingIdPhotos ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-[#097EEC]" />
+                            <span className="ml-2">
+                              Cargando fotos de cédula...
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <IdPhotoUploadButton
+                              photoType="front"
+                              existingPhoto={idPhotos.find(
+                                (photo) => photo.photo_type === "front",
+                              )}
+                            />
+                            <IdPhotoUploadButton
+                              photoType="back"
+                              existingPhoto={idPhotos.find(
+                                (photo) => photo.photo_type === "back",
+                              )}
+                            />
+                          </div>
+                        )}
+
+                        {idPhotos.length > 0 && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 className="font-medium text-blue-900 mb-2">
+                              Estado de verificación
+                            </h4>
+                            <div className="space-y-2">
+                              {idPhotos.map((photo) => (
+                                <div
+                                  key={photo.id}
+                                  className="flex items-center justify-between text-sm"
+                                >
+                                  <span className="text-blue-800">
+                                    Foto{" "}
+                                    {photo.photo_type === "front"
+                                      ? "frontal"
+                                      : "posterior"}
+                                  </span>
+                                  <div
+                                    className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(photo.status)}`}
+                                  >
+                                    {getStatusIcon(photo.status)}
+                                    {photo.status === "approved" && "Aprobada"}
+                                    {photo.status === "rejected" && "Rechazada"}
+                                    {photo.status === "pending" &&
+                                      "En revisión"}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            Recomendaciones
+                          </h4>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            <li>• Las fotos deben ser claras y legibles</li>
+                            <li>
+                              • Asegúrate de que toda la información sea visible
+                            </li>
+                            <li>• Evita reflejos y sombras</li>
+                            <li>• Usa buena iluminación</li>
+                            <li>
+                              • Los archivos deben ser en formato JPG, PNG o
+                              WebP
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  )}
 
                   {/* Botón de guardar solo para información personal y empresa */}
                   <div className="mt-8 flex justify-end">
