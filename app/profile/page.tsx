@@ -21,7 +21,8 @@ import {
   Trash2,
   CheckCircle,
   BadgeCheck,
-  AlertTriangle, // Agregar esta importación
+  AlertTriangle,
+  FileImage, // Agregar esta importación
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -228,6 +229,14 @@ const ProfilePage = () => {
       });
     }
 
+    if ((user?.idPhotos?.length ?? 0) < 2) {
+      missingInfo.push({
+        field: "idPhotos",
+        label: "Fotos de cédula",
+        icon: FileImage,
+      });
+    }
+
     const isProfileComplete = missingInfo.length === 0;
 
     return (
@@ -271,8 +280,6 @@ const ProfilePage = () => {
       </div>
     );
   };
-
-  console.log("User data:", user);
 
   return (
     <>
