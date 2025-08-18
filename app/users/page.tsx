@@ -38,6 +38,7 @@ import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
+import { IconId } from "@tabler/icons-react";
 
 interface RequiredField {
   name: string;
@@ -431,6 +432,12 @@ const UsersPageContent = () => {
                           </th>
                           <th
                             scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                          >
+                            # Cedula
+                          </th>
+                          <th
+                            scope="col"
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
                             Rol
@@ -480,6 +487,14 @@ const UsersPageContent = () => {
                                   <Mail className="h-3 w-3 text-gray-400" />
                                   <span className="text-sm text-gray-500">
                                     {user.email}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                                <div className="flex items-center gap-1">
+                                  <IconId className="h-3 w-3 text-gray-400" />
+                                  <span className="text-sm text-gray-500">
+                                    {user.cedula || "Ninguna"}
                                   </span>
                                 </div>
                               </td>

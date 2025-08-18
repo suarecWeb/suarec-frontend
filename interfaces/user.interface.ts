@@ -62,6 +62,7 @@ export interface User {
   profession?: string;
   skills?: string[];
   isVerify?: boolean;
+  cedula?: string;
 
   // Relaciones
   idPhotos?: {
