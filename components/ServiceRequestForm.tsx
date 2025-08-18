@@ -7,7 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SimpleSelect, SimpleSelectItem } from "@/components/ui/simple-select";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import PublicationService from "@/services/PublicationsService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -17,7 +20,10 @@ interface ServiceRequestFormProps {
   onCancel?: () => void;
 }
 
-export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceRequestFormProps) {
+export default function ServiceRequestForm({
+  onSuccess,
+  onCancel,
+}: ServiceRequestFormProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,7 +40,7 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error("Debes estar autenticado para crear una solicitud");
       return;
@@ -74,9 +80,9 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -113,27 +119,37 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Categoría</Label>
-              <SimpleSelect 
-                value={formData.category} 
+              <SimpleSelect
+                value={formData.category}
                 onValueChange={(value) => handleInputChange("category", value)}
                 placeholder="Selecciona una categoría"
               >
                 <SimpleSelectItem value="plomeria">Plomería</SimpleSelectItem>
-                <SimpleSelectItem value="electricidad">Electricidad</SimpleSelectItem>
-                <SimpleSelectItem value="carpinteria">Carpintería</SimpleSelectItem>
+                <SimpleSelectItem value="electricidad">
+                  Electricidad
+                </SimpleSelectItem>
+                <SimpleSelectItem value="carpinteria">
+                  Carpintería
+                </SimpleSelectItem>
                 <SimpleSelectItem value="limpieza">Limpieza</SimpleSelectItem>
-                <SimpleSelectItem value="jardineria">Jardinería</SimpleSelectItem>
+                <SimpleSelectItem value="jardineria">
+                  Jardinería
+                </SimpleSelectItem>
                 <SimpleSelectItem value="pintura">Pintura</SimpleSelectItem>
-                <SimpleSelectItem value="albañileria">Albañilería</SimpleSelectItem>
-                <SimpleSelectItem value="tecnologia">Tecnología</SimpleSelectItem>
+                <SimpleSelectItem value="albañileria">
+                  Albañilería
+                </SimpleSelectItem>
+                <SimpleSelectItem value="tecnologia">
+                  Tecnología
+                </SimpleSelectItem>
                 <SimpleSelectItem value="otros">Otros</SimpleSelectItem>
               </SimpleSelect>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="urgency">Urgencia</Label>
-              <SimpleSelect 
-                value={formData.urgency} 
+              <SimpleSelect
+                value={formData.urgency}
                 onValueChange={(value) => handleInputChange("urgency", value)}
               >
                 <SimpleSelectItem value="LOW">Baja</SimpleSelectItem>
@@ -157,13 +173,15 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
 
             <div className="space-y-2">
               <Label htmlFor="priceUnit">Unidad de precio</Label>
-              <SimpleSelect 
-                value={formData.priceUnit} 
+              <SimpleSelect
+                value={formData.priceUnit}
                 onValueChange={(value) => handleInputChange("priceUnit", value)}
                 placeholder="Selecciona unidad"
               >
                 <SimpleSelectItem value="hour">Por hora</SimpleSelectItem>
-                <SimpleSelectItem value="project">Por proyecto</SimpleSelectItem>
+                <SimpleSelectItem value="project">
+                  Por proyecto
+                </SimpleSelectItem>
                 <SimpleSelectItem value="day">Por día</SimpleSelectItem>
                 <SimpleSelectItem value="monthly">Mensual</SimpleSelectItem>
               </SimpleSelect>
@@ -185,7 +203,9 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
             <Input
               id="preferredSchedule"
               value={formData.preferredSchedule}
-              onChange={(e) => handleInputChange("preferredSchedule", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("preferredSchedule", e.target.value)
+              }
               placeholder="Ej: Lunes a viernes por la mañana"
             />
           </div>
@@ -195,7 +215,9 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
             <Textarea
               id="requirements"
               value={formData.requirements}
-              onChange={(e) => handleInputChange("requirements", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("requirements", e.target.value)
+              }
               placeholder="Experiencia requerida, herramientas necesarias, etc."
               rows={3}
             />
@@ -206,7 +228,12 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
               {isLoading ? "Creando..." : "Crear Solicitud"}
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                className="flex-1"
+              >
                 Cancelar
               </Button>
             )}
@@ -215,4 +242,4 @@ export default function ServiceRequestForm({ onSuccess, onCancel }: ServiceReque
       </CardContent>
     </Card>
   );
-} 
+}

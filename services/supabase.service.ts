@@ -165,6 +165,48 @@ const SupabaseService = {
       return false;
     }
   },
+
+  getPathFromUrl(publicUrl: string): string | null {
+    try {
+      const url = new URL(publicUrl);
+      const pathParts = url.pathname.split("/");
+      const bucketIndex = pathParts.indexOf("public");
+
+      if (bucketIndex !== -1 && pathParts.length > bucketIndex + 2) {
+        const path = pathParts.slice(bucketIndex + 2).join("/");
+        return path;
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async deleteIdPhotoFromStorage(
+    imagePath: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      this.checkConfig();
+
+      const { error } = await supabase.storage
+        .from("suarec-media")
+        .remove([imagePath]);
+
+      if (error) {
+        throw new Error(
+          `Error al eliminar imagen del storage: ${error.message}`,
+        );
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  },
 };
 
 export default SupabaseService;

@@ -62,8 +62,18 @@ export interface User {
   profession?: string;
   skills?: string[];
   isVerify?: boolean;
+  cedula?: string;
 
   // Relaciones
+  idPhotos?: {
+    id: string;
+    image_url: string;
+    status: "pending" | "approved" | "rejected";
+    reviewed_by?: {
+      id: string;
+      name: string;
+    };
+  }[];
   company?: Company;
   publications?: Publication[];
   comments?: Comment[];
