@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, AlertTriangle, ArrowLeft } from "lucide-react";
 import Navbar from "../../../components/navbar";
 import { ContractService } from "../../../services/ContractService";
 import toast from "react-hot-toast";
 
-export default function PenaltySuccessPage() {
+function PenaltySuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
@@ -16,7 +16,6 @@ export default function PenaltySuccessPage() {
 
   useEffect(() => {
     const contractIdParam = searchParams.get("contract_id");
-    const paymentId = searchParams.get("payment_id");
     const status = searchParams.get("status");
 
     if (!contractIdParam) {
@@ -27,9 +26,7 @@ export default function PenaltySuccessPage() {
 
     setContractId(contractIdParam);
 
-    // Verificar el estado del pago
     if (status === "success" || status === "completed") {
-      // Procesar la cancelación del contrato
       processContractCancellation(contractIdParam);
     } else {
       setError("El pago no se completó correctamente");
@@ -39,12 +36,7 @@ export default function PenaltySuccessPage() {
 
   const processContractCancellation = async (contractId: string) => {
     try {
-      // Aquí se debería verificar que el pago esté confirmado en el backend
-      // Por ahora, asumimos que el pago fue exitoso
-
-      // Cancelar el contrato
       await ContractService.cancelContract(contractId);
-
       toast.success("Contrato cancelado exitosamente");
       setIsProcessing(false);
     } catch (error) {
@@ -62,6 +54,7 @@ export default function PenaltySuccessPage() {
     router.push("/");
   };
 
+  // --- Renderizado con estados ---
   if (error) {
     return (
       <>
@@ -147,7 +140,6 @@ export default function PenaltySuccessPage() {
                 Has pagado la penalización de $10,000 pesos colombianos y tu
                 contrato ha sido cancelado.
               </p>
-
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
                 <h3 className="font-medium text-green-800 mb-2">
                   Resumen de la transacción:
@@ -158,7 +150,6 @@ export default function PenaltySuccessPage() {
                   <li>✅ Proceso completado</li>
                 </ul>
               </div>
-
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -174,7 +165,6 @@ export default function PenaltySuccessPage() {
                   </div>
                 </div>
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={handleGoToContracts}
@@ -195,5 +185,13 @@ export default function PenaltySuccessPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function PenaltySuccessPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Cargando...</div>}>
+      <PenaltySuccessContent />
+    </Suspense>
   );
 }
