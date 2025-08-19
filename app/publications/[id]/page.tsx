@@ -34,6 +34,7 @@ import {
   CheckCircle,
   XCircle,
   TrendingUp,
+  MessageCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Publication } from "@/interfaces/publication.interface";
@@ -71,6 +72,8 @@ const PublicationDetailPage = () => {
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState("");
+  const [applicationPrice, setApplicationPrice] = useState("");
+  const [applicationPriceUnit, setApplicationPriceUnit] = useState("");
   const [showApplicationModal, setShowApplicationModal] = useState(false);
 
   // Estados para contratación
@@ -82,6 +85,10 @@ const PublicationDetailPage = () => {
     totalBids: number;
   }>({ contracts: [], totalBids: 0 });
   const [isLoadingBids, setIsLoadingBids] = useState(false);
+
+  // Estados para aplicaciones
+  const [applications, setApplications] = useState<any[]>([]);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
 
   // Estados para calificaciones del usuario
   const [userRatingStats, setUserRatingStats] = useState<{
@@ -175,6 +182,10 @@ const PublicationDetailPage = () => {
   useEffect(() => {
     if (publication?.id) {
       loadPublicationBids();
+      // Si es una solicitud de servicio, también cargar aplicaciones
+      if (publication.type === "SERVICE_REQUEST") {
+        loadApplications();
+      }
     }
   }, [publication?.id]);
 
@@ -253,6 +264,8 @@ const PublicationDetailPage = () => {
         userId: currentUserId,
         publicationId: publication.id,
         message: applicationMessage.trim() || undefined,
+        price: applicationPrice ? Number(applicationPrice) : undefined,
+        priceUnit: applicationPriceUnit || undefined,
       };
 
       const response =
@@ -262,6 +275,8 @@ const PublicationDetailPage = () => {
       setApplicationId(response.data.id || null);
       setShowApplicationModal(false);
       setApplicationMessage("");
+      setApplicationPrice("");
+      setApplicationPriceUnit("");
 
       // Mostrar mensaje de éxito
       setError(null);
@@ -361,6 +376,145 @@ const PublicationDetailPage = () => {
     }
   };
 
+  // Función para cargar aplicaciones de una solicitud
+  const loadApplications = async () => {
+    if (!publication?.id) return;
+
+    try {
+      setIsLoadingApplications(true);
+      const response = await ApplicationService.getPublicationApplications(
+        publication.id,
+      );
+      console.log("🔍 Debug - Aplicaciones cargadas:", response.data.data);
+
+      // Log detallado de cada aplicación
+      response.data.data.forEach((app: any, index: number) => {
+        console.log(`🔍 Debug - Aplicación ${index + 1}:`, {
+          id: app.id,
+          price: app.price,
+          priceUnit: app.priceUnit,
+          message: app.message,
+          status: app.status,
+          user: app.user?.name,
+        });
+      });
+
+      setApplications(response.data.data || []);
+    } catch (error) {
+      console.error("Error loading applications:", error);
+    } finally {
+      setIsLoadingApplications(false);
+    }
+  };
+
+  // Función para aceptar una aplicación
+  const handleAcceptApplication = async (applicationId: string) => {
+    try {
+      console.log("Intentando aceptar aplicación:", applicationId);
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "ACCEPTED",
+        },
+      );
+      console.log("Respuesta del servidor:", response);
+      toast.success("Aplicación aceptada");
+      // Recargar aplicaciones
+      loadApplications();
+    } catch (error: any) {
+      console.error("Error accepting application:", error);
+      console.error("Error details:", error.response?.data);
+      toast.error("No se pudo aceptar la aplicación. Inténtalo de nuevo.");
+    }
+  };
+
+  // Función para rechazar una aplicación
+  const handleRejectApplication = async (applicationId: string) => {
+    try {
+      console.log("Intentando rechazar aplicación:", applicationId);
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "REJECTED",
+        },
+      );
+      console.log("Respuesta del servidor:", response);
+      toast.success("Aplicación rechazada");
+      // Recargar aplicaciones
+      loadApplications();
+    } catch (error: any) {
+      console.error("Error rejecting application:", error);
+      console.error("Error details:", error.response?.data);
+      toast.error("No se pudo rechazar la aplicación. Inténtalo de nuevo.");
+    }
+  };
+
+  // Función para iniciar el servicio (cambiar a EN_PROGRESO)
+  const handleStartService = async (applicationId: string) => {
+    try {
+      console.log("Intentando iniciar servicio:", applicationId);
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "IN_PROGRESS",
+        },
+      );
+      console.log("Respuesta del servidor:", response);
+      toast.success("Servicio iniciado");
+      // Recargar aplicaciones
+      loadApplications();
+    } catch (error: any) {
+      console.error("Error starting service:", error);
+      console.error("Error details:", error.response?.data);
+      toast.error("No se pudo iniciar el servicio. Inténtalo de nuevo.");
+    }
+  };
+
+  // Función para terminar el servicio
+  const handleCompleteService = async (applicationId: string) => {
+    try {
+      console.log("Intentando terminar servicio:", applicationId);
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "COMPLETED",
+        },
+      );
+      console.log("Respuesta del servidor:", response);
+      toast.success("Servicio completado. Procede con el pago.");
+      // Recargar aplicaciones
+      loadApplications();
+    } catch (error: any) {
+      console.error("Error completing service:", error);
+      console.error("Error details:", error.response?.data);
+      toast.error("No se pudo completar el servicio. Inténtalo de nuevo.");
+    }
+  };
+
+  // Función para ir al chat
+  const handleGoToChat = (application: any) => {
+    // Navegar al chat con el aplicante usando el parámetro 'sender'
+    router.push(`/chat?sender=${application.user?.id}`);
+  };
+
+  // Función para proceder con el pago
+  const handleProceedToPayment = (application: any) => {
+    // Navegar a la página de pagos con los datos de la aplicación
+    const paymentData = {
+      amount: application.price,
+      recipientId: application.user?.id,
+      recipientName: application.user?.name,
+      serviceDescription: publication?.title,
+      applicationId: application.id,
+    };
+
+    // Guardar los datos de pago en localStorage para la página de pagos
+    localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
+
+    // Navegar a la página de pagos
+    router.push("/payments");
+  };
+
   return (
     <>
       <Navbar />
@@ -399,11 +553,14 @@ const PublicationDetailPage = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Aplicar a esta publicación
+                  {publication?.type === "SERVICE_REQUEST"
+                    ? "Aplicar a esta solicitud"
+                    : "Aplicar a esta publicación"}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  ¿Estás interesado en esta oportunidad? Puedes enviar un
-                  mensaje opcional junto con tu aplicación.
+                  {publication?.type === "SERVICE_REQUEST"
+                    ? "¿Estás interesado en esta solicitud? Puedes enviar un mensaje opcional junto con tu propuesta."
+                    : "¿Estás interesado en esta oportunidad? Puedes enviar un mensaje opcional junto con tu aplicación."}
                 </p>
 
                 <textarea
@@ -415,11 +572,53 @@ const PublicationDetailPage = () => {
                   disabled={isApplying}
                 />
 
+                {/* Campos de precio para solicitudes de servicio */}
+                {publication?.type === "SERVICE_REQUEST" && (
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio propuesto
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        placeholder="Ej: 50000"
+                        value={applicationPrice}
+                        onChange={(e) => setApplicationPrice(e.target.value)}
+                        disabled={isApplying}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Unidad
+                      </label>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        value={applicationPriceUnit}
+                        onChange={(e) =>
+                          setApplicationPriceUnit(e.target.value)
+                        }
+                        disabled={isApplying}
+                      >
+                        <option value="">Seleccionar</option>
+                        <option value="hour">Por hora</option>
+                        <option value="day">Por día</option>
+                        <option value="service">Por servicio</option>
+                        <option value="project">Por proyecto</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => {
                       setShowApplicationModal(false);
                       setApplicationMessage("");
+                      setApplicationPrice("");
+                      setApplicationPriceUnit("");
                     }}
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors"
                     disabled={isApplying}
@@ -598,7 +797,28 @@ const PublicationDetailPage = () => {
                     {/* Botones de Aplicar/Contratar */}
                     {currentUserId && publication.userId !== currentUserId && (
                       <div className="mt-6 pt-4 border-t border-gray-200">
-                        {isCompanyPublication() ? (
+                        {publication.type === "SERVICE_REQUEST" ? (
+                          // Botón para aplicar a solicitud de servicio
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            {hasApplied ? (
+                              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-3 rounded-lg">
+                                <CheckCircle className="h-5 w-5" />
+                                <span className="font-medium">
+                                  Ya aplicaste a esta solicitud
+                                </span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowApplicationModal(true)}
+                                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+                                disabled={isApplying}
+                              >
+                                <Briefcase className="h-5 w-5" />
+                                Aplicar a esta solicitud
+                              </button>
+                            )}
+                          </div>
+                        ) : isCompanyPublication() ? (
                           // Botón para aplicar a empresa
                           <div className="flex flex-col sm:flex-row gap-4">
                             {hasApplied ? (
@@ -620,7 +840,7 @@ const PublicationDetailPage = () => {
                             )}
                           </div>
                         ) : (
-                          // Botón para contratar persona
+                          // Botón para contratar servicio ofrecido
                           <div className="flex flex-col sm:flex-row gap-4">
                             <button
                               onClick={handleHire}
@@ -633,9 +853,11 @@ const PublicationDetailPage = () => {
                         )}
 
                         <p className="text-sm text-gray-500 mt-3">
-                          {isCompanyPublication()
-                            ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
-                            : "Inicia el proceso de contratación con negociación de precios."}
+                          {publication.type === "SERVICE_REQUEST"
+                            ? "Al aplicar, el solicitante podrá ver tu perfil y propuesta para decidir si te contrata."
+                            : isCompanyPublication()
+                              ? "Al aplicar, la empresa podrá ver tu perfil y decidir si contactarte."
+                              : "Inicia el proceso de contratación con negociación de precios."}
                         </p>
                       </div>
                     )}
@@ -717,6 +939,75 @@ const PublicationDetailPage = () => {
                         </div>
                       </div>
 
+                      {/* Campos específicos para solicitudes de servicio */}
+                      {publication.type === "SERVICE_REQUEST" && (
+                        <div className="space-y-4">
+                          {publication.requirements && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
+                                Requisitos Específicos
+                              </h4>
+                              <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                                {publication.requirements}
+                              </p>
+                            </div>
+                          )}
+
+                          {publication.location && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <span className="w-1 h-5 bg-green-500 rounded-full"></span>
+                                Ubicación
+                              </h4>
+                              <p className="text-gray-700">
+                                {publication.location}
+                              </p>
+                            </div>
+                          )}
+
+                          {publication.urgency && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <span className="w-1 h-5 bg-orange-500 rounded-full"></span>
+                                Urgencia
+                              </h4>
+                              <p className="text-gray-700">
+                                {publication.urgency === "low" &&
+                                  "Baja (1-2 semanas)"}
+                                {publication.urgency === "medium" &&
+                                  "Media (3-5 días)"}
+                                {publication.urgency === "high" &&
+                                  "Alta (1-2 días)"}
+                                {publication.urgency === "urgent" &&
+                                  "Urgente (Hoy/Mañana)"}
+                              </p>
+                            </div>
+                          )}
+
+                          {publication.preferredSchedule && (
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <span className="w-1 h-5 bg-purple-500 rounded-full"></span>
+                                Horario Preferido
+                              </h4>
+                              <p className="text-gray-700">
+                                {publication.preferredSchedule === "morning" &&
+                                  "Mañana (8:00 AM - 12:00 PM)"}
+                                {publication.preferredSchedule ===
+                                  "afternoon" && "Tarde (12:00 PM - 6:00 PM)"}
+                                {publication.preferredSchedule === "evening" &&
+                                  "Noche (6:00 PM - 10:00 PM)"}
+                                {publication.preferredSchedule === "weekend" &&
+                                  "Fines de semana"}
+                                {publication.preferredSchedule === "flexible" &&
+                                  "Horario flexible"}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Ofertas recibidas - Solo mostrar si es el autor de la publicación */}
                       {currentUserId &&
                         publication.userId === currentUserId &&
@@ -725,7 +1016,9 @@ const PublicationDetailPage = () => {
                             <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
                               <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
                               <TrendingUp className="h-5 w-5 text-[#097EEC]" />
-                              Ofertas Recibidas
+                              {publication.type === "SERVICE_REQUEST"
+                                ? "Aplicaciones Recibidas"
+                                : "Ofertas Recibidas"}
                               {publicationBids.totalBids > 0 && (
                                 <span className="bg-[#097EEC] text-white text-sm px-2 py-1 rounded-full">
                                   {publicationBids.totalBids}
@@ -835,6 +1128,305 @@ const PublicationDetailPage = () => {
                                 <p>
                                   No hay ofertas aún. ¡Las ofertas aparecerán
                                   aquí cuando alguien contrate tu servicio!
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      {/* Aplicaciones recibidas - Solo mostrar si es el autor de una solicitud */}
+                      {currentUserId &&
+                        publication.userId === currentUserId &&
+                        publication.type === "SERVICE_REQUEST" && (
+                          <div className="border-t border-gray-200 pt-6 mt-8">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                              <span className="w-1 h-6 bg-green-500 rounded-full"></span>
+                              <Briefcase className="h-5 w-5 text-green-500" />
+                              Aplicaciones Recibidas
+                              {applications.length > 0 && (
+                                <span className="bg-green-500 text-white text-sm px-2 py-1 rounded-full">
+                                  {applications.length}
+                                </span>
+                              )}
+                            </h3>
+
+                            {isLoadingApplications ? (
+                              <div className="space-y-4">
+                                {Array.from({ length: 3 }).map((_, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                  >
+                                    <Skeleton className="h-4 w-32 mb-2" />
+                                    <Skeleton className="h-3 w-48" />
+                                  </div>
+                                ))}
+                              </div>
+                            ) : applications.length > 0 ? (
+                              <div className="space-y-4">
+                                {applications.map((application) => (
+                                  <div
+                                    key={application.id}
+                                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                                  >
+                                    <div className="flex justify-between items-start mb-3">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                          <UserIcon className="h-5 w-5 text-white" />
+                                        </div>
+                                        <div>
+                                          <p className="font-medium text-gray-900">
+                                            {application.user?.name ||
+                                              "Usuario"}
+                                          </p>
+                                          <p className="text-sm text-gray-500">
+                                            {formatDate(application.created_at)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span
+                                          className={`px-2 py-1 text-xs rounded-full ${
+                                            application.status === "PENDING"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : application.status ===
+                                                  "ACCEPTED"
+                                                ? "bg-green-100 text-green-800"
+                                                : application.status ===
+                                                    "IN_PROGRESS"
+                                                  ? "bg-blue-100 text-blue-800"
+                                                  : application.status ===
+                                                      "COMPLETED"
+                                                    ? "bg-purple-100 text-purple-800"
+                                                    : application.status ===
+                                                        "REJECTED"
+                                                      ? "bg-red-100 text-red-800"
+                                                      : "bg-gray-100 text-gray-800"
+                                          }`}
+                                        >
+                                          {application.status === "PENDING" &&
+                                            "Pendiente"}
+                                          {application.status === "ACCEPTED" &&
+                                            "Aceptada"}
+                                          {application.status ===
+                                            "IN_PROGRESS" && "En Progreso"}
+                                          {application.status === "COMPLETED" &&
+                                            "Completado"}
+                                          {application.status === "REJECTED" &&
+                                            "Rechazada"}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {application.message && (
+                                      <p className="text-sm text-gray-600 mb-3">
+                                        {application.message}
+                                      </p>
+                                    )}
+
+                                    {/* Mostrar precio si existe */}
+                                    {application.price && (
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-sm font-medium text-green-800">
+                                            Precio propuesto:
+                                          </span>
+                                          <span className="text-lg font-bold text-green-600">
+                                            $
+                                            {application.price.toLocaleString()}
+                                          </span>
+                                        </div>
+                                        {application.priceUnit && (
+                                          <span className="text-xs text-green-600">
+                                            por {application.priceUnit}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Botones de acción según el estado y el rol del usuario */}
+                                    {(() => {
+                                      const isOwner =
+                                        currentUserId ===
+                                        Number(publication?.user?.id);
+                                      console.log(
+                                        "🔍 Debug autorización botones:",
+                                        {
+                                          currentUserId,
+                                          publicationUserId:
+                                            publication?.user?.id,
+                                          publicationUserIdNumber: Number(
+                                            publication?.user?.id,
+                                          ),
+                                          isOwner,
+                                          applicationStatus: application.status,
+                                          applicationId: application.id,
+                                          publication: publication,
+                                        },
+                                      );
+
+                                      // Mostrar siempre para debug
+                                      console.log(
+                                        "🔍 Mostrando botones para aplicación:",
+                                        application.status,
+                                      );
+
+                                      return isOwner;
+                                    })() && (
+                                      <div className="flex gap-2 mt-3">
+                                        {/* Botones para aplicaciones pendientes */}
+                                        {application.status === "PENDING" && (
+                                          <>
+                                            <button
+                                              onClick={() =>
+                                                handleAcceptApplication(
+                                                  application.id,
+                                                )
+                                              }
+                                              className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                                            >
+                                              Aceptar
+                                            </button>
+                                            <button
+                                              onClick={() =>
+                                                handleRejectApplication(
+                                                  application.id,
+                                                )
+                                              }
+                                              className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                                            >
+                                              Rechazar
+                                            </button>
+                                          </>
+                                        )}
+
+                                        {/* Botones para aplicaciones aceptadas */}
+                                        {application.status === "ACCEPTED" && (
+                                          <>
+                                            <button
+                                              onClick={() =>
+                                                handleGoToChat(application)
+                                              }
+                                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                            >
+                                              <MessageCircle className="h-4 w-4" />
+                                              Ir al Chat
+                                            </button>
+                                            <button
+                                              onClick={() =>
+                                                handleStartService(
+                                                  application.id,
+                                                )
+                                              }
+                                              className="px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+                                            >
+                                              Iniciar Servicio
+                                            </button>
+                                          </>
+                                        )}
+
+                                        {/* Botones para servicios en progreso */}
+                                        {application.status ===
+                                          "IN_PROGRESS" && (
+                                          <>
+                                            <button
+                                              onClick={() =>
+                                                handleGoToChat(application)
+                                              }
+                                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                            >
+                                              <MessageCircle className="h-4 w-4" />
+                                              Ir al Chat
+                                            </button>
+                                            <button
+                                              onClick={() =>
+                                                handleCompleteService(
+                                                  application.id,
+                                                )
+                                              }
+                                              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                                            >
+                                              Terminar Servicio
+                                            </button>
+                                          </>
+                                        )}
+
+                                        {/* Estado completado */}
+                                        {application.status === "COMPLETED" && (
+                                          <div className="space-y-3">
+                                            <div className="flex items-center gap-2 text-purple-600 bg-purple-50 px-4 py-2 rounded-lg">
+                                              <CheckCircle className="h-5 w-5" />
+                                              <span className="text-sm font-medium">
+                                                Servicio completado
+                                              </span>
+                                            </div>
+                                            <button
+                                              onClick={() =>
+                                                handleProceedToPayment(
+                                                  application,
+                                                )
+                                              }
+                                              className="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                              <span className="font-medium">
+                                                Proceder con el Pago
+                                              </span>
+                                              <span className="text-xs">
+                                                $
+                                                {application.price?.toLocaleString() ||
+                                                  0}
+                                              </span>
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* DEBUG: Mostrar botones sin autorización temporalmente */}
+                                    {application.status === "ACCEPTED" && (
+                                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p className="text-xs text-yellow-800 mb-2">
+                                          🔍 DEBUG - Botones sin autorización:
+                                        </p>
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={() =>
+                                              handleGoToChat(application)
+                                            }
+                                            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                          >
+                                            <MessageCircle className="h-4 w-4" />
+                                            Ir al Chat
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleStartService(application.id)
+                                            }
+                                            className="px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
+                                          >
+                                            Iniciar Servicio
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <Link
+                                      href={`/profile/${application.user?.id}`}
+                                    >
+                                      <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                        Ver perfil
+                                      </button>
+                                    </Link>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-gray-500">
+                                <Briefcase className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                <p>
+                                  No hay aplicaciones aún. ¡Las aplicaciones
+                                  aparecerán aquí cuando alguien aplique a tu
+                                  solicitud!
                                 </p>
                               </div>
                             )}
@@ -1023,7 +1615,9 @@ const PublicationDetailPage = () => {
                       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                           <span className="w-1 h-5 bg-[#097EEC] rounded-full"></span>
-                          Información del Proveedor
+                          {publication?.type === "SERVICE_REQUEST"
+                            ? "Información del Solicitante"
+                            : "Información del Proveedor"}
                         </h3>
 
                         {author ? (
@@ -1045,7 +1639,7 @@ const PublicationDetailPage = () => {
                                         : 0,
                                       name: author.name,
                                       profile_image: author.profile_image,
-                                      email: author.email,
+                                      // email: author.email, // Ocultar email
                                     }}
                                     size="lg"
                                   />
@@ -1060,7 +1654,7 @@ const PublicationDetailPage = () => {
                                       : 0,
                                     name: author.name,
                                     profile_image: author.profile_image,
-                                    email: author.email,
+                                    // email: author.email, // Ocultar email
                                   }}
                                   size="lg"
                                 />
@@ -1115,6 +1709,7 @@ const PublicationDetailPage = () => {
                               </div>
                             )}
 
+                            {/* Ocultar información privada del autor
                             <div className="space-y-2">
                               {author.email && (
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -1129,6 +1724,7 @@ const PublicationDetailPage = () => {
                                 </div>
                               )}
                             </div>
+                            */}
 
                             {/* Rating section */}
                             {userRatingStats &&

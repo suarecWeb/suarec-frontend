@@ -2,8 +2,12 @@ import { User } from "./user.interface";
 import { Comment } from "./comment.interface";
 
 export enum PublicationType {
-  SERVICE = "SERVICE",
-  JOB = "JOB",
+  // Tipos de servicios
+  SERVICE = "SERVICE", // Usuario ofrece servicios (OFERTA)
+  SERVICE_REQUEST = "SERVICE_REQUEST", // Usuario busca servicios (SOLICITUD)
+
+  // Tipos de empleos
+  JOB = "JOB", // Empresa ofrece vacante
 }
 
 export interface Publication {
@@ -12,8 +16,9 @@ export interface Publication {
   description?: string;
   created_at: string | Date;
   modified_at: Date;
+  deleted_at?: Date;
   category: string;
-  type?: PublicationType; // Nuevo campo para distinguir el tipo
+  type: PublicationType; // Tipo de publicación
   image_url?: string;
   visitors?: number;
   price?: number;
@@ -25,4 +30,10 @@ export interface Publication {
   userId: number;
   user?: User;
   comments?: Comment[];
+
+  // Campos específicos para solicitudes de servicios
+  requirements?: string; // Requisitos del trabajo
+  location?: string; // Ubicación del trabajo
+  urgency?: string; // Urgencia: "LOW", "MEDIUM", "HIGH"
+  preferredSchedule?: string; // Horario preferido
 }

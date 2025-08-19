@@ -5,6 +5,8 @@ export interface Message {
   read: boolean;
   sent_at: Date;
   read_at?: Date;
+  status?: string; // "open", "closed", "resolved", "message"
+  ticket_id?: string;
   senderId: number;
   recipientId: number;
 
@@ -25,6 +27,7 @@ export interface CreateMessageDto {
   content: string;
   senderId: number;
   recipientId: number;
+  ticket_id?: string;
 }
 
 export interface Conversation {

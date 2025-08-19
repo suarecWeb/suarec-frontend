@@ -1,7 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type React from "react";
-
+import {
+  IdPhotosService,
+  type IdPhoto,
+  type CreateIdPhotoRequest,
+} from "@/services/IdPhotosService";
+import { Trash2, Eye, XCircle, Clock, FileImage } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -17,6 +22,7 @@ import {
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserService } from "@/services/UsersService";
+import AuthService from "@/services/AuthService";
 import {
   User as UserType,
   Reference,
@@ -25,6 +31,9 @@ import {
 } from "@/interfaces/user.interface";
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
 import toast from "react-hot-toast";
+import SupabaseService from "@/services/supabase.service";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 // Interfaces para el token
 interface TokenPayload {
@@ -176,6 +185,9 @@ const ProfileEditPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [idPhotos, setIdPhotos] = useState<IdPhoto[]>([]);
+  const [uploadingIdPhoto, setUploadingIdPhoto] = useState(false);
+  const [loadingIdPhotos, setLoadingIdPhotos] = useState(true);
   const router = useRouter();
 
   // Form state
@@ -202,6 +214,253 @@ const ProfileEditPage = () => {
     references: [] as Reference[],
     socialLinks: [] as SocialLink[],
   });
+
+  // Estados para cambiar contraseña
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const fetchIdPhotos = async () => {
+    try {
+      setLoadingIdPhotos(true);
+      const photos = await IdPhotosService.getMyIdPhotos();
+      setIdPhotos(photos);
+    } catch (err) {
+      toast.error("No se pudieron cargar las fotos de cédula");
+    } finally {
+      setLoadingIdPhotos(false);
+    }
+  };
+
+  const handleUploadIdPhoto = async (
+    photoType: "front" | "back",
+    file: File,
+  ) => {
+    try {
+      setUploadingIdPhoto(true);
+
+      // Validar el archivo antes de subirlo
+      if (!file) {
+        toast.error("No se ha seleccionado ningún archivo");
+        return;
+      }
+
+      // Validar tipo de archivo
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Formato de archivo no válido. Use JPG, PNG o WebP");
+        return;
+      }
+
+      // Validar tamaño de archivo (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("El archivo es muy grande. Máximo 5MB permitido");
+        return;
+      }
+
+      // Toast informativo mientras se sube
+      toast.loading("Subiendo foto de cédula...", { id: "uploadIdPhoto" });
+
+      // Subir imagen a Supabase Storage
+      const uploadResult = await SupabaseService.uploadImage(
+        file,
+        "id-photos", // Carpeta específica para fotos de cédula
+      );
+
+      // Verificar si hubo error en la subida
+      if (uploadResult.error || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Error al subir la imagen");
+      }
+
+      // Crear objeto con datos de la foto para enviar al backend
+      const photoData: CreateIdPhotoRequest = {
+        image_url: uploadResult.url,
+        image_path: uploadResult.path,
+        photo_type: photoType,
+        description: `Foto de cédula - ${photoType === "front" ? "frontal" : "posterior"}`,
+      };
+
+      // Guardar en la base de datos a través del backend
+      await IdPhotosService.addIdPhoto(photoData);
+
+      // Toast de éxito
+      toast.success(
+        `Foto ${photoType === "front" ? "frontal" : "posterior"} subida exitosamente`,
+        { id: "uploadIdPhoto" },
+      );
+
+      // Recargar las fotos para mostrar la nueva
+      await fetchIdPhotos();
+    } catch (err: any) {
+      // Manejo específico de errores
+      if (err.response?.status === 400) {
+        toast.error(
+          "Ya existe una foto de este tipo. Use la opción de actualizar.",
+          { id: "uploadIdPhoto" },
+        );
+      } else if (err.message?.includes("subir imagen")) {
+        toast.error(`Error de almacenamiento: ${err.message}`, {
+          id: "uploadIdPhoto",
+        });
+      } else if (err.response?.data?.message) {
+        toast.error(`Error: ${err.response.data.message}`, {
+          id: "uploadIdPhoto",
+        });
+      } else {
+        toast.error("Error al subir la foto de cédula. Intenta nuevamente", {
+          id: "uploadIdPhoto",
+        });
+      }
+    } finally {
+      setUploadingIdPhoto(false);
+    }
+  };
+
+  const handleDeleteIdPhoto = async (photoId: number) => {
+    try {
+      // Primero obtener la información de la foto para conseguir el image_path
+      const photoToDelete = idPhotos.find((photo) => photo.id === photoId);
+
+      if (!photoToDelete) {
+        toast.error("No se encontró la foto a eliminar");
+        return;
+      }
+
+      // Toast informativo
+      toast.loading("Eliminando foto...", { id: "deleteIdPhoto" });
+
+      // Eliminar la foto del backend
+      await IdPhotosService.deleteIdPhoto(photoId);
+
+      // Si hay un image_path, eliminar también del storage de Supabase
+      if (photoToDelete.image_path) {
+        await SupabaseService.deleteIdPhotoFromStorage(
+          photoToDelete.image_path,
+        );
+      }
+
+      toast.success("Foto eliminada exitosamente", { id: "deleteIdPhoto" });
+      await fetchIdPhotos();
+    } catch (err: any) {
+      toast.error("Error al eliminar la foto", { id: "deleteIdPhoto" });
+    }
+  };
+
+  const handleUpdateIdPhoto = async (photoId: number, file: File) => {
+    try {
+      setUploadingIdPhoto(true);
+
+      // Validar el archivo antes de subirlo
+      if (!file) {
+        toast.error("No se ha seleccionado ningún archivo");
+        return;
+      }
+
+      // Validar tipo de archivo
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Formato de archivo no válido. Use JPG, PNG o WebP");
+        return;
+      }
+
+      // Validar tamaño de archivo (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("El archivo es muy grande. Máximo 5MB permitido");
+        return;
+      }
+
+      // Obtener la foto actual para eliminar la imagen anterior
+      const currentPhoto = idPhotos.find((photo) => photo.id === photoId);
+
+      // Toast informativo
+      toast.loading("Actualizando foto de cédula...", { id: "updateIdPhoto" });
+
+      // Subir nueva imagen a Supabase Storage
+      const uploadResult = await SupabaseService.uploadImage(
+        file,
+        "id-photos", // Carpeta específica para fotos de cédula
+      );
+
+      // Verificar si hubo error en la subida
+      if (uploadResult.error || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Error al subir la imagen");
+      }
+
+      // Actualizar la foto existente en el backend
+      await IdPhotosService.updateIdPhoto(photoId, {
+        image_url: uploadResult.url,
+        image_path: uploadResult.path,
+      });
+
+      // Si había una imagen anterior y se actualizó exitosamente, eliminar la anterior del storage
+      if (currentPhoto?.image_path) {
+        await SupabaseService.deleteIdPhotoFromStorage(currentPhoto.image_path);
+      }
+
+      toast.success("Foto actualizada exitosamente", { id: "updateIdPhoto" });
+
+      // Recargar las fotos
+      await fetchIdPhotos();
+    } catch (err: any) {
+      // Manejo específico de errores
+      if (err.message?.includes("subir imagen")) {
+        toast.error(`❌ Error de almacenamiento: ${err.message}`, {
+          id: "updateIdPhoto",
+        });
+      } else if (err.response?.data?.message) {
+        toast.error(`❌ Error: ${err.response.data.message}`, {
+          id: "updateIdPhoto",
+        });
+      } else {
+        toast.error("❌ Error al actualizar la foto. Intenta nuevamente", {
+          id: "updateIdPhoto",
+        });
+      }
+    } finally {
+      setUploadingIdPhoto(false);
+    }
+  };
+
+  // Función para obtener el color del estado
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "text-green-600 bg-green-50";
+      case "rejected":
+        return "text-red-600 bg-red-50";
+      case "pending":
+      default:
+        return "text-yellow-600 bg-yellow-50";
+    }
+  };
+
+  // Función para obtener el icono del estado
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle className="h-4 w-4" />;
+      case "rejected":
+        return <XCircle className="h-4 w-4" />;
+      case "pending":
+      default:
+        return <Clock className="h-4 w-4" />;
+    }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -280,7 +539,6 @@ const ProfileEditPage = () => {
 
         setLoading(false);
       } catch (err) {
-        console.error("Error al obtener perfil:", err);
         toast.error("No se pudo cargar la información del perfil");
         setLoading(false);
       }
@@ -406,13 +664,19 @@ const ProfileEditPage = () => {
         (link) => link.type && link.url,
       );
 
+      // Función auxiliar para crear fecha sin problemas de zona horaria
+      const createLocalDate = (dateString: string): Date => {
+        const date = new Date(dateString + "T12:00:00");
+        return date;
+      };
+
       // Convertir born_at a Date antes de enviarlo y limpiar el payload
       const userData: Partial<UserType> = {
         name: formData.name || undefined,
         email: formData.email ? formData.email.toLowerCase() : undefined,
         genre: formData.genre || undefined,
         cellphone: formData.cellphone || undefined,
-        born_at: formData.born_at ? new Date(formData.born_at) : undefined,
+        born_at: createLocalDate(formData.born_at) || undefined,
         cv_url: formData.cv_url || undefined,
         profession: finalProfession || undefined,
         skills:
@@ -432,7 +696,6 @@ const ProfileEditPage = () => {
         router.push("/profile");
       }, 2000);
     } catch (err) {
-      console.error("Error al actualizar perfil:", err);
       toast.error("No se pudo actualizar la información del perfil");
     } finally {
       setSaving(false);
@@ -453,6 +716,209 @@ const ProfileEditPage = () => {
   const hasBusinessRole = user?.roles
     ? getRoleNames(user.roles).includes("BUSINESS")
     : false;
+
+  const hasPersonRole = user?.roles
+    ? getRoleNames(user.roles).includes("PERSON")
+    : false;
+
+  // Función para manejar cambios en los campos de contraseña
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Función para cambiar contraseña
+  const handleChangePassword = async () => {
+    // Validaciones
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      toast.error("Todos los campos son obligatorios");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Las contraseñas nuevas no coinciden");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("La nueva contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      // Toast informativo al iniciar el proceso
+      toast.loading("🔄 Cambiando contraseña...", { id: "changePassword" });
+
+      // Llamada a la API para cambiar la contraseña
+      const response = await AuthService.changePassword(
+        user?.id?.toString() || "",
+        passwordData.newPassword,
+      );
+
+      // Verificar si la respuesta fue exitosa
+      if (response.status === 200 || response.status === 201) {
+        toast.success("✅ Contraseña cambiada exitosamente", {
+          id: "changePassword",
+        });
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        toast.error("❌ No se pudo cambiar la contraseña", {
+          id: "changePassword",
+        });
+      }
+    } catch (err: any) {
+      // Manejar diferentes tipos de errores
+      if (err.response?.status === 400) {
+        toast.error(
+          "❌ Error: Verifica que la nueva contraseña cumpla con los requisitos",
+          { id: "changePassword" },
+        );
+      } else if (err.response?.status === 401) {
+        toast.error("❌ Error: No tienes permisos para cambiar la contraseña", {
+          id: "changePassword",
+        });
+      } else if (err.response?.status === 404) {
+        toast.error("❌ Error: Usuario no encontrado", {
+          id: "changePassword",
+        });
+      } else if (err.response?.data?.message) {
+        toast.error(`❌ Error: ${err.response.data.message}`, {
+          id: "changePassword",
+        });
+      } else {
+        toast.error(
+          "❌ Error: No se pudo cambiar la contraseña. Intenta nuevamente",
+          { id: "changePassword" },
+        );
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchIdPhotos();
+    }
+  }, [user]);
+
+  const IdPhotoUploadButton = ({
+    photoType,
+    existingPhoto,
+  }: {
+    photoType: "front" | "back";
+    existingPhoto?: IdPhoto;
+  }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        if (existingPhoto) {
+          handleUpdateIdPhoto(existingPhoto.id, file);
+        } else {
+          handleUploadIdPhoto(photoType, file);
+        }
+      }
+    };
+
+    return (
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+
+        {existingPhoto ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <Zoom>
+                <img
+                  src={existingPhoto.image_url}
+                  alt={`Cédula ${photoType === "front" ? "frontal" : "posterior"}`}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+              </Zoom>
+              <div
+                className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(existingPhoto.status)}`}
+              >
+                {getStatusIcon(existingPhoto.status)}
+                {existingPhoto.status === "approved" && "Aprobada"}
+                {existingPhoto.status === "rejected" && "Rechazada"}
+                {existingPhoto.status === "pending" && "Pendiente"}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingIdPhoto}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploadingIdPhoto ? "Subiendo..." : "Cambiar"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteIdPhoto(existingPhoto.id)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+              </button>
+            </div>
+
+            {existingPhoto.description &&
+              existingPhoto.status === "rejected" && (
+                <p className="text-sm text-gray-600">
+                  Motivo rechazo: {existingPhoto.description}
+                </p>
+              )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <FileImage className="h-12 w-12 text-gray-400 mx-auto" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Foto {photoType === "front" ? "frontal" : "posterior"} de cédula
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Sube la foto{" "}
+                {photoType === "front" ? "del frente" : "de la parte posterior"}{" "}
+                de tu cédula de ciudadanía
+              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingIdPhoto}
+                className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploadingIdPhoto ? "Subiendo..." : "Subir foto"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -487,9 +953,6 @@ const ProfileEditPage = () => {
                 <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <h3 className="text-red-800 font-medium">Error</h3>
-                </div>
-                <div>
-                  <h3 className="text-red-800 font-medium">Error</h3>
                   <p className="text-red-700">{error}</p>
                 </div>
               </div>
@@ -506,14 +969,11 @@ const ProfileEditPage = () => {
               </div>
             )}
 
-            {loading ? (
-              <div className="py-32 flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#097EEC]"></div>
-              </div>
-            ) : (
+            {/* Formulario principal solo para información personal y empresa */}
+            {user && (
               <form onSubmit={handleSubmit}>
                 <Tabs defaultValue="personal">
-                  <TabsList className="w-full mb-6">
+                  <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
                     <TabsTrigger value="personal" className="flex-1">
                       Información personal
                     </TabsTrigger>
@@ -522,6 +982,14 @@ const ProfileEditPage = () => {
                         Información de empresa
                       </TabsTrigger>
                     )}
+                    {hasPersonRole && (
+                      <TabsTrigger value="id-photos" className="flex-1">
+                        Fotos de cédula
+                      </TabsTrigger>
+                    )}
+                    <TabsTrigger value="security" className="flex-1">
+                      Seguridad
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="personal">
@@ -1179,6 +1647,190 @@ const ProfileEditPage = () => {
                     </TabsContent>
                   )}
 
+                  {/* Tab de Seguridad - Formulario independiente */}
+                  <TabsContent value="security">
+                    <div className="max-w-md">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Cambiar contraseña
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Actualiza tu contraseña para mantener tu cuenta segura
+                      </p>
+
+                      {/* Formulario simplificado sin onSubmit */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="currentPassword"
+                            className="block text-sm font-medium text-gray-700"
+                          >
+                            Contraseña actual
+                          </label>
+                          <input
+                            type="password"
+                            id="currentPassword"
+                            name="currentPassword"
+                            value={passwordData.currentPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            placeholder="Ingresa tu contraseña actual"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="newPassword"
+                            className="block text-sm font-medium text-gray-700"
+                          >
+                            Nueva contraseña
+                          </label>
+                          <input
+                            type="password"
+                            id="newPassword"
+                            name="newPassword"
+                            value={passwordData.newPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            placeholder="Mínimo 6 caracteres"
+                            minLength={6}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="confirmPassword"
+                            className="block text-sm font-medium text-gray-700"
+                          >
+                            Confirmar nueva contraseña
+                          </label>
+                          <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            value={passwordData.confirmPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            placeholder="Repite la nueva contraseña"
+                          />
+                        </div>
+
+                        <div className="pt-4 space-y-3">
+                          {/* Botón principal */}
+                          <button
+                            type="button"
+                            onClick={handleChangePassword}
+                            className="w-full bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                            disabled={changingPassword}
+                          >
+                            {changingPassword ? (
+                              <>
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>Cambiando contraseña...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-5 w-5" />
+                                <span>Cambiar contraseña</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {hasPersonRole && (
+                    <TabsContent value="id-photos">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Verificación de identidad
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-6">
+                            Sube las fotos de tu cédula de ciudadanía para
+                            verificar tu identidad. Las fotos serán revisadas
+                            por nuestro equipo.
+                          </p>
+                        </div>
+
+                        {loadingIdPhotos ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-[#097EEC]" />
+                            <span className="ml-2">
+                              Cargando fotos de cédula...
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <IdPhotoUploadButton
+                              photoType="front"
+                              existingPhoto={idPhotos.find(
+                                (photo) => photo.photo_type === "front",
+                              )}
+                            />
+                            <IdPhotoUploadButton
+                              photoType="back"
+                              existingPhoto={idPhotos.find(
+                                (photo) => photo.photo_type === "back",
+                              )}
+                            />
+                          </div>
+                        )}
+
+                        {idPhotos.length > 0 && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 className="font-medium text-blue-900 mb-2">
+                              Estado de verificación
+                            </h4>
+                            <div className="space-y-2">
+                              {idPhotos.map((photo) => (
+                                <div
+                                  key={photo.id}
+                                  className="flex items-center justify-between text-sm"
+                                >
+                                  <span className="text-blue-800">
+                                    Foto{" "}
+                                    {photo.photo_type === "front"
+                                      ? "frontal"
+                                      : "posterior"}
+                                  </span>
+                                  <div
+                                    className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(photo.status)}`}
+                                  >
+                                    {getStatusIcon(photo.status)}
+                                    {photo.status === "approved" && "Aprobada"}
+                                    {photo.status === "rejected" && "Rechazada"}
+                                    {photo.status === "pending" &&
+                                      "En revisión"}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            Recomendaciones
+                          </h4>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            <li>• Las fotos deben ser claras y legibles</li>
+                            <li>
+                              • Asegúrate de que toda la información sea visible
+                            </li>
+                            <li>• Evita reflejos y sombras</li>
+                            <li>• Usa buena iluminación</li>
+                            <li>
+                              • Los archivos deben ser en formato JPG, PNG o
+                              WebP
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  )}
+
+                  {/* Botón de guardar solo para información personal y empresa */}
                   <div className="mt-8 flex justify-end">
                     <button
                       type="submit"

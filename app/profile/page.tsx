@@ -20,6 +20,9 @@ import {
   Eye,
   Trash2,
   CheckCircle,
+  BadgeCheck,
+  AlertTriangle,
+  FileImage, // Agregar esta importación
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -129,7 +132,10 @@ const ProfilePage = () => {
 
   const formatDate = (dateString: Date | string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
+    const localDate = new Date(
+      date.getTime() + date.getTimezoneOffset() * 60000,
+    );
+    return localDate.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -199,6 +205,82 @@ const ProfilePage = () => {
     }
   };
 
+  const ProfileCompletionMessages = ({ user }: { user: User }) => {
+    // Verificar qué información falta
+    const missingInfo = [];
+
+    if (!user.profile_image) {
+      missingInfo.push({
+        field: "profile_image",
+        label: "Foto de perfil",
+        icon: UserIcon,
+      });
+    }
+
+    if (!user.bio || user.bio.trim() === "") {
+      missingInfo.push({ field: "bio", label: "Biografía", icon: FileText });
+    }
+
+    if (!user.education || user.education.length === 0) {
+      missingInfo.push({
+        field: "education",
+        label: "Información educativa",
+        icon: FileText,
+      });
+    }
+
+    if ((user?.idPhotos?.length ?? 0) < 2) {
+      missingInfo.push({
+        field: "idPhotos",
+        label: "Fotos de cédula",
+        icon: FileImage,
+      });
+    }
+
+    const isProfileComplete = missingInfo.length === 0;
+
+    return (
+      <div className="space-y-4 mb-6">
+        {/* Mensaje de verificación */}
+        {!user.isVerify && isProfileComplete && (
+          <div className="rounded-lg p-4 border-l-4 bg-yellow-50 border-yellow-500">
+            <div className="flex items-start gap-3">
+              <Clock className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-yellow-800">
+                  Verificación Pendiente
+                </h3>
+                <p className="text-sm mt-1 text-yellow-700">
+                  Tu perfil está siendo revisado por nuestro equipo. Este
+                  proceso puede tomar entre 24 a 48 horas hábiles.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mensaje de completar perfil */}
+        {!isProfileComplete && (
+          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-blue-800">
+                  Completa tu perfil para obtener la verificación
+                </h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Para poder ser verificado, necesitas completar la siguiente
+                  información:{" "}
+                  {missingInfo.map((info) => info.label).join(", ")}.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
@@ -233,6 +315,8 @@ const ProfilePage = () => {
               </div>
             </div>
           )}
+
+          {user && <ProfileCompletionMessages user={user} />}
 
           {loading ? (
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -303,7 +387,14 @@ const ProfilePage = () => {
                       />
                     </div>
                     <div className="text-center md:text-left">
-                      <h2 className="text-2xl font-bold">{user.name}</h2>
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                        {user.name}
+                        {user.isVerify && (
+                          <div className="flex items-center gap-1 bg-white rounded-full p-1">
+                            <BadgeCheck className="h-5 w-5 text-blue-500" />
+                          </div>
+                        )}
+                      </h2>{" "}
                       {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
                         {getRoleNames(user.roles).map((roleName, index) => (
                           <span
@@ -772,48 +863,57 @@ const ProfilePage = () => {
                             Mis publicaciones
                           </h3>
 
-                          {user.publications && user.publications.length > 0 ? (
+                          {user.publications &&
+                          user.publications.filter(
+                            (pub: any) => !pub.deleted_at,
+                          ).length > 0 ? (
                             <div className="space-y-4">
-                              {user.publications.map((pub: any) => (
-                                <div
-                                  key={pub.id}
-                                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                                >
-                                  <div className="flex justify-between">
-                                    <h4 className="text-lg font-medium text-gray-800">
-                                      {pub.title}
-                                    </h4>
-                                    <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
-                                      {pub.category}
-                                    </span>
-                                  </div>
-
-                                  {pub.description && (
-                                    <p className="text-gray-600 mt-2">
-                                      {pub.description}
-                                    </p>
-                                  )}
-
-                                  <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100 text-sm text-gray-500">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-4 w-4" />
-                                      <span>{formatDate(pub.created_at)}</span>
+                              {user.publications
+                                .filter((pub: any) => !pub.deleted_at) // Filtrar publicaciones eliminadas
+                                .map((pub: any) => (
+                                  <div
+                                    key={pub.id}
+                                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                  >
+                                    <div className="flex justify-between">
+                                      <h4 className="text-lg font-medium text-gray-800">
+                                        {pub.title}
+                                      </h4>
+                                      <span className="text-xs font-medium text-[#097EEC] bg-blue-50 px-2 py-0.5 rounded-full">
+                                        {pub.category}
+                                      </span>
                                     </div>
 
-                                    <div className="flex items-center gap-1">
-                                      <Eye className="h-4 w-4" />
-                                      <span>{pub.visitors || 0} visitas</span>
-                                    </div>
+                                    {pub.description && (
+                                      <p className="text-gray-600 mt-2">
+                                        {pub.description}
+                                      </p>
+                                    )}
 
-                                    <Link href={`/publications/${pub.id}/edit`}>
-                                      <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1">
-                                        <Edit className="h-4 w-4" />
-                                        <span>Editar</span>
-                                      </button>
-                                    </Link>
+                                    <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100 text-sm text-gray-500">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>
+                                          {formatDate(pub.created_at)}
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center gap-1">
+                                        <Eye className="h-4 w-4" />
+                                        <span>{pub.visitors || 0} visitas</span>
+                                      </div>
+
+                                      <Link
+                                        href={`/publications/${pub.id}/edit`}
+                                      >
+                                        <button className="text-[#097EEC] hover:text-[#0A6BC7] transition-colors flex items-center gap-1">
+                                          <Edit className="h-4 w-4" />
+                                          <span>Editar</span>
+                                        </button>
+                                      </Link>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
                             </div>
                           ) : (
                             <div className="bg-gray-50 rounded-lg p-8 text-center">

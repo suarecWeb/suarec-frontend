@@ -29,6 +29,10 @@ const getMessagesBetweenUsers = (
 const createMessage = (messageData: CreateMessageDto) =>
   api.post<Message>(baseURL, messageData);
 
+// Enviar respuesta de admin a ticket de soporte
+const sendAdminReply = (messageData: { ticketId: string; content: string }) =>
+  api.post<Message>(`${baseURL}/admin-reply`, messageData);
+
 // Marcar mensaje como leído
 const markAsRead = (messageId: string) =>
   api.patch<Message>(`${baseURL}/${messageId}/read`);
@@ -43,14 +47,46 @@ const getMessageById = (id: string) => api.get<Message>(`${baseURL}/${id}`);
 // Eliminar mensaje (solo admin)
 const deleteMessage = (id: string) => api.delete(`${baseURL}/${id}`);
 
+// Obtener tickets de soporte (solo admin)
+const getSupportTickets = (params?: PaginationParams) =>
+  api.get<PaginationResponse<Message>>(`${baseURL}/support-tickets`, {
+    params,
+  });
+
+// Obtener ticket activo de un usuario
+const getActiveTicket = (userId: number) =>
+  api.get<Message | null>(`${baseURL}/active-ticket/${userId}`);
+
+// Actualizar estado de un ticket (solo admin)
+const updateTicketStatus = (messageId: string, status: string) =>
+  api.patch<Message>(`${baseURL}/${messageId}/status`, { status });
+
+// Obtener todos los mensajes de un ticket específico
+const getTicketMessages = (ticketId: string) =>
+  api.get<Message[]>(`${baseURL}/ticket/${ticketId}/messages`);
+
+// Agregar mensaje a un ticket existente
+const addMessageToTicket = (
+  ticketId: string,
+  userId: number,
+  content: string,
+) =>
+  api.post<Message>(`${baseURL}/add-to-ticket`, { ticketId, userId, content });
+
 const MessageService = {
   getConversations,
   getMessagesBetweenUsers,
   createMessage,
+  sendAdminReply,
   markAsRead,
   countUnreadMessages,
   getMessageById,
   deleteMessage,
+  getSupportTickets,
+  getActiveTicket,
+  updateTicketStatus,
+  getTicketMessages,
+  addMessageToTicket,
 };
 
 export default MessageService;

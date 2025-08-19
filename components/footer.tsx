@@ -1,7 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Heart, FileText, Building2, Users } from "lucide-react";
+import {
+  Heart,
+  FileText,
+  Building2,
+  Users,
+  Instagram,
+  Twitter,
+  Facebook,
+  Linkedin,
+} from "lucide-react";
 import SuarecLogo from "@/components/logo";
 import TermsModal from "@/components/terms-modal";
 import PrivacyModal from "@/components/privacy-modal";
@@ -85,6 +94,57 @@ export default function Footer() {
                   <span className="text-white">Colombia</span>
                 </li>
               </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-eras-bold mb-6">Síguenos</h3>
+              <div className="flex flex-wrap gap-4">
+                <a
+                  href="https://www.instagram.com/suarec.co?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras"
+                >
+                  <Instagram className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@suarec.co?_t=ZS-8yPgagZaqQS&_r=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://x.com/suarec_?s=11"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras"
+                >
+                  <Twitter className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.facebook.com/share/18shUoxxch/?mibextid=wwXIfr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/80 hover:text-white transition-colors duration-300 flex items-center gap-2 font-eras"
+                >
+                  <Facebook className="h-6 w-6" />
+                </a>
+                <a
+                  href="#"
+                  className="text-white/60 hover:text-white/80 transition-colors duration-300 flex items-center gap-2 font-eras cursor-not-allowed"
+                  title="LinkedIn - Próximamente"
+                >
+                  <Linkedin className="h-6 w-6" />
+                </a>
+              </div>
             </div>
           </div>
 

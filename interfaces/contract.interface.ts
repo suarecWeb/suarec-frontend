@@ -48,6 +48,7 @@ export interface Contract {
   agreedTime?: string;
   createdAt: Date;
   updatedAt: Date;
+  deleted_at?: Date;
   bids: ContractBid[];
   quantity?: number;
 }
@@ -71,12 +72,14 @@ export interface CreateContractDto {
 
 export interface CreateBidDto {
   contractId: string;
+  bidderId: number;
   amount: number;
   message?: string;
 }
 
 export interface AcceptBidDto {
   bidId: string;
+  acceptorId: number;
 }
 
 export interface ProviderResponseDto {
