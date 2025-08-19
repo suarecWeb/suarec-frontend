@@ -113,6 +113,15 @@ export class ContractService {
     return response.data;
   }
 
+  static async checkPenaltyRequired(
+    contractId: string,
+  ): Promise<{ requiresPenalty: boolean; message?: string }> {
+    const response = await api.get(
+      `/suarec/contracts/${contractId}/check-penalty`,
+    );
+    return response.data;
+  }
+
   static async providerResponse(data: ProviderResponseDto): Promise<any> {
     try {
       const response = await api.post(

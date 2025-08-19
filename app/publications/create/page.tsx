@@ -153,7 +153,10 @@ const CreatePublicationPage = () => {
         title: data.title,
         description: data.description || "", // Asegurar que no sea undefined
         category: data.category.toUpperCase(),
-        type: data.type === "offer" ? PublicationType.SERVICE : PublicationType.SERVICE_REQUEST, // Convertir string a enum
+        type:
+          data.type === "offer"
+            ? PublicationType.SERVICE
+            : PublicationType.SERVICE_REQUEST, // Convertir string a enum
         image_url: imageUrl || undefined, // Opcional
         price: data.price || 0, // Precio opcional
         priceUnit: data.priceUnit || undefined, // Unidad de precio opcional
@@ -246,7 +249,8 @@ const CreatePublicationPage = () => {
                       htmlFor="type"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Tipo de publicación <span className="text-red-500">*</span>
+                      Tipo de publicación{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="type"
@@ -259,8 +263,12 @@ const CreatePublicationPage = () => {
                       disabled={isLoading}
                     >
                       <option value="">Selecciona el tipo</option>
-                      <option value="offer">Oferta de Servicio (Ofrezco un servicio)</option>
-                      <option value="request">Solicitud de Servicio (Busco un servicio)</option>
+                      <option value="offer">
+                        Oferta de Servicio (Ofrezco un servicio)
+                      </option>
+                      <option value="request">
+                        Solicitud de Servicio (Busco un servicio)
+                      </option>
                     </select>
                     {errors.type && (
                       <p className="text-red-500 text-sm mt-1">

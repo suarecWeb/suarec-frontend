@@ -30,7 +30,10 @@ import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
 import PublicationService from "@/services/PublicationsService";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
 import Cookies from "js-cookie";
@@ -62,7 +65,9 @@ export default function FeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedPublicationType, setSelectedPublicationType] = useState<PublicationType | "">("");
+  const [selectedPublicationType, setSelectedPublicationType] = useState<
+    PublicationType | ""
+  >("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -300,7 +305,11 @@ export default function FeedPage() {
                       name="publicationType"
                       value=""
                       checked={selectedPublicationType === ""}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType | "",
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras">Todos los tipos</span>
@@ -311,8 +320,14 @@ export default function FeedPage() {
                       type="radio"
                       name="publicationType"
                       value={PublicationType.SERVICE}
-                      checked={selectedPublicationType === PublicationType.SERVICE}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      checked={
+                        selectedPublicationType === PublicationType.SERVICE
+                      }
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -326,8 +341,15 @@ export default function FeedPage() {
                       type="radio"
                       name="publicationType"
                       value={PublicationType.SERVICE_REQUEST}
-                      checked={selectedPublicationType === PublicationType.SERVICE_REQUEST}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      checked={
+                        selectedPublicationType ===
+                        PublicationType.SERVICE_REQUEST
+                      }
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -342,7 +364,11 @@ export default function FeedPage() {
                       name="publicationType"
                       value={PublicationType.JOB}
                       checked={selectedPublicationType === PublicationType.JOB}
-                      onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType)}
+                      onChange={(e) =>
+                        setSelectedPublicationType(
+                          e.target.value as PublicationType,
+                        )
+                      }
                       className="text-[#097EEC] focus:ring-[#097EEC]"
                     />
                     <span className="text-sm font-eras flex items-center gap-1">
@@ -384,13 +410,23 @@ export default function FeedPage() {
                   </label>
                   <select
                     value={selectedPublicationType}
-                    onChange={(e) => setSelectedPublicationType(e.target.value as PublicationType | "")}
+                    onChange={(e) =>
+                      setSelectedPublicationType(
+                        e.target.value as PublicationType | "",
+                      )
+                    }
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                   >
                     <option value="">Todos los tipos</option>
-                    <option value={PublicationType.SERVICE}>Servicios Ofrecidos</option>
-                    <option value={PublicationType.SERVICE_REQUEST}>Servicios Solicitados</option>
-                    <option value={PublicationType.JOB}>Vacantes de Trabajo</option>
+                    <option value={PublicationType.SERVICE}>
+                      Servicios Ofrecidos
+                    </option>
+                    <option value={PublicationType.SERVICE_REQUEST}>
+                      Servicios Solicitados
+                    </option>
+                    <option value={PublicationType.JOB}>
+                      Vacantes de Trabajo
+                    </option>
                   </select>
                 </div>
 

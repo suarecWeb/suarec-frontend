@@ -472,16 +472,20 @@ const ProfileEditPage = () => {
   // Función para manejar cambios en los campos de contraseña
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPasswordData(prev => ({
+    setPasswordData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Función para cambiar contraseña
   const handleChangePassword = async () => {
     // Validaciones
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
       toast.error("Todos los campos son obligatorios");
       return;
     }
@@ -500,35 +504,54 @@ const ProfileEditPage = () => {
     try {
       // Toast informativo al iniciar el proceso
       toast.loading("🔄 Cambiando contraseña...", { id: "changePassword" });
-      
+
       // Llamada a la API para cambiar la contraseña
-      const response = await AuthService.changePassword(user?.id?.toString() || "", passwordData.newPassword);
-      
+      const response = await AuthService.changePassword(
+        user?.id?.toString() || "",
+        passwordData.newPassword,
+      );
+
       // Verificar si la respuesta fue exitosa
       if (response.status === 200 || response.status === 201) {
-        toast.success("✅ Contraseña cambiada exitosamente", { id: "changePassword" });
+        toast.success("✅ Contraseña cambiada exitosamente", {
+          id: "changePassword",
+        });
         setPasswordData({
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
         });
       } else {
-        toast.error("❌ No se pudo cambiar la contraseña", { id: "changePassword" });
+        toast.error("❌ No se pudo cambiar la contraseña", {
+          id: "changePassword",
+        });
       }
     } catch (err: any) {
       console.error("Error al cambiar contraseña:", err);
-      
+
       // Manejar diferentes tipos de errores
       if (err.response?.status === 400) {
-        toast.error("❌ Error: Verifica que la nueva contraseña cumpla con los requisitos", { id: "changePassword" });
+        toast.error(
+          "❌ Error: Verifica que la nueva contraseña cumpla con los requisitos",
+          { id: "changePassword" },
+        );
       } else if (err.response?.status === 401) {
-        toast.error("❌ Error: No tienes permisos para cambiar la contraseña", { id: "changePassword" });
+        toast.error("❌ Error: No tienes permisos para cambiar la contraseña", {
+          id: "changePassword",
+        });
       } else if (err.response?.status === 404) {
-        toast.error("❌ Error: Usuario no encontrado", { id: "changePassword" });
+        toast.error("❌ Error: Usuario no encontrado", {
+          id: "changePassword",
+        });
       } else if (err.response?.data?.message) {
-        toast.error(`❌ Error: ${err.response.data.message}`, { id: "changePassword" });
+        toast.error(`❌ Error: ${err.response.data.message}`, {
+          id: "changePassword",
+        });
       } else {
-        toast.error("❌ Error: No se pudo cambiar la contraseña. Intenta nuevamente", { id: "changePassword" });
+        toast.error(
+          "❌ Error: No se pudo cambiar la contraseña. Intenta nuevamente",
+          { id: "changePassword" },
+        );
       }
     } finally {
       setChangingPassword(false);
@@ -1266,7 +1289,7 @@ const ProfileEditPage = () => {
                       <p className="text-sm text-gray-600 mb-6">
                         Actualiza tu contraseña para mantener tu cuenta segura
                       </p>
-                      
+
                       {/* Formulario simplificado sin onSubmit */}
                       <div className="space-y-4">
                         <div className="space-y-2">
