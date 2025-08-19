@@ -194,7 +194,7 @@ const MyApplicationsPageContent = () => {
             const contractData = {
               publicationId: publicationId,
               clientId: currentUserId!,
-              providerId: application.user.id,
+              // providerId se obtiene automáticamente en el backend de la publicación
               initialPrice: application.price || 0,
               totalPrice: application.price || 0,
               priceUnit: application.priceUnit || "service",
@@ -213,7 +213,6 @@ const MyApplicationsPageContent = () => {
             console.log("🔍 Debug - Tipos de datos:", {
               publicationId: typeof publicationId,
               clientId: typeof currentUserId,
-              providerId: typeof application.user.id,
               initialPrice: typeof application.price,
               totalPrice: typeof application.price,
               priceUnit: typeof application.priceUnit
