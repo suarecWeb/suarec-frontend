@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { TokenPayload } from "@/interfaces/auth.interface";
 
 interface ContractModalProps {
   publication: Publication;
@@ -65,6 +68,14 @@ export default function ContractModal({
   isOpen,
   onClose,
 }: ContractModalProps) {
+  console.log("🔍 Debug - ContractModal recibió publicación:", {
+    id: publication?.id,
+    title: publication?.title,
+    user: publication?.user,
+    userId: publication?.userId,
+    price: publication?.price
+  });
+
   const [contractType, setContractType] = useState<"accept" | "custom">(
     "accept",
   );
@@ -112,6 +123,30 @@ export default function ContractModal({
     setIsLoading(true);
 
     try {
+      // Verificar que el usuario esté autenticado
+      const token = Cookies.get("token");
+      if (!token) {
+        toast.error("Debes iniciar sesión para contratar un servicio");
+        setIsLoading(false);
+        return;
+      }
+
+      // Verificar que el token sea válido
+      let decoded: TokenPayload;
+      try {
+        decoded = jwtDecode<TokenPayload>(token);
+        if (!decoded.id) {
+          toast.error("Token de autenticación inválido");
+          setIsLoading(false);
+          return;
+        }
+        console.log("🔍 Debug - Usuario autenticado:", decoded.id);
+      } catch (error) {
+        toast.error("Token de autenticación inválido");
+        setIsLoading(false);
+        return;
+      }
+
       if (isNaN(basePrice) || basePrice <= 0) {
         toast.error("Debes ingresar un precio válido");
         setIsLoading(false);
@@ -160,7 +195,8 @@ export default function ContractModal({
       // Construcción de contractData
       const contractData: any = {
         publicationId: publication.id!,
-        initialPrice: Number(customPrice || publication.price!),
+        clientId: Number(decoded.id), // Agregar el clientId del usuario autenticado
+        initialPrice: Number(customPrice || basePrice),
         totalPrice: Number(totalPrice),
         priceUnit: publication.priceUnit || "project",
         clientMessage: message || undefined,
@@ -174,6 +210,14 @@ export default function ContractModal({
         neighborhood: serviceMode === "presencial" ? neighborhood.trim() : "",
         locationDescription: locationDescription.trim() || undefined,
       };
+
+      // Validar que tenemos una publicación válida
+      if (!publication.id) {
+        toast.error("Error: No se pudo identificar la publicación");
+        setIsLoading(false);
+        return;
+      }
+
       if (isUnitary && quantity !== "") {
         contractData.quantity = Number(quantity);
       }

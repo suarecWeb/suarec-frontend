@@ -27,6 +27,8 @@ export class ContractService {
   static async createContract(
     contractData: CreateContractDto,
   ): Promise<Contract> {
+    console.log("🔍 Debug - ContractService enviando datos:", contractData);
+    
     const response = await api.post("/suarec/contracts", contractData);
     const contract = response.data;
 

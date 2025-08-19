@@ -55,6 +55,8 @@ export interface Contract {
 
 export interface CreateContractDto {
   publicationId: string;
+  clientId: number; // Requerido - el usuario autenticado que contrata
+  providerId?: number; // Opcional - se obtiene automáticamente del backend
   initialPrice: number;
   totalPrice: number;
   priceUnit: string;

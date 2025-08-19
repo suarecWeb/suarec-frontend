@@ -266,7 +266,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden main-content">
       <Navbar />
 
       {/* Header azul extendido como en perfil */}
