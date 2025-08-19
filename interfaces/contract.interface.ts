@@ -49,6 +49,7 @@ export interface Contract {
   createdAt: Date;
   updatedAt: Date;
   bids: ContractBid[];
+  quantity?: number;
 }
 
 export interface CreateContractDto {
@@ -56,6 +57,7 @@ export interface CreateContractDto {
   initialPrice: number;
   totalPrice: number;
   priceUnit: string;
+  quantity?: number;
   clientMessage?: string;
   requestedDate: Date;
   requestedTime: string;
