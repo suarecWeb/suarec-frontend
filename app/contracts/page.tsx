@@ -494,18 +494,16 @@ export default function ContractsPage() {
                         </span>
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <div className="grid md:grid-cols-3 gap-4 mb-4">
                         <div className="bg-gray-50 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <DollarSign className="h-4 w-4 text-gray-600" />
                             <span className="text-sm font-medium text-gray-700">
-                              Precio Inicial
+                              Precio Total
                             </span>
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
-                            {formatCurrency(
-                              calculatePriceWithTax(contract.initialPrice || 0),
-                            )}{" "}
+                            {formatCurrency(contract.totalPrice || 0)}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>
@@ -524,6 +522,18 @@ export default function ContractsPage() {
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>
+
+                        <div className="bg-emerald-50 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-medium text-emerald-700">
+                              Unidades
+                            </span>
+                          </div>
+                          <p className="text-lg font-semibold text-emerald-800">
+                            {contract.quantity ? contract.quantity : "-"}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Total Price Display (when contract is accepted) */}
@@ -538,13 +548,16 @@ export default function ContractsPage() {
                                     Total a pagar (incluye IVA)
                                   </p>
                                   <p className="text-2xl font-bold text-green-700">
-                                    {formatCurrency(contract.totalPrice, {
-                                      showCurrency: true,
-                                    })}
+                                    {contract.quantity && contract.currentPrice
+                                      ? `${contract.quantity} x ${formatCurrency(calculatePriceWithTax(contract.currentPrice))} = ${formatCurrency(contract.quantity * calculatePriceWithTax(contract.currentPrice), { showCurrency: true })}`
+                                      : formatCurrency(contract.totalPrice, {
+                                          showCurrency: true,
+                                        })}
                                   </p>
                                   {/* Debug log */}
                                   <p className="text-xs text-gray-500">
-                                    Debug: totalPrice={contract.totalPrice}, initialPrice={contract.initialPrice}
+                                    Debug: totalPrice={contract.totalPrice},
+                                    initialPrice={contract.initialPrice}
                                   </p>
                                 </div>
                               </div>
@@ -1021,13 +1034,11 @@ export default function ContractsPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <DollarSign className="h-4 w-4 text-gray-600" />
                             <span className="text-sm font-medium text-gray-700">
-                              Precio Inicial
+                              Precio Total
                             </span>
                           </div>
                           <p className="text-lg font-semibold text-gray-800">
-                            {formatCurrency(
-                              calculatePriceWithTax(contract.initialPrice || 0),
-                            )}{" "}
+                            {formatCurrency(contract.totalPrice || 0)}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>

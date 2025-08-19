@@ -171,7 +171,10 @@ const StartChatButton = ({
         recipientId: recipientId,
       };
 
-      console.log("🔍 Datos que se van a enviar:", JSON.stringify(messageData, null, 2));
+      console.log(
+        "🔍 Datos que se van a enviar:",
+        JSON.stringify(messageData, null, 2),
+      );
 
       await MessageService.createMessage(messageData);
 

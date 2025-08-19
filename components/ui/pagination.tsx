@@ -112,8 +112,8 @@ const Pagination = ({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
         className={`h-10 w-10 rounded-md flex items-center justify-center transition-colors flex-shrink-0 ${
-          currentPage <= 1 
-            ? "opacity-50 cursor-not-allowed bg-gray-100" 
+          currentPage <= 1
+            ? "opacity-50 cursor-not-allowed bg-gray-100"
             : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
         }`}
         aria-label="Go to previous page"

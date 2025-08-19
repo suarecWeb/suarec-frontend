@@ -55,6 +55,14 @@ const paymentMethods = [
   },
 ] as const;
 
+// Traducción local para mostrar la unidad correctamente en el modal
+function getDisplayUnit(unit: string) {
+  if (unit === "mes") return "mensual";
+  if (unit === "semana") return "semanal";
+  if (unit === "día") return "diario";
+  return unit;
+}
+
 export default function ContractModal({
   publication,
   isOpen,
@@ -71,6 +79,8 @@ export default function ContractModal({
   const [contractType, setContractType] = useState<"accept" | "custom">(
     "accept",
   );
+  // Cambia el tipo de quantity para aceptar number o string vacío
+  const [quantity, setQuantity] = useState<number | "">(1);
   const [customPrice, setCustomPrice] = useState(0);
   const [serviceMode, setServiceMode] = useState<"presencial" | "virtual">(
     "presencial",
@@ -88,8 +98,22 @@ export default function ContractModal({
   const { showNotification, showContractNotification } = useNotification();
 
   // Calcular precios
+  // Cambia la lógica de isUnitary para que sea true para cualquier unidad distinta de las excluidas
+  const excludedUnits = [
+    "servicio",
+    "proyecto",
+    "service",
+    "project",
+    "event",
+    "piece",
+  ];
+  const isUnitary =
+    publication.priceUnit &&
+    !excludedUnits.includes((publication.priceUnit || "").toLowerCase());
+  // Asegúrate de que los cálculos usen (quantity || 1) para evitar NaN
   const basePrice = Number(
-    contractType === "accept" ? publication.price! : customPrice,
+    (contractType === "accept" ? publication.price! : customPrice) *
+      (isUnitary ? quantity || 1 : 1),
   );
   const iva = Math.round(basePrice * 0.19);
   const totalPrice = basePrice + iva;
@@ -168,7 +192,8 @@ export default function ContractModal({
         newPaymentMethod = "WOMPI";
       }
 
-      const contractData = {
+      // Construcción de contractData
+      const contractData: any = {
         publicationId: publication.id!,
         clientId: Number(decoded.id), // Agregar el clientId del usuario autenticado
         initialPrice: Number(customPrice || basePrice),
@@ -193,16 +218,9 @@ export default function ContractModal({
         return;
       }
 
-      console.log("Enviando datos de contratación:", contractData);
-      console.log("Desglose de precios:");
-      console.log("- Precio base:", basePrice);
-      console.log("- IVA (19%):", iva);
-      console.log("- Total:", totalPrice);
-      console.log("🔍 Debug - Client ID:", contractData.clientId);
-      console.log("🔍 Debug - Publication ID:", publication.id);
-      console.log("🔍 Debug - Publication user:", publication.user);
-      console.log("🔍 Debug - Publication userId:", publication.userId);
-
+      if (isUnitary && quantity !== "") {
+        contractData.quantity = Number(quantity);
+      }
       await ContractService.createContract(contractData);
 
       // Mostrar mensaje de éxito informando sobre las notificaciones
@@ -267,7 +285,10 @@ export default function ContractModal({
                   })}
                 </span>
                 <span className="text-sm text-gray-600">
-                  por {translatePriceUnit(publication.priceUnit || "")}
+                  por{" "}
+                  {getDisplayUnit(
+                    translatePriceUnit(publication.priceUnit || ""),
+                  )}
                 </span>
               </div>
             )}
@@ -336,6 +357,29 @@ export default function ContractModal({
                 </label>
               </div>
             </div>
+
+            {/* Input de cantidad de unidades si la unidad es hora, día, semana o mes */}
+            {isUnitary && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Cantidad de{" "}
+                  {getDisplayUnit(
+                    translatePriceUnit(publication.priceUnit || ""),
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setQuantity(val === "" ? "" : Number(val));
+                  }}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  required
+                />
+              </div>
+            )}
 
             {/* Custom Price Input */}
             {contractType === "custom" && (
@@ -624,6 +668,17 @@ export default function ContractModal({
               </div>
 
               <div className="space-y-2 text-sm">
+                {isUnitary && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Cantidad:</span>
+                    <span className="font-medium">
+                      {quantity}{" "}
+                      {getDisplayUnit(
+                        translatePriceUnit(publication.priceUnit || ""),
+                      )}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Precio base:</span>
                   <span className="font-medium">

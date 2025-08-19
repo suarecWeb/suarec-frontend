@@ -1,7 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Calendar, Tag, MapPin, Clock, DollarSign, User, Building2, Star, MessageSquare, Share2, Heart, Edit, Trash2, AlertTriangle, Briefcase, CheckCircle, HandHeart } from "lucide-react";
+import {
+  X,
+  Calendar,
+  Tag,
+  MapPin,
+  Clock,
+  DollarSign,
+  User,
+  Building2,
+  Star,
+  MessageSquare,
+  Share2,
+  Heart,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  Briefcase,
+  CheckCircle,
+  HandHeart,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
 import { User as UserInterface } from "@/interfaces/user.interface";
@@ -85,7 +104,10 @@ const PublicationDetailModal = ({
     const publicationUserId = publication.user?.id || publication.userId;
     const currentUserIdNumber = Number(currentUserId);
     const publicationUserIdNumber = Number(publicationUserId);
-    return currentUserIdNumber === publicationUserIdNumber || userRoles.includes("ADMIN");
+    return (
+      currentUserIdNumber === publicationUserIdNumber ||
+      userRoles.includes("ADMIN")
+    );
   };
 
   // Cargar autor y comentarios cuando se abre el modal
@@ -99,14 +121,14 @@ const PublicationDetailModal = ({
 
   const checkUserApplication = async () => {
     if (!publication?.id || !currentUserId || !publication.user?.id) return;
-    
+
     // Solo verificar si no es el autor
     if (Number(publication.user.id) === currentUserId) return;
-    
+
     try {
       const applicationCheck = await ApplicationService.checkUserApplication(
         currentUserId.toString(),
-        publication.id
+        publication.id,
       );
       setHasApplied(applicationCheck.data.hasApplied);
       if (applicationCheck.data.application) {
@@ -138,7 +160,8 @@ const PublicationDetailModal = ({
         priceUnit: applicationPriceUnit || undefined,
       };
 
-      const response = await ApplicationService.createApplication(applicationData);
+      const response =
+        await ApplicationService.createApplication(applicationData);
 
       setHasApplied(true);
       setApplicationId(response.data.id || null);
@@ -152,7 +175,7 @@ const PublicationDetailModal = ({
       console.error("Error al aplicar:", err);
       toast.error(
         err.response?.data?.message ||
-          "No se pudo enviar la aplicación. Inténtalo de nuevo."
+          "No se pudo enviar la aplicación. Inténtalo de nuevo.",
       );
     } finally {
       setIsApplying(false);
@@ -166,7 +189,7 @@ const PublicationDetailModal = ({
 
   const loadAuthor = async () => {
     if (!publication?.user?.id) return;
-    
+
     try {
       // Aquí podrías hacer una llamada a la API para obtener información completa del autor
       // Por ahora usamos la información que ya tenemos en la publicación
@@ -178,9 +201,11 @@ const PublicationDetailModal = ({
 
   const loadComments = async () => {
     if (!publication?.id) return;
-    
+
     try {
-      const response = await CommentService.getPublicationComments(publication.id);
+      const response = await CommentService.getPublicationComments(
+        publication.id,
+      );
       setComments(response.data?.data || []);
     } catch (error) {
       console.error("Error loading comments:", error);
@@ -198,7 +223,7 @@ const PublicationDetailModal = ({
         userId: currentUserId,
         created_at: new Date(),
       });
-      
+
       setCommentText("");
       await loadComments(); // Recargar comentarios
       toast.success("Comentario agregado exitosamente");
@@ -221,7 +246,7 @@ const PublicationDetailModal = ({
           "Content-Type": "application/json",
         },
       });
-      
+
       toast.success("Publicación eliminada exitosamente");
       onPublicationDeleted?.();
       onClose();
@@ -282,7 +307,12 @@ const PublicationDetailModal = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(`/publications/${publication.id}/edit`, '_blank')}
+                    onClick={() =>
+                      window.open(
+                        `/publications/${publication.id}/edit`,
+                        "_blank",
+                      )
+                    }
                     className="flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
@@ -349,28 +379,29 @@ const PublicationDetailModal = ({
             )}
 
             {/* Galería de imágenes adicionales */}
-            {publication.gallery_images && publication.gallery_images.length > 0 && (
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Galería de imágenes
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {publication.gallery_images.map((imageUrl, index) => (
-                    <div
-                      key={index}
-                      className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => window.open(imageUrl, '_blank')}
-                    >
-                      <img
-                        src={imageUrl}
-                        alt={`${publication.title} - Imagen ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                  ))}
+            {publication.gallery_images &&
+              publication.gallery_images.length > 0 && (
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Galería de imágenes
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {publication.gallery_images.map((imageUrl, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => window.open(imageUrl, "_blank")}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`${publication.title} - Imagen ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Contenido principal */}
             <div className="p-6 space-y-6">
@@ -406,14 +437,16 @@ const PublicationDetailModal = ({
                         Habilidades:
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {author.skills.slice(0, 5).map((skill: string, index: number) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                          >
-                            {skill}
-                          </span>
-                        ))}
+                        {author.skills
+                          .slice(0, 5)
+                          .map((skill: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
+                            >
+                              {skill}
+                            </span>
+                          ))}
                         {author.skills.length > 5 && (
                           <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full">
                             +{author.skills.length - 5} más
@@ -581,23 +614,29 @@ const PublicationDetailModal = ({
               {/* Botones de acción secundarios */}
               <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
                 <StartChatButton
-                  recipientId={publication.user?.id ? Number(publication.user.id) : 0}
+                  recipientId={
+                    publication.user?.id ? Number(publication.user.id) : 0
+                  }
                   recipientName={publication.user?.name || ""}
                   className="flex-shrink-0"
                 />
-                
+
                 <button
                   onClick={toggleLike}
                   disabled={isLikeLoading}
                   className={`flex items-center gap-2 text-sm transition-colors ${
-                    hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+                    hasLiked
+                      ? "text-red-500"
+                      : "text-gray-500 hover:text-red-500"
                   } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
+                  <Heart
+                    className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`}
+                  />
                   <span>{likesCount}</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     const url = `${window.location.origin}/feed/${publication.id}`;
                     if (navigator.share) {
@@ -608,7 +647,7 @@ const PublicationDetailModal = ({
                       });
                     } else {
                       navigator.clipboard.writeText(url);
-                      toast.success('Enlace copiado al portapapeles');
+                      toast.success("Enlace copiado al portapapeles");
                     }
                   }}
                   className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
@@ -678,7 +717,9 @@ const PublicationDetailModal = ({
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-sm">No hay comentarios aún.</p>
+                    <p className="text-gray-500 text-sm">
+                      No hay comentarios aún.
+                    </p>
                   )}
                 </div>
               </div>
@@ -714,7 +755,8 @@ const PublicationDetailModal = ({
             </div>
             <div className="p-6">
               <p className="text-gray-700 mb-6">
-                ¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.
+                ¿Estás seguro de que quieres eliminar esta publicación? Esta
+                acción no se puede deshacer.
               </p>
               <div className="flex justify-end gap-3">
                 <Button
@@ -756,9 +798,7 @@ const PublicationDetailModal = ({
                   <h3 className="text-lg font-semibold text-gray-900">
                     Aplicar a la publicación
                   </h3>
-                  <p className="text-sm text-gray-500">
-                    Envía tu propuesta
-                  </p>
+                  <p className="text-sm text-gray-500">Envía tu propuesta</p>
                 </div>
               </div>
               <Button
@@ -782,7 +822,7 @@ const PublicationDetailModal = ({
                   rows={4}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -814,7 +854,7 @@ const PublicationDetailModal = ({
                   </select>
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-3 pt-4">
                 <Button
                   variant="outline"

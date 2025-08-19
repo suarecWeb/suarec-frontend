@@ -37,7 +37,9 @@ import toast from "react-hot-toast";
 
 const MyApplicationsPageContent = () => {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [receivedApplications, setReceivedApplications] = useState<Application[]>([]);
+  const [receivedApplications, setReceivedApplications] = useState<
+    Application[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [loadingReceived, setLoadingReceived] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,19 +103,23 @@ const MyApplicationsPageContent = () => {
 
     try {
       setLoadingReceived(true);
-      
+
       // Obtener todas las publicaciones y filtrar por el usuario actual
       const publicationsResponse = await PublicationService.getPublications();
-      
-      console.log("🔍 Debug - Todas las publicaciones:", publicationsResponse.data.data);
-      
+
+      console.log(
+        "🔍 Debug - Todas las publicaciones:",
+        publicationsResponse.data.data,
+      );
+
       // Filtrar solo las publicaciones del usuario actual
       const userPublications = publicationsResponse.data.data.filter(
-        (pub: any) => pub.userId === currentUserId || pub.user?.id === currentUserId
+        (pub: any) =>
+          pub.userId === currentUserId || pub.user?.id === currentUserId,
       );
-      
+
       console.log("🔍 Debug - Publicaciones del usuario:", userPublications);
-      
+
       if (!userPublications.length) {
         setReceivedApplications([]);
         return;
@@ -121,27 +127,39 @@ const MyApplicationsPageContent = () => {
 
       // Obtener aplicaciones para cada publicación del usuario
       const allApplications: Application[] = [];
-      
+
       for (const publication of userPublications) {
         if (!publication.id) {
           console.warn("Publicación sin ID:", publication);
           continue;
         }
-        
+
         try {
-          console.log(`🔍 Debug - Obteniendo aplicaciones para publicación: ${publication.id}`);
-          const applicationsResponse = await ApplicationService.getPublicationApplications(publication.id);
-          console.log(`🔍 Debug - Aplicaciones para ${publication.id}:`, applicationsResponse.data.data);
+          console.log(
+            `🔍 Debug - Obteniendo aplicaciones para publicación: ${publication.id}`,
+          );
+          const applicationsResponse =
+            await ApplicationService.getPublicationApplications(publication.id);
+          console.log(
+            `🔍 Debug - Aplicaciones para ${publication.id}:`,
+            applicationsResponse.data.data,
+          );
           if (applicationsResponse.data.data) {
             allApplications.push(...applicationsResponse.data.data);
           }
         } catch (error) {
-          console.error(`Error loading applications for publication ${publication.id}:`, error);
+          console.error(
+            `Error loading applications for publication ${publication.id}:`,
+            error,
+          );
         }
       }
-      
-      console.log("🔍 Debug - Todas las aplicaciones recibidas:", allApplications);
-      
+
+      console.log(
+        "🔍 Debug - Todas las aplicaciones recibidas:",
+        allApplications,
+      );
+
       setReceivedApplications(allApplications);
     } catch (err) {
       console.error("Error al cargar aplicaciones recibidas:", err);
@@ -176,18 +194,22 @@ const MyApplicationsPageContent = () => {
   const handleAcceptApplication = async (applicationId: string) => {
     try {
       console.log("Intentando aceptar aplicación:", applicationId);
-      const response = await ApplicationService.updateApplication(applicationId, {
-        status: "ACCEPTED"
-      });
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "ACCEPTED",
+        },
+      );
       console.log("Respuesta del servidor:", response);
-      
+
       // Crear contrato automáticamente cuando se acepta la aplicación
       if (response.data) {
         const application = response.data;
-        
+
         // Obtener el ID de la publicación de la aplicación
-        const publicationId = application.publication?.id || application.publicationId;
-        
+        const publicationId =
+          application.publication?.id || application.publicationId;
+
         if (publicationId && application.user?.id) {
           try {
             // Crear datos del contrato
@@ -209,32 +231,46 @@ const MyApplicationsPageContent = () => {
               locationDescription: "Acordar",
             };
 
-            console.log("🔍 Debug - Datos del contrato a enviar:", contractData);
+            console.log(
+              "🔍 Debug - Datos del contrato a enviar:",
+              contractData,
+            );
             console.log("🔍 Debug - Tipos de datos:", {
               publicationId: typeof publicationId,
               clientId: typeof currentUserId,
               initialPrice: typeof application.price,
               totalPrice: typeof application.price,
-              priceUnit: typeof application.priceUnit
+              priceUnit: typeof application.priceUnit,
             });
-            
+
             // Importar ContractService dinámicamente
-            const { ContractService } = await import("@/services/ContractService");
-            const contractResponse = await ContractService.createContract(contractData);
-            
+            const { ContractService } = await import(
+              "@/services/ContractService"
+            );
+            const contractResponse =
+              await ContractService.createContract(contractData);
+
             console.log("Contrato creado:", contractResponse);
-            toast.success("Aplicación aceptada y contrato creado. Ve a la sección de contratos para proceder con el pago.");
+            toast.success(
+              "Aplicación aceptada y contrato creado. Ve a la sección de contratos para proceder con el pago.",
+            );
           } catch (contractError) {
             console.error("Error creando contrato:", contractError);
-            toast.success("Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.");
+            toast.success(
+              "Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.",
+            );
           }
         } else {
-          toast.success("Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.");
+          toast.success(
+            "Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.",
+          );
         }
       } else {
-        toast.success("Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.");
+        toast.success(
+          "Aplicación aceptada. Ve a la sección de contratos para proceder con el pago.",
+        );
       }
-      
+
       fetchReceivedApplications();
     } catch (error: any) {
       console.error("Error accepting application:", error);
@@ -246,9 +282,12 @@ const MyApplicationsPageContent = () => {
   // Función para rechazar una aplicación
   const handleRejectApplication = async (applicationId: string) => {
     try {
-      const response = await ApplicationService.updateApplication(applicationId, {
-        status: "REJECTED"
-      });
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "REJECTED",
+        },
+      );
       toast.success("Aplicación rechazada");
       fetchReceivedApplications();
     } catch (error: any) {
@@ -261,9 +300,12 @@ const MyApplicationsPageContent = () => {
   const handleStartService = async (applicationId: string) => {
     try {
       console.log("Intentando iniciar servicio:", applicationId);
-      const response = await ApplicationService.updateApplication(applicationId, {
-        status: "IN_PROGRESS"
-      });
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "IN_PROGRESS",
+        },
+      );
       console.log("Respuesta del servidor:", response);
       toast.success("Servicio iniciado");
       fetchReceivedApplications();
@@ -278,9 +320,12 @@ const MyApplicationsPageContent = () => {
   const handleCompleteService = async (applicationId: string) => {
     try {
       console.log("Intentando terminar servicio:", applicationId);
-      const response = await ApplicationService.updateApplication(applicationId, {
-        status: "COMPLETED"
-      });
+      const response = await ApplicationService.updateApplication(
+        applicationId,
+        {
+          status: "COMPLETED",
+        },
+      );
       console.log("Respuesta del servidor:", response);
       toast.success("Servicio completado. Procede con el pago.");
       fetchReceivedApplications();
@@ -294,14 +339,14 @@ const MyApplicationsPageContent = () => {
   // Función para ir al chat
   const handleGoToChat = (application: any) => {
     // Navegar al chat con el aplicante usando el parámetro 'sender'
-    window.open(`/chat?sender=${application.user?.id}`, '_blank');
+    window.open(`/chat?sender=${application.user?.id}`, "_blank");
   };
 
   // Función para proceder con el pago
   const handleProceedToPayment = (application: any) => {
     // Redirigir a la página de contratos donde el usuario puede ver sus contratos
     // y proceder con el pago a través del flujo existente
-    window.open('/contracts', '_blank');
+    window.open("/contracts", "_blank");
   };
 
   // Filtrar aplicaciones según el término de búsqueda y estado
@@ -380,9 +425,7 @@ const MyApplicationsPageContent = () => {
             .includes(searchTerm.toLowerCase()) ||
           (app.message &&
             app.message.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          app.user?.name
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()),
+          app.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -637,7 +680,9 @@ const MyApplicationsPageContent = () => {
                 className="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
               >
                 <span className="font-medium">Proceder con el Pago</span>
-                <span className="text-xs">${application.price?.toLocaleString() || 0}</span>
+                <span className="text-xs">
+                  ${application.price?.toLocaleString() || 0}
+                </span>
               </button>
             </div>
           )}
@@ -913,75 +958,77 @@ const MyApplicationsPageContent = () => {
                     </TabsTrigger>
                   </TabsList>
 
-              <TabsContent value={activeTab}>
-                {loading ? (
-                  <div className="py-32 flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#097EEC]"></div>
-                  </div>
-                ) : (
-                  <>
-                    {filteredApplications.length > 0 ? (
-                      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                        {filteredApplications.map((application) =>
-                          renderApplicationCard(application),
-                        )}
+                  <TabsContent value={activeTab}>
+                    {loading ? (
+                      <div className="py-32 flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#097EEC]"></div>
                       </div>
                     ) : (
-                      <div className="py-16 text-center">
-                        <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
-                          <Briefcase className="h-10 w-10 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {activeTab === "pending" &&
-                            "No tienes aplicaciones pendientes"}
-                          {activeTab === "interview" &&
-                            "No tienes aplicaciones en entrevista"}
-                          {activeTab === "accepted" &&
-                            "No tienes aplicaciones aceptadas"}
-                          {activeTab === "rejected" &&
-                            "No tienes aplicaciones rechazadas"}
-                          {activeTab === "all" &&
-                            "No has hecho aplicaciones aún"}
-                        </h3>
-                        <p className="mt-2 text-gray-500">
-                          {searchTerm
-                            ? "No se encontraron aplicaciones que coincidan con tu búsqueda."
-                            : "Explora las oportunidades disponibles y comienza a aplicar."}
-                        </p>
+                      <>
+                        {filteredApplications.length > 0 ? (
+                          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                            {filteredApplications.map((application) =>
+                              renderApplicationCard(application),
+                            )}
+                          </div>
+                        ) : (
+                          <div className="py-16 text-center">
+                            <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
+                              <Briefcase className="h-10 w-10 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900">
+                              {activeTab === "pending" &&
+                                "No tienes aplicaciones pendientes"}
+                              {activeTab === "interview" &&
+                                "No tienes aplicaciones en entrevista"}
+                              {activeTab === "accepted" &&
+                                "No tienes aplicaciones aceptadas"}
+                              {activeTab === "rejected" &&
+                                "No tienes aplicaciones rechazadas"}
+                              {activeTab === "all" &&
+                                "No has hecho aplicaciones aún"}
+                            </h3>
+                            <p className="mt-2 text-gray-500">
+                              {searchTerm
+                                ? "No se encontraron aplicaciones que coincidan con tu búsqueda."
+                                : "Explora las oportunidades disponibles y comienza a aplicar."}
+                            </p>
 
-                        {!searchTerm && (
-                          <Link href="/publications">
-                            <button className="mt-4 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
-                              <Briefcase className="h-5 w-5" />
-                              <span>Ver oportunidades</span>
-                            </button>
-                          </Link>
+                            {!searchTerm && (
+                              <Link href="/publications">
+                                <button className="mt-4 bg-[#097EEC] text-white px-6 py-3 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2 mx-auto">
+                                  <Briefcase className="h-5 w-5" />
+                                  <span>Ver oportunidades</span>
+                                </button>
+                              </Link>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
 
-                    {/* Pagination */}
-                    {pagination.totalPages > 1 && (
-                      <div className="mt-8 flex justify-center">
-                        <Pagination
-                          currentPage={pagination.page}
-                          totalPages={pagination.totalPages}
-                          onPageChange={handlePageChange}
-                        />
-                      </div>
-                    )}
+                        {/* Pagination */}
+                        {pagination.totalPages > 1 && (
+                          <div className="mt-8 flex justify-center">
+                            <Pagination
+                              currentPage={pagination.page}
+                              totalPages={pagination.totalPages}
+                              onPageChange={handlePageChange}
+                            />
+                          </div>
+                        )}
 
-                    {/* Results Summary */}
-                    {!loading && !error && filteredApplications.length > 0 && (
-                      <div className="mt-6 text-sm text-gray-500 text-center">
-                        Mostrando {filteredApplications.length} de{" "}
-                        {pagination.total} aplicaciones
-                      </div>
+                        {/* Results Summary */}
+                        {!loading &&
+                          !error &&
+                          filteredApplications.length > 0 && (
+                            <div className="mt-6 text-sm text-gray-500 text-center">
+                              Mostrando {filteredApplications.length} de{" "}
+                              {pagination.total} aplicaciones
+                            </div>
+                          )}
+                      </>
                     )}
-                  </>
-                )}
-              </TabsContent>
-            </Tabs>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
 
               {/* Received Applications Tab */}
@@ -1065,12 +1112,14 @@ const MyApplicationsPageContent = () => {
                         )}
 
                         {/* Results Summary */}
-                        {!loadingReceived && filteredReceivedApplications.length > 0 && (
-                          <div className="mt-6 text-sm text-gray-500 text-center">
-                            Mostrando {filteredReceivedApplications.length} de{" "}
-                            {receivedApplications.length} aplicaciones recibidas
-                          </div>
-                        )}
+                        {!loadingReceived &&
+                          filteredReceivedApplications.length > 0 && (
+                            <div className="mt-6 text-sm text-gray-500 text-center">
+                              Mostrando {filteredReceivedApplications.length} de{" "}
+                              {receivedApplications.length} aplicaciones
+                              recibidas
+                            </div>
+                          )}
                       </>
                     )}
                   </TabsContent>

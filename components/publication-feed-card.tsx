@@ -189,7 +189,7 @@ const PublicationFeedCard = ({
 
   return (
     <>
-      <div 
+      <div
         className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group"
         onClick={() => setShowDetailModal(true)}
       >
@@ -250,10 +250,13 @@ const PublicationFeedCard = ({
                 </div>
               </div>
             </div>
-            
+
             {/* Botones de acción solo si puede editar */}
             {canEditPublication() && (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Link href={`/publications/${publication.id}/edit`}>
                   <button className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors">
                     <Edit className="h-4 w-4" />
@@ -274,7 +277,7 @@ const PublicationFeedCard = ({
             <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
               {publication.title}
             </h2>
-            
+
             {publication.description && (
               <p className="text-gray-600 text-sm line-clamp-2 mb-3">
                 {publication.description}
@@ -309,10 +312,12 @@ const PublicationFeedCard = ({
                   hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
                 } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <Heart className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`} />
+                <Heart
+                  className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`}
+                />
                 <span>{likesCount}</span>
               </button>
-              
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -325,7 +330,10 @@ const PublicationFeedCard = ({
               </button>
             </div>
 
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="flex items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Button
                 size="sm"
                 className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1.5"
@@ -333,7 +341,7 @@ const PublicationFeedCard = ({
               >
                 Expandir
               </Button>
-              
+
               <StartChatButton
                 recipientId={parseInt(publication.user?.id || "0")}
                 recipientName={publication.user?.name || ""}
@@ -421,7 +429,9 @@ const PublicationFeedCard = ({
                     );
                   })
                 ) : (
-                  <p className="text-gray-500 text-sm">No hay comentarios aún.</p>
+                  <p className="text-gray-500 text-sm">
+                    No hay comentarios aún.
+                  </p>
                 )}
               </div>
             </div>
