@@ -70,6 +70,7 @@ export default function FeedPage() {
   >("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [isVerify, setIsVerify] = useState<Boolean | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pagination, setPagination] = useState<{
     page: number;
@@ -97,6 +98,7 @@ export default function FeedPage() {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
+        setIsVerify(decoded.isVerify);
         setUserRoles(decoded.roles.map((role) => role.name));
       } catch (error) {
         console.error("Error al decodificar token:", error);
@@ -249,8 +251,22 @@ export default function FeedPage() {
     return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   };
 
+  function verifyCreatePublication() {
+    if (!User) {
+      toast.error("Debes iniciar sesión para crear una publicación");
+      return false;
+    }
+    if (!isVerify) {
+      toast.error(
+        "Debes verificar tu cuenta antes de crear una publicación. Por favor, realiza la verificación en tu perfil.",
+      );
+      return false;
+    }
+    return setIsCreateModalOpen(true);
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden main-content">
       <Navbar />
 
       {/* Header azul extendido como en perfil */}
@@ -266,8 +282,8 @@ export default function FeedPage() {
       </div>
 
       {/* Content con margen negativo para que se superponga */}
-      <div className="container mx-auto px-4 -mt-6 pb-12">
-        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
+      <div className="container mx-auto px-4 -mt-6 pb-12 overflow-x-hidden">
+        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8 w-full max-w-full">
           {/* Sidebar izquierdo - Filtros principales */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
@@ -382,29 +398,29 @@ export default function FeedPage() {
           </div>
 
           {/* Main Content - Feed (centro) */}
-          <div className="lg:col-span-2 col-span-full">
+          <div className="lg:col-span-2 col-span-full w-full max-w-full overflow-x-hidden">
             {/* Filtros móviles */}
-            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-              <div className="flex flex-col gap-4">
+            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 w-full max-w-full">
+              <div className="flex flex-col gap-4 w-full">
                 {/* Búsqueda móvil */}
-                <div>
+                <div className="w-full">
                   <label className="block text-sm font-eras-medium text-gray-700 mb-2">
                     Buscar
                   </label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       type="text"
                       placeholder="Título, descripción..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 font-eras"
+                      className="pl-10 font-eras w-full"
                     />
                   </div>
                 </div>
 
                 {/* Tipo de publicación móvil */}
-                <div>
+                <div className="w-full">
                   <label className="block text-sm font-eras-medium text-gray-700 mb-2">
                     Tipo de publicación
                   </label>
@@ -431,7 +447,7 @@ export default function FeedPage() {
                 </div>
 
                 {/* Categoría móvil */}
-                <div>
+                <div className="w-full">
                   <label className="block text-sm font-eras-medium text-gray-700 mb-2">
                     Categoría
                   </label>
@@ -451,13 +467,13 @@ export default function FeedPage() {
             </div>
 
             {/* Create Post Button */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1 font-eras-semibold text-gray-900 text-sm sm:text-base">
                   ¿Qué estás buscando hoy?
                 </div>
                 <Button
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => verifyCreatePublication()} // setIsCreateModalOpen(true)
                   className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -467,13 +483,13 @@ export default function FeedPage() {
             </div>
 
             {/* Feed */}
-            <div className="space-y-4 lg:space-y-6">
+            <div className="space-y-4 lg:space-y-6 w-full max-w-full overflow-x-hidden">
               {loading ? (
                 // Loading skeletons
                 Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6"
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 w-full max-w-full"
                   >
                     <div className="flex items-start gap-4 mb-4">
                       <Skeleton className="h-12 w-12 rounded-full" />
@@ -488,7 +504,7 @@ export default function FeedPage() {
                   </div>
                 ))
               ) : error ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center w-full max-w-full">
                   <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
                   <h3 className="text-lg font-eras-bold text-gray-900 mb-2">
                     Error al cargar
@@ -506,7 +522,7 @@ export default function FeedPage() {
                   />
                 ))
               ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center w-full max-w-full">
                   <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-eras-bold text-gray-900 mb-2">
                     No se encontraron publicaciones
@@ -520,20 +536,22 @@ export default function FeedPage() {
 
             {/* Pagination */}
             {filteredPublications.length > 0 && pagination.totalPages > 1 && (
-              <div className="mt-8">
+              <div className="mt-8 w-full max-w-full overflow-x-hidden">
                 <div className="text-center mb-4 text-sm text-gray-600">
                   Página {pagination.page} de {pagination.totalPages}
                 </div>
-                <Pagination
-                  currentPage={pagination.page}
-                  totalPages={pagination.totalPages}
-                  onPageChange={(page) =>
-                    fetchPublications({
-                      page,
-                      limit: pagination.limit,
-                    })
-                  }
-                />
+                <div className="w-full max-w-full overflow-x-auto">
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={(page) =>
+                      fetchPublications({
+                        page,
+                        limit: pagination.limit,
+                      })
+                    }
+                  />
+                </div>
               </div>
             )}
           </div>

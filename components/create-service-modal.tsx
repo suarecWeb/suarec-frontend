@@ -243,11 +243,20 @@ export default function CreateServiceModal({
       }, 2000);
     } catch (err: any) {
       setIsLoading(false);
+
+      console.log("Error al crear publicación:", err);
+
+      if (err.response?.data?.statusCode === 403) {
+        toast.error(
+          "Debes verificar tu cuenta antes de crear una publicación. Por favor, realiza la verificación en tu perfil.",
+        );
+        return;
+      }
+
       const errorMessage =
         err.response?.data?.message ||
         "Error al crear la publicación. Inténtalo de nuevo.";
       setError(errorMessage);
-      console.error("Error al crear publicación:", err);
     }
   };
 

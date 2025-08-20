@@ -20,6 +20,9 @@ import {
   Eye,
   Trash2,
   CheckCircle,
+  BadgeCheck,
+  AlertTriangle,
+  FileImage, // Agregar esta importación
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -202,10 +205,86 @@ const ProfilePage = () => {
     }
   };
 
+  const ProfileCompletionMessages = ({ user }: { user: User }) => {
+    // Verificar qué información falta
+    const missingInfo = [];
+
+    if (!user.profile_image) {
+      missingInfo.push({
+        field: "profile_image",
+        label: "Foto de perfil",
+        icon: UserIcon,
+      });
+    }
+
+    if (!user.bio || user.bio.trim() === "") {
+      missingInfo.push({ field: "bio", label: "Biografía", icon: FileText });
+    }
+
+    if (!user.education || user.education.length === 0) {
+      missingInfo.push({
+        field: "education",
+        label: "Información educativa",
+        icon: FileText,
+      });
+    }
+
+    if ((user?.idPhotos?.length ?? 0) < 2) {
+      missingInfo.push({
+        field: "idPhotos",
+        label: "Fotos de cédula",
+        icon: FileImage,
+      });
+    }
+
+    const isProfileComplete = missingInfo.length === 0;
+
+    return (
+      <div className="space-y-4 mb-6">
+        {/* Mensaje de verificación */}
+        {!user.isVerify && isProfileComplete && (
+          <div className="rounded-lg p-4 border-l-4 bg-yellow-50 border-yellow-500">
+            <div className="flex items-start gap-3">
+              <Clock className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-yellow-800">
+                  Verificación Pendiente
+                </h3>
+                <p className="text-sm mt-1 text-yellow-700">
+                  Tu perfil está siendo revisado por nuestro equipo. Este
+                  proceso puede tomar entre 24 a 48 horas hábiles.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mensaje de completar perfil */}
+        {!isProfileComplete && (
+          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-blue-800">
+                  Completa tu perfil para obtener la verificación
+                </h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Para poder ser verificado, necesitas completar la siguiente
+                  información:{" "}
+                  {missingInfo.map((info) => info.label).join(", ")}.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12">
+      <div className="bg-gray-50 min-h-screen pb-12 main-content">
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8">
           <div className="container mx-auto px-4">
@@ -236,6 +315,8 @@ const ProfilePage = () => {
               </div>
             </div>
           )}
+
+          {user && <ProfileCompletionMessages user={user} />}
 
           {loading ? (
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -306,7 +387,14 @@ const ProfilePage = () => {
                       />
                     </div>
                     <div className="text-center md:text-left">
-                      <h2 className="text-2xl font-bold">{user.name}</h2>
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                        {user.name}
+                        {user.isVerify && (
+                          <div className="flex items-center gap-1 bg-white rounded-full p-1">
+                            <BadgeCheck className="h-5 w-5 text-blue-500" />
+                          </div>
+                        )}
+                      </h2>{" "}
                       {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
                         {getRoleNames(user.roles).map((roleName, index) => (
                           <span
