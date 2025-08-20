@@ -640,11 +640,6 @@ export default function ContractsPage() {
                                       showCurrency: true,
                                     })}
                                   </p>
-                                  {/* Debug log */}
-                                  <p className="text-xs text-gray-500">
-                                    Debug: totalPrice={contract.totalPrice},
-                                    initialPrice={contract.initialPrice}
-                                  </p>
                                 </div>
                               </div>
                               <div className="text-right">
@@ -1039,15 +1034,13 @@ export default function ContractsPage() {
                         {/* Botón de Cancelación */}
                         {contract.status !== ContractStatus.CANCELLED &&
                           contract.status !== ContractStatus.COMPLETED && (
-                            <div className="mt-4 flex justify-end">
-                              <button
-                                onClick={() => handleCancelContract(contract)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
-                              >
-                                <XCircle className="h-4 w-4" />
-                                Cancelar Contrato
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => handleCancelContract(contract)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 ml-auto"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancelar Contrato
+                            </button>
                           )}
 
                         {/* Cash Payment Info - Now handled through Wompi like other methods */}
@@ -1426,21 +1419,23 @@ export default function ContractsPage() {
         )}
 
         {/* Cancel Contract Penalty Modal */}
-        <CancellationPenaltyModal
-          isOpen={isCancelConfirmationOpen}
-          onClose={closeCancelConfirmation}
-          onConfirm={
-            penaltyInfo?.requiresPenalty
-              ? handleCancellationPenaltyPayment
-              : confirmCancelContract
-          }
-          contractTitle={
-            contractToCancel?.publication?.title || "este contrato"
-          }
-          isLoading={isCancelling}
-          requiresPenalty={penaltyInfo?.requiresPenalty ?? true}
-          penaltyMessage={penaltyInfo?.message}
-        />
+        {penaltyInfo && (
+          <CancellationPenaltyModal
+            isOpen={isCancelConfirmationOpen}
+            onClose={closeCancelConfirmation}
+            onConfirm={
+              penaltyInfo.requiresPenalty
+                ? handleCancellationPenaltyPayment
+                : confirmCancelContract
+            }
+            contractTitle={
+              contractToCancel?.publication?.title || "este contrato"
+            }
+            isLoading={isCancelling}
+            requiresPenalty={penaltyInfo.requiresPenalty}
+            penaltyMessage={penaltyInfo.message}
+          />
+        )}
       </div>
     </>
   );
