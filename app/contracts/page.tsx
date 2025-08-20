@@ -517,7 +517,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
                             {formatCurrency(
-                              calculatePriceWithTax(contract.currentPrice || 0),
+                              contract.currentPrice || 0,
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
@@ -553,11 +553,6 @@ export default function ContractsPage() {
                                       : formatCurrency(contract.totalPrice, {
                                           showCurrency: true,
                                         })}
-                                  </p>
-                                  {/* Debug log */}
-                                  <p className="text-xs text-gray-500">
-                                    Debug: totalPrice={contract.totalPrice},
-                                    initialPrice={contract.initialPrice}
                                   </p>
                                 </div>
                               </div>
