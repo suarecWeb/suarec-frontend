@@ -73,7 +73,7 @@ export default function ContractModal({
     title: publication?.title,
     user: publication?.user,
     userId: publication?.userId,
-    price: publication?.price
+    price: publication?.price,
   });
 
   const [contractType, setContractType] = useState<"accept" | "custom">(

@@ -26,8 +26,10 @@ import {
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
+import CancellationPenaltyModal from "@/components/cancellation-penalty-modal";
 import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { CancellationPenaltyService } from "../../services/CancellationPenaltyService";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
   PaymentService,
@@ -57,6 +59,16 @@ export default function ContractsPage() {
     useState(false);
   const [isEditProviderMessageModalOpen, setIsEditProviderMessageModalOpen] =
     useState(false);
+  const [isCancelConfirmationOpen, setIsCancelConfirmationOpen] =
+    useState(false);
+  const [contractToCancel, setContractToCancel] = useState<Contract | null>(
+    null,
+  );
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [penaltyInfo, setPenaltyInfo] = useState<{
+    requiresPenalty: boolean;
+    message?: string;
+  } | null>(null);
   const router = useRouter();
   const { showNotification } = useNotification();
   const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
@@ -256,6 +268,92 @@ export default function ContractsPage() {
       contract.paymentMethod &&
       contract.totalPrice
     );
+  };
+
+  const handleCancelContract = async (contract: Contract) => {
+    setContractToCancel(contract);
+
+    try {
+      // Verificar si se requiere penalización antes de mostrar el modal
+      const penaltyCheck = await ContractService.checkPenaltyRequired(
+        contract.id,
+      );
+      setPenaltyInfo(penaltyCheck);
+
+      if (penaltyCheck.requiresPenalty) {
+        // Si se requiere penalización, mostrar el modal de confirmación
+        setIsCancelConfirmationOpen(true);
+      } else {
+        // Si no se requiere penalización, igualmente mostrar modal de confirmación
+        setIsCancelConfirmationOpen(true);
+      }
+    } catch (error) {
+      console.error("Error checking penalty requirement:", error);
+      // En caso de error, mostrar el modal por defecto con penalización
+      setPenaltyInfo({
+        requiresPenalty: true,
+        message: "Error al verificar penalización",
+      });
+      setIsCancelConfirmationOpen(true);
+    }
+  };
+
+  const confirmCancelContract = async () => {
+    if (!contractToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      await ContractService.cancelContract(contractToCancel.id);
+      toast.success("Contrato cancelado exitosamente");
+      loadContracts(); // Recargar la lista de contratos
+      setIsCancelConfirmationOpen(false);
+      setContractToCancel(null);
+    } catch (error) {
+      console.error("Error canceling contract:", error);
+      toast.error("Error al cancelar el contrato");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const closeCancelConfirmation = () => {
+    setIsCancelConfirmationOpen(false);
+    setContractToCancel(null);
+    setIsCancelling(false);
+    setPenaltyInfo(null);
+  };
+
+  const handleCancellationPenaltyPayment = async () => {
+    if (!contractToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      // Crear el pago de penalización usando el servicio específico
+      const penaltyData = {
+        contractId: contractToCancel.id,
+        amount: 10000,
+        currency: "COP",
+        paymentMethod: "WOMPI",
+        description: `Penalización por cancelación de contrato: ${contractToCancel.publication?.title || "Contrato"}`,
+        paymentType: "CANCELLATION_PENALTY",
+      };
+
+      const payment =
+        await CancellationPenaltyService.createPenaltyPayment(penaltyData);
+      console.log(payment.wompi_payment_link);
+      if (payment && payment.wompi_payment_link) {
+        window.location.href = payment.wompi_payment_link;
+      } else {
+        toast.error(
+          "No se pudo generar el enlace de pago para la penalización",
+        );
+      }
+    } catch (error) {
+      console.error("Error creating penalty payment:", error);
+      toast.error("Error al crear el pago de penalización");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const getStatusColor = (status: ContractStatus) => {
@@ -945,6 +1043,18 @@ export default function ContractsPage() {
                           })()
                         )}
 
+                        {/* Botón de Cancelación */}
+                        {contract.status !== ContractStatus.CANCELLED &&
+                          contract.status !== ContractStatus.COMPLETED && (
+                            <button
+                              onClick={() => handleCancelContract(contract)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 ml-auto"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancelar Contrato
+                            </button>
+                          )}
+
                         {/* Cash Payment Info - Now handled through Wompi like other methods */}
                         {/* {contract.status === ContractStatus.ACCEPTED &&
                           contract.paymentMethod === "efectivo" && (
@@ -1253,6 +1363,20 @@ export default function ContractsPage() {
                           </button>
                         </div>
                       )}
+
+                      {/* Botón de Cancelación para el Proveedor */}
+                      {contract.status !== ContractStatus.CANCELLED &&
+                        contract.status !== ContractStatus.COMPLETED && (
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={() => handleCancelContract(contract)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancelar Contrato
+                            </button>
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>
@@ -1301,6 +1425,25 @@ export default function ContractsPage() {
               setSelectedContract(null);
               loadContracts();
             }}
+          />
+        )}
+
+        {/* Cancel Contract Penalty Modal */}
+        {penaltyInfo && (
+          <CancellationPenaltyModal
+            isOpen={isCancelConfirmationOpen}
+            onClose={closeCancelConfirmation}
+            onConfirm={
+              penaltyInfo.requiresPenalty
+                ? handleCancellationPenaltyPayment
+                : confirmCancelContract
+            }
+            contractTitle={
+              contractToCancel?.publication?.title || "este contrato"
+            }
+            isLoading={isCancelling}
+            requiresPenalty={penaltyInfo.requiresPenalty}
+            penaltyMessage={penaltyInfo.message}
           />
         )}
       </div>
