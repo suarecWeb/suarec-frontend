@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { SimpleSelect, SimpleSelectItem } from "@/components/ui/simple-select";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 import PublicationService from "@/services/PublicationsService";
 import ServiceRequestCard from "@/components/ServiceRequestCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -102,11 +105,12 @@ export default function ServiceRequestsPage() {
   };
 
   const filteredPublications = publications.filter((pub) => {
-    const matchesSearch = pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         pub.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pub.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !categoryFilter || pub.category === categoryFilter;
     const matchesUrgency = !urgencyFilter || pub.urgency === urgencyFilter;
-    
+
     return matchesSearch && matchesCategory && matchesUrgency;
   });
 
@@ -121,7 +125,7 @@ export default function ServiceRequestsPage() {
             Encuentra trabajos que necesitan ser realizados
           </p>
         </div>
-        
+
         <Link href="/service-requests/create">
           <Button className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -149,9 +153,9 @@ export default function ServiceRequestsPage() {
                 className="pl-10"
               />
             </div>
-            
-            <SimpleSelect 
-              value={categoryFilter} 
+
+            <SimpleSelect
+              value={categoryFilter}
               onValueChange={setCategoryFilter}
               placeholder="Categoría"
             >
@@ -161,9 +165,9 @@ export default function ServiceRequestsPage() {
                 </SimpleSelectItem>
               ))}
             </SimpleSelect>
-            
-            <SimpleSelect 
-              value={urgencyFilter} 
+
+            <SimpleSelect
+              value={urgencyFilter}
               onValueChange={setUrgencyFilter}
               placeholder="Urgencia"
             >
@@ -219,11 +223,11 @@ export default function ServiceRequestsPage() {
               >
                 Anterior
               </Button>
-              
+
               <span className="text-sm text-gray-600">
                 Página {pagination.page} de {pagination.totalPages}
               </span>
-              
+
               <Button
                 variant="outline"
                 onClick={() => handlePageChange(pagination.page + 1)}
@@ -238,7 +242,9 @@ export default function ServiceRequestsPage() {
         <Card>
           <CardContent className="text-center py-12">
             <div className="text-gray-500">
-              <p className="text-lg font-medium mb-2">No se encontraron solicitudes</p>
+              <p className="text-lg font-medium mb-2">
+                No se encontraron solicitudes
+              </p>
               <p className="text-sm">
                 {searchTerm || categoryFilter || urgencyFilter
                   ? "Intenta ajustar los filtros de búsqueda"
@@ -250,4 +256,4 @@ export default function ServiceRequestsPage() {
       )}
     </div>
   );
-} 
+}

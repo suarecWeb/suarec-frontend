@@ -28,10 +28,7 @@ export default function CreateServiceRequestPage() {
         </p>
       </div>
 
-      <ServiceRequestForm 
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-      />
+      <ServiceRequestForm onSuccess={handleSuccess} onCancel={handleCancel} />
     </div>
   );
-} 
+}

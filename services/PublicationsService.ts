@@ -2,21 +2,31 @@
 import api from "./axios_config";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
-import { Publication, PublicationType } from "@/interfaces/publication.interface";
+import {
+  Publication,
+  PublicationType,
+} from "@/interfaces/publication.interface";
 
 const baseURL = "/suarec/publications";
 
 // Estructura de respuesta de publicación
-const getPublications = (params?: PaginationParams & { type?: PublicationType; category?: string }) => {
+const getPublications = (
+  params?: PaginationParams & { type?: PublicationType; category?: string },
+) => {
   return api.get<PaginationResponse<Publication>>(baseURL, { params });
 };
 
 const getServiceOffers = (params?: PaginationParams) => {
-  return api.get<PaginationResponse<Publication>>(`${baseURL}/service-offers`, { params });
+  return api.get<PaginationResponse<Publication>>(`${baseURL}/service-offers`, {
+    params,
+  });
 };
 
 const getServiceRequests = (params?: PaginationParams) => {
-  return api.get<PaginationResponse<Publication>>(`${baseURL}/service-requests`, { params });
+  return api.get<PaginationResponse<Publication>>(
+    `${baseURL}/service-requests`,
+    { params },
+  );
 };
 
 const getPublicationById = (id: string) => {

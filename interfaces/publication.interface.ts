@@ -5,7 +5,7 @@ export enum PublicationType {
   // Tipos de servicios
   SERVICE = "SERVICE", // Usuario ofrece servicios (OFERTA)
   SERVICE_REQUEST = "SERVICE_REQUEST", // Usuario busca servicios (SOLICITUD)
-  
+
   // Tipos de empleos
   JOB = "JOB", // Empresa ofrece vacante
 }
@@ -30,7 +30,7 @@ export interface Publication {
   userId: number;
   user?: User;
   comments?: Comment[];
-  
+
   // Campos específicos para solicitudes de servicios
   requirements?: string; // Requisitos del trabajo
   location?: string; // Ubicación del trabajo

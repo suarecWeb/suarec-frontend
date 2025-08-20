@@ -50,13 +50,17 @@ export interface Contract {
   updatedAt: Date;
   deleted_at?: Date;
   bids: ContractBid[];
+  quantity?: number;
 }
 
 export interface CreateContractDto {
   publicationId: string;
+  clientId: number; // Requerido - el usuario autenticado que contrata
+  providerId?: number; // Opcional - se obtiene automáticamente del backend
   initialPrice: number;
   totalPrice: number;
   priceUnit: string;
+  quantity?: number;
   clientMessage?: string;
   requestedDate: Date;
   requestedTime: string;
