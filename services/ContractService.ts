@@ -115,6 +115,11 @@ export class ContractService {
     return response.data;
   }
 
+  static async completeContract(contractId: string): Promise<Contract> {
+    const response = await api.post(`/suarec/contracts/${contractId}/complete`);
+    return response.data;
+  }
+
   static async checkPenaltyRequired(
     contractId: string,
   ): Promise<{ requiresPenalty: boolean; message?: string }> {

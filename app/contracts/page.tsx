@@ -27,7 +27,11 @@ import {
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
 import CancellationPenaltyModal from "@/components/cancellation-penalty-modal";
-import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
+import {
+  translatePriceUnit,
+  calculatePriceWithTax,
+  canCompleteContract,
+} from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { CancellationPenaltyService } from "../../services/CancellationPenaltyService";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -65,6 +69,12 @@ export default function ContractsPage() {
     null,
   );
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isCompleteConfirmationOpen, setIsCompleteConfirmationOpen] =
+    useState(false);
+  const [contractToComplete, setContractToComplete] = useState<Contract | null>(
+    null,
+  );
   const [penaltyInfo, setPenaltyInfo] = useState<{
     requiresPenalty: boolean;
     message?: string;
@@ -298,6 +308,44 @@ export default function ContractsPage() {
     }
   };
 
+  const handleCompleteContract = async (contract: Contract) => {
+    if (!currentUserId) {
+      toast.error("No se pudo identificar al usuario");
+      return;
+    }
+
+    if (!canCompleteContract(contract, currentUserId)) {
+      toast.error("No puedes marcar este contrato como completado");
+      return;
+    }
+
+    setContractToComplete(contract);
+    setIsCompleteConfirmationOpen(true);
+  };
+
+  const confirmCompleteContract = async () => {
+    if (!contractToComplete) return;
+
+    setIsCompleting(true);
+    try {
+      await ContractService.completeContract(contractToComplete.id);
+      toast.success("Contrato marcado como completado exitosamente");
+      loadContracts(); // Recargar para ver los cambios
+      setIsCompleteConfirmationOpen(false);
+      setContractToComplete(null);
+    } catch (error) {
+      toast.error("Error al marcar el contrato como completado");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const closeCompleteConfirmation = () => {
+    setIsCompleteConfirmationOpen(false);
+    setContractToComplete(null);
+    setIsCompleting(false);
+  };
+
   const confirmCancelContract = async () => {
     if (!contractToCancel) return;
 
@@ -368,6 +416,8 @@ export default function ContractsPage() {
         return "bg-red-100 text-red-800 border-red-200";
       case ContractStatus.CANCELLED:
         return "bg-gray-100 text-gray-800 border-gray-200";
+      case ContractStatus.COMPLETED:
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -385,6 +435,8 @@ export default function ContractsPage() {
         return <XCircle className="h-4 w-4" />;
       case ContractStatus.CANCELLED:
         return <XCircle className="h-4 w-4" />;
+      case ContractStatus.COMPLETED:
+        return <CheckCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
     }
@@ -402,6 +454,8 @@ export default function ContractsPage() {
         return "Rechazado";
       case ContractStatus.CANCELLED:
         return "Cancelado";
+      case ContractStatus.COMPLETED:
+        return "Completado";
       default:
         return status;
     }
@@ -614,9 +668,7 @@ export default function ContractsPage() {
                             </span>
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency(
-                              contract.currentPrice || 0,
-                            )}{" "}
+                            {formatCurrency(contract.currentPrice || 0)}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>
@@ -1364,6 +1416,29 @@ export default function ContractsPage() {
                         </div>
                       )}
 
+                      {/* Botón de Completar Contrato para el Proveedor */}
+                      {currentUserId && (
+                        <div className="mt-4 flex justify-end">
+                          {contract.status === ContractStatus.COMPLETED ? (
+                            <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 font-medium flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4" />
+                              Servicio Completado
+                            </div>
+                          ) : canCompleteContract(contract, currentUserId) ? (
+                            <button
+                              onClick={() => handleCompleteContract(contract)}
+                              disabled={isCompleting}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              {isCompleting
+                                ? "Completando..."
+                                : "Marcar como Completado"}
+                            </button>
+                          ) : null}
+                        </div>
+                      )}
+
                       {/* Botón de Cancelación para el Proveedor */}
                       {contract.status !== ContractStatus.CANCELLED &&
                         contract.status !== ContractStatus.COMPLETED && (
@@ -1426,6 +1501,76 @@ export default function ContractsPage() {
               loadContracts();
             }}
           />
+        )}
+
+        {/* Complete Contract Confirmation Modal */}
+        {isCompleteConfirmationOpen && contractToComplete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Confirmar Completación
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Marcar contrato como completado
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-3">
+                  ¿Estás seguro que quieres marcar este contrato como
+                  completado?
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800 font-medium">
+                    ⚠️ Esto significa que el trabajo ya fue realizado y el
+                    servicio ha sido prestado completamente.
+                  </p>
+                </div>
+                <div className="mt-3 text-sm text-gray-600">
+                  <p>
+                    <strong>Servicio:</strong>{" "}
+                    {contractToComplete.publication?.title}
+                  </p>
+                  <p>
+                    <strong>Cliente:</strong> {contractToComplete.client?.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeCompleteConfirmation}
+                  disabled={isCompleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmCompleteContract}
+                  disabled={isCompleting}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCompleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Completando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Confirmar Completación
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Cancel Contract Penalty Modal */}
