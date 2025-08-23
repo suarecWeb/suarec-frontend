@@ -1416,42 +1416,44 @@ export default function ContractsPage() {
                         </div>
                       )}
 
-                      {/* Botón de Completar Contrato para el Proveedor */}
+                      {/* Acciones del Proveedor */}
                       {currentUserId && (
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex justify-end gap-3">
                           {contract.status === ContractStatus.COMPLETED ? (
                             <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 font-medium flex items-center gap-2">
                               <CheckCircle className="h-4 w-4" />
                               Servicio Completado
                             </div>
-                          ) : canCompleteContract(contract, currentUserId) ? (
-                            <button
-                              onClick={() => handleCompleteContract(contract)}
-                              disabled={isCompleting}
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                              {isCompleting
-                                ? "Completando..."
-                                : "Marcar como Completado"}
-                            </button>
-                          ) : null}
+                          ) : (
+                            <>
+                              {canCompleteContract(contract, currentUserId) && (
+                                <button
+                                  onClick={() =>
+                                    handleCompleteContract(contract)
+                                  }
+                                  disabled={isCompleting}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                  {isCompleting
+                                    ? "Completando..."
+                                    : "Marcar como Completado"}
+                                </button>
+                              )}
+
+                              {contract.status !== ContractStatus.CANCELLED && (
+                                <button
+                                  onClick={() => handleCancelContract(contract)}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  Cancelar Contrato
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
-
-                      {/* Botón de Cancelación para el Proveedor */}
-                      {contract.status !== ContractStatus.CANCELLED &&
-                        contract.status !== ContractStatus.COMPLETED && (
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={() => handleCancelContract(contract)}
-                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
-                            >
-                              <XCircle className="h-4 w-4" />
-                              Cancelar Contrato
-                            </button>
-                          </div>
-                        )}
                     </div>
                   ))}
                 </div>
@@ -1505,10 +1507,23 @@ export default function ContractsPage() {
 
         {/* Complete Contract Confirmation Modal */}
         {isCompleteConfirmationOpen && contractToComplete && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={closeCompleteConfirmation}
+          >
+            <div
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={closeCompleteConfirmation}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+
+              <div className="flex flex-col items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div>
@@ -1526,7 +1541,7 @@ export default function ContractsPage() {
                   ¿Estás seguro que quieres marcar este contrato como
                   completado?
                 </p>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
                   <p className="text-sm text-amber-800 font-medium">
                     ⚠️ Esto significa que el trabajo ya fue realizado y el
                     servicio ha sido prestado completamente.
@@ -1543,7 +1558,7 @@ export default function ContractsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex justify-center gap-3">
                 <button
                   onClick={closeCompleteConfirmation}
                   disabled={isCompleting}
