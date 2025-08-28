@@ -23,10 +23,12 @@ import {
   CreditCard,
   ArrowRight,
   Receipt,
+  Mail,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
 import CancellationPenaltyModal from "@/components/cancellation-penalty-modal";
+import OTPVerificationModal from "@/components/otp-verification-modal";
 import {
   translatePriceUnit,
   calculatePriceWithTax,
@@ -75,6 +77,8 @@ export default function ContractsPage() {
   const [contractToComplete, setContractToComplete] = useState<Contract | null>(
     null,
   );
+  const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+  const [contractForOTP, setContractForOTP] = useState<Contract | null>(null);
   const [penaltyInfo, setPenaltyInfo] = useState<{
     requiresPenalty: boolean;
     message?: string;
@@ -273,6 +277,14 @@ export default function ContractsPage() {
       return false;
     }
 
+    // Para contratos completados, solo mostrar el botón de pago después de verificación OTP
+    if (contract.status === ContractStatus.COMPLETED) {
+      // Solo mostrar el botón de pago si el OTP ha sido verificado
+      return (
+        contract.otpVerified && contract.paymentMethod && contract.totalPrice
+      );
+    }
+
     return (
       contract.status === ContractStatus.ACCEPTED &&
       contract.paymentMethod &&
@@ -344,6 +356,35 @@ export default function ContractsPage() {
     setIsCompleteConfirmationOpen(false);
     setContractToComplete(null);
     setIsCompleting(false);
+  };
+
+  const handleOTPVerification = (contract: Contract) => {
+    setContractForOTP(contract);
+    setIsOTPModalOpen(true);
+  };
+
+  const handleOTPVerified = () => {
+    // Una vez que el OTP es verificado, el cliente puede proceder con el pago
+    if (contractForOTP) {
+      // Actualizar el estado del contrato localmente
+      setContracts((prevContracts) => ({
+        ...prevContracts,
+        asClient: prevContracts.asClient.map((contract) =>
+          contract.id === contractForOTP.id
+            ? { ...contract, otpVerified: true }
+            : contract,
+        ),
+        asProvider: prevContracts.asProvider,
+      }));
+
+      toast.success("Servicio confirmado. Ahora puedes proceder con el pago.");
+      loadContracts(); // Recargar para actualizar el estado desde el backend
+    }
+  };
+
+  const closeOTPModal = () => {
+    setIsOTPModalOpen(false);
+    setContractForOTP(null);
   };
 
   const confirmCancelContract = async () => {
@@ -1039,7 +1080,51 @@ export default function ContractsPage() {
                           )}
 
                         {/* Payment Button or Payment Status */}
-                        {shouldShowPaymentButton(contract) ? (
+                        {contract.status === ContractStatus.COMPLETED ? (
+                          <div className="flex flex-col gap-3 ml-auto">
+                            {/* Solo mostrar el botón de verificación OTP si no ha sido verificado */}
+                            {!contract.otpVerified && (
+                              <button
+                                onClick={() => handleOTPVerification(contract)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                              >
+                                <Mail className="h-4 w-4" />
+                                Verificar Servicio (OTP)
+                              </button>
+                            )}
+
+                            {/* Mostrar mensaje de confirmación si ya fue verificado */}
+                            {contract.otpVerified && (
+                              <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-green-800">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ✅ Servicio verificado
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {shouldShowPaymentButton(contract) && (
+                              <button
+                                onClick={() => handleGoToPayment(contract)}
+                                disabled={!acceptPolicy || !acceptPersonal}
+                                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
+                                  !acceptPolicy || !acceptPersonal
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                                }`}
+                              >
+                                <CreditCard className="h-4 w-4" />
+                                Ir a Pagar{" "}
+                                {formatCurrency(contract.totalPrice, {
+                                  showCurrency: true,
+                                })}
+                                <ArrowRight className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ) : shouldShowPaymentButton(contract) ? (
                           <button
                             onClick={() => handleGoToPayment(contract)}
                             disabled={!acceptPolicy || !acceptPersonal}
@@ -1502,6 +1587,18 @@ export default function ContractsPage() {
               setSelectedContract(null);
               loadContracts();
             }}
+          />
+        )}
+
+        {/* OTP Verification Modal */}
+        {isOTPModalOpen && contractForOTP && (
+          <OTPVerificationModal
+            isOpen={isOTPModalOpen}
+            onClose={closeOTPModal}
+            contractId={contractForOTP.id}
+            serviceTitle={contractForOTP.publication?.title || "Servicio"}
+            providerName={contractForOTP.provider?.name || "Proveedor"}
+            onOTPVerified={handleOTPVerified}
           />
         )}
 

@@ -120,6 +120,30 @@ export class ContractService {
     return response.data;
   }
 
+  static async generateOTP(contractId: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/generate-otp`,
+    );
+    return response.data;
+  }
+
+  static async verifyOTP(contractId: string, otpCode: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/verify-otp`,
+      {
+        otpCode,
+      },
+    );
+    return response.data;
+  }
+
+  static async resendOTP(contractId: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/resend-otp`,
+    );
+    return response.data;
+  }
+
   static async checkPenaltyRequired(
     contractId: string,
   ): Promise<{ requiresPenalty: boolean; message?: string }> {
