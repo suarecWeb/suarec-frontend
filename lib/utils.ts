@@ -5,6 +5,32 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function canCompleteContract(
+  contract: any,
+  currentUserId: number,
+): boolean {
+  if (contract.provider?.id !== currentUserId) {
+    return false;
+  }
+
+  if (contract.status === "cancelled" || contract.status === "completed") {
+    return false;
+  }
+
+  if (!contract.agreedDate || !contract.agreedTime) {
+    return false;
+  }
+
+  const agreedDate = new Date(contract.agreedDate);
+  const [hours, minutes] = contract.agreedTime.split(":").map(Number);
+
+  const serviceDateTime = new Date(agreedDate);
+  serviceDateTime.setHours(hours, minutes, 0, 0);
+
+  const now = new Date();
+  return now >= serviceDateTime;
+}
+
 // Función para traducir unidades de precio de inglés a español
 export function translatePriceUnit(priceUnit: string): string {
   const translations: { [key: string]: string } = {
