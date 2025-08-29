@@ -277,41 +277,31 @@ export default function ContractsPage() {
       return false;
     }
 
-    // Para contratos completados, solo mostrar el botón de pago después de verificación OTP
     if (contract.status === ContractStatus.COMPLETED) {
-      // Solo mostrar el botón de pago si el OTP ha sido verificado
       return (
         contract.otpVerified && contract.paymentMethod && contract.totalPrice
       );
     }
 
-    return (
-      contract.status === ContractStatus.ACCEPTED &&
-      contract.paymentMethod &&
-      contract.totalPrice
-    );
+    return false;
   };
 
   const handleCancelContract = async (contract: Contract) => {
     setContractToCancel(contract);
 
     try {
-      // Verificar si se requiere penalización antes de mostrar el modal
       const penaltyCheck = await ContractService.checkPenaltyRequired(
         contract.id,
       );
       setPenaltyInfo(penaltyCheck);
 
       if (penaltyCheck.requiresPenalty) {
-        // Si se requiere penalización, mostrar el modal de confirmación
         setIsCancelConfirmationOpen(true);
       } else {
-        // Si no se requiere penalización, igualmente mostrar modal de confirmación
         setIsCancelConfirmationOpen(true);
       }
     } catch (error) {
       console.error("Error checking penalty requirement:", error);
-      // En caso de error, mostrar el modal por defecto con penalización
       setPenaltyInfo({
         requiresPenalty: true,
         message: "Error al verificar penalización",
@@ -342,7 +332,7 @@ export default function ContractsPage() {
     try {
       await ContractService.completeContract(contractToComplete.id);
       toast.success("Contrato marcado como completado exitosamente");
-      loadContracts(); // Recargar para ver los cambios
+      loadContracts();
       setIsCompleteConfirmationOpen(false);
       setContractToComplete(null);
     } catch (error) {
@@ -364,9 +354,7 @@ export default function ContractsPage() {
   };
 
   const handleOTPVerified = () => {
-    // Una vez que el OTP es verificado, el cliente puede proceder con el pago
     if (contractForOTP) {
-      // Actualizar el estado del contrato localmente
       setContracts((prevContracts) => ({
         ...prevContracts,
         asClient: prevContracts.asClient.map((contract) =>
@@ -378,7 +366,7 @@ export default function ContractsPage() {
       }));
 
       toast.success("Servicio confirmado. Ahora puedes proceder con el pago.");
-      loadContracts(); // Recargar para actualizar el estado desde el backend
+      loadContracts();
     }
   };
 
@@ -394,7 +382,7 @@ export default function ContractsPage() {
     try {
       await ContractService.cancelContract(contractToCancel.id);
       toast.success("Contrato cancelado exitosamente");
-      loadContracts(); // Recargar la lista de contratos
+      loadContracts();
       setIsCancelConfirmationOpen(false);
       setContractToCancel(null);
     } catch (error) {
@@ -1146,10 +1134,26 @@ export default function ContractsPage() {
                           (() => {
                             const paymentStatus =
                               contractPaymentStatus[contract.id];
-                            if (
-                              paymentStatus?.hasCompletedPayments &&
-                              contract.status === ContractStatus.ACCEPTED
-                            ) {
+
+                            // Para contratos ACCEPTED, mostrar mensaje de espera
+                            if (contract.status === ContractStatus.ACCEPTED) {
+                              return (
+                                <div className="px-4 py-3 ml-auto bg-blue-50 border border-blue-200 rounded-lg">
+                                  <div className="flex items-center gap-2 text-blue-800">
+                                    <Clock className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      ⏳ Esperando que se complete el servicio
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    Una vez completado, podrás verificar y
+                                    proceder con el pago
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            if (paymentStatus?.hasCompletedPayments) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
                                   <div className="flex items-center gap-2 text-green-800">
@@ -1161,10 +1165,7 @@ export default function ContractsPage() {
                                 </div>
                               );
                             }
-                            if (
-                              paymentStatus?.hasPendingPayments &&
-                              contract.status === ContractStatus.ACCEPTED
-                            ) {
+                            if (paymentStatus?.hasPendingPayments) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
                                   <div className="flex items-center gap-2 text-yellow-800">

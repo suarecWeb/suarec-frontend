@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, RefreshCw, Mail } from "lucide-react";
+import { CheckCircle, RefreshCw, Mail } from "lucide-react";
 import { ContractService } from "../services/ContractService";
 import toast from "react-hot-toast";
 
@@ -30,9 +30,14 @@ export default function OTPVerificationModal({
 
   useEffect(() => {
     if (isOpen) {
-      // No generar OTP automáticamente, solo mostrar el modal
+      document.body.style.overflow = "hidden";
       setOtpGenerated(true);
+    } else {
+      document.body.style.overflow = "auto";
     }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isOpen]);
 
   const generateOTP = async () => {
@@ -92,11 +97,11 @@ export default function OTPVerificationModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center relative"
+        className="bg-white rounded-lg p-6 max-w-md w-full mx-4 my-8 text-center relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
