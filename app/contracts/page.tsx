@@ -614,9 +614,7 @@ export default function ContractsPage() {
                             </span>
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency(
-                              contract.currentPrice || 0,
-                            )}{" "}
+                            {formatCurrency(contract.currentPrice || 0)}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>

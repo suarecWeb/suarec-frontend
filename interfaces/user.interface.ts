@@ -47,6 +47,12 @@ export interface SocialLink {
   url: string;
 }
 
+export enum UserPlan {
+  FREE = "free",
+  PREMIUM = "premium",
+  CREATOR = "creator",
+}
+
 export interface User {
   id?: string;
   email: string;
@@ -63,6 +69,7 @@ export interface User {
   skills?: string[];
   isVerify?: boolean;
   cedula?: string;
+  plan?: UserPlan;
 
   // Relaciones
   idPhotos?: {
