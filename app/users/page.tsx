@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { UserService } from "@/services/UsersService";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
-import { User } from "@/interfaces/user.interface";
+import { User, UserPlan } from "@/interfaces/user.interface";
 import Navbar from "@/components/navbar";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
@@ -182,6 +182,58 @@ const UsersPageContent = () => {
       );
     } catch (err) {
       toast.error("Error al actualizar la verificación del usuario");
+    }
+  };
+
+  // Función para cambiar el plan del usuario
+  const handlePlanChange = async (userId: string, newPlan: UserPlan) => {
+    try {
+      const updateData = { plan: newPlan };
+      await UserService.partialUpdateUser(userId, updateData);
+
+      // Actualizar el estado local inmediatamente
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, plan: newPlan } : user,
+        ),
+      );
+
+      toast.success(
+        `Plan actualizado a ${newPlan.charAt(0).toUpperCase() + newPlan.slice(1)}`,
+      );
+    } catch (err) {
+      toast.error("Error al actualizar el plan del usuario");
+      console.error("Error updating user plan:", err);
+    }
+  };
+
+  // Función para obtener el color del badge del plan
+  const getPlanBadgeColor = (plan?: UserPlan) => {
+    if (!plan || plan === UserPlan.FREE) {
+      return "bg-gray-100 text-gray-800";
+    }
+    switch (plan) {
+      case UserPlan.PREMIUM:
+        return "bg-blue-100 text-blue-800";
+      case UserPlan.CREATOR:
+        return "bg-amber-100 text-amber-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Función para obtener el nombre del plan para mostrar
+  const getPlanDisplayName = (plan?: UserPlan) => {
+    if (!plan) return "Free";
+    switch (plan) {
+      case UserPlan.FREE:
+        return "Free";
+      case UserPlan.PREMIUM:
+        return "Premium";
+      case UserPlan.CREATOR:
+        return "Creator";
+      default:
+        return "Free";
     }
   };
 
@@ -452,6 +504,12 @@ const UsersPageContent = () => {
                             scope="col"
                             className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
+                            Plan
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
                             Campos Obligatorios
                           </th>
                           <th
@@ -546,6 +604,27 @@ const UsersPageContent = () => {
                                     <XCircle className="h-5 w-5 text-red-500 ml-2" />
                                   )}
                                 </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <select
+                                  value={user.plan || UserPlan.FREE}
+                                  onChange={(e) =>
+                                    user.id &&
+                                    handlePlanChange(
+                                      user.id,
+                                      e.target.value as UserPlan,
+                                    )
+                                  }
+                                  className={`px-2 py-1 text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-[#097EEC] ${getPlanBadgeColor(user.plan)}`}
+                                >
+                                  <option value={UserPlan.FREE}>Free</option>
+                                  <option value={UserPlan.PREMIUM}>
+                                    Premium
+                                  </option>
+                                  <option value={UserPlan.CREATOR}>
+                                    Creador
+                                  </option>
+                                </select>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <div className="flex flex-col items-center space-y-2">
