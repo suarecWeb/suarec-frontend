@@ -57,6 +57,7 @@ import {
   getPlanColor,
   UserIconResult,
 } from "@/lib/userUtils";
+import { UserGallery } from "@/components/ui/UserGallery";
 
 interface PublicProfilePageProps {
   params: {
@@ -413,6 +414,19 @@ const PublicProfilePage = () => {
               <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left Column - Personal Info */}
                 <div className="lg:w-1/3">
+                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                    <UserGallery
+                      isVisit={true}
+                      userId={
+                        userId
+                          ? typeof userId === "string"
+                            ? parseInt(userId)
+                            : userId
+                          : 0
+                      }
+                    />
+                  </div>
+
                   {/* Información personal */}
                   <div className="bg-gray-50 rounded-lg p-6 mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">

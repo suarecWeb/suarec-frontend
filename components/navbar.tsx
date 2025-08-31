@@ -153,7 +153,7 @@ const Navbar = () => {
                     icon={<TrendingUp className="h-4 w-4" />}
                     isScrolled={isScrolled}
                   >
-                    Inicio
+                    Publicaciones
                   </NavLink>
                 )}
 
@@ -300,7 +300,7 @@ const Navbar = () => {
                       icon={<TrendingUp className="h-5 w-5" />}
                       onClick={closeMenu}
                     >
-                      Inicio
+                      Publicaciones
                     </MobileNavLink>
                   )}
 
