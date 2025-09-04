@@ -47,6 +47,7 @@ import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { BalanceCard } from "@/components/BalanceCard";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -525,6 +526,11 @@ export default function ContractsPage() {
         </div>
 
         <div className="container mx-auto px-4 -mt-6 pb-12">
+          {/* Balance Card */}
+          <div className="mb-8">
+            <BalanceCard />
+          </div>
+
           {/* Stats Cards as Tabs */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <button
