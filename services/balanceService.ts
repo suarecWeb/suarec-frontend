@@ -3,8 +3,10 @@ import api from "./axios_config";
 export interface BalanceTransaction {
   id: string;
   amount: number;
-  balanceBefore: number;
-  balanceAfter: number;
+  creditBalanceBefore: number;
+  creditBalanceAfter: number;
+  debitBalanceBefore: number;
+  debitBalanceAfter: number;
   type:
     | "otp_verification_debit"
     | "otp_verification_credit"

@@ -147,19 +147,46 @@ export function BalanceHistory({ className = "" }: BalanceHistoryProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-gray-600">
-                      Balance anterior:
-                    </div>
-                    <div className="text-sm font-medium">
-                      {balanceService.formatBalance(transaction.balanceBefore)}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Balance nuevo:
-                    </div>
-                    <div
-                      className={`text-sm font-bold ${balanceService.getBalanceColor(transaction.balanceAfter)}`}
-                    >
-                      {balanceService.formatBalance(transaction.balanceAfter)}
+                    <div className="space-y-2">
+                      {/* Deudas */}
+                      <div>
+                        <div className="text-xs text-gray-500">Deudas:</div>
+                        <div className="text-sm">
+                          <span className="text-gray-600">
+                            {balanceService.formatBalance(
+                              transaction.debitBalanceBefore,
+                            )}
+                          </span>
+                          <span className="mx-1">→</span>
+                          <span
+                            className={`font-medium ${transaction.debitBalanceAfter > 0 ? "text-red-600" : "text-green-600"}`}
+                          >
+                            {balanceService.formatBalance(
+                              transaction.debitBalanceAfter,
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Créditos */}
+                      <div>
+                        <div className="text-xs text-gray-500">Créditos:</div>
+                        <div className="text-sm">
+                          <span className="text-gray-600">
+                            {balanceService.formatBalance(
+                              transaction.creditBalanceBefore,
+                            )}
+                          </span>
+                          <span className="mx-1">→</span>
+                          <span
+                            className={`font-medium ${transaction.creditBalanceAfter > 0 ? "text-green-600" : "text-gray-600"}`}
+                          >
+                            {balanceService.formatBalance(
+                              transaction.creditBalanceAfter,
+                            )}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
