@@ -29,7 +29,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserService } from "@/services/UsersService";
-import { User } from "@/interfaces/user.interface";
+import { User, UserPlan } from "@/interfaces/user.interface";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import ExperienceDialog from "@/components/ExperienceDialog";
 import { toast } from "react-hot-toast";
@@ -49,6 +49,18 @@ import BankInfoForm from "@/components/bank-info-form";
 import BankInfoDisplay from "@/components/bank-info-display";
 import { BankInfo } from "@/interfaces/bank-info";
 import { BankInfoService } from "@/services/bank-info.service";
+import { IconRosetteDiscountCheckFilled } from "@tabler/icons-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  getUserIcon,
+  getPlanDisplayName,
+  UserIconResult,
+} from "@/lib/userUtils";
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -67,6 +79,10 @@ const ProfilePage = () => {
     null,
   );
   const router = useRouter();
+  const [userIcons, setUserIcons] = useState<UserIconResult>({
+    verified: null,
+    plan: null,
+  });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -88,6 +104,7 @@ const ProfilePage = () => {
         // Establecer los datos del usuario
         setUser(userData);
         setLoading(false);
+        setUserIcons(getUserIcon(userData));
       } catch (err) {
         toast.error("No se pudo cargar la información del perfil");
         setLoading(false);
@@ -387,14 +404,39 @@ const ProfilePage = () => {
                       />
                     </div>
                     <div className="text-center md:text-left">
-                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <div className="text-2xl font-bold flex justify-center items-center gap-2">
                         {user.name}
-                        {user.isVerify && (
-                          <div className="flex items-center gap-1 bg-white rounded-full p-1">
-                            <BadgeCheck className="h-5 w-5 text-blue-500" />
-                          </div>
+                        {userIcons.verified && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center gap-1 bg-white rounded-full p-[2px]">
+                                  <IconRosetteDiscountCheckFilled
+                                    className={`h-6 w-6 ${
+                                      userIcons.verified === "checked-gray"
+                                        ? "text-gray-500"
+                                        : userIcons.verified === "checked-blue"
+                                          ? "text-blue-500"
+                                          : userIcons.verified ===
+                                              "checked-gold"
+                                            ? "text-amber-500"
+                                            : "text-gray-500"
+                                    }`}
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">
+                                  Usuario verificado
+                                  {user.plan
+                                    ? ` - ${getPlanDisplayName(user.plan)}`
+                                    : ""}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
-                      </h2>{" "}
+                      </div>{" "}
                       {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
                         {getRoleNames(user.roles).map((roleName, index) => (
                           <span
