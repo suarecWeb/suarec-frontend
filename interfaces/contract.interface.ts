@@ -50,6 +50,7 @@ export interface Contract {
   updatedAt: Date;
   deleted_at?: Date;
   bids: ContractBid[];
+  otpVerified?: boolean; // Si el OTP ha sido verificado por el cliente
   quantity?: number;
 }
 
