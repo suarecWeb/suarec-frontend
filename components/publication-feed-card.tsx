@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
-import { translatePriceUnit, getPublicationDisplayPrice } from "@/lib/utils";
+import { translatePriceUnit, getPublicationDisplayPrice, isUserCompany } from "@/lib/utils";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
@@ -212,10 +212,12 @@ const PublicationFeedCard = ({
                   <span className="inline-flex items-center px-2.5 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-white text-xs font-semibold">
                     {(() => {
                       const basePrice = publication.price;
+                      const isProviderCompany = isUserCompany(publication.user);
                       const priceInfo = getPublicationDisplayPrice(
                         basePrice,
                         publication.type,
                         publication.priceUnit,
+                        isProviderCompany,
                       );
                       return formatCurrency(priceInfo.price);
                     })()}

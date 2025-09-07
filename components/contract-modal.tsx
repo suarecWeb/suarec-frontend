@@ -20,7 +20,7 @@ import {
   Calendar,
   Receipt,
 } from "lucide-react";
-import { translatePriceUnit, calculatePriceWithTax } from "@/lib/utils";
+import { translatePriceUnit, calculatePriceWithTax, isUserCompany } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -97,6 +97,9 @@ export default function ContractModal({
   const router = useRouter();
   const { showNotification, showContractNotification } = useNotification();
 
+  // Verificar si el proveedor es una empresa
+  const isProviderCompany = isUserCompany(publication.user);
+  
   // Calcular precios
   // Cambia la lógica de isUnitary para que sea true para cualquier unidad distinta de las excluidas
   const excludedUnits = [
@@ -115,7 +118,7 @@ export default function ContractModal({
     (contractType === "accept" ? publication.price! : customPrice) *
       (isUnitary ? quantity || 1 : 1),
   );
-  const iva = Math.round(basePrice * 0.19);
+  const iva = isProviderCompany ? Math.round(basePrice * 0.19) : 0; // Solo aplicar IVA si es empresa
   const totalPrice = basePrice + iva;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -280,7 +283,7 @@ export default function ContractModal({
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
                 <span className="text-lg">
-                  {formatCurrency(calculatePriceWithTax(publication.price!), {
+                  {formatCurrency(calculatePriceWithTax(publication.price!, 0.19, isProviderCompany), {
                     showCurrency: true,
                   })}
                 </span>
@@ -320,7 +323,7 @@ export default function ContractModal({
                     </div>
                     <p className="text-sm text-gray-600">
                       {formatCurrency(
-                        calculatePriceWithTax(publication.price!),
+                        calculatePriceWithTax(publication.price!, 0.19, isProviderCompany),
                       )}{" "}
                       {translatePriceUnit(publication.priceUnit || "")}
                     </p>
@@ -395,7 +398,7 @@ export default function ContractModal({
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.valueAsNumber)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder={`Ej: ${calculatePriceWithTax(publication.price!)}`}
+                    placeholder={`Ej: ${calculatePriceWithTax(publication.price!, 0.19, isProviderCompany)}`}
                     required
                     min="0"
                     step="1000"
@@ -685,10 +688,12 @@ export default function ContractModal({
                     {formatCurrency(basePrice)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">IVA (19%):</span>
-                  <span className="font-medium">{formatCurrency(iva)}</span>
-                </div>
+                {isProviderCompany && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">IVA (19%):</span>
+                    <span className="font-medium">{formatCurrency(iva)}</span>
+                  </div>
+                )}
                 <hr className="border-gray-300" />
                 <div className="flex justify-between items-center text-lg font-bold text-green-600">
                   <span>Total a pagar:</span>

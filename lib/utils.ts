@@ -22,9 +22,11 @@ export function translatePriceUnit(priceUnit: string): string {
 }
 
 // Función para calcular el precio con IVA incluido
+// Solo aplica IVA si el usuario es una empresa (persona jurídica)
 export function calculatePriceWithTax(
   basePrice: number | string,
   taxRate: number = 0.19,
+  isCompany: boolean = false,
 ): number {
   // Convertir a número si es string
   const price =
@@ -35,7 +37,9 @@ export function calculatePriceWithTax(
     return 0;
   }
 
-  return Math.round(price + price * taxRate);
+  // Solo aplicar IVA si es una empresa
+  const finalTaxRate = isCompany ? taxRate : 0;
+  return Math.round(price + price * finalTaxRate);
 }
 
 // Configuración escalable para tipos de publicación y sus reglas de IVA
@@ -65,10 +69,12 @@ const PUBLICATION_PRICE_CONFIG: Record<string, PublicationPriceConfig> = {
 };
 
 // Función escalable para obtener el precio de una publicación
+// Solo aplica IVA si el proveedor es una empresa (persona jurídica)
 export function getPublicationDisplayPrice(
   basePrice: number | string,
   publicationType?: string,
   priceUnit?: string,
+  isProviderCompany: boolean = false,
 ): {
   price: number;
   showsTax: boolean;
@@ -109,15 +115,31 @@ export function getPublicationDisplayPrice(
   const config =
     PUBLICATION_PRICE_CONFIG[resolvedType] || PUBLICATION_PRICE_CONFIG.JOB;
 
-  const finalPrice = config.showTax
-    ? calculatePriceWithTax(price, config.taxRate)
+  // Solo aplicar IVA si es una empresa Y el tipo de publicación lo requiere
+  const shouldApplyTax = config.showTax && isProviderCompany;
+  const finalPrice = shouldApplyTax
+    ? calculatePriceWithTax(price, config.taxRate, isProviderCompany)
     : price;
 
   return {
     price: finalPrice,
-    showsTax: config.showTax,
-    taxApplied: config.showTax ? config.taxRate : 0,
+    showsTax: shouldApplyTax,
+    taxApplied: shouldApplyTax ? config.taxRate : 0,
   };
+}
+
+// Función helper para verificar si un usuario es una empresa
+export function isUserCompany(user: any): boolean {
+  if (!user?.roles) return false;
+  
+  return user.roles.some((role: any) => {
+    if (typeof role === 'string') {
+      return role === 'BUSINESS';
+    } else if (role && typeof role === 'object' && role.name) {
+      return role.name === 'BUSINESS';
+    }
+    return false;
+  });
 }
 
 // Función para obtener la URL pública de una imagen desde Supabase
