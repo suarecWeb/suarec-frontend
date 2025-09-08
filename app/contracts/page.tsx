@@ -23,11 +23,21 @@ import {
   CreditCard,
   ArrowRight,
   Receipt,
+  Mail,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
-import { translatePriceUnit, calculatePriceWithTax, isUserCompany } from "@/lib/utils";
+
+import CancellationPenaltyModal from "@/components/cancellation-penalty-modal";
+import OTPVerificationModal from "@/components/otp-verification-modal";
+import {
+  translatePriceUnit,
+  calculatePriceWithTax,
+  canCompleteContract,
+  isUserCompany
+} from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { CancellationPenaltyService } from "../../services/CancellationPenaltyService";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
   PaymentService,
@@ -57,6 +67,24 @@ export default function ContractsPage() {
     useState(false);
   const [isEditProviderMessageModalOpen, setIsEditProviderMessageModalOpen] =
     useState(false);
+  const [isCancelConfirmationOpen, setIsCancelConfirmationOpen] =
+    useState(false);
+  const [contractToCancel, setContractToCancel] = useState<Contract | null>(
+    null,
+  );
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isCompleteConfirmationOpen, setIsCompleteConfirmationOpen] =
+    useState(false);
+  const [contractToComplete, setContractToComplete] = useState<Contract | null>(
+    null,
+  );
+  const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+  const [contractForOTP, setContractForOTP] = useState<Contract | null>(null);
+  const [penaltyInfo, setPenaltyInfo] = useState<{
+    requiresPenalty: boolean;
+    message?: string;
+  } | null>(null);
   const router = useRouter();
   const { showNotification } = useNotification();
   const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
@@ -251,11 +279,160 @@ export default function ContractsPage() {
       return false;
     }
 
-    return (
-      contract.status === ContractStatus.ACCEPTED &&
-      contract.paymentMethod &&
-      contract.totalPrice
-    );
+    if (contract.status === ContractStatus.COMPLETED) {
+      return (
+        contract.otpVerified && contract.paymentMethod && contract.totalPrice
+      );
+    }
+
+    return false;
+  };
+
+  const handleCancelContract = async (contract: Contract) => {
+    setContractToCancel(contract);
+
+    try {
+      const penaltyCheck = await ContractService.checkPenaltyRequired(
+        contract.id,
+      );
+      setPenaltyInfo(penaltyCheck);
+
+      if (penaltyCheck.requiresPenalty) {
+        setIsCancelConfirmationOpen(true);
+      } else {
+        setIsCancelConfirmationOpen(true);
+      }
+    } catch (error) {
+      console.error("Error checking penalty requirement:", error);
+      setPenaltyInfo({
+        requiresPenalty: true,
+        message: "Error al verificar penalización",
+      });
+      setIsCancelConfirmationOpen(true);
+    }
+  };
+
+  const handleCompleteContract = async (contract: Contract) => {
+    if (!currentUserId) {
+      toast.error("No se pudo identificar al usuario");
+      return;
+    }
+
+    if (!canCompleteContract(contract, currentUserId)) {
+      toast.error("No puedes marcar este contrato como completado");
+      return;
+    }
+
+    setContractToComplete(contract);
+    setIsCompleteConfirmationOpen(true);
+  };
+
+  const confirmCompleteContract = async () => {
+    if (!contractToComplete) return;
+
+    setIsCompleting(true);
+    try {
+      await ContractService.completeContract(contractToComplete.id);
+      toast.success("Contrato marcado como completado exitosamente");
+      loadContracts();
+      setIsCompleteConfirmationOpen(false);
+      setContractToComplete(null);
+    } catch (error) {
+      toast.error("Error al marcar el contrato como completado");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const closeCompleteConfirmation = () => {
+    setIsCompleteConfirmationOpen(false);
+    setContractToComplete(null);
+    setIsCompleting(false);
+  };
+
+  const handleOTPVerification = (contract: Contract) => {
+    setContractForOTP(contract);
+    setIsOTPModalOpen(true);
+  };
+
+  const handleOTPVerified = () => {
+    if (contractForOTP) {
+      setContracts((prevContracts) => ({
+        ...prevContracts,
+        asClient: prevContracts.asClient.map((contract) =>
+          contract.id === contractForOTP.id
+            ? { ...contract, otpVerified: true }
+            : contract,
+        ),
+        asProvider: prevContracts.asProvider,
+      }));
+
+      toast.success("Servicio confirmado. Ahora puedes proceder con el pago.");
+      loadContracts();
+    }
+  };
+
+  const closeOTPModal = () => {
+    setIsOTPModalOpen(false);
+    setContractForOTP(null);
+  };
+
+  const confirmCancelContract = async () => {
+    if (!contractToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      await ContractService.cancelContract(contractToCancel.id);
+      toast.success("Contrato cancelado exitosamente");
+      loadContracts();
+      setIsCancelConfirmationOpen(false);
+      setContractToCancel(null);
+    } catch (error) {
+      console.error("Error canceling contract:", error);
+      toast.error("Error al cancelar el contrato");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const closeCancelConfirmation = () => {
+    setIsCancelConfirmationOpen(false);
+    setContractToCancel(null);
+    setIsCancelling(false);
+    setPenaltyInfo(null);
+  };
+
+  const handleCancellationPenaltyPayment = async () => {
+    if (!contractToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      // Crear el pago de penalización usando el servicio específico
+      const penaltyData = {
+        contractId: contractToCancel.id,
+        amount: 10000,
+        currency: "COP",
+        paymentMethod: "WOMPI",
+        description: `Penalización por cancelación de contrato: ${contractToCancel.publication?.title || "Contrato"}`,
+        paymentType: "CANCELLATION_PENALTY",
+      };
+
+      const payment =
+        await CancellationPenaltyService.createPenaltyPayment(penaltyData);
+      console.log(payment.wompi_payment_link);
+      if (payment && payment.wompi_payment_link) {
+        window.location.href = payment.wompi_payment_link;
+      } else {
+        toast.error(
+          "No se pudo generar el enlace de pago para la penalización",
+        );
+      }
+    } catch (error) {
+      console.error("Error creating penalty payment:", error);
+      toast.error("Error al crear el pago de penalización");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const getStatusColor = (status: ContractStatus) => {
@@ -270,6 +447,8 @@ export default function ContractsPage() {
         return "bg-red-100 text-red-800 border-red-200";
       case ContractStatus.CANCELLED:
         return "bg-gray-100 text-gray-800 border-gray-200";
+      case ContractStatus.COMPLETED:
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -287,6 +466,8 @@ export default function ContractsPage() {
         return <XCircle className="h-4 w-4" />;
       case ContractStatus.CANCELLED:
         return <XCircle className="h-4 w-4" />;
+      case ContractStatus.COMPLETED:
+        return <CheckCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
     }
@@ -304,6 +485,8 @@ export default function ContractsPage() {
         return "Rechazado";
       case ContractStatus.CANCELLED:
         return "Cancelado";
+      case ContractStatus.COMPLETED:
+        return "Completado";
       default:
         return status;
     }
@@ -516,9 +699,7 @@ export default function ContractsPage() {
                             </span>
                           </div>
                           <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency(
-                              contract.currentPrice || 0,
-                            )}{" "}
+                            {formatCurrency(contract.currentPrice || 0)}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
                         </div>
@@ -889,7 +1070,51 @@ export default function ContractsPage() {
                           )}
 
                         {/* Payment Button or Payment Status */}
-                        {shouldShowPaymentButton(contract) ? (
+                        {contract.status === ContractStatus.COMPLETED ? (
+                          <div className="flex flex-col gap-3 ml-auto">
+                            {/* Solo mostrar el botón de verificación OTP si no ha sido verificado */}
+                            {!contract.otpVerified && (
+                              <button
+                                onClick={() => handleOTPVerification(contract)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                              >
+                                <Mail className="h-4 w-4" />
+                                Verificar Servicio (OTP)
+                              </button>
+                            )}
+
+                            {/* Mostrar mensaje de confirmación si ya fue verificado */}
+                            {contract.otpVerified && (
+                              <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-green-800">
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    ✅ Servicio verificado
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {shouldShowPaymentButton(contract) && (
+                              <button
+                                onClick={() => handleGoToPayment(contract)}
+                                disabled={!acceptPolicy || !acceptPersonal}
+                                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
+                                  !acceptPolicy || !acceptPersonal
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                                }`}
+                              >
+                                <CreditCard className="h-4 w-4" />
+                                Ir a Pagar{" "}
+                                {formatCurrency(contract.totalPrice, {
+                                  showCurrency: true,
+                                })}
+                                <ArrowRight className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ) : shouldShowPaymentButton(contract) ? (
                           <button
                             onClick={() => handleGoToPayment(contract)}
                             disabled={!acceptPolicy || !acceptPersonal}
@@ -911,10 +1136,26 @@ export default function ContractsPage() {
                           (() => {
                             const paymentStatus =
                               contractPaymentStatus[contract.id];
-                            if (
-                              paymentStatus?.hasCompletedPayments &&
-                              contract.status === ContractStatus.ACCEPTED
-                            ) {
+
+                            // Para contratos ACCEPTED, mostrar mensaje de espera
+                            if (contract.status === ContractStatus.ACCEPTED) {
+                              return (
+                                <div className="px-4 py-3 ml-auto bg-blue-50 border border-blue-200 rounded-lg">
+                                  <div className="flex items-center gap-2 text-blue-800">
+                                    <Clock className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      ⏳ Esperando que se complete el servicio
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    Una vez completado, podrás verificar y
+                                    proceder con el pago
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            if (paymentStatus?.hasCompletedPayments) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
                                   <div className="flex items-center gap-2 text-green-800">
@@ -926,10 +1167,7 @@ export default function ContractsPage() {
                                 </div>
                               );
                             }
-                            if (
-                              paymentStatus?.hasPendingPayments &&
-                              contract.status === ContractStatus.ACCEPTED
-                            ) {
+                            if (paymentStatus?.hasPendingPayments) {
                               return (
                                 <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
                                   <div className="flex items-center gap-2 text-yellow-800">
@@ -944,6 +1182,18 @@ export default function ContractsPage() {
                             return null;
                           })()
                         )}
+
+                        {/* Botón de Cancelación */}
+                        {contract.status !== ContractStatus.CANCELLED &&
+                          contract.status !== ContractStatus.COMPLETED && (
+                            <button
+                              onClick={() => handleCancelContract(contract)}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 ml-auto"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancelar Contrato
+                            </button>
+                          )}
 
                         {/* Cash Payment Info - Now handled through Wompi like other methods */}
                         {/* {contract.status === ContractStatus.ACCEPTED &&
@@ -1253,6 +1503,45 @@ export default function ContractsPage() {
                           </button>
                         </div>
                       )}
+
+                      {/* Acciones del Proveedor */}
+                      {currentUserId && (
+                        <div className="mt-4 flex justify-end gap-3">
+                          {contract.status === ContractStatus.COMPLETED ? (
+                            <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 font-medium flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4" />
+                              Servicio Completado
+                            </div>
+                          ) : (
+                            <>
+                              {canCompleteContract(contract, currentUserId) && (
+                                <button
+                                  onClick={() =>
+                                    handleCompleteContract(contract)
+                                  }
+                                  disabled={isCompleting}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                  {isCompleting
+                                    ? "Completando..."
+                                    : "Marcar como Completado"}
+                                </button>
+                              )}
+
+                              {contract.status !== ContractStatus.CANCELLED && (
+                                <button
+                                  onClick={() => handleCancelContract(contract)}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  Cancelar Contrato
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1301,6 +1590,120 @@ export default function ContractsPage() {
               setSelectedContract(null);
               loadContracts();
             }}
+          />
+        )}
+
+        {/* OTP Verification Modal */}
+        {isOTPModalOpen && contractForOTP && (
+          <OTPVerificationModal
+            isOpen={isOTPModalOpen}
+            onClose={closeOTPModal}
+            contractId={contractForOTP.id}
+            serviceTitle={contractForOTP.publication?.title || "Servicio"}
+            providerName={contractForOTP.provider?.name || "Proveedor"}
+            onOTPVerified={handleOTPVerified}
+          />
+        )}
+
+        {/* Complete Contract Confirmation Modal */}
+        {isCompleteConfirmationOpen && contractToComplete && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={closeCompleteConfirmation}
+          >
+            <div
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4 text-center relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={closeCompleteConfirmation}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+
+              <div className="flex flex-col items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Confirmar Completación
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Marcar contrato como completado
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-3">
+                  ¿Estás seguro que quieres marcar este contrato como
+                  completado?
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                  <p className="text-sm text-amber-800 font-medium">
+                    ⚠️ Esto significa que el trabajo ya fue realizado y el
+                    servicio ha sido prestado completamente.
+                  </p>
+                </div>
+                <div className="mt-3 text-sm text-gray-600">
+                  <p>
+                    <strong>Servicio:</strong>{" "}
+                    {contractToComplete.publication?.title}
+                  </p>
+                  <p>
+                    <strong>Cliente:</strong> {contractToComplete.client?.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={closeCompleteConfirmation}
+                  disabled={isCompleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmCompleteContract}
+                  disabled={isCompleting}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCompleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Completando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Confirmar Completación
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Contract Penalty Modal */}
+        {penaltyInfo && (
+          <CancellationPenaltyModal
+            isOpen={isCancelConfirmationOpen}
+            onClose={closeCancelConfirmation}
+            onConfirm={
+              penaltyInfo.requiresPenalty
+                ? handleCancellationPenaltyPayment
+                : confirmCancelContract
+            }
+            contractTitle={
+              contractToCancel?.publication?.title || "este contrato"
+            }
+            isLoading={isCancelling}
+            requiresPenalty={penaltyInfo.requiresPenalty}
+            penaltyMessage={penaltyInfo.message}
           />
         )}
       </div>
