@@ -27,12 +27,14 @@ import {
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
+
 import CancellationPenaltyModal from "@/components/cancellation-penalty-modal";
 import OTPVerificationModal from "@/components/otp-verification-modal";
 import {
   translatePriceUnit,
   calculatePriceWithTax,
   canCompleteContract,
+  isUserCompany
 } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { CancellationPenaltyService } from "../../services/CancellationPenaltyService";
@@ -724,11 +726,11 @@ export default function ContractsPage() {
                                 <Receipt className="h-5 w-5 text-green-600" />
                                 <div>
                                   <p className="text-sm font-medium text-green-800">
-                                    Total a pagar (incluye IVA)
+                                    Total a pagar{isUserCompany(contract.provider) ? ' (incluye IVA)' : ''}
                                   </p>
                                   <p className="text-2xl font-bold text-green-700">
                                     {contract.quantity && contract.currentPrice
-                                      ? `${contract.quantity} x ${formatCurrency(calculatePriceWithTax(contract.currentPrice))} = ${formatCurrency(contract.quantity * calculatePriceWithTax(contract.currentPrice), { showCurrency: true })}`
+                                      ? `${contract.quantity} x ${formatCurrency(calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)))} = ${formatCurrency(contract.quantity * calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)), { showCurrency: true })}`
                                       : formatCurrency(contract.totalPrice, {
                                           showCurrency: true,
                                         })}
@@ -1295,7 +1297,7 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-green-800">
                             {formatCurrency(
-                              calculatePriceWithTax(contract.currentPrice || 0),
+                              calculatePriceWithTax(contract.currentPrice || 0, 0.19, isUserCompany(contract.provider)),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>
