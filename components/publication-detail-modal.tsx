@@ -37,6 +37,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
 import ApplicationService from "@/services/ApplicationService";
 import ContractModal from "./contract-modal";
+import Link from "next/link";
 
 interface PublicationDetailModalProps {
   publication: Publication | null;
@@ -408,27 +409,29 @@ const PublicationDetailModal = ({
               {/* Información del autor - Movida después de la imagen */}
               {author && (
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <UserAvatarDisplay
-                      user={{
-                        id: author.id ? Number(author.id) : 0,
-                        name: author.name,
-                        profile_image: author.profile_image,
-                        // email: author.email, // Ocultar email
-                      }}
-                      size="lg"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-gray-800">
-                        {author.name}
-                      </h3>
-                      {author.profession && (
-                        <p className="text-sm text-gray-600">
-                          {author.profession}
-                        </p>
-                      )}
+                  <Link href={`/profile/${author.id}`} title="Ir al perfil">
+                    <div className="flex items-center gap-3">
+                      <UserAvatarDisplay
+                        user={{
+                          id: author.id ? Number(author.id) : 0,
+                          name: author.name,
+                          profile_image: author.profile_image,
+                          // email: author.email, // Ocultar email
+                        }}
+                        size="lg"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-800">
+                          {author.name}
+                        </h3>
+                        {author.profession && (
+                          <p className="text-sm text-gray-600">
+                            {author.profession}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Habilidades */}
                   {author.skills && author.skills.length > 0 && (

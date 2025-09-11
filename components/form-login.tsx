@@ -100,6 +100,10 @@ const FormLogin = () => {
               `/auth/verify-email?email=${encodeURIComponent(values.email)}`,
             );
           }, 3000);
+        } else if (err.response?.data?.error === "COMPANY_NOT_VERIFIED") {
+          toast.error(
+            "Tu empresa no ha sido verificada. Por favor, espera a que tu informacion sea validada.",
+          );
         } else {
           // Error genérico de credenciales
           toast.error(

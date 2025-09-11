@@ -27,6 +27,11 @@ export class GalleryService {
     return response.data;
   }
 
+  static async getUserGalleryVisit(id: string): Promise<GalleryImage[]> {
+    const response = await api.get(`/suarec/users/${id}/gallery`);
+    return response.data;
+  }
+
   // Agregar imagen a galería de usuario
   static async addImageToUserGallery(
     imageUrl: string,
