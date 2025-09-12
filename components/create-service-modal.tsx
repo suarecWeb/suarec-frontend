@@ -667,7 +667,10 @@ export default function CreateServiceModal({
                         if (token) {
                           try {
                             const decoded = jwtDecode<any>(token);
-                            isCurrentUserCompany = decoded.roles?.some((role: any) => role.name === 'BUSINESS') || false;
+                            isCurrentUserCompany =
+                              decoded.roles?.some(
+                                (role: any) => role.name === "BUSINESS",
+                              ) || false;
                           } catch (error) {
                             console.error("Error decoding token:", error);
                           }
@@ -683,7 +686,11 @@ export default function CreateServiceModal({
                             <p className="text-xs text-green-700">
                               <strong>Precio con IVA (19%):</strong>{" "}
                               {formatCurrency(
-                                calculatePriceWithTax(numericPrice, 0.19, isCurrentUserCompany),
+                                calculatePriceWithTax(
+                                  numericPrice,
+                                  0.19,
+                                  isCurrentUserCompany,
+                                ),
                               )}
                             </p>
                           </div>
@@ -723,10 +730,11 @@ export default function CreateServiceModal({
                         <div>
                           <p className="text-xs text-yellow-700">
                             <strong>Importante:</strong> El precio que ingreses
-                            es el precio base. Si eres una empresa, se aplicará automáticamente un
-                            19% de IVA que será visible para los usuarios en el
-                            precio final mostrado en tu publicación. Si eres una persona natural,
-                            no se aplicará IVA.
+                            es el precio base. Si eres una empresa, se aplicará
+                            automáticamente un 19% de IVA que será visible para
+                            los usuarios en el precio final mostrado en tu
+                            publicación. Si eres una persona natural, no se
+                            aplicará IVA.
                           </p>
                         </div>
                       </div>

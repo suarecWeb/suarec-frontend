@@ -34,7 +34,7 @@ import {
   translatePriceUnit,
   calculatePriceWithTax,
   canCompleteContract,
-  isUserCompany
+  isUserCompany,
 } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { CancellationPenaltyService } from "../../services/CancellationPenaltyService";
@@ -49,6 +49,7 @@ import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { BalanceCard } from "@/components/BalanceCard";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -527,6 +528,11 @@ export default function ContractsPage() {
         </div>
 
         <div className="container mx-auto px-4 -mt-6 pb-12">
+          {/* Balance Card */}
+          <div className="mb-8">
+            <BalanceCard />
+          </div>
+
           {/* Stats Cards as Tabs */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <button
@@ -726,7 +732,10 @@ export default function ContractsPage() {
                                 <Receipt className="h-5 w-5 text-green-600" />
                                 <div>
                                   <p className="text-sm font-medium text-green-800">
-                                    Total a pagar{isUserCompany(contract.provider) ? ' (incluye IVA)' : ''}
+                                    Total a pagar
+                                    {isUserCompany(contract.provider)
+                                      ? " (incluye IVA)"
+                                      : ""}
                                   </p>
                                   <p className="text-2xl font-bold text-green-700">
                                     {contract.quantity && contract.currentPrice
@@ -1297,7 +1306,11 @@ export default function ContractsPage() {
                           </div>
                           <p className="text-lg font-semibold text-green-800">
                             {formatCurrency(
-                              calculatePriceWithTax(contract.currentPrice || 0, 0.19, isUserCompany(contract.provider)),
+                              calculatePriceWithTax(
+                                contract.currentPrice || 0,
+                                0.19,
+                                isUserCompany(contract.provider),
+                              ),
                             )}{" "}
                             {translatePriceUnit(contract.priceUnit)}
                           </p>

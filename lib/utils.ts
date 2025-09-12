@@ -157,12 +157,12 @@ export function getPublicationDisplayPrice(
 // Función helper para verificar si un usuario es una empresa
 export function isUserCompany(user: any): boolean {
   if (!user?.roles) return false;
-  
+
   return user.roles.some((role: any) => {
-    if (typeof role === 'string') {
-      return role === 'BUSINESS';
-    } else if (role && typeof role === 'object' && role.name) {
-      return role.name === 'BUSINESS';
+    if (typeof role === "string") {
+      return role === "BUSINESS";
+    } else if (role && typeof role === "object" && role.name) {
+      return role.name === "BUSINESS";
     }
     return false;
   });

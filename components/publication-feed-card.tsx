@@ -26,7 +26,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
-import { translatePriceUnit, getPublicationDisplayPrice, isUserCompany } from "@/lib/utils";
+import {
+  translatePriceUnit,
+  getPublicationDisplayPrice,
+  isUserCompany,
+} from "@/lib/utils";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
 import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";

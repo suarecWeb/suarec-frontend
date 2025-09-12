@@ -20,7 +20,11 @@ import {
   Calendar,
   Receipt,
 } from "lucide-react";
-import { translatePriceUnit, calculatePriceWithTax, isUserCompany } from "@/lib/utils";
+import {
+  translatePriceUnit,
+  calculatePriceWithTax,
+  isUserCompany,
+} from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -99,7 +103,7 @@ export default function ContractModal({
 
   // Verificar si el proveedor es una empresa
   const isProviderCompany = isUserCompany(publication.user);
-  
+
   // Calcular precios
   // Cambia la lógica de isUnitary para que sea true para cualquier unidad distinta de las excluidas
   const excludedUnits = [
@@ -283,9 +287,16 @@ export default function ContractModal({
             {publication.price && (
               <div className="flex items-center gap-2 text-green-600 font-semibold">
                 <span className="text-lg">
-                  {formatCurrency(calculatePriceWithTax(publication.price!, 0.19, isProviderCompany), {
-                    showCurrency: true,
-                  })}
+                  {formatCurrency(
+                    calculatePriceWithTax(
+                      publication.price!,
+                      0.19,
+                      isProviderCompany,
+                    ),
+                    {
+                      showCurrency: true,
+                    },
+                  )}
                 </span>
                 <span className="text-sm text-gray-600">
                   por{" "}
@@ -323,7 +334,11 @@ export default function ContractModal({
                     </div>
                     <p className="text-sm text-gray-600">
                       {formatCurrency(
-                        calculatePriceWithTax(publication.price!, 0.19, isProviderCompany),
+                        calculatePriceWithTax(
+                          publication.price!,
+                          0.19,
+                          isProviderCompany,
+                        ),
                       )}{" "}
                       {translatePriceUnit(publication.priceUnit || "")}
                     </p>

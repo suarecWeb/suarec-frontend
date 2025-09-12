@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, RefreshCw, Mail } from "lucide-react";
 import { ContractService } from "../services/ContractService";
+import { balanceService } from "../services/balanceService";
+import { useBalance } from "../hooks/useBalance";
 import toast from "react-hot-toast";
 
 interface OTPVerificationModalProps {
@@ -27,6 +29,7 @@ export default function OTPVerificationModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [otpGenerated, setOtpGenerated] = useState(false);
+  const { refreshBalance } = useBalance(false); // No auto-fetch, solo para refresh
 
   useEffect(() => {
     if (isOpen) {
@@ -64,6 +67,17 @@ export default function OTPVerificationModal({
       const result = await ContractService.verifyOTP(contractId, otpCode);
       if (result.isValid) {
         toast.success("OTP verificado correctamente");
+
+        // Actualizar balance automáticamente usando el hook
+        try {
+          await refreshBalance();
+          console.log(
+            "✅ Balance actualizado automáticamente después de verificar OTP",
+          );
+        } catch (balanceError) {
+          console.error("⚠️ Error actualizando balance:", balanceError);
+        }
+
         onOTPVerified();
         onClose();
       } else {
