@@ -2,17 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Search,
-  Filter,
-  MapPin,
-  DollarSign,
-  Briefcase,
-  Building2,
   Plus,
-  TrendingUp,
-  Calendar,
-  Eye,
-  Tag,
   AlertCircle,
   User,
   Heart,
@@ -21,14 +11,18 @@ import {
   Send,
   MoreHorizontal,
   Handshake,
+  Briefcase,
+  Building2,
+  Tag,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
+import AdvancedFilters from "@/components/advanced-filters";
 import PublicationService from "@/services/PublicationsService";
 import {
   Publication,
@@ -44,30 +38,10 @@ import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import toast from "react-hot-toast";
 
-// Categorías disponibles para filtrado
-const PUBLICATION_CATEGORIES = [
-  "Tecnología",
-  "Construcción",
-  "Salud",
-  "Educación",
-  "Servicios",
-  "Gastronomía",
-  "Transporte",
-  "Manufactura",
-  "Finanzas",
-  "Agricultura",
-  "Otro",
-];
-
 export default function FeedPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedPublicationType, setSelectedPublicationType] = useState<
-    PublicationType | ""
-  >("");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isVerify, setIsVerify] = useState<Boolean | null>(null);
@@ -81,7 +55,7 @@ export default function FeedPage() {
     hasPrevPage: boolean;
   }>({
     page: 1,
-    limit: 5, // Cambiar a 5 publicaciones por página
+    limit: 10,
     total: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -90,6 +64,14 @@ export default function FeedPage() {
   const [publicationBids, setPublicationBids] = useState<{
     [key: string]: { contracts: Contract[]; totalBids: number };
   }>({});
+  
+  // Estado para filtros avanzados
+  const [filters, setFilters] = useState<PaginationParams>({
+    page: 1,
+    limit: 10,
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -134,27 +116,17 @@ export default function FeedPage() {
     }
   };
 
-  // Función para cargar publicaciones
+  // Función para cargar publicaciones con filtros avanzados
   const fetchPublications = useCallback(
-    async (params: PaginationParams = { page: 1, limit: pagination.limit }) => {
+    async (newFilters?: PaginationParams) => {
       try {
         setLoading(true);
-        console.log("🔍 Frontend - Sending type:", selectedPublicationType);
-        const response = await PublicationService.getPublications({
-          ...params,
-          type: selectedPublicationType || undefined,
-        });
+        const currentFilters = newFilters || filters;
+        console.log("🔍 Frontend - Sending filters:", currentFilters);
+        
+        const response = await PublicationService.getPublications(currentFilters);
 
-        // Ordenar publicaciones por fecha (más recientes primero)
-        const sortedPublications = response.data.data.sort(
-          (a: Publication, b: Publication) => {
-            const dateA = new Date(a.created_at);
-            const dateB = new Date(b.created_at);
-            return dateB.getTime() - dateA.getTime(); // Orden descendente (más reciente primero)
-          },
-        );
-
-        setPublications(sortedPublications);
+        setPublications(response.data.data);
         setPagination(response.data.meta);
 
         // Cargar ofertas para las publicaciones
@@ -169,8 +141,30 @@ export default function FeedPage() {
         setLoading(false);
       }
     },
-    [pagination.limit, selectedPublicationType],
+    [filters],
   );
+
+  // Función para manejar cambios en los filtros
+  const handleFiltersChange = (newFilters: PaginationParams) => {
+    setFilters(newFilters);
+  };
+
+  // Función para aplicar filtros
+  const handleApplyFilters = () => {
+    fetchPublications(filters);
+  };
+
+  // Función para limpiar filtros
+  const handleClearFilters = () => {
+    const clearedFilters: PaginationParams = {
+      page: 1,
+      limit: 10,
+      sortBy: 'created_at',
+      sortOrder: 'DESC'
+    };
+    setFilters(clearedFilters);
+    fetchPublications(clearedFilters);
+  };
 
   // Cargar datos al montar el componente y cuando cambien los filtros
   useEffect(() => {
@@ -183,30 +177,32 @@ export default function FeedPage() {
     fetchPublications();
   };
 
-  // Filtrar publicaciones
-  const filteredPublications = publications.filter((pub) => {
-    // Primero filtrar publicaciones eliminadas (solo mostrar las activas)
-    if (pub.deleted_at) {
-      return false; // Excluir publicaciones eliminadas
-    }
+  // Ya no necesitamos filtrar localmente - el backend maneja todos los filtros
+  // Las publicaciones ya vienen filtradas del backend
+  const filteredPublications = publications;
 
-    const matchesSearch =
-      pub.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (pub.description &&
-        pub.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      pub.category.toLowerCase().includes(searchQuery.toLowerCase());
+  // Obtener categorías únicas (ahora se obtienen del backend)
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableTypes, setAvailableTypes] = useState<PublicationType[]>([]);
 
-    const matchesCategory =
-      selectedCategory === "all" || pub.category === selectedCategory;
+  // Cargar categorías y tipos disponibles del backend
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const [categoriesResponse, typesResponse] = await Promise.all([
+          PublicationService.getAvailableCategories(),
+          PublicationService.getAvailableTypes(),
+        ]);
+        
+        setAvailableCategories(categoriesResponse.data);
+        setAvailableTypes(typesResponse.data);
+      } catch (error) {
+        console.error("Error loading filter options:", error);
+      }
+    };
 
-    return matchesSearch && matchesCategory;
-  });
-
-  // Obtener categorías únicas
-  const categories = [
-    "all",
-    ...Array.from(new Set(publications.map((pub) => pub.category))),
-  ];
+    loadFilterOptions();
+  }, []);
 
   // Función para obtener el texto del tipo de publicación
   const getPublicationTypeText = (type: PublicationType) => {
@@ -291,109 +287,14 @@ export default function FeedPage() {
                 Filtros
               </h3>
 
-              {/* Búsqueda */}
-              <div className="mb-6">
-                <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                  Buscar
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Título, descripción..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 font-eras"
-                  />
-                </div>
-              </div>
+              {/* Componente de filtros avanzados */}
+              <AdvancedFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+              />
 
-              {/* Tipo de publicación */}
-              <div className="mb-6">
-                <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                  Tipo de publicación
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      id="type-all"
-                      type="radio"
-                      name="publicationType"
-                      value=""
-                      checked={selectedPublicationType === ""}
-                      onChange={(e) =>
-                        setSelectedPublicationType(
-                          e.target.value as PublicationType | "",
-                        )
-                      }
-                      className="text-[#097EEC] focus:ring-[#097EEC]"
-                    />
-                    <span className="text-sm font-eras">Todos los tipos</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      id="type-service"
-                      type="radio"
-                      name="publicationType"
-                      value={PublicationType.SERVICE}
-                      checked={
-                        selectedPublicationType === PublicationType.SERVICE
-                      }
-                      onChange={(e) =>
-                        setSelectedPublicationType(
-                          e.target.value as PublicationType,
-                        )
-                      }
-                      className="text-[#097EEC] focus:ring-[#097EEC]"
-                    />
-                    <span className="text-sm font-eras flex items-center gap-1">
-                      <Briefcase className="h-3 w-3" />
-                      Servicios Ofrecidos
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      id="type-service-request"
-                      type="radio"
-                      name="publicationType"
-                      value={PublicationType.SERVICE_REQUEST}
-                      checked={
-                        selectedPublicationType ===
-                        PublicationType.SERVICE_REQUEST
-                      }
-                      onChange={(e) =>
-                        setSelectedPublicationType(
-                          e.target.value as PublicationType,
-                        )
-                      }
-                      className="text-[#097EEC] focus:ring-[#097EEC]"
-                    />
-                    <span className="text-sm font-eras flex items-center gap-1">
-                      <Handshake className="h-3 w-3" />
-                      Servicios Solicitados
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      id="type-job"
-                      type="radio"
-                      name="publicationType"
-                      value={PublicationType.JOB}
-                      checked={selectedPublicationType === PublicationType.JOB}
-                      onChange={(e) =>
-                        setSelectedPublicationType(
-                          e.target.value as PublicationType,
-                        )
-                      }
-                      className="text-[#097EEC] focus:ring-[#097EEC]"
-                    />
-                    <span className="text-sm font-eras flex items-center gap-1">
-                      <Building2 className="h-3 w-3" />
-                      Vacantes de Trabajo
-                    </span>
-                  </label>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -401,69 +302,12 @@ export default function FeedPage() {
           <div className="lg:col-span-2 col-span-full w-full max-w-full overflow-x-hidden">
             {/* Filtros móviles */}
             <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 w-full max-w-full">
-              <div className="flex flex-col gap-4 w-full">
-                {/* Búsqueda móvil */}
-                <div className="w-full">
-                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                    Buscar
-                  </label>
-                  <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Título, descripción..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 font-eras w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Tipo de publicación móvil */}
-                <div className="w-full">
-                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                    Tipo de publicación
-                  </label>
-                  <select
-                    value={selectedPublicationType}
-                    onChange={(e) =>
-                      setSelectedPublicationType(
-                        e.target.value as PublicationType | "",
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                  >
-                    <option value="">Todos los tipos</option>
-                    <option value={PublicationType.SERVICE}>
-                      Servicios Ofrecidos
-                    </option>
-                    <option value={PublicationType.SERVICE_REQUEST}>
-                      Servicios Solicitados
-                    </option>
-                    <option value={PublicationType.JOB}>
-                      Vacantes de Trabajo
-                    </option>
-                  </select>
-                </div>
-
-                {/* Categoría móvil */}
-                <div className="w-full">
-                  <label className="block text-sm font-eras-medium text-gray-700 mb-2">
-                    Categoría
-                  </label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                  >
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category === "all" ? "Todas las categorías" : category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <AdvancedFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+              />
             </div>
 
             {/* Create Post Button */}
@@ -560,51 +404,22 @@ export default function FeedPage() {
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
               <h3 className="text-lg font-eras-bold text-gray-900 mb-4">
-                Categorías
+                Estadísticas
               </h3>
 
-              {/* Categoría */}
-              <div className="mb-6">
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <label
-                      key={category}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="category"
-                        value={category}
-                        checked={selectedCategory === category}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="text-[#097EEC] focus:ring-[#097EEC]"
-                      />
-                      <span className="text-sm font-eras">
-                        {category === "all" ? "Todas las categorías" : category}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               {/* Estadísticas rápidas */}
-              <div className="border-t border-gray-100 pt-4">
-                <h4 className="text-sm font-eras-bold text-gray-900 mb-3">
-                  Estadísticas
-                </h4>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex justify-between">
-                    <span className="font-eras">Total publicaciones</span>
-                    <span className="font-eras-bold">
-                      {filteredPublications.length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-eras">Categorías</span>
-                    <span className="font-eras-bold">
-                      {categories.length - 1}
-                    </span>
-                  </div>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span className="font-eras">Total publicaciones</span>
+                  <span className="font-eras-bold">
+                    {pagination.total}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-eras">Página actual</span>
+                  <span className="font-eras-bold">
+                    {pagination.page} de {pagination.totalPages}
+                  </span>
                 </div>
               </div>
             </div>
