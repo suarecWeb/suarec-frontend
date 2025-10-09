@@ -64,13 +64,13 @@ export default function FeedPage() {
   const [publicationBids, setPublicationBids] = useState<{
     [key: string]: { contracts: Contract[]; totalBids: number };
   }>({});
-  
+
   // Estado para filtros avanzados
   const [filters, setFilters] = useState<PaginationParams>({
     page: 1,
     limit: 10,
-    sortBy: 'created_at',
-    sortOrder: 'DESC'
+    sortBy: "created_at",
+    sortOrder: "DESC",
   });
 
   // Obtener información del usuario al cargar
@@ -123,8 +123,9 @@ export default function FeedPage() {
         setLoading(true);
         const currentFilters = newFilters || filters;
         console.log("🔍 Frontend - Sending filters:", currentFilters);
-        
-        const response = await PublicationService.getPublications(currentFilters);
+
+        const response =
+          await PublicationService.getPublications(currentFilters);
 
         setPublications(response.data.data);
         setPagination(response.data.meta);
@@ -159,8 +160,8 @@ export default function FeedPage() {
     const clearedFilters: PaginationParams = {
       page: 1,
       limit: 10,
-      sortBy: 'created_at',
-      sortOrder: 'DESC'
+      sortBy: "created_at",
+      sortOrder: "DESC",
     };
     setFilters(clearedFilters);
     fetchPublications(clearedFilters);
@@ -193,7 +194,7 @@ export default function FeedPage() {
           PublicationService.getAvailableCategories(),
           PublicationService.getAvailableTypes(),
         ]);
-        
+
         setAvailableCategories(categoriesResponse.data);
         setAvailableTypes(typesResponse.data);
       } catch (error) {
@@ -294,7 +295,6 @@ export default function FeedPage() {
                 onApplyFilters={handleApplyFilters}
                 onClearFilters={handleClearFilters}
               />
-
             </div>
           </div>
 
@@ -411,9 +411,7 @@ export default function FeedPage() {
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span className="font-eras">Total publicaciones</span>
-                  <span className="font-eras-bold">
-                    {pagination.total}
-                  </span>
+                  <span className="font-eras-bold">{pagination.total}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-eras">Página actual</span>

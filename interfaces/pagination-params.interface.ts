@@ -11,5 +11,5 @@ export interface PaginationParams {
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }

@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Search, 
-  Filter, 
-  X, 
-  DollarSign, 
-  Calendar, 
-  Tag, 
+import {
+  Search,
+  Filter,
+  X,
+  DollarSign,
+  Calendar,
+  Tag,
   ChevronDown,
   RotateCcw,
-  Check
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ export default function AdvancedFilters({
           PublicationService.getAvailableCategories(),
           PublicationService.getAvailableTypes(),
         ]);
-        
+
         setAvailableCategories(categoriesResponse.data);
         setAvailableTypes(typesResponse.data);
       } catch (error) {
@@ -82,16 +82,19 @@ export default function AdvancedFilters({
   const handleCategoryToggle = (category: string) => {
     const currentCategories = filters.categories || [];
     const newCategories = currentCategories.includes(category)
-      ? currentCategories.filter(c => c !== category)
+      ? currentCategories.filter((c) => c !== category)
       : [...currentCategories, category];
-    
-    handleFilterChange('categories', newCategories.length > 0 ? newCategories : undefined);
+
+    handleFilterChange(
+      "categories",
+      newCategories.length > 0 ? newCategories : undefined,
+    );
   };
 
   const handlePriceRangeChange = (values: number[]) => {
     const [min, max] = values;
-    handleFilterChange('minPrice', min > 0 ? min : undefined);
-    handleFilterChange('maxPrice', max < 10000 ? max : undefined);
+    handleFilterChange("minPrice", min > 0 ? min : undefined);
+    handleFilterChange("maxPrice", max < 10000 ? max : undefined);
   };
 
   const getActiveFiltersCount = () => {
@@ -101,8 +104,8 @@ export default function AdvancedFilters({
     if (filters.categories && filters.categories.length > 0) count++;
     if (filters.search) count++;
     if (filters.minPrice || filters.maxPrice) count++;
-    if (filters.sortBy && filters.sortBy !== 'created_at') count++;
-    if (filters.sortOrder && filters.sortOrder !== 'DESC') count++;
+    if (filters.sortBy && filters.sortBy !== "created_at") count++;
+    if (filters.sortOrder && filters.sortOrder !== "DESC") count++;
     return count;
   };
 
@@ -121,17 +124,19 @@ export default function AdvancedFilters({
               <div className="p-1.5 rounded-lg bg-[#097EEC]/10">
                 <Filter className="h-4 w-4 text-[#097EEC]" />
               </div>
-              <span className="font-eras-medium text-gray-900">Filtros Avanzados</span>
+              <span className="font-eras-medium text-gray-900">
+                Filtros Avanzados
+              </span>
               {activeFiltersCount > 0 && (
                 <Badge className="bg-[#097EEC] text-white text-xs px-2 py-1">
                   {activeFiltersCount}
                 </Badge>
               )}
             </div>
-            <ChevronDown 
+            <ChevronDown
               className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              }`} 
+                isOpen ? "rotate-180" : ""
+              }`}
             />
           </Button>
         </CollapsibleTrigger>
@@ -148,7 +153,9 @@ export default function AdvancedFilters({
                 <Input
                   placeholder="Título, descripción o categoría..."
                   value={filters.search || ""}
-                  onChange={(e) => handleFilterChange('search', e.target.value || undefined)}
+                  onChange={(e) =>
+                    handleFilterChange("search", e.target.value || undefined)
+                  }
                   className="pl-10 h-10 border-gray-200 focus:border-[#097EEC] focus:ring-[#097EEC]/20"
                 />
               </div>
@@ -163,14 +170,20 @@ export default function AdvancedFilters({
                 </label>
                 <select
                   value={filters.type || ""}
-                  onChange={(e) => handleFilterChange('type', e.target.value === "" ? undefined : e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "type",
+                      e.target.value === "" ? undefined : e.target.value,
+                    )
+                  }
                   className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
                 >
                   <option value="">Seleccionar tipo</option>
                   {availableTypes.map((type) => (
                     <option key={type} value={type}>
                       {type === PublicationType.SERVICE && "Servicios (Oferta)"}
-                      {type === PublicationType.SERVICE_REQUEST && "Solicitudes de Servicios"}
+                      {type === PublicationType.SERVICE_REQUEST &&
+                        "Solicitudes de Servicios"}
                       {type === PublicationType.JOB && "Empleos"}
                     </option>
                   ))}
@@ -184,7 +197,12 @@ export default function AdvancedFilters({
                 </label>
                 <select
                   value={filters.category || ""}
-                  onChange={(e) => handleFilterChange('category', e.target.value === "" ? undefined : e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "category",
+                      e.target.value === "" ? undefined : e.target.value,
+                    )
+                  }
                   className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
                 >
                   <option value="">Seleccionar categoría</option>
@@ -256,7 +274,7 @@ export default function AdvancedFilters({
                 </label>
                 <select
                   value={filters.sortBy || "created_at"}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
                   className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
                 >
                   <option value="created_at">Fecha</option>
@@ -273,7 +291,12 @@ export default function AdvancedFilters({
                 </label>
                 <select
                   value={filters.sortOrder || "DESC"}
-                  onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'ASC' | 'DESC')}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "sortOrder",
+                      e.target.value as "ASC" | "DESC",
+                    )
+                  }
                   className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
                 >
                   <option value="DESC">Descendente</option>
@@ -284,8 +307,8 @@ export default function AdvancedFilters({
 
             {/* Botones de acción */}
             <div className="flex gap-2 pt-3 border-t border-gray-100">
-              <Button 
-                onClick={onApplyFilters} 
+              <Button
+                onClick={onApplyFilters}
                 className="flex-1 h-10 bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium text-sm"
               >
                 <Check className="h-3 w-3 mr-1" />
