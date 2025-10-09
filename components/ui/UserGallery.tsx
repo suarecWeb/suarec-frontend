@@ -8,6 +8,9 @@ import { GalleryService, GalleryImage } from "@/services/gallery.service";
 import { ImageUpload } from "./ImageUpload";
 import { ImageGallery } from "./ImageGallery";
 import toast from "react-hot-toast";
+import { IconCancel } from "@tabler/icons-react";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 interface UserGalleryProps {
   userId: number;
@@ -15,6 +18,7 @@ interface UserGalleryProps {
   onImagesSelected?: (selectedImages: string[]) => void;
   maxSelection?: number;
   showSelection?: boolean;
+  isVisit?: boolean;
 }
 
 export function UserGallery({
@@ -23,6 +27,7 @@ export function UserGallery({
   onImagesSelected,
   maxSelection = 5,
   showSelection = false,
+  isVisit = false,
 }: UserGalleryProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +37,11 @@ export function UserGallery({
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   useEffect(() => {
-    loadGallery();
+    if (isVisit) {
+      loadGalleryVisit();
+    } else {
+      loadGallery();
+    }
   }, [userId]);
 
   const loadGallery = async () => {
@@ -40,6 +49,21 @@ export function UserGallery({
       setIsLoading(true);
       setError(null);
       const galleryImages = await GalleryService.getUserGallery();
+      setImages(galleryImages);
+    } catch (error) {
+      toast.error("Error al cargar la galería");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadGalleryVisit = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const galleryImages = await GalleryService.getUserGalleryVisit(
+        userId.toString(),
+      );
       setImages(galleryImages);
     } catch (error) {
       toast.error("Error al cargar la galería");
@@ -122,7 +146,9 @@ export function UserGallery({
     return (
       <div className={`space-y-4 ${className}`}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Mi Galería</h3>
+          <h3 className="text-lg font-semibold">
+            {!isVisit ? "Mi Galería" : "Galería de Imágenes"}
+          </h3>
           <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -142,7 +168,9 @@ export function UserGallery({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800">Mi Galería</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {!isVisit ? "Mi Galería" : "Galería de Imágenes"}
+          </h3>
           <p className="text-sm text-gray-600">
             {images.length}/10 imágenes •{" "}
             {showSelection &&
@@ -150,7 +178,7 @@ export function UserGallery({
           </p>
         </div>
 
-        {images.length < 10 && (
+        {images.length < 10 && !isVisit && (
           <Button
             onClick={() => setShowUpload(!showUpload)}
             disabled={isUploading}
@@ -198,63 +226,78 @@ export function UserGallery({
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <Image
-                src={image.image_url}
-                alt={image.description || "Imagen de galería"}
-                width={300}
-                height={300}
-                className="w-full h-full object-cover"
-              />
+              <Zoom>
+                <Image
+                  src={image.image_url}
+                  alt={image.description || "Imagen de galería"}
+                  width={300}
+                  height={300}
+                  className="w-full h-full object-cover"
+                />
+              </Zoom>
 
-              {/* Overlay con acciones */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                  {showSelection ? (
-                    <Button
-                      size="sm"
-                      variant={
-                        selectedImages.includes(image.image_url)
-                          ? "destructive"
-                          : "default"
-                      }
-                      onClick={() => handleImageSelect(image.image_url)}
-                      className="text-xs"
-                    >
-                      {selectedImages.includes(image.image_url)
-                        ? "Quitar"
-                        : "Seleccionar"}
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteImage(image.id)}
-                      className="text-xs"
-                    >
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Badge de seleccionado */}
-              {showSelection && selectedImages.includes(image.image_url) && (
-                <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                  ✓
+              {!isVisit && (
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    {showSelection ? (
+                      <Button
+                        size="sm"
+                        variant={
+                          selectedImages.includes(image.image_url)
+                            ? "destructive"
+                            : "default"
+                        }
+                        onClick={() => handleImageSelect(image.image_url)}
+                        className="text-xs"
+                      >
+                        {selectedImages.includes(image.image_url)
+                          ? "Quitar"
+                          : "Seleccionar"}
+                      </Button>
+                    ) : !isVisit ? (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteImage(image.id)}
+                        className="text-xs"
+                      >
+                        Eliminar
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               )}
+
+              {/* Badge de seleccionado */}
+              {!isVisit &&
+                showSelection &&
+                selectedImages.includes(image.image_url) && (
+                  <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                    ✓
+                  </div>
+                )}
             </div>
           ))}
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="h-8 w-8 text-gray-400" />
+            {!isVisit ? (
+              <Plus className="h-8 w-8 text-gray-400" />
+            ) : (
+              <IconCancel className="h-8 w-8 text-gray-400" />
+            )}
           </div>
-          <p className="text-gray-600 mb-2">No tienes imágenes en tu galería</p>
-          <p className="text-sm text-gray-500">
-            Agrega hasta 10 fotos para usar en tus publicaciones
+          <p className="text-gray-600 mb-2">
+            {!isVisit
+              ? "No tienes imágenes en tu galería"
+              : "Este usuario no tiene imágenes en la Galería"}
           </p>
+          {!isVisit && (
+            <p className="text-sm text-gray-500">
+              Agrega hasta 10 fotos para usar en tus publicaciones
+            </p>
+          )}
         </div>
       )}
 

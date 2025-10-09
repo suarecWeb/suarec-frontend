@@ -50,6 +50,14 @@ import DownloadCVButton from "@/components/download-cv-button";
 import PublicationService from "@/services/PublicationsService";
 import toast from "react-hot-toast";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { IconRosetteDiscountCheckFilled } from "@tabler/icons-react";
+import {
+  getUserIcon,
+  getPlanDisplayName,
+  getPlanColor,
+  UserIconResult,
+} from "@/lib/userUtils";
+import { UserGallery } from "@/components/ui/UserGallery";
 
 interface PublicProfilePageProps {
   params: {
@@ -64,6 +72,10 @@ const PublicProfilePage = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userIcons, setUserIcons] = useState<UserIconResult>({
+    verified: null,
+    plan: null,
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -91,6 +103,7 @@ const PublicProfilePage = () => {
         const userData = response.data;
 
         setUser(userData);
+        setUserIcons(getUserIcon(userData));
         setLoading(false);
       } catch (err: any) {
         console.error("Error al obtener perfil:", err);
@@ -309,17 +322,22 @@ const PublicProfilePage = () => {
                 <div className="text-center md:text-left flex-1">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
                     {user.name}
-                    {user.isVerify && (
+                    {userIcons.verified && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <div className="flex items-center gap-1 bg-white rounded-full p-1">
-                              <BadgeCheck className="h-5 w-5 text-blue-500" />
+                            <div className="flex items-center gap-1 bg-white rounded-full p-[2px]">
+                              <IconRosetteDiscountCheckFilled
+                                className={`h-6 w-6 ${getPlanColor(user.plan || ("FREE" as any))}`}
+                              />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="font-medium">
-                              Este usuario está verificado por Suarec
+                              Usuario verificado
+                              {user.plan
+                                ? ` - ${getPlanDisplayName(user.plan)}`
+                                : ""}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -396,6 +414,19 @@ const PublicProfilePage = () => {
               <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left Column - Personal Info */}
                 <div className="lg:w-1/3">
+                  <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                    <UserGallery
+                      isVisit={true}
+                      userId={
+                        userId
+                          ? typeof userId === "string"
+                            ? parseInt(userId)
+                            : userId
+                          : 0
+                      }
+                    />
+                  </div>
+
                   {/* Información personal */}
                   <div className="bg-gray-50 rounded-lg p-6 mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">

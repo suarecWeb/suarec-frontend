@@ -10,9 +10,7 @@ import {
 const baseURL = "/suarec/publications";
 
 // Estructura de respuesta de publicación
-const getPublications = (
-  params?: PaginationParams & { type?: PublicationType; category?: string },
-) => {
+const getPublications = (params?: PaginationParams) => {
   return api.get<PaginationResponse<Publication>>(baseURL, { params });
 };
 
@@ -61,6 +59,16 @@ const restorePublication = (id: string) => {
   return api.post<Publication>(`${baseURL}/${id}/restore`);
 };
 
+// Obtener categorías disponibles para filtros
+const getAvailableCategories = () => {
+  return api.get<string[]>(`${baseURL}/filters/categories`);
+};
+
+// Obtener tipos de publicaciones disponibles para filtros
+const getAvailableTypes = () => {
+  return api.get<PublicationType[]>(`${baseURL}/filters/types`);
+};
+
 const PublicationService = {
   getPublications,
   getServiceOffers,
@@ -71,6 +79,8 @@ const PublicationService = {
   deletePublication,
   getDeletedPublications,
   restorePublication,
+  getAvailableCategories,
+  getAvailableTypes,
 };
 
 export default PublicationService;

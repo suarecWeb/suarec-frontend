@@ -28,7 +28,7 @@ export class ContractService {
     contractData: CreateContractDto,
   ): Promise<Contract> {
     console.log("🔍 Debug - ContractService enviando datos:", contractData);
-    
+
     const response = await api.post("/suarec/contracts", contractData);
     const contract = response.data;
 
@@ -112,6 +112,44 @@ export class ContractService {
 
   static async cancelContract(contractId: string): Promise<Contract> {
     const response = await api.delete(`/suarec/contracts/${contractId}/cancel`);
+    return response.data;
+  }
+
+  static async completeContract(contractId: string): Promise<Contract> {
+    const response = await api.post(`/suarec/contracts/${contractId}/complete`);
+    return response.data;
+  }
+
+  static async generateOTP(contractId: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/generate-otp`,
+    );
+    return response.data;
+  }
+
+  static async verifyOTP(contractId: string, otpCode: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/verify-otp`,
+      {
+        otpCode,
+      },
+    );
+    return response.data;
+  }
+
+  static async resendOTP(contractId: string): Promise<any> {
+    const response = await api.post(
+      `/suarec/contracts/${contractId}/resend-otp`,
+    );
+    return response.data;
+  }
+
+  static async checkPenaltyRequired(
+    contractId: string,
+  ): Promise<{ requiresPenalty: boolean; message?: string }> {
+    const response = await api.get(
+      `/suarec/contracts/${contractId}/check-penalty`,
+    );
     return response.data;
   }
 

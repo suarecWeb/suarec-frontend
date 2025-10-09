@@ -55,7 +55,7 @@ export default function Home() {
         {/* Contenido principal */}
         <div className="relative z-10 container mx-auto px-4 text-center mt-4">
           {/* Contador regresivo */}
-          <CountdownTimer />
+          {/* <CountdownTimer /> */}
 
           {/* Logo/Título principal */}
           <div className="mb-8">

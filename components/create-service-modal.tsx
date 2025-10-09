@@ -661,12 +661,36 @@ export default function CreateServiceModal({
                         if (isNaN(numericPrice) || numericPrice <= 0)
                           return null;
 
+                        // Verificar si el usuario actual es una empresa
+                        const token = Cookies.get("token");
+                        let isCurrentUserCompany = false;
+                        if (token) {
+                          try {
+                            const decoded = jwtDecode<any>(token);
+                            isCurrentUserCompany =
+                              decoded.roles?.some(
+                                (role: any) => role.name === "BUSINESS",
+                              ) || false;
+                          } catch (error) {
+                            console.error("Error decoding token:", error);
+                          }
+                        }
+
+                        // Solo mostrar el mensaje de IVA si el usuario es una empresa
+                        if (!isCurrentUserCompany) {
+                          return null;
+                        }
+
                         return (
                           <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
                             <p className="text-xs text-green-700">
                               <strong>Precio con IVA (19%):</strong>{" "}
                               {formatCurrency(
-                                calculatePriceWithTax(numericPrice),
+                                calculatePriceWithTax(
+                                  numericPrice,
+                                  0.19,
+                                  isCurrentUserCompany,
+                                ),
                               )}
                             </p>
                           </div>
@@ -706,9 +730,11 @@ export default function CreateServiceModal({
                         <div>
                           <p className="text-xs text-yellow-700">
                             <strong>Importante:</strong> El precio que ingreses
-                            es el precio base. Se aplicará automáticamente un
-                            19% de IVA que será visible para los usuarios en el
-                            precio final mostrado en tu publicación.
+                            es el precio base. Si eres una empresa, se aplicará
+                            automáticamente un 19% de IVA que será visible para
+                            los usuarios en el precio final mostrado en tu
+                            publicación. Si eres una persona natural, no se
+                            aplicará IVA.
                           </p>
                         </div>
                       </div>
