@@ -1,5 +1,4 @@
 "use client";
-import { IconArrowNarrowRight } from "@tabler/icons-react";
 import { useState, useRef, useId, useEffect } from "react";
 
 interface SlideData {
@@ -68,7 +67,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
     <div className="[perspective:1200px] [transform-style:preserve-3d]">
       <li
         ref={slideRef}
-        className="flex flex-1 flex-col items-center justify-center relative text-center text-white opacity-100 transition-all duration-300 ease-in-out w-[35vmin] h-[35vmin] mx-[4vmin] z-10 "
+        className="flex flex-1 flex-col items-center justify-center relative text-center text-white opacity-100 transition-all duration-300 ease-in-out w-[35vmin] h-[35vmin] mx-[4vmin] z-10 cursor-pointer hover:scale-110 hover:z-20"
         onClick={() => handleSlideClick(index)}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -79,15 +78,18 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
               : "scale(1) rotateX(0deg)",
           transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
           transformOrigin: "bottom",
+          filter: "drop-shadow(0 0 0 rgba(0, 0, 0, 0))",
         }}
       >
         <div
-          className="absolute top-0 left-0 w-full h-full bg-[#1D1F2F] rounded-[1%] overflow-hidden transition-all duration-150 ease-out"
+          className="absolute top-0 left-0 w-full h-full bg-[#1D1F2F] rounded-2xl overflow-hidden transition-all duration-300 ease-out shadow-2xl"
           style={{
             transform:
               current === index
                 ? "translate3d(calc(var(--x) / 30), calc(var(--y) / 30), 0)"
                 : "none",
+            boxShadow:
+              "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(109, 100, 247, 0.3)",
           }}
         >
           <img
@@ -120,43 +122,23 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
   );
 };
 
-interface CarouselControlProps {
-  type: string;
-  title: string;
-  handleClick: () => void;
-}
-
-const CarouselControl = ({
-  type,
-  title,
-  handleClick,
-}: CarouselControlProps) => {
-  return (
-    <button
-      className={`w-10 h-10 flex items-center mx-2 justify-center bg-neutral-200 dark:bg-neutral-800 border-3 border-transparent rounded-full focus:border-[#6D64F7] focus:outline-none hover:-translate-y-0.5 active:translate-y-0.5 transition duration-200 ${
-        type === "previous" ? "rotate-180" : ""
-      }`}
-      title={title}
-      onClick={handleClick}
-    >
-      <IconArrowNarrowRight className="text-neutral-600 dark:text-neutral-200" />
-    </button>
-  );
-};
-
 interface CarouselProps {
   slides: SlideData[];
 }
 
 export function Carousel({ slides }: CarouselProps) {
   const [current, setCurrent] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
 
-  const handlePreviousClick = () => {
+  const handlePrevious = () => {
     const previous = current - 1;
     setCurrent(previous < 0 ? slides.length - 1 : previous);
   };
 
-  const handleNextClick = () => {
+  const handleNext = () => {
     const next = current + 1;
     setCurrent(next === slides.length ? 0 : next);
   };
@@ -167,12 +149,46 @@ export function Carousel({ slides }: CarouselProps) {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    startX.current = e.pageX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX;
+    const walk = x - startX.current;
+
+    if (Math.abs(walk) > 50) {
+      if (walk > 0) {
+        handlePrevious();
+      } else {
+        handleNext();
+      }
+      isDragging.current = false;
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
   const id = useId();
 
   return (
     <div
-      className="relative w-[35vmin] h-[35vmin] mx-auto"
+      ref={carouselRef}
+      className="relative w-[35vmin] h-[35vmin] mx-auto select-none"
       aria-labelledby={`carousel-heading-${id}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       <ul
         className="absolute flex mx-[-4vmin] transition-transform duration-1000 ease-in-out"
@@ -191,18 +207,20 @@ export function Carousel({ slides }: CarouselProps) {
         ))}
       </ul>
 
-      <div className="absolute flex justify-center w-full top-[calc(100%+2rem)]">
-        <CarouselControl
-          type="previous"
-          title="Go to previous slide"
-          handleClick={handlePreviousClick}
-        />
-
-        <CarouselControl
-          type="next"
-          title="Go to next slide"
-          handleClick={handleNextClick}
-        />
+      {/* Indicadores de navegación */}
+      <div className="absolute flex justify-center gap-2 w-full top-[calc(100%+2rem)]">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              current === index
+                ? "bg-[#6D64F7] w-8"
+                : "bg-neutral-400 hover:bg-neutral-500"
+            }`}
+            aria-label={`Ir al slide ${index + 1}`}
+          />
+        ))}
       </div>
     </div>
   );

@@ -163,136 +163,140 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
           />
         </button>
 
-        {isDropdownOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+        <div
+          className={`absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 transition-all duration-300 ease-out transform ${
+            isDropdownOpen
+              ? "opacity-100 scale-100 translate-y-0"
+              : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+          }`}
+        >
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+            onClick={() => setIsDropdownOpen(false)}
+          >
+            <User className="h-4 w-4" />
+            <span className="text-sm">Mi Perfil</span>
+          </Link>
+
+          {(userRole === "PERSON" || userRole === "ADMIN") && (
             <Link
-              href="/profile"
+              href="/my-applications"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <User className="h-4 w-4" />
-              <span className="text-sm">Mi Perfil</span>
+              <UserCheck className="h-4 w-4" />
+              <span className="text-sm">Mis aplicaciones</span>
             </Link>
+          )}
 
-            {(userRole === "PERSON" || userRole === "ADMIN") && (
-              <Link
-                href="/my-applications"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <UserCheck className="h-4 w-4" />
-                <span className="text-sm">Mis aplicaciones</span>
-              </Link>
-            )}
-
-            {(userRole === "BUSINESS" || userRole === "ADMIN") && (
-              <Link
-                href="/companies"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm">Compañías</span>
-              </Link>
-            )}
-
-            {(userRole === "BUSINESS" || userRole === "ADMIN") && (
-              <Link
-                href="/contracts"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <Handshake className="h-4 w-4" />
-                <span className="text-sm">Contrataciones</span>
-              </Link>
-            )}
-
-            {/* Aplicaciones - Para ADMIN */}
-            {userRoles.includes("ADMIN") && (
-              <Link
-                href="/applications"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <Briefcase className="h-4 w-4" />
-                <span className="text-sm">Aplicaciones</span>
-              </Link>
-            )}
-
+          {(userRole === "BUSINESS" || userRole === "ADMIN") && (
             <Link
-              href="/stats"
+              href="/companies"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <BarChart3 className="h-4 w-4" />
-              <span className="text-sm">Mis Estadísticas</span>
+              <Building2 className="h-4 w-4" />
+              <span className="text-sm">Compañías</span>
             </Link>
+          )}
 
-            {userRoles.includes("ADMIN") ? (
-              <Link
-                href="/payments"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <CreditCard className="h-4 w-4" />
-                <span className="text-sm">Pagos</span>
-              </Link>
-            ) : (
-              <Link
-                href="/payments/history"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <CreditCard className="h-4 w-4" />
-                <span className="text-sm">Historial de Pagos</span>
-              </Link>
-            )}
-
-            {/* Calificaciones */}
+          {(userRole === "BUSINESS" || userRole === "ADMIN") && (
             <Link
-              href="/ratings"
+              href="/contracts"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <Star className="h-4 w-4" />
-              <span className="text-sm">Calificaciones</span>
+              <Handshake className="h-4 w-4" />
+              <span className="text-sm">Contrataciones</span>
             </Link>
+          )}
 
-            {/* Tickets de soporte - Solo para ADMIN */}
-            {userRoles.includes("ADMIN") && (
-              <Link
-                href="/admin/tickets"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <Ticket className="h-4 w-4" />
-                <span className="text-sm">Tickets de soporte</span>
-              </Link>
-            )}
-
+          {/* Aplicaciones - Para ADMIN */}
+          {userRoles.includes("ADMIN") && (
             <Link
-              href="/profile/edit"
+              href="/applications"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <Settings className="h-4 w-4" />
-              <span className="text-sm">Configuración</span>
+              <Briefcase className="h-4 w-4" />
+              <span className="text-sm">Aplicaciones</span>
             </Link>
+          )}
 
-            <div className="border-t border-gray-100 my-1"></div>
+          <Link
+            href="/stats"
+            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+            onClick={() => setIsDropdownOpen(false)}
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="text-sm">Mis Estadísticas</span>
+          </Link>
 
-            <button
-              onClick={() => {
-                handleLogOutClick();
-                setIsDropdownOpen(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-300 w-full text-left"
+          {userRoles.includes("ADMIN") ? (
+            <Link
+              href="/payments"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => setIsDropdownOpen(false)}
             >
-              <LogOut className="h-4 w-4" />
-              <span className="text-sm">Cerrar sesión</span>
-            </button>
-          </div>
-        )}
+              <CreditCard className="h-4 w-4" />
+              <span className="text-sm">Pagos</span>
+            </Link>
+          ) : (
+            <Link
+              href="/payments/history"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="text-sm">Historial de Pagos</span>
+            </Link>
+          )}
+
+          {/* Calificaciones */}
+          <Link
+            href="/ratings"
+            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+            onClick={() => setIsDropdownOpen(false)}
+          >
+            <Star className="h-4 w-4" />
+            <span className="text-sm">Calificaciones</span>
+          </Link>
+
+          {/* Tickets de soporte - Solo para ADMIN */}
+          {userRoles.includes("ADMIN") && (
+            <Link
+              href="/admin/tickets"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => setIsDropdownOpen(false)}
+            >
+              <Ticket className="h-4 w-4" />
+              <span className="text-sm">Tickets de soporte</span>
+            </Link>
+          )}
+
+          <Link
+            href="/profile/edit"
+            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
+            onClick={() => setIsDropdownOpen(false)}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="text-sm">Configuración</span>
+          </Link>
+
+          <div className="border-t border-gray-100 my-1"></div>
+
+          <button
+            onClick={() => {
+              handleLogOutClick();
+              setIsDropdownOpen(false);
+            }}
+            className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-300 w-full text-left"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="text-sm">Cerrar sesión</span>
+          </button>
+        </div>
       </div>
     );
   }

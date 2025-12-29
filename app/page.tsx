@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import CountdownTimer from "@/components/countdown-timer";
+import SwiperAuto from "@/components/ui/SwiperAuto";
 import {
   ArrowRight,
   Briefcase,
@@ -155,89 +156,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Briefcase className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Ofertas exclusivas
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Accede a oportunidades laborales únicas que no encontrarás en
-                otras plataformas. Trabajamos directamente con las mejores
-                empresas.
-              </p>
-            </div>
-
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Empresas verificadas
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Todas nuestras empresas pasan por un riguroso proceso de
-                verificación para garantizar las mejores condiciones laborales.
-              </p>
-            </div>
-
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Users className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Comunidad activa
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Forma parte de una red de profesionales que comparten
-                oportunidades, experiencias y crecen juntos.
-              </p>
-            </div>
-
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Shield className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Seguridad garantizada
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Tu información está protegida con los más altos estándares de
-                seguridad y privacidad.
-              </p>
-            </div>
-
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Zap className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Proceso rápido
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Conectamos profesionales con empresas en tiempo récord, sin
-                trámites complicados.
-              </p>
-            </div>
-
-            <div className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20">
-              <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Award className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-eras-bold mb-4 text-gray-800">
-                Calidad premium
-              </h3>
-              <p className="text-gray-600 leading-relaxed font-eras">
-                Solo trabajamos con los mejores profesionales y las empresas más
-                prestigiosas del mercado.
-              </p>
-            </div>
-          </div>
+          <SwiperAuto />
         </div>
       </section>
-
       {/* Sección de Alianzas */}
       <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-4">

@@ -56,8 +56,7 @@ export const formatCurrency = (
 
   // Formatear usando Intl.NumberFormat para Colombia
   const formatter = new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
+    style: "decimal",
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -67,15 +66,17 @@ export const formatCurrency = (
   // Personalizar el resultado según las opciones
   if (!showSymbol && !showCurrency) {
     // Solo el número con puntuación
-    formatted = formatted.replace(/[$COP\s]/g, "").trim();
+    formatted = formatted.trim();
   } else if (!showSymbol && showCurrency) {
     // Número + COP
-    formatted = formatted.replace("$", "").trim() + " COP";
+    formatted = formatted.trim() + " COP";
   } else if (showSymbol && showCurrency) {
     // $ + número + COP
-    formatted = formatted + " COP";
+    formatted = "$" + formatted + " COP";
+  } else if (showSymbol && !showCurrency) {
+    // $ + número (formato por defecto)
+    formatted = "$" + formatted;
   }
-  // Si showSymbol es true y showCurrency es false, usar el formato por defecto
 
   // Agregar texto "peso/pesos"
   if (showText) {

@@ -18,6 +18,7 @@ import {
   Info,
   AlertCircle,
   Image as ImageIcon,
+  ChevronDown,
 } from "lucide-react";
 import { calculatePriceWithTax } from "../lib/utils";
 import { formatCurrency } from "../lib/formatCurrency";
@@ -89,6 +90,11 @@ export default function CreateServiceModal({
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string>("");
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isPriceUnitDropdownOpen, setIsPriceUnitDropdownOpen] = useState(false);
+  const [isUrgencyDropdownOpen, setIsUrgencyDropdownOpen] = useState(false);
+  const [isScheduleDropdownOpen, setIsScheduleDropdownOpen] = useState(false);
   const router = useRouter();
 
   const {
@@ -122,17 +128,47 @@ export default function CreateServiceModal({
     setSelectedType(watchedType);
   }, [watchedType]);
 
-  // Función simple para limpiar el precio
+  // Cerrar dropdowns al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".dropdown-container")) {
+        setIsTypeDropdownOpen(false);
+        setIsCategoryDropdownOpen(false);
+        setIsPriceUnitDropdownOpen(false);
+        setIsUrgencyDropdownOpen(false);
+        setIsScheduleDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Función para formatear el precio con separadores de miles
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Remover todo excepto números
     const cleaned = e.target.value.replace(/[^\d]/g, "");
 
-    // Actualizar el valor del input
-    e.target.value = cleaned;
+    if (!cleaned) {
+      e.target.value = "";
+      setValue("price", undefined);
+      return;
+    }
 
-    // Convertir a número y actualizar el formulario
-    const numericValue = parseFloat(cleaned);
-    setValue("price", isNaN(numericValue) ? undefined : numericValue);
+    // Convertir a número
+    const numericValue = parseInt(cleaned, 10);
+
+    // Formatear con separadores de miles (punto como separador)
+    const formatted = numericValue.toLocaleString("es-CO");
+
+    // Actualizar el valor visual del input
+    e.target.value = formatted;
+
+    // Actualizar el formulario con el valor numérico limpio
+    setValue("price", numericValue);
   };
 
   // Validar que el usuario esté autenticado
@@ -276,10 +312,10 @@ export default function CreateServiceModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto modal-scrollbar">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md backdrop-brightness-75 flex items-center justify-center z-50 p-2 sm:p-4 transition-opacity duration-200">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl mx-auto h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white p-4 rounded-t-xl">
+        <div className="bg-gradient-to-l from-gray-800 to-[#097EEC] text-white p-4 rounded-t-xl">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold mb-1">
@@ -308,7 +344,7 @@ export default function CreateServiceModal({
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] modal-scrollbar">
           {/* Error message */}
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 p-3 rounded-lg flex items-start gap-3">
@@ -331,36 +367,78 @@ export default function CreateServiceModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid lg:grid-cols-2 gap-4">
-              {/* Left column - Form fields */}
-              <div className="space-y-4">
-                {/* Type field - Agregar al principio */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Form fields in single column layout */}
+            <div className="space-y-6">
+              {/* First row - Type and Image */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Type field - Custom dropdown */}
                 <div className="space-y-2">
-                  <label
-                    htmlFor="type"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label className="block text-sm font-medium text-gray-700">
                     Tipo de publicación <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="type"
-                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
-                      errors.type ? "border-red-500" : "border-gray-200"
-                    }`}
-                    {...register("type", {
-                      required: "El tipo de publicación es obligatorio",
-                    })}
-                    disabled={isLoading}
-                  >
-                    <option value="">Selecciona el tipo</option>
-                    <option value="offer">
-                      Oferta de Servicio (Ofrezco un servicio)
-                    </option>
-                    <option value="request">
-                      Solicitud de Servicio (Busco un servicio)
-                    </option>
-                  </select>
+                  <div className="relative dropdown-container">
+                    <button
+                      type="button"
+                      onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                      className={`w-full px-4 py-3 bg-white border-2 rounded-xl text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-sm flex items-center justify-between ${
+                        errors.type
+                          ? "border-red-500"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      disabled={isLoading}
+                    >
+                      <span
+                        className={
+                          watch("type") ? "text-gray-900" : "text-gray-500"
+                        }
+                      >
+                        {watch("type") === "offer"
+                          ? "Oferta de Servicio (Ofrezco un servicio)"
+                          : watch("type") === "request"
+                            ? "Solicitud de Servicio (Busco un servicio)"
+                            : "Selecciona el tipo"}
+                      </span>
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-400 transition-transform ${isTypeDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isTypeDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("type", "offer");
+                            setIsTypeDropdownOpen(false);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">
+                            Oferta de Servicio
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Ofrezco un servicio
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("type", "request");
+                            setIsTypeDropdownOpen(false);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm"
+                        >
+                          <div className="font-medium text-gray-900">
+                            Solicitud de Servicio
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Busco un servicio
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {errors.type && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.type.message}
@@ -406,31 +484,56 @@ export default function CreateServiceModal({
                   )}
                 </div>
 
-                {/* Category field */}
+                {/* Category field - Custom dropdown */}
                 <div className="space-y-2">
-                  <label
-                    htmlFor="category"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label className="block text-sm font-medium text-gray-700">
                     Categoría <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="category"
-                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
-                      errors.category ? "border-red-500" : "border-gray-200"
-                    }`}
-                    {...register("category", {
-                      required: "La categoría es obligatoria",
-                    })}
-                    disabled={isLoading}
-                  >
-                    <option value="">Selecciona una categoría</option>
-                    {SERVICE_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative dropdown-container">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                      }
+                      className={`w-full px-4 py-3 bg-white border-2 rounded-xl text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-sm flex items-center justify-between ${
+                        errors.category
+                          ? "border-red-500"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      disabled={isLoading}
+                    >
+                      <span
+                        className={
+                          watch("category") ? "text-gray-900" : "text-gray-500"
+                        }
+                      >
+                        {watch("category") || "Selecciona una categoría"}
+                      </span>
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-400 transition-transform ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isCategoryDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        {SERVICE_CATEGORIES.map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => {
+                              setValue("category", category);
+                              setIsCategoryDropdownOpen(false);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">
+                              {category}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {errors.category && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.category.message}
@@ -556,33 +659,90 @@ export default function CreateServiceModal({
                       )}
                     </div>
 
-                    {/* Urgencia */}
+                    {/* Urgencia - Custom dropdown */}
                     <div className="space-y-2">
-                      <label
-                        htmlFor="urgency"
-                        className="block text-sm font-medium text-gray-700"
-                      >
+                      <label className="block text-sm font-medium text-gray-700">
                         Urgencia <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        id="urgency"
-                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
-                          errors.urgency ? "border-red-500" : "border-gray-200"
-                        }`}
-                        {...register("urgency", {
-                          required:
-                            selectedType === "request"
-                              ? "La urgencia es obligatoria"
-                              : false,
-                        })}
-                        disabled={isLoading}
-                      >
-                        <option value="">Selecciona la urgencia</option>
-                        <option value="low">Baja (1-2 semanas)</option>
-                        <option value="medium">Media (3-5 días)</option>
-                        <option value="high">Alta (1-2 días)</option>
-                        <option value="urgent">Urgente (Hoy/Mañana)</option>
-                      </select>
+                      <div className="relative dropdown-container">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsUrgencyDropdownOpen(!isUrgencyDropdownOpen)
+                          }
+                          className={`w-full px-4 py-3 bg-white border-2 rounded-xl text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-sm flex items-center justify-between ${
+                            errors.urgency
+                              ? "border-red-500"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                          disabled={isLoading}
+                        >
+                          <span
+                            className={
+                              watch("urgency")
+                                ? "text-gray-900"
+                                : "text-gray-500"
+                            }
+                          >
+                            {watch("urgency") === "low"
+                              ? "Baja (1-2 semanas)"
+                              : watch("urgency") === "medium"
+                                ? "Media (3-5 días)"
+                                : watch("urgency") === "high"
+                                  ? "Alta (1-2 días)"
+                                  : watch("urgency") === "urgent"
+                                    ? "Urgente (Hoy/Mañana)"
+                                    : "Selecciona la urgencia"}
+                          </span>
+                          <ChevronDown
+                            className={`h-5 w-5 text-gray-400 transition-transform ${isUrgencyDropdownOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+
+                        {isUrgencyDropdownOpen && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                            {[
+                              {
+                                value: "low",
+                                label: "Baja",
+                                description: "1-2 semanas",
+                              },
+                              {
+                                value: "medium",
+                                label: "Media",
+                                description: "3-5 días",
+                              },
+                              {
+                                value: "high",
+                                label: "Alta",
+                                description: "1-2 días",
+                              },
+                              {
+                                value: "urgent",
+                                label: "Urgente",
+                                description: "Hoy/Mañana",
+                              },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setValue("urgency", option.value);
+                                  setIsUrgencyDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {option.label}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {option.description}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       {errors.urgency && (
                         <p className="text-red-500 text-xs mt-1">
                           {errors.urgency.message}
@@ -590,33 +750,98 @@ export default function CreateServiceModal({
                       )}
                     </div>
 
-                    {/* Horario preferido */}
+                    {/* Horario preferido - Custom dropdown */}
                     <div className="space-y-2">
-                      <label
-                        htmlFor="preferredSchedule"
-                        className="block text-sm font-medium text-gray-700"
-                      >
+                      <label className="block text-sm font-medium text-gray-700">
                         Horario preferido
                       </label>
-                      <select
-                        id="preferredSchedule"
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                        {...register("preferredSchedule")}
-                        disabled={isLoading}
-                      >
-                        <option value="">Sin preferencia</option>
-                        <option value="morning">
-                          Mañana (8:00 AM - 12:00 PM)
-                        </option>
-                        <option value="afternoon">
-                          Tarde (12:00 PM - 6:00 PM)
-                        </option>
-                        <option value="evening">
-                          Noche (6:00 PM - 10:00 PM)
-                        </option>
-                        <option value="weekend">Fines de semana</option>
-                        <option value="flexible">Horario flexible</option>
-                      </select>
+                      <div className="relative dropdown-container">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsScheduleDropdownOpen(!isScheduleDropdownOpen)
+                          }
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-sm flex items-center justify-between hover:border-gray-300"
+                          disabled={isLoading}
+                        >
+                          <span
+                            className={
+                              watch("preferredSchedule")
+                                ? "text-gray-900"
+                                : "text-gray-500"
+                            }
+                          >
+                            {watch("preferredSchedule") === "morning"
+                              ? "Mañana (8:00 AM - 12:00 PM)"
+                              : watch("preferredSchedule") === "afternoon"
+                                ? "Tarde (12:00 PM - 6:00 PM)"
+                                : watch("preferredSchedule") === "evening"
+                                  ? "Noche (6:00 PM - 10:00 PM)"
+                                  : watch("preferredSchedule") === "weekend"
+                                    ? "Fines de semana"
+                                    : watch("preferredSchedule") === "flexible"
+                                      ? "Horario flexible"
+                                      : "Sin preferencia"}
+                          </span>
+                          <ChevronDown
+                            className={`h-5 w-5 text-gray-400 transition-transform ${isScheduleDropdownOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+
+                        {isScheduleDropdownOpen && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                            {[
+                              {
+                                value: "",
+                                label: "Sin preferencia",
+                                description: "Cualquier horario",
+                              },
+                              {
+                                value: "morning",
+                                label: "Mañana",
+                                description: "8:00 AM - 12:00 PM",
+                              },
+                              {
+                                value: "afternoon",
+                                label: "Tarde",
+                                description: "12:00 PM - 6:00 PM",
+                              },
+                              {
+                                value: "evening",
+                                label: "Noche",
+                                description: "6:00 PM - 10:00 PM",
+                              },
+                              {
+                                value: "weekend",
+                                label: "Fines de semana",
+                                description: "Sábado y domingo",
+                              },
+                              {
+                                value: "flexible",
+                                label: "Horario flexible",
+                                description: "A convenir",
+                              },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setValue("preferredSchedule", option.value);
+                                  setIsScheduleDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {option.label}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {option.description}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
@@ -636,7 +861,7 @@ export default function CreateServiceModal({
                         id="price"
                         onChange={handlePriceChange}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                        placeholder="Ej: 10000"
+                        placeholder="Ej: 10.000"
                       />
 
                       {/* Mensaje simple */}
@@ -699,24 +924,67 @@ export default function CreateServiceModal({
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="priceUnit"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Unidad
                       </label>
-                      <select
-                        id="priceUnit"
-                        {...register("priceUnit")}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
-                      >
-                        <option value="">Seleccionar</option>
-                        <option value="hour">Por hora</option>
-                        <option value="monthly">Por mes</option>
-                        <option value="daily">Por día</option>
-                        <option value="weekly">Por semana</option>
-                        <option value="service">Por servicio</option>
-                      </select>
+                      <div className="relative dropdown-container">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsPriceUnitDropdownOpen(!isPriceUnitDropdownOpen)
+                          }
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-sm flex items-center justify-between hover:border-gray-300"
+                        >
+                          <span
+                            className={
+                              watch("priceUnit")
+                                ? "text-gray-900"
+                                : "text-gray-500"
+                            }
+                          >
+                            {watch("priceUnit") === "hour"
+                              ? "Por hora"
+                              : watch("priceUnit") === "monthly"
+                                ? "Por mes"
+                                : watch("priceUnit") === "daily"
+                                  ? "Por día"
+                                  : watch("priceUnit") === "weekly"
+                                    ? "Por semana"
+                                    : watch("priceUnit") === "service"
+                                      ? "Por servicio"
+                                      : "Seleccionar"}
+                          </span>
+                          <ChevronDown
+                            className={`h-5 w-5 text-gray-400 transition-transform ${isPriceUnitDropdownOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+
+                        {isPriceUnitDropdownOpen && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                            {[
+                              { value: "hour", label: "Por hora" },
+                              { value: "monthly", label: "Por mes" },
+                              { value: "daily", label: "Por día" },
+                              { value: "weekly", label: "Por semana" },
+                              { value: "service", label: "Por servicio" },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setValue("priceUnit", option.value);
+                                  setIsPriceUnitDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {option.label}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

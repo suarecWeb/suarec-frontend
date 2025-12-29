@@ -283,8 +283,23 @@ export default function FeedPage() {
         <div className="grid lg:grid-cols-4 gap-4 lg:gap-8 w-full max-w-full">
           {/* Sidebar izquierdo - Filtros principales */}
           <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-              <h3 className="text-lg font-eras-bold text-gray-900 mb-4">
+            <div className="bg-gradient-to-br from-slate-50 to-blue-50/20 rounded-xl shadow-sm border border-slate-200/60 p-6 sticky top-24 hover:shadow-md hover:border-blue-300/60 transition-all duration-200">
+              <h3 className="text-lg font-eras-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-slate-500/10">
+                  <svg
+                    className="h-4 w-4 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                </div>
                 Filtros
               </h3>
 
@@ -311,13 +326,13 @@ export default function FeedPage() {
             </div>
 
             {/* Create Post Button */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-full">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-full hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300 cursor-pointer">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1 font-eras-semibold text-gray-900 text-sm sm:text-base">
                   ¿Qué estás buscando hoy?
                 </div>
                 <Button
-                  onClick={() => verifyCreatePublication()} // setIsCreateModalOpen(true)
+                  onClick={() => verifyCreatePublication()}
                   className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -325,7 +340,6 @@ export default function FeedPage() {
                 </Button>
               </div>
             </div>
-
             {/* Feed */}
             <div className="space-y-4 lg:space-y-6 w-full max-w-full overflow-x-hidden">
               {loading ? (
@@ -402,8 +416,17 @@ export default function FeedPage() {
 
           {/* Sidebar derecho - Filtros de categoría y estadísticas */}
           <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-              <h3 className="text-lg font-eras-bold text-gray-900 mb-4">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50/30 rounded-xl shadow-sm border border-green-200/60 p-6 sticky top-24 hover:shadow-md transition-all duration-200">
+              <h3 className="text-lg font-eras-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gray-100">
+                  <svg
+                    className="h-4 w-4 text-gray-700"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M3 3v18h18v-2H5V3H3zm4 14h2V9H7v8zm4 0h2V7h-2v10zm4 0h2V5h-2v12z" />
+                  </svg>
+                </div>
                 Estadísticas
               </h3>
 

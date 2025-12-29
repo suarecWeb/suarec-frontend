@@ -197,34 +197,34 @@ const CompaniesPageContent = () => {
                     {filteredCompanies.map((company) => (
                       <div
                         key={company.id}
-                        className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                        className="group relative bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out"
                       >
                         <div className="p-4 sm:p-6">
                           <div className="flex items-start gap-3 sm:gap-4">
                             {company.user?.profile_image ? (
-                              <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden">
+                              <div className="relative flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg group-hover:ring-blue-200 transition-all duration-300">
                                 <Image
                                   src={company.user.profile_image}
                                   alt={company.name}
                                   width={48}
                                   height={48}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               </div>
                             ) : (
-                              <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#097EEC]" />
+                              <div className="relative flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center ring-2 ring-white shadow-lg group-hover:ring-blue-200 group-hover:from-blue-600 group-hover:to-blue-700 transition-all duration-300">
+                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white group-hover:scale-110 transition-transform duration-300" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 truncate">
+                              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate group-hover:text-blue-700 transition-colors duration-300">
                                 {company.name}
                               </h3>
-                              <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                              <p className="text-xs sm:text-sm text-gray-600 font-semibold bg-gray-100 px-2 py-1 rounded-md inline-block">
                                 NIT: {company.nit}
                               </p>
 
-                              <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+                              <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                                   <span className="truncate">
@@ -246,7 +246,7 @@ const CompaniesPageContent = () => {
                           </div>
 
                           {/* Actions */}
-                          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                          <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-gray-100">
                             <Link
                               href={`/companies/${company.id}`}
                               className="w-full sm:w-auto"
@@ -258,12 +258,12 @@ const CompaniesPageContent = () => {
                             </Link>
 
                             {canManageCompany(company) && (
-                              <div className="flex gap-2 sm:gap-3">
+                              <div className="flex flex-wrap gap-2 mt-3">
                                 <Link
                                   href={`/companies/${company.id}/employees`}
                                 >
-                                  <button className="text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 text-sm">
-                                    <User className="h-4 w-4" />
+                                  <button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 text-xs hover:scale-105">
+                                    <User className="h-3 w-3" />
                                     <span>Empleados</span>
                                   </button>
                                 </Link>
@@ -272,8 +272,8 @@ const CompaniesPageContent = () => {
                                   href={`/companies/${company.id}/edit`}
                                   className="flex-1 sm:flex-initial"
                                 >
-                                  <button className="w-full sm:w-auto text-amber-600 hover:text-amber-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1">
-                                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <button className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 text-xs hover:scale-105">
+                                    <Edit className="h-3 w-3" />
                                     <span>Editar</span>
                                   </button>
                                 </Link>
@@ -283,9 +283,9 @@ const CompaniesPageContent = () => {
                                     onClick={() =>
                                       company.id && handleDelete(company.id)
                                     }
-                                    className="flex-1 sm:flex-initial text-red-600 hover:text-red-700 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm py-1"
+                                    className="flex-1 sm:flex-initial bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 text-xs hover:scale-105"
                                   >
-                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <Trash2 className="h-3 w-3" />
                                     <span>Eliminar</span>
                                   </button>
                                 )}
