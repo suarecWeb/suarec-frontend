@@ -994,12 +994,12 @@ const ProfileEditPage = () => {
 
                   <TabsContent value="personal">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label
                           htmlFor="name"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
-                          Nombre completo
+                          Nombre completo *
                         </label>
                         <input
                           type="text"
@@ -1007,17 +1007,18 @@ const ProfileEditPage = () => {
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          placeholder="Ej: Juan Manuel Fernández"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                           required
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label
                           htmlFor="email"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
-                          Correo electrónico
+                          Correo electrónico *
                         </label>
                         <input
                           type="email"
@@ -1025,17 +1026,18 @@ const ProfileEditPage = () => {
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          placeholder="ejemplo@correo.com"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                           required
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label
                           htmlFor="cellphone"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
-                          Teléfono
+                          Teléfono *
                         </label>
                         <input
                           type="tel"
@@ -1043,24 +1045,25 @@ const ProfileEditPage = () => {
                           name="cellphone"
                           value={formData.cellphone}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          placeholder="3178194773"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                           required
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label
                           htmlFor="genre"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
-                          Género
+                          Género *
                         </label>
                         <select
                           id="genre"
                           name="genre"
                           value={formData.genre}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                           required
                         >
                           <option value="">Seleccionar género</option>
@@ -1070,12 +1073,12 @@ const ProfileEditPage = () => {
                         </select>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label
                           htmlFor="born_at"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
-                          Fecha de nacimiento
+                          Fecha de nacimiento *
                         </label>
                         <input
                           type="date"
@@ -1083,7 +1086,7 @@ const ProfileEditPage = () => {
                           name="born_at"
                           value={formData.born_at}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                           required
                         />
                       </div>
@@ -1091,78 +1094,113 @@ const ProfileEditPage = () => {
                       {/* PROFESIÓN Y HABILIDADES SOLO PARA NO-EMPRESAS */}
                       {!hasBusinessRole && (
                         <>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="profession"
-                              className="block text-sm font-medium text-gray-700"
-                            ></label>
-                            <ProfessionAutocomplete
-                              value={formData.profession}
-                              onChange={(val) =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  profession: val,
-                                }))
-                              }
-                              suggestions={profesionesSugeridas}
-                            />
+                          <div className="space-y-3 md:col-span-1">
+                            <div className="relative">
+                              <ProfessionAutocomplete
+                                value={formData.profession}
+                                onChange={(val) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    profession: val,
+                                  }))
+                                }
+                                suggestions={profesionesSugeridas}
+                                label="Profesión"
+                              />
+                            </div>
                             {formData.profession === "Otra" && (
                               <input
                                 type="text"
                                 placeholder="Escribe tu profesión"
                                 value={formData.customProfession}
                                 onChange={handleCustomProfessionChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none mt-2"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white mt-2"
                               />
                             )}
                           </div>
 
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="skills"
-                              className="block text-sm font-medium text-gray-700"
-                            >
-                              Habilidades
-                            </label>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                              {formData.skills.map((skill) => (
-                                <span
-                                  key={skill}
-                                  className="bg-[#097EEC]/10 text-[#097EEC] px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1"
-                                >
-                                  {skill}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveSkill(skill)}
-                                    className="ml-1 text-red-500 hover:text-red-700"
-                                  >
-                                    &times;
-                                  </button>
-                                </span>
-                              ))}
+                          <div className="space-y-4">
+                            <div>
+                              <label
+                                htmlFor="skills"
+                                className="block text-lg font-semibold text-gray-800 mb-2"
+                              >
+                                Habilidades
+                              </label>
+                              <p className="text-sm text-gray-600 mb-4">
+                                Agrega tus habilidades principales separadas por
+                                comas o presionando Enter
+                              </p>
                             </div>
-                            <input
-                              id="skills"
-                              name="skills"
-                              type="text"
-                              placeholder="Agrega una habilidad y presiona Enter o coma"
-                              value={formData.skillInput}
-                              onChange={handleSkillInputChange}
-                              onKeyDown={handleSkillInputKeyDown}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Ejemplo: Comunicación, Liderazgo, Creatividad...
-                            </p>
+
+                            <div className="bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg p-6">
+                              <div className="flex flex-wrap gap-3 mb-4 min-h-[60px] p-4 bg-gray-50/50 rounded-xl border border-gray-200/30">
+                                {formData.skills.length > 0 ? (
+                                  formData.skills.map((skill) => (
+                                    <span
+                                      key={skill}
+                                      className="group relative bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                                    >
+                                      <span className="relative z-10">
+                                        {skill}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveSkill(skill)}
+                                        className="relative z-10 w-5 h-5 bg-white/20 text-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center text-xs font-bold"
+                                      >
+                                        ×
+                                      </button>
+                                    </span>
+                                  ))
+                                ) : (
+                                  <div className="flex items-center justify-center w-full h-full text-gray-400 text-sm">
+                                    <div className="text-center">
+                                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span className="text-gray-400 text-lg">
+                                          +
+                                        </span>
+                                      </div>
+                                      <p>Agrega tus habilidades aquí</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <input
+                                  id="skills"
+                                  name="skills"
+                                  type="text"
+                                  placeholder="Ej: Comunicación, Liderazgo, Creatividad..."
+                                  value={formData.skillInput}
+                                  onChange={handleSkillInputChange}
+                                  onKeyDown={handleSkillInputKeyDown}
+                                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white text-gray-700 placeholder-gray-400"
+                                />
+                                <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                  <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                  Presiona{" "}
+                                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                                    Enter
+                                  </kbd>{" "}
+                                  o{" "}
+                                  <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                                    ,
+                                  </kbd>{" "}
+                                  para agregar
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         </>
                       )}
 
                       {/* SOBRE MÍ */}
-                      <div className="space-y-2">
+                      <div className="space-y-3 md:col-span-2">
                         <label
                           htmlFor="bio"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm font-semibold text-gray-800"
                         >
                           Sobre mí
                         </label>
@@ -1176,154 +1214,224 @@ const ProfileEditPage = () => {
                               bio: e.target.value,
                             }))
                           }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none min-h-[80px]"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none"
                           placeholder="Cuéntanos sobre ti, tu experiencia, intereses, etc."
                         />
                       </div>
 
                       {/* EDUCACIÓN */}
-                      <div className="space-y-2 mt-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Educación
-                        </label>
-                        <p className="text-xs text-gray-500 mb-2">
-                          Los campos marcados con * son obligatorios
-                        </p>
-                        {formData.education.map((edu, idx) => (
-                          <div
-                            key={idx}
-                            className="border p-3 rounded-lg mb-2 relative"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  education: prev.education.filter(
-                                    (_, i) => i !== idx,
-                                  ),
-                                }))
-                              }
-                              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                      <div className="space-y-6 mt-6">
+                        <div>
+                          <label className="block text-lg font-semibold text-gray-800 mb-2">
+                            Educación
+                          </label>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Los campos marcados con * son obligatorios
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          {formData.education.map((edu, idx) => (
+                            <div
+                              key={idx}
+                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden p-6"
                             >
-                              &times;
-                            </button>
-                            <input
-                              type="text"
-                              placeholder="Institución *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!edu.institution ? "border-red-300" : ""}`}
-                              value={edu.institution || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.education.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, institution: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, education: arr };
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              placeholder="Título *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!edu.degree ? "border-red-300" : ""}`}
-                              value={edu.degree || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.education.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, degree: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, education: arr };
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              placeholder="Campo de estudio"
-                              className="w-full mb-1 px-2 py-1 border rounded"
-                              value={edu.fieldOfStudy || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.education.map((item, i) =>
-                                    i === idx
-                                      ? {
-                                          ...item,
-                                          fieldOfStudy: e.target.value,
-                                        }
-                                      : item,
-                                  );
-                                  return { ...prev, education: arr };
-                                })
-                              }
-                            />
-                            <div className="flex gap-2 mb-1">
-                              <input
-                                type="date"
-                                className={`flex-1 px-2 py-1 border rounded ${!edu.startDate ? "border-red-300" : ""}`}
-                                value={
-                                  typeof edu.startDate === "string"
-                                    ? edu.startDate
-                                    : edu.startDate
-                                      ? new Date(edu.startDate)
-                                          .toISOString()
-                                          .split("T")[0]
-                                      : ""
-                                }
-                                onChange={(e) =>
-                                  setFormData((prev) => {
-                                    const arr = prev.education.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, startDate: e.target.value }
-                                        : item,
-                                    );
-                                    return { ...prev, education: arr };
-                                  })
-                                }
-                              />
-                              <input
-                                type="date"
-                                className="flex-1 px-2 py-1 border rounded"
-                                value={
-                                  typeof edu.endDate === "string"
-                                    ? edu.endDate
-                                    : edu.endDate
-                                      ? new Date(edu.endDate)
-                                          .toISOString()
-                                          .split("T")[0]
-                                      : ""
-                                }
-                                onChange={(e) =>
-                                  setFormData((prev) => {
-                                    const arr = prev.education.map((item, i) =>
-                                      i === idx
-                                        ? { ...item, endDate: e.target.value }
-                                        : item,
-                                    );
-                                    return { ...prev, education: arr };
-                                  })
-                                }
-                              />
+                              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+
+                              <div className="relative z-10">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      education: prev.education.filter(
+                                        (_, i) => i !== idx,
+                                      ),
+                                    }))
+                                  }
+                                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold shadow-lg z-20"
+                                >
+                                  ×
+                                </button>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Institución *
+                                    </label>
+                                    <input
+                                      type="text"
+                                      placeholder="Ej: Universidad Nacional"
+                                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!edu.institution ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
+                                      value={edu.institution || ""}
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.education.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    institution: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, education: arr };
+                                        })
+                                      }
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Título *
+                                    </label>
+                                    <input
+                                      type="text"
+                                      placeholder="Ej: Ingeniería de Sistemas"
+                                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!edu.degree ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
+                                      value={edu.degree || ""}
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.education.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    degree: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, education: arr };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="mb-4">
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Campo de estudio
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Ej: Tecnología, Ciencias, Artes"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
+                                    value={edu.fieldOfStudy || ""}
+                                    onChange={(e) =>
+                                      setFormData((prev) => {
+                                        const arr = prev.education.map(
+                                          (item, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...item,
+                                                  fieldOfStudy: e.target.value,
+                                                }
+                                              : item,
+                                        );
+                                        return { ...prev, education: arr };
+                                      })
+                                    }
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Fecha de inicio *
+                                    </label>
+                                    <input
+                                      type="date"
+                                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!edu.startDate ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
+                                      value={
+                                        typeof edu.startDate === "string"
+                                          ? edu.startDate
+                                          : edu.startDate
+                                            ? new Date(edu.startDate)
+                                                .toISOString()
+                                                .split("T")[0]
+                                            : ""
+                                      }
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.education.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    startDate: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, education: arr };
+                                        })
+                                      }
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Fecha de finalización
+                                    </label>
+                                    <input
+                                      type="date"
+                                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
+                                      value={
+                                        typeof edu.endDate === "string"
+                                          ? edu.endDate
+                                          : edu.endDate
+                                            ? new Date(edu.endDate)
+                                                .toISOString()
+                                                .split("T")[0]
+                                            : ""
+                                      }
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.education.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    endDate: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, education: arr };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Descripción
+                                  </label>
+                                  <textarea
+                                    placeholder="Describe tu experiencia, logros o aspectos destacados de esta formación..."
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none"
+                                    value={edu.description || ""}
+                                    onChange={(e) =>
+                                      setFormData((prev) => {
+                                        const arr = prev.education.map(
+                                          (item, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...item,
+                                                  description: e.target.value,
+                                                }
+                                              : item,
+                                        );
+                                        return { ...prev, education: arr };
+                                      })
+                                    }
+                                  />
+                                </div>
+                              </div>
                             </div>
-                            <textarea
-                              placeholder="Descripción"
-                              className="w-full px-2 py-1 border rounded"
-                              value={edu.description || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.education.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, description: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, education: arr };
-                                })
-                              }
-                            />
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+
                         <button
                           type="button"
                           onClick={() =>
@@ -1341,24 +1449,31 @@ const ProfileEditPage = () => {
                               ],
                             }))
                           }
-                          className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]"
+                          className="group relative w-full bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer overflow-hidden p-4"
                         >
-                          Agregar educación
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                          <div className="relative z-10 flex items-center justify-center gap-3 text-[#097EEC] font-semibold">
+                            <div className="w-8 h-8 bg-[#097EEC] text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                              +
+                            </div>
+                            Agregar educación
+                          </div>
                         </button>
                       </div>
 
                       {/* REFERENCIAS */}
-                      <div className="space-y-2 mt-4">
-                        <label className="block text-sm font-medium text-gray-700">
+                      <div className="space-y-3 md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-800">
                           Referencias
                         </label>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <p className="text-sm text-gray-600 mb-4">
                           Los campos marcados con * son obligatorios
                         </p>
                         {formData.references.map((ref, idx) => (
                           <div
                             key={idx}
-                            className="border p-3 rounded-lg mb-2 relative"
+                            className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 mb-3 relative"
                           >
                             <button
                               type="button"
@@ -1370,64 +1485,69 @@ const ProfileEditPage = () => {
                                   ),
                                 }))
                               }
-                              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold"
                             >
-                              &times;
+                              ×
                             </button>
-                            <input
-                              type="text"
-                              placeholder="Nombre *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.name ? "border-red-300" : ""}`}
-                              value={ref.name || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.references.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, name: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, references: arr };
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              placeholder="Relación *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.relationship ? "border-red-300" : ""}`}
-                              value={ref.relationship || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.references.map((item, i) =>
-                                    i === idx
-                                      ? {
-                                          ...item,
-                                          relationship: e.target.value,
-                                        }
-                                      : item,
-                                  );
-                                  return { ...prev, references: arr };
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              placeholder="Contacto *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!ref.contact ? "border-red-300" : ""}`}
-                              value={ref.contact || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.references.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, contact: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, references: arr };
-                                })
-                              }
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                              <input
+                                type="text"
+                                placeholder="Nombre *"
+                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.name ? "border-red-300" : "border-gray-200"}`}
+                                value={ref.name || ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => {
+                                    const arr = prev.references.map(
+                                      (item, i) =>
+                                        i === idx
+                                          ? { ...item, name: e.target.value }
+                                          : item,
+                                    );
+                                    return { ...prev, references: arr };
+                                  })
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="Relación *"
+                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.relationship ? "border-red-300" : "border-gray-200"}`}
+                                value={ref.relationship || ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => {
+                                    const arr = prev.references.map(
+                                      (item, i) =>
+                                        i === idx
+                                          ? {
+                                              ...item,
+                                              relationship: e.target.value,
+                                            }
+                                          : item,
+                                    );
+                                    return { ...prev, references: arr };
+                                  })
+                                }
+                              />
+                              <input
+                                type="text"
+                                placeholder="Contacto *"
+                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.contact ? "border-red-300" : "border-gray-200"}`}
+                                value={ref.contact || ""}
+                                onChange={(e) =>
+                                  setFormData((prev) => {
+                                    const arr = prev.references.map(
+                                      (item, i) =>
+                                        i === idx
+                                          ? { ...item, contact: e.target.value }
+                                          : item,
+                                    );
+                                    return { ...prev, references: arr };
+                                  })
+                                }
+                              />
+                            </div>
                             <textarea
-                              placeholder="Comentario"
-                              className="w-full px-2 py-1 border rounded"
+                              placeholder="Comentario adicional (opcional)"
+                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[80px] resize-none"
                               value={ref.comment || ""}
                               onChange={(e) =>
                                 setFormData((prev) => {
@@ -1458,80 +1578,117 @@ const ProfileEditPage = () => {
                               ],
                             }))
                           }
-                          className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]"
+                          className="w-full px-4 py-3 border-2 border-[#097EEC] text-[#097EEC] rounded-xl hover:bg-[#097EEC] hover:text-white transition-all font-semibold"
                         >
-                          Agregar referencia
+                          + Agregar referencia
                         </button>
                       </div>
 
                       {/* REDES SOCIALES */}
-                      <div className="space-y-2 mt-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Redes
-                        </label>
-                        <p className="text-xs text-gray-500 mb-2">
-                          Los campos marcados con * son obligatorios
-                        </p>
-                        {formData.socialLinks.map((link, idx) => (
-                          <div
-                            key={idx}
-                            className="border p-3 rounded-lg mb-2 relative"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  socialLinks: prev.socialLinks.filter(
-                                    (_, i) => i !== idx,
-                                  ),
-                                }))
-                              }
-                              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                      <div className="space-y-6 mt-6">
+                        <div>
+                          <label className="block text-lg font-semibold text-gray-800 mb-2">
+                            Redes Sociales
+                          </label>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Los campos marcados con * son obligatorios
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          {formData.socialLinks.map((link, idx) => (
+                            <div
+                              key={idx}
+                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden p-6"
                             >
-                              &times;
-                            </button>
-                            <select
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!link.type ? "border-red-300" : ""}`}
-                              value={link.type || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.socialLinks.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, type: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, socialLinks: arr };
-                                })
-                              }
-                            >
-                              <option value="">Selecciona una red *</option>
-                              <option value="LinkedIn">LinkedIn</option>
-                              <option value="GitHub">GitHub</option>
-                              <option value="Twitter">Twitter</option>
-                              <option value="Facebook">Facebook</option>
-                              <option value="Instagram">Instagram</option>
-                              <option value="Website">Website</option>
-                              <option value="Otra">Otra</option>
-                            </select>
-                            <input
-                              type="url"
-                              placeholder="URL *"
-                              className={`w-full mb-1 px-2 py-1 border rounded ${!link.url ? "border-red-300" : ""}`}
-                              value={link.url || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.socialLinks.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, url: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, socialLinks: arr };
-                                })
-                              }
-                            />
-                          </div>
-                        ))}
+                              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+
+                              <div className="relative z-10">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      socialLinks: prev.socialLinks.filter(
+                                        (_, i) => i !== idx,
+                                      ),
+                                    }))
+                                  }
+                                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold shadow-lg z-20"
+                                >
+                                  ×
+                                </button>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Red Social *
+                                    </label>
+                                    <select
+                                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!link.type ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
+                                      value={link.type || ""}
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.socialLinks.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    type: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, socialLinks: arr };
+                                        })
+                                      }
+                                    >
+                                      <option value="">
+                                        Selecciona una red *
+                                      </option>
+                                      <option value="LinkedIn">LinkedIn</option>
+                                      <option value="GitHub">GitHub</option>
+                                      <option value="Twitter">Twitter</option>
+                                      <option value="Facebook">Facebook</option>
+                                      <option value="Instagram">
+                                        Instagram
+                                      </option>
+                                      <option value="Website">Website</option>
+                                      <option value="Otra">Otra</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      URL *
+                                    </label>
+                                    <input
+                                      type="url"
+                                      placeholder="https://ejemplo.com/tu-perfil"
+                                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!link.url ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
+                                      value={link.url || ""}
+                                      onChange={(e) =>
+                                        setFormData((prev) => {
+                                          const arr = prev.socialLinks.map(
+                                            (item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    url: e.target.value,
+                                                  }
+                                                : item,
+                                          );
+                                          return { ...prev, socialLinks: arr };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
                         <button
                           type="button"
                           onClick={() =>
@@ -1543,9 +1700,16 @@ const ProfileEditPage = () => {
                               ],
                             }))
                           }
-                          className="mt-1 px-3 py-1 bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7]"
+                          className="group relative w-full bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer overflow-hidden p-4"
                         >
-                          Agregar red
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                          <div className="relative z-10 flex items-center justify-center gap-3 text-[#097EEC] font-semibold">
+                            <div className="w-8 h-8 bg-[#097EEC] text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                              +
+                            </div>
+                            Agregar red social
+                          </div>
                         </button>
                       </div>
                     </div>

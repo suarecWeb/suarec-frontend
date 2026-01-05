@@ -1,7 +1,8 @@
 "use client";
-
+//para el saludo y enviar un mensaje, para cualquier persona en cualquier parte de la app
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import MessageService from "@/services/MessageService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -226,94 +227,100 @@ const StartChatButton = ({
       </div>
 
       {/* Modal de opciones */}
-      {showOptions && (
-        <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
-            onClick={() => setShowOptions(false)}
-            aria-hidden="true"
-          />
+      {showOptions &&
+        createPortal(
+          <>
+            {/* Overlay */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+              style={{ zIndex: 9999 }}
+              onClick={() => setShowOptions(false)}
+              aria-hidden="true"
+            />
 
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md max-h-[90vh] flex flex-col">
-              {/* Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-                <h3 className="font-medium text-gray-800">
-                  Elige cómo iniciar la conversación
-                </h3>
-                <button
-                  onClick={() => setShowOptions(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-6 space-y-4 overflow-y-auto flex-1">
-                {/* Templates predefinidos */}
-                {messageTemplates.map((template) => (
+            {/* Modal */}
+            <div
+              className="fixed inset-0 flex items-center justify-center p-4"
+              style={{ zIndex: 10000 }}
+            >
+              <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                  <h3 className="font-medium text-gray-800">
+                    Elige cómo iniciar la conversación
+                  </h3>
                   <button
-                    key={template.id}
-                    onClick={() => handleQuickMessage(template)}
-                    disabled={loading}
-                    className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-[#097EEC] hover:bg-blue-50 transition-all group disabled:opacity-50"
+                    onClick={() => setShowOptions(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 p-2 bg-[#097EEC]/10 rounded-lg group-hover:bg-[#097EEC]/20 transition-colors">
-                        {template.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-800 text-sm mb-1">
-                          {template.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 mb-2">
-                          {template.description}
-                        </p>
-                        <p className="text-sm text-gray-600 italic leading-relaxed">
-                          {template.message}
-                        </p>
-                      </div>
-                    </div>
+                    <X className="h-5 w-5" />
                   </button>
-                ))}
+                </div>
 
-                {/* Mensaje personalizado */}
-                <div className="pt-4 border-t border-gray-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    O escribe un mensaje personalizado:
-                  </label>
-                  <div className="space-y-3">
-                    <textarea
-                      value={customMessage}
-                      onChange={(e) => setCustomMessage(e.target.value)}
-                      placeholder={`Escribe tu mensaje para ${recipientName}...`}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none text-sm"
-                      rows={4}
-                      maxLength={500}
-                    />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        {customMessage.length}/500 caracteres
-                      </span>
-                      <button
-                        onClick={() => handleStartChat()}
-                        disabled={loading || !customMessage.trim()}
-                        className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
-                      >
-                        <Send className="h-3 w-3" />
-                        Enviar
-                      </button>
+                {/* Content */}
+                <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                  {/* Templates predefinidos */}
+                  {messageTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => handleQuickMessage(template)}
+                      disabled={loading}
+                      className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-[#097EEC] hover:bg-blue-50 transition-all group disabled:opacity-50"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 p-2 bg-[#097EEC]/10 rounded-lg group-hover:bg-[#097EEC]/20 transition-colors">
+                          {template.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-800 text-sm mb-1">
+                            {template.title}
+                          </h4>
+                          <p className="text-xs text-gray-500 mb-2">
+                            {template.description}
+                          </p>
+                          <p className="text-sm text-gray-600 italic leading-relaxed">
+                            {template.message}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+
+                  {/* Mensaje personalizado */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      O escribe un mensaje personalizado:
+                    </label>
+                    <div className="space-y-3">
+                      <textarea
+                        value={customMessage}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                        placeholder={`Escribe tu mensaje para ${recipientName}...`}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none text-sm"
+                        rows={4}
+                        maxLength={500}
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {customMessage.length}/500 caracteres
+                        </span>
+                        <button
+                          onClick={() => handleStartChat()}
+                          disabled={loading || !customMessage.trim()}
+                          className="px-4 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#0A6BC7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                        >
+                          <Send className="h-3 w-3" />
+                          Enviar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>,
+          document.body,
+        )}
 
       {/* Error message */}
       {error && (

@@ -73,8 +73,20 @@ export default function BenefitsCarousel() {
     cardsData[4],
     cardsData[5],
   ]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Esperar a que el componente se monte completamente
+    const initTimeout = setTimeout(() => {
+      setIsInitialized(true);
+    }, 1000);
+
+    return () => clearTimeout(initTimeout);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
     const interval = setInterval(() => {
       setTopRow((prev) => {
         const newTop = [...prev];
@@ -94,7 +106,7 @@ export default function BenefitsCarousel() {
     }, 3000); // Cambia cada 3 segundos
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isInitialized]);
 
   const renderCard = (card: CardData) => {
     const Icon = card.icon;

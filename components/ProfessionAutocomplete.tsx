@@ -51,7 +51,7 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
     <div className="space-y-2 relative">
       <label
         htmlFor="profession-autocomplete"
-        className="block text-sm font-medium text-gray-700"
+        className="block text-sm font-semibold text-gray-800"
       >
         {label}
       </label>
@@ -64,7 +64,7 @@ const ProfessionAutocomplete: React.FC<ProfessionAutocompleteProps> = ({
         onChange={handleInputChange}
         onBlur={handleBlur}
         onFocus={handleFocus}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
         placeholder={placeholder}
         aria-autocomplete="list"
         aria-controls="profession-suggestions"
