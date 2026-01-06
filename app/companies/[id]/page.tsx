@@ -254,11 +254,11 @@ export default function CompanyDetailsPage({
 
                 {/* Estadísticas rápidas */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:rotate-1 cursor-pointer overflow-hidden">
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
                     <div className="relative z-10">
-                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
                         {getCompanyAge()}
                       </div>
                       <div className="text-sm text-gray-600 font-eras">
@@ -266,11 +266,11 @@ export default function CompanyDetailsPage({
                       </div>
                     </div>
                   </div>
-                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:-rotate-1 cursor-pointer overflow-hidden">
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
                     <div className="relative z-10">
-                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
                         {company.user ? "1" : "0"}
                       </div>
                       <div className="text-sm text-gray-600 font-eras">
@@ -278,11 +278,11 @@ export default function CompanyDetailsPage({
                       </div>
                     </div>
                   </div>
-                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:rotate-1 cursor-pointer overflow-hidden">
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
                     <div className="relative z-10">
-                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
                         {new Date(company.created_at).getFullYear()}
                       </div>
                       <div className="text-sm text-gray-600 font-eras">
@@ -368,7 +368,7 @@ export default function CompanyDetailsPage({
 
               {/* Administrador */}
               {company.user && (
-                <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden p-6 md:p-8">
+                <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden p-6 md:p-8">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
                   <div className="relative z-10">
@@ -434,7 +434,7 @@ export default function CompanyDetailsPage({
 
             {/* Sidebar - Acciones */}
             <div className="lg:col-span-1">
-              <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:-rotate-2 cursor-pointer overflow-hidden p-6 md:p-8 lg:sticky lg:top-24">
+              <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden p-6 md:p-8 lg:sticky lg:top-24">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
                 <div className="relative z-10">

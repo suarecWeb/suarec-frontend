@@ -1139,7 +1139,7 @@ const ProfileEditPage = () => {
                                   formData.skills.map((skill) => (
                                     <span
                                       key={skill}
-                                      className="group relative bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                                      className="group relative bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-200 hover:border-gray-300 transition-all duration-200"
                                     >
                                       <span className="relative z-10">
                                         {skill}
@@ -1147,7 +1147,7 @@ const ProfileEditPage = () => {
                                       <button
                                         type="button"
                                         onClick={() => handleRemoveSkill(skill)}
-                                        className="relative z-10 w-5 h-5 bg-white/20 text-white rounded-full hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center text-xs font-bold"
+                                        className="relative z-10 w-4 h-4 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all duration-200 flex items-center justify-center text-xs font-medium"
                                       >
                                         ×
                                       </button>
@@ -1208,13 +1208,23 @@ const ProfileEditPage = () => {
                           id="bio"
                           name="bio"
                           value={formData.bio}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setFormData((prev) => ({
                               ...prev,
                               bio: e.target.value,
-                            }))
-                          }
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none"
+                            }));
+                            // Auto-expand textarea
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height = target.scrollHeight + "px";
+                          }}
+                          onInput={(e) => {
+                            // Auto-expand on input
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height = target.scrollHeight + "px";
+                          }}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none overflow-hidden"
                           placeholder="Cuéntanos sobre ti, tu experiencia, intereses, etc."
                         />
                       </div>
@@ -1234,7 +1244,7 @@ const ProfileEditPage = () => {
                           {formData.education.map((edu, idx) => (
                             <div
                               key={idx}
-                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden p-6"
+                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden p-6"
                             >
                               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
@@ -1250,7 +1260,7 @@ const ProfileEditPage = () => {
                                       ),
                                     }))
                                   }
-                                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold shadow-lg z-20"
+                                  className="absolute -top-2 -right-2 w-6 h-6 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all duration-200 flex items-center justify-center text-sm font-medium border border-gray-200 hover:border-red-200 bg-white shadow-sm z-30"
                                 >
                                   ×
                                 </button>
@@ -1453,9 +1463,11 @@ const ProfileEditPage = () => {
                         >
                           <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
-                          <div className="relative z-10 flex items-center justify-center gap-3 text-[#097EEC] font-semibold">
-                            <div className="w-8 h-8 bg-[#097EEC] text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                              +
+                          <div className="relative z-10 flex items-center justify-center gap-3 text-gray-500 hover:text-[#097EEC] font-semibold transition-colors duration-300">
+                            <div className="w-8 h-8 bg-gray-200 hover:bg-[#097EEC] text-gray-500 hover:text-white rounded-full flex items-center justify-center transition-all duration-300">
+                              <span className="text-gray-500 group-hover:text-white transition-colors duration-300">
+                                +
+                              </span>
                             </div>
                             Agregar educación
                           </div>
@@ -1463,7 +1475,7 @@ const ProfileEditPage = () => {
                       </div>
 
                       {/* REFERENCIAS */}
-                      <div className="space-y-3 md:col-span-2">
+                      <div className="space-y-3 md:col-span-1">
                         <label className="block text-sm font-semibold text-gray-800">
                           Referencias
                         </label>
@@ -1473,8 +1485,11 @@ const ProfileEditPage = () => {
                         {formData.references.map((ref, idx) => (
                           <div
                             key={idx}
-                            className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 mb-3 relative"
+                            className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden p-6"
                           >
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+
                             <button
                               type="button"
                               onClick={() =>
@@ -1485,59 +1500,82 @@ const ProfileEditPage = () => {
                                   ),
                                 }))
                               }
-                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold"
+                              className="absolute top-2 right-2 w-7 h-7 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all duration-200 flex items-center justify-center text-base font-medium border border-gray-200 hover:border-red-200 bg-white shadow-md z-50"
                             >
                               ×
                             </button>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                              <input
-                                type="text"
-                                placeholder="Nombre *"
-                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.name ? "border-red-300" : "border-gray-200"}`}
-                                value={ref.name || ""}
+
+                            <div className="relative z-10">
+                              <div className="grid grid-cols-1 gap-3 mb-3 mt-8">
+                                <input
+                                  type="text"
+                                  placeholder="Nombre *"
+                                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.name ? "border-red-300" : "border-gray-200"}`}
+                                  value={ref.name || ""}
+                                  onChange={(e) =>
+                                    setFormData((prev) => {
+                                      const arr = prev.references.map(
+                                        (item, i) =>
+                                          i === idx
+                                            ? { ...item, name: e.target.value }
+                                            : item,
+                                      );
+                                      return { ...prev, references: arr };
+                                    })
+                                  }
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Relación *"
+                                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.relationship ? "border-red-300" : "border-gray-200"}`}
+                                  value={ref.relationship || ""}
+                                  onChange={(e) =>
+                                    setFormData((prev) => {
+                                      const arr = prev.references.map(
+                                        (item, i) =>
+                                          i === idx
+                                            ? {
+                                                ...item,
+                                                relationship: e.target.value,
+                                              }
+                                            : item,
+                                      );
+                                      return { ...prev, references: arr };
+                                    })
+                                  }
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Contacto *"
+                                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.contact ? "border-red-300" : "border-gray-200"}`}
+                                  value={ref.contact || ""}
+                                  onChange={(e) =>
+                                    setFormData((prev) => {
+                                      const arr = prev.references.map(
+                                        (item, i) =>
+                                          i === idx
+                                            ? {
+                                                ...item,
+                                                contact: e.target.value,
+                                              }
+                                            : item,
+                                      );
+                                      return { ...prev, references: arr };
+                                    })
+                                  }
+                                />
+                              </div>
+
+                              <textarea
+                                placeholder="Comentario adicional (opcional)"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[80px] resize-none"
+                                value={ref.comment || ""}
                                 onChange={(e) =>
                                   setFormData((prev) => {
                                     const arr = prev.references.map(
                                       (item, i) =>
                                         i === idx
-                                          ? { ...item, name: e.target.value }
-                                          : item,
-                                    );
-                                    return { ...prev, references: arr };
-                                  })
-                                }
-                              />
-                              <input
-                                type="text"
-                                placeholder="Relación *"
-                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.relationship ? "border-red-300" : "border-gray-200"}`}
-                                value={ref.relationship || ""}
-                                onChange={(e) =>
-                                  setFormData((prev) => {
-                                    const arr = prev.references.map(
-                                      (item, i) =>
-                                        i === idx
-                                          ? {
-                                              ...item,
-                                              relationship: e.target.value,
-                                            }
-                                          : item,
-                                    );
-                                    return { ...prev, references: arr };
-                                  })
-                                }
-                              />
-                              <input
-                                type="text"
-                                placeholder="Contacto *"
-                                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white ${!ref.contact ? "border-red-300" : "border-gray-200"}`}
-                                value={ref.contact || ""}
-                                onChange={(e) =>
-                                  setFormData((prev) => {
-                                    const arr = prev.references.map(
-                                      (item, i) =>
-                                        i === idx
-                                          ? { ...item, contact: e.target.value }
+                                          ? { ...item, comment: e.target.value }
                                           : item,
                                     );
                                     return { ...prev, references: arr };
@@ -1545,21 +1583,6 @@ const ProfileEditPage = () => {
                                 }
                               />
                             </div>
-                            <textarea
-                              placeholder="Comentario adicional (opcional)"
-                              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[80px] resize-none"
-                              value={ref.comment || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => {
-                                  const arr = prev.references.map((item, i) =>
-                                    i === idx
-                                      ? { ...item, comment: e.target.value }
-                                      : item,
-                                  );
-                                  return { ...prev, references: arr };
-                                })
-                              }
-                            />
                           </div>
                         ))}
                         <button
@@ -1578,9 +1601,18 @@ const ProfileEditPage = () => {
                               ],
                             }))
                           }
-                          className="w-full px-4 py-3 border-2 border-[#097EEC] text-[#097EEC] rounded-xl hover:bg-[#097EEC] hover:text-white transition-all font-semibold"
+                          className="group relative w-full bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer overflow-hidden p-4"
                         >
-                          + Agregar referencia
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                          <div className="relative z-10 flex items-center justify-center gap-3 text-gray-500 hover:text-[#097EEC] font-semibold transition-colors duration-300">
+                            <div className="w-8 h-8 bg-gray-200 hover:bg-[#097EEC] text-gray-500 hover:text-white rounded-full flex items-center justify-center transition-all duration-300">
+                              <span className="text-gray-500 group-hover:text-white transition-colors duration-300">
+                                +
+                              </span>
+                            </div>
+                            Agregar referencia
+                          </div>
                         </button>
                       </div>
 
