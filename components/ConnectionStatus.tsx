@@ -26,7 +26,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   if (isConnected) {
     return (
       <div className="flex items-center gap-2 bg-green-500/20 backdrop-blur-sm px-3 py-2 rounded-full border border-green-300/50">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+        <Wifi className="h-4 w-4 text-white" />
         <span className="text-sm font-medium text-white">Conectado</span>
       </div>
     );
@@ -34,7 +34,7 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
   return (
     <div className="flex items-center gap-2 bg-red-500/20 backdrop-blur-sm px-3 py-2 rounded-full border border-red-300/50">
-      <div className="w-2 h-2 rounded-full bg-red-400"></div>
+      <WifiOff className="h-4 w-4 text-white" />
       <span className="text-sm font-medium text-white">Desconectado</span>
       {onRetry && (
         <button

@@ -992,7 +992,10 @@ const ProfileEditPage = () => {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="personal">
+                  <TabsContent
+                    value="personal"
+                    className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <label
@@ -1631,7 +1634,7 @@ const ProfileEditPage = () => {
                           {formData.socialLinks.map((link, idx) => (
                             <div
                               key={idx}
-                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden p-6"
+                              className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden p-6"
                             >
                               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
@@ -1647,7 +1650,7 @@ const ProfileEditPage = () => {
                                       ),
                                     }))
                                   }
-                                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center text-sm font-bold shadow-lg z-20"
+                                  className="absolute -top-2 -right-2 w-6 h-6 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all duration-200 flex items-center justify-center text-sm font-medium border border-gray-200 hover:border-red-200 bg-white shadow-sm z-30"
                                 >
                                   ×
                                 </button>
@@ -1748,7 +1751,10 @@ const ProfileEditPage = () => {
                   </TabsContent>
 
                   {hasBusinessRole && (
-                    <TabsContent value="company">
+                    <TabsContent
+                      value="company"
+                      className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                    >
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label
@@ -1844,7 +1850,10 @@ const ProfileEditPage = () => {
                   )}
 
                   {/* Tab de Seguridad - Formulario independiente */}
-                  <TabsContent value="security">
+                  <TabsContent
+                    value="security"
+                    className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                  >
                     <div className="max-w-md">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
                         Cambiar contraseña
@@ -1936,7 +1945,10 @@ const ProfileEditPage = () => {
                   </TabsContent>
 
                   {hasPersonRole && (
-                    <TabsContent value="id-photos">
+                    <TabsContent
+                      value="id-photos"
+                      className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                    >
                       <div className="space-y-6">
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">

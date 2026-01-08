@@ -31,6 +31,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { maskNit } from "@/components/utils/maskNit";
 
 export default function CompanyDetailsPage({
   params,
@@ -232,7 +233,7 @@ export default function CompanyDetailsPage({
                         {company.name}
                       </h2>
                       <p className="text-gray-600 font-eras text-sm md:text-base break-all">
-                        NIT: {company.nit}
+                        NIT: {maskNit(company.nit)}
                       </p>
                     </div>
                   </div>

@@ -27,6 +27,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
+import { maskNit } from "@/components/utils/maskNit";
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -221,7 +222,7 @@ const CompaniesPageContent = () => {
                                 {company.name}
                               </h3>
                               <p className="text-xs sm:text-sm text-gray-600 font-semibold bg-gray-100 px-2 py-1 rounded-md inline-block">
-                                NIT: {company.nit}
+                                NIT: {maskNit(company.nit)}
                               </p>
 
                               <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
