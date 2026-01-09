@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import ConditionalFooter from "@/components/conditional-footer";
+import { FloatingMailbox } from "@/components/FloatingMailbox";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
           <WebSocketProvider>
             <div className="flex-1 flex flex-col">{children}</div>
             <ConditionalFooter />
+            <FloatingMailbox />
           </WebSocketProvider>
         </NotificationProvider>
       </body>

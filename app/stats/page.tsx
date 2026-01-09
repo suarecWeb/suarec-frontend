@@ -18,14 +18,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import toast from "react-hot-toast";
-import {
-  StatsSummaryCard,
-  StatsSuccessOverview,
-  StatsGrowthCard,
-  StatsPeriodInfo,
-  StatsCallToAction,
-  StatsLevelAndBadges,
-} from "@/components/stats";
+import { StatsDashboardContainer } from "@/components/stats";
 
 const StatsPage = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -183,68 +176,7 @@ const StatsPage = () => {
 
         <div className="container mx-auto px-4 -mt-4 pb-12">
           {stats && (
-            <>
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatsSummaryCard
-                  icon={DollarSign}
-                  value={formatCurrency(stats.totalEarnings, {
-                    showCurrency: true,
-                  })}
-                  title="Dinero Generado"
-                  description="¡Esto es lo que has ganado con SUAREC!"
-                  bgColor="bg-green-100"
-                  iconColor="text-green-600"
-                  valueColor="text-green-600"
-                />
-                <StatsSummaryCard
-                  icon={Briefcase}
-                  value={stats.totalContractsCompleted}
-                  title="Contratos Exitosos"
-                  description="¡Cada proyecto completado es un éxito más!"
-                  bgColor="bg-blue-100"
-                  iconColor="text-blue-600"
-                  valueColor="text-blue-600"
-                />
-                <StatsSummaryCard
-                  icon={PieChart}
-                  value={stats.totalPublications}
-                  title="Servicios Publicados"
-                  description="¡Tu presencia en SUAREC está creciendo!"
-                  bgColor="bg-purple-100"
-                  iconColor="text-purple-600"
-                  valueColor="text-purple-600"
-                />
-              </div>
-
-              {/* Level and Badges */}
-              <StatsLevelAndBadges period={selectedTimeRange} />
-
-              {/* Motivational Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <StatsSuccessOverview
-                  totalEarnings={stats.totalEarnings}
-                  totalContractsCompleted={stats.totalContractsCompleted}
-                  totalPublications={stats.totalPublications}
-                />
-                <StatsGrowthCard
-                  totalEarnings={stats.totalEarnings}
-                  totalContractsCompleted={stats.totalContractsCompleted}
-                  totalPublications={stats.totalPublications}
-                />
-              </div>
-
-              {/* Period Information */}
-              <StatsPeriodInfo
-                selectedTimeRange={selectedTimeRange}
-                totalContractsCompleted={stats.totalContractsCompleted}
-                totalPublications={stats.totalPublications}
-                getTimeRangeLabel={getTimeRangeLabel}
-              />
-
-              {/* Call to Action */}
-              <StatsCallToAction totalEarnings={stats.totalEarnings} />
-            </>
+            <StatsDashboardContainer stats={stats} period={selectedTimeRange} />
           )}
         </div>
       </div>
