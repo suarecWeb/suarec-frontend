@@ -52,6 +52,12 @@ export default function AdvancedFilters({
   const [availableTypes, setAvailableTypes] = useState<PublicationType[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Estados para dropdowns personalizados
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isSortByDropdownOpen, setIsSortByDropdownOpen] = useState(false);
+  const [isSortOrderDropdownOpen, setIsSortOrderDropdownOpen] = useState(false);
+
   // Cargar opciones de filtros disponibles
   useEffect(() => {
     const loadFilterOptions = async () => {
@@ -62,7 +68,12 @@ export default function AdvancedFilters({
           PublicationService.getAvailableTypes(),
         ]);
 
-        setAvailableCategories(categoriesResponse.data);
+        // Normalizar categorías a mayúsculas y eliminar duplicados
+        const normalizedCategories = categoriesResponse.data.map(
+          (cat: string) => cat.toUpperCase(),
+        );
+        const uniqueCategories = Array.from(new Set(normalizedCategories));
+        setAvailableCategories(uniqueCategories);
         setAvailableTypes(typesResponse.data);
       } catch (error) {
         console.error("Error loading filter options:", error);
@@ -75,7 +86,29 @@ export default function AdvancedFilters({
     loadFilterOptions();
   }, []);
 
+  // Cerrar dropdowns al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".dropdown-container")) {
+        setIsTypeDropdownOpen(false);
+        setIsCategoryDropdownOpen(false);
+        setIsSortByDropdownOpen(false);
+        setIsSortOrderDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleFilterChange = (key: keyof PaginationParams, value: any) => {
+    // Normalizar categorías para evitar problemas de case sensitivity
+    if (key === "category" && value && typeof value === "string") {
+      value = value.toUpperCase();
+    }
     onFiltersChange({ ...filters, [key]: value, page: 1 }); // Reset to page 1 when filters change
   };
 
@@ -117,101 +150,180 @@ export default function AdvancedFilters({
         <CollapsibleTrigger asChild>
           <Button
             variant="outline"
-            className="w-full justify-between h-12 bg-white hover:bg-gray-50 border-gray-200 hover:border-[#097EEC] transition-all duration-200"
+            className="w-full justify-between h-10 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 hover:border-[#097EEC] hover:shadow-md transition-all duration-200"
             disabled={loading}
           >
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-[#097EEC]/10">
-                <Filter className="h-4 w-4 text-[#097EEC]" />
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-lg bg-[#097EEC]/10">
+                <Filter className="h-3.5 w-3.5 text-[#097EEC]" />
               </div>
-              <span className="font-eras-medium text-gray-900">
+              <span className="font-eras-medium text-sm text-gray-900">
                 Filtros Avanzados
               </span>
               {activeFiltersCount > 0 && (
-                <Badge className="bg-[#097EEC] text-white text-xs px-2 py-1">
+                <Badge className="bg-[#097EEC] text-white text-xs px-1.5 py-0.5">
                   {activeFiltersCount}
                 </Badge>
               )}
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+              className={`h-3.5 w-3.5 text-gray-500 transition-transform duration-200 ${
                 isOpen ? "rotate-180" : ""
               }`}
             />
           </Button>
         </CollapsibleTrigger>
 
-        <CollapsibleContent className="mt-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 max-h-96 overflow-y-auto">
+        <CollapsibleContent className="mt-3">
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl border border-blue-200/60 p-3 relative shadow-sm">
             {/* Búsqueda */}
-            <div className="mb-4">
-              <label className="text-sm font-eras-medium text-gray-700 mb-2 block">
+            <div className="mb-3">
+              <label className="text-xs font-eras-medium text-gray-700 mb-1.5 block">
                 Buscar
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <Input
                   placeholder="Título, descripción o categoría..."
                   value={filters.search || ""}
                   onChange={(e) =>
                     handleFilterChange("search", e.target.value || undefined)
                   }
-                  className="pl-10 h-10 border-gray-200 focus:border-[#097EEC] focus:ring-[#097EEC]/20"
+                  className="pl-9 h-9 text-sm border-gray-200 focus:border-[#097EEC] focus:ring-[#097EEC]/20"
                 />
               </div>
             </div>
 
             {/* Filtros Principales */}
-            <div className="grid grid-cols-1 gap-3 mb-4">
-              {/* Tipo de publicación */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              {/* Tipo de publicación - Custom dropdown */}
               <div>
-                <label className="text-sm font-eras-medium text-gray-700 mb-1 block">
+                <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
                   Tipo
                 </label>
-                <select
-                  value={filters.type || ""}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "type",
-                      e.target.value === "" ? undefined : e.target.value,
-                    )
-                  }
-                  className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
-                >
-                  <option value="">Seleccionar tipo</option>
-                  {availableTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type === PublicationType.SERVICE && "Servicios (Oferta)"}
-                      {type === PublicationType.SERVICE_REQUEST &&
-                        "Solicitudes de Servicios"}
-                      {type === PublicationType.JOB && "Empleos"}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative dropdown-container">
+                  <button
+                    type="button"
+                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                    className="h-9 w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-xs flex items-center justify-between hover:border-gray-300"
+                  >
+                    <span
+                      className={
+                        filters.type ? "text-gray-900" : "text-gray-500"
+                      }
+                    >
+                      {filters.type === PublicationType.SERVICE
+                        ? "Servicios (Oferta)"
+                        : filters.type === PublicationType.SERVICE_REQUEST
+                          ? "Solicitudes de Servicios"
+                          : filters.type === PublicationType.JOB
+                            ? "Empleos"
+                            : "Seleccionar tipo"}
+                    </span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isTypeDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {isTypeDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleFilterChange("type", undefined);
+                          setIsTypeDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100"
+                      >
+                        <div className="font-medium text-gray-900 text-xs">
+                          Todos los tipos
+                        </div>
+                      </button>
+                      {availableTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            handleFilterChange("type", type);
+                            setIsTypeDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900 text-xs">
+                            {type === PublicationType.SERVICE &&
+                              "Servicios (Oferta)"}
+                            {type === PublicationType.SERVICE_REQUEST &&
+                              "Solicitudes de Servicios"}
+                            {type === PublicationType.JOB && "Empleos"}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Categoría única */}
+              {/* Categoría única - Custom dropdown */}
               <div>
-                <label className="text-sm font-eras-medium text-gray-700 mb-1 block">
+                <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
                   Categoría
                 </label>
-                <select
-                  value={filters.category || ""}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "category",
-                      e.target.value === "" ? undefined : e.target.value,
-                    )
-                  }
-                  className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative dropdown-container">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                    }
+                    className="h-9 w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-xs flex items-center justify-between hover:border-gray-300"
+                  >
+                    <span
+                      className={
+                        filters.category ? "text-gray-900" : "text-gray-500"
+                      }
+                    >
+                      {filters.category
+                        ? filters.category.charAt(0).toUpperCase() +
+                          filters.category.slice(1).toLowerCase()
+                        : "Seleccionar categoría"}
+                    </span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {isCategoryDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleFilterChange("category", undefined);
+                          setIsCategoryDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100"
+                      >
+                        <div className="font-medium text-gray-900 text-xs">
+                          Todas las categorías
+                        </div>
+                      </button>
+                      {availableCategories.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => {
+                            handleFilterChange("category", category);
+                            setIsCategoryDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900 text-xs">
+                            {category.charAt(0).toUpperCase() +
+                              category.slice(1).toLowerCase()}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -266,61 +378,133 @@ export default function AdvancedFilters({
               </div>
             </div> */}
 
-            {/* Ordenamiento - Compacto */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* Ordenamiento - Custom dropdowns */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="text-sm font-eras-medium text-gray-700 mb-1 block">
+                <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
                   Ordenar por
                 </label>
-                <select
-                  value={filters.sortBy || "created_at"}
-                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
-                >
-                  <option value="created_at">Fecha</option>
-                  <option value="modified_at">Modificación</option>
-                  <option value="price">Precio</option>
-                  <option value="visitors">Visitas</option>
-                  <option value="title">Título</option>
-                </select>
+                <div className="relative dropdown-container">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsSortByDropdownOpen(!isSortByDropdownOpen)
+                    }
+                    className="h-9 w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-xs flex items-center justify-between hover:border-gray-300"
+                  >
+                    <span className="text-gray-900">
+                      {filters.sortBy === "created_at"
+                        ? "Fecha"
+                        : filters.sortBy === "modified_at"
+                          ? "Modificación"
+                          : filters.sortBy === "price"
+                            ? "Precio"
+                            : filters.sortBy === "visitors"
+                              ? "Visitas"
+                              : filters.sortBy === "title"
+                                ? "Título"
+                                : "Fecha"}
+                    </span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isSortByDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {isSortByDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                      {[
+                        { value: "created_at", label: "Fecha" },
+                        { value: "modified_at", label: "Modificación" },
+                        { value: "price", label: "Precio" },
+                        { value: "visitors", label: "Visitas" },
+                        { value: "title", label: "Título" },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            handleFilterChange("sortBy", option.value);
+                            setIsSortByDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900 text-xs">
+                            {option.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="text-sm font-eras-medium text-gray-700 mb-1 block">
+                <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
                   Dirección
                 </label>
-                <select
-                  value={filters.sortOrder || "DESC"}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "sortOrder",
-                      e.target.value as "ASC" | "DESC",
-                    )
-                  }
-                  className="h-10 w-full px-3 py-2 border border-gray-200 rounded-md focus:border-[#097EEC] focus:ring-[#097EEC]/20 focus:outline-none text-sm"
-                >
-                  <option value="DESC">Descendente</option>
-                  <option value="ASC">Ascendente</option>
-                </select>
+                <div className="relative dropdown-container">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsSortOrderDropdownOpen(!isSortOrderDropdownOpen)
+                    }
+                    className="h-9 w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-xs flex items-center justify-between hover:border-gray-300"
+                  >
+                    <span className="text-gray-900">
+                      {filters.sortOrder === "ASC"
+                        ? "Ascendente"
+                        : "Descendente"}
+                    </span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isSortOrderDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {isSortOrderDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                      {[
+                        { value: "DESC", label: "Descendente" },
+                        { value: "ASC", label: "Ascendente" },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            handleFilterChange(
+                              "sortOrder",
+                              option.value as "ASC" | "DESC",
+                            );
+                            setIsSortOrderDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900 text-xs">
+                            {option.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Botones de acción */}
-            <div className="flex gap-2 pt-3 border-t border-gray-100">
+            <div className="flex gap-2 pt-2.5 border-t border-gray-100">
               <Button
                 onClick={onApplyFilters}
-                className="flex-1 h-10 bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium text-sm"
+                className="flex-1 h-9 bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium text-xs"
               >
-                <Check className="h-3 w-3 mr-1" />
+                <Check className="h-3 w-3 mr-1.5" />
                 Aplicar
               </Button>
               <Button
                 variant="outline"
                 onClick={onClearFilters}
                 disabled={activeFiltersCount === 0}
-                className="h-10 border-gray-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 font-eras-medium text-sm"
+                className="h-9 border-gray-200 hover:border-red-300 hover:text-red-600 hover:bg-red-50 font-eras-medium text-xs"
               >
-                <RotateCcw className="h-3 w-3 mr-1" />
+                <RotateCcw className="h-3 w-3 mr-1.5" />
                 Limpiar
               </Button>
             </div>

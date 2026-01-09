@@ -11,6 +11,7 @@ import {
   User,
   DollarSign,
   Clock,
+  X,
   MessageSquare,
   CheckCircle,
   XCircle,
@@ -85,6 +86,11 @@ export default function ContractsPage() {
   const [penaltyInfo, setPenaltyInfo] = useState<{
     requiresPenalty: boolean;
     message?: string;
+  } | null>(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [selectedChatRecipient, setSelectedChatRecipient] = useState<{
+    id: number;
+    name: string;
   } | null>(null);
   const router = useRouter();
   const { showNotification } = useNotification();
@@ -237,8 +243,8 @@ export default function ContractsPage() {
 
     if (paymentStatus.hasCompletedPayments) {
       return (
-        <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg mb-4">
-          <div className="flex items-center gap-2 text-green-800">
+        <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-gray-800">
             <CheckCircle className="h-4 w-4" />
             <span className="text-sm font-medium">✅ Pago completado</span>
           </div>
@@ -441,15 +447,15 @@ export default function ContractsPage() {
       case ContractStatus.PENDING:
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case ContractStatus.NEGOTIATING:
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-gray-100 text-gray-800 border-gray-200";
       case ContractStatus.ACCEPTED:
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-gray-100 text-gray-800 border-gray-200";
       case ContractStatus.REJECTED:
         return "bg-red-100 text-red-800 border-red-200";
       case ContractStatus.CANCELLED:
         return "bg-gray-100 text-gray-800 border-gray-200";
       case ContractStatus.COMPLETED:
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -518,7 +524,7 @@ export default function ContractsPage() {
       <Navbar />
       <div className="bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#097EEC] to-[#0A6BC7] text-white py-12 pt-24">
+        <div className="bg-[#097EEC] text-white py-12 pt-24">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold mb-2">Mis Contrataciones</h1>
             <p className="text-blue-100 text-lg">
@@ -537,92 +543,108 @@ export default function ContractsPage() {
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <button
               onClick={() => setActiveTab("client")}
-              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+              className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-300 text-left hover:shadow-md hover:-translate-y-1 ${
                 activeTab === "client"
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-blue-300"
+                  ? "border-blue-200 bg-blue-50"
+                  : "hover:border-gray-200"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 mb-3">
                 <div
-                  className={`p-3 rounded-lg ${
-                    activeTab === "client" ? "bg-blue-200" : "bg-blue-100"
+                  className={`p-3 rounded-lg transition-all duration-200 ${
+                    activeTab === "client"
+                      ? "bg-[#097EEC] text-white"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  <Briefcase className="h-6 w-6 text-blue-600" />
+                  <Briefcase className="h-6 w-6" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 mb-1">
                     Contrataciones Solicitadas
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-3xl font-bold text-gray-900">
                     {contracts.asClient.length}
                   </p>
                 </div>
               </div>
               {activeTab === "client" && (
-                <div className="mt-2 text-xs text-blue-600 font-medium">
-                  ← Sección activa
+                <div className="bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">
+                  <div className="text-xs text-blue-700 font-semibold">
+                    Sección activa
+                  </div>
                 </div>
               )}
             </button>
 
             <button
               onClick={() => setActiveTab("provider")}
-              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+              className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-300 text-left hover:shadow-md hover:-translate-y-1 ${
                 activeTab === "provider"
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 hover:border-green-300"
+                  ? "border-blue-200 bg-blue-50"
+                  : "hover:border-gray-200"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 mb-3">
                 <div
-                  className={`p-3 rounded-lg ${
-                    activeTab === "provider" ? "bg-green-200" : "bg-green-100"
+                  className={`p-3 rounded-lg transition-all duration-200 ${
+                    activeTab === "provider"
+                      ? "bg-[#097EEC] text-white"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  <Users className="h-6 w-6 text-green-600" />
+                  <Users className="h-6 w-6" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Servicios Ofrecidos</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 mb-1">
+                    Servicios Ofrecidos
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
                     {contracts.asProvider.length}
                   </p>
                 </div>
               </div>
               {activeTab === "provider" && (
-                <div className="mt-2 text-xs text-green-600 font-medium">
-                  ← Sección activa
+                <div className="bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">
+                  <div className="text-xs text-blue-700 font-semibold">
+                    Sección activa
+                  </div>
                 </div>
               )}
             </button>
 
             <button
               onClick={() => setActiveTab("all")}
-              className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all duration-300 text-left hover:shadow-md ${
+              className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-300 text-left hover:shadow-md hover:-translate-y-1 ${
                 activeTab === "all"
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200 hover:border-purple-300"
+                  ? "border-blue-200 bg-blue-50"
+                  : "hover:border-gray-200"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 mb-3">
                 <div
-                  className={`p-3 rounded-lg ${
-                    activeTab === "all" ? "bg-purple-200" : "bg-purple-100"
+                  className={`p-3 rounded-lg transition-all duration-200 ${
+                    activeTab === "all"
+                      ? "bg-[#097EEC] text-white"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  <FileText className="h-6 w-6 text-purple-600" />
+                  <FileText className="h-6 w-6" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total de Contratos</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 mb-1">
+                    Total de Contratos
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
                     {contracts.asClient.length + contracts.asProvider.length}
                   </p>
                 </div>
               </div>
               {activeTab === "all" && (
-                <div className="mt-2 text-xs text-purple-600 font-medium">
-                  ← Sección activa
+                <div className="bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">
+                  <div className="text-xs text-blue-700 font-semibold">
+                    Sección activa
+                  </div>
                 </div>
               )}
             </button>
@@ -632,8 +654,8 @@ export default function ContractsPage() {
           {(activeTab === "client" || activeTab === "all") && (
             <div className="mb-12">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <span className="w-1 h-8 bg-blue-500 rounded-full"></span>
-                <Briefcase className="h-6 w-6 text-blue-600" />
+                <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
+                <Briefcase className="h-6 w-6 text-gray-600" />
                 Contrataciones Solicitadas
               </h2>
 
@@ -653,559 +675,614 @@ export default function ContractsPage() {
                   {contracts.asClient.map((contract) => (
                     <div
                       key={contract.id}
-                      className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                      className="group relative overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl hover:-translate-y-1"
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                            {contract.publication?.title}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              <span>Proveedor: {contract.provider?.name}</span>
+                      {/* Decorative background elements */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-green-500/10 to-blue-500/10 rounded-full translate-y-12 -translate-x-12"></div>
+
+                      <div className="relative z-10 p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                              {contract.publication?.title}
+                            </h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <User className="h-4 w-4" />
+                                <span>
+                                  Proveedor: {contract.provider?.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString()}
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(contract.status)} flex items-center gap-1`}
+                          >
+                            {getStatusIcon(contract.status)}
+                            {getStatusText(contract.status)}
+                          </span>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-4 mb-4">
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <DollarSign className="h-4 w-4 text-gray-600" />
+                              <span className="text-sm font-medium text-gray-700">
+                                Precio Total
                               </span>
                             </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {formatCurrency(contract.totalPrice || 0)}{" "}
+                              {translatePriceUnit(contract.priceUnit)}
+                            </p>
+                          </div>
+
+                          <div className="bg-gray-100 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="h-4 w-4 text-gray-600" />
+                              <span className="text-sm font-medium text-gray-700">
+                                Precio Actual
+                              </span>
+                            </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {formatCurrency(contract.currentPrice || 0)}{" "}
+                              {translatePriceUnit(contract.priceUnit)}
+                            </p>
+                          </div>
+
+                          <div className="bg-gray-100 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-gray-600" />
+                              <span className="text-sm font-medium text-gray-700">
+                                Unidades
+                              </span>
+                            </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {contract.quantity ? contract.quantity : "-"}
+                            </p>
                           </div>
                         </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(contract.status)} flex items-center gap-1`}
-                        >
-                          {getStatusIcon(contract.status)}
-                          {getStatusText(contract.status)}
-                        </span>
-                      </div>
 
-                      <div className="grid md:grid-cols-3 gap-4 mb-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <DollarSign className="h-4 w-4 text-gray-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Precio Total
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-800">
-                            {formatCurrency(contract.totalPrice || 0)}{" "}
-                            {translatePriceUnit(contract.priceUnit)}
-                          </p>
-                        </div>
-
-                        <div className="bg-blue-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-700">
-                              Precio Actual
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency(contract.currentPrice || 0)}{" "}
-                            {translatePriceUnit(contract.priceUnit)}
-                          </p>
-                        </div>
-
-                        <div className="bg-emerald-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="h-4 w-4 text-emerald-600" />
-                            <span className="text-sm font-medium text-emerald-700">
-                              Unidades
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-emerald-800">
-                            {contract.quantity ? contract.quantity : "-"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Total Price Display (when contract is accepted) */}
-                      {contract.status === ContractStatus.ACCEPTED &&
-                        contract.totalPrice && (
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mb-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Receipt className="h-5 w-5 text-green-600" />
-                                <div>
-                                  <p className="text-sm font-medium text-green-800">
-                                    Total a pagar
-                                    {isUserCompany(contract.provider)
-                                      ? " (incluye IVA)"
-                                      : ""}
+                        {/* Total Price Display (when contract is accepted) */}
+                        {contract.status === ContractStatus.ACCEPTED &&
+                          contract.totalPrice && (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Receipt className="h-5 w-5 text-gray-600" />
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-800">
+                                      Total a pagar
+                                      {isUserCompany(contract.provider)
+                                        ? " (incluye IVA)"
+                                        : ""}
+                                    </p>
+                                    <p className="text-2xl font-bold text-gray-700">
+                                      {contract.quantity &&
+                                      contract.currentPrice
+                                        ? `${contract.quantity} x ${formatCurrency(calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)))} = ${formatCurrency(contract.quantity * calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)), { showCurrency: true })}`
+                                        : formatCurrency(contract.totalPrice, {
+                                            showCurrency: true,
+                                          })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs text-gray-600 mb-1">
+                                    Método de pago:
                                   </p>
-                                  <p className="text-2xl font-bold text-green-700">
-                                    {contract.quantity && contract.currentPrice
-                                      ? `${contract.quantity} x ${formatCurrency(calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)))} = ${formatCurrency(contract.quantity * calculatePriceWithTax(contract.currentPrice, 0.19, isUserCompany(contract.provider)), { showCurrency: true })}`
-                                      : formatCurrency(contract.totalPrice, {
-                                          showCurrency: true,
-                                        })}
+                                  <p className="text-sm font-medium text-gray-700">
+                                    {getPaymentMethodText(
+                                      contract.paymentMethod || "",
+                                    )}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-green-600 mb-1">
-                                  Método de pago:
+                            </div>
+                          )}
+
+                        {/* Layout optimizado: Tu mensaje y Fecha/hora lado a lado */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                          {contract.clientMessage && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 bg-gray-500 rounded-lg">
+                                  <MessageSquare className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold text-gray-800 mb-2">
+                                    Tu mensaje:
+                                  </p>
+                                  <p className="text-sm text-gray-700 leading-relaxed">
+                                    {contract.clientMessage}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Fecha y hora solicitadas */}
+                          {(contract.requestedDate ||
+                            contract.requestedTime) && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div className="flex items-start gap-3 mb-3">
+                                <div className="p-2 bg-gray-500 rounded-lg">
+                                  <Clock className="h-4 w-4 text-white" />
+                                </div>
+                                <p className="text-sm font-semibold text-gray-800">
+                                  Fecha y hora solicitadas:
                                 </p>
-                                <p className="text-sm font-medium text-green-700">
-                                  {getPaymentMethodText(
-                                    contract.paymentMethod || "",
-                                  )}
+                              </div>
+                              <div className="space-y-2 ml-11">
+                                {contract.requestedDate && (
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500">
+                                      Fecha:
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {new Date(
+                                        contract.requestedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
+                                {contract.requestedTime && (
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500">
+                                      Hora:
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {contract.requestedTime}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Fecha y hora acordadas */}
+                        {(contract.agreedDate || contract.agreedTime) && (
+                          <div className="bg-white border border-green-200 rounded-lg p-4 mb-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500 rounded-lg">
+                                  <CheckCircle className="h-4 w-4 text-white" />
+                                </div>
+                                <p className="text-sm font-semibold text-green-800">
+                                  Fecha y hora acordadas:
                                 </p>
+                              </div>
+                              <div className="flex items-center gap-6 text-sm text-gray-700">
+                                {contract.agreedDate && (
+                                  <div className="text-right">
+                                    <span className="font-medium text-gray-500">
+                                      Fecha:
+                                    </span>
+                                    <p className="font-medium">
+                                      {new Date(
+                                        contract.agreedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
+                                {contract.agreedTime && (
+                                  <div className="text-right">
+                                    <span className="font-medium text-gray-500">
+                                      Hora:
+                                    </span>
+                                    <p className="font-medium">
+                                      {contract.agreedTime}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
                         )}
 
-                      {contract.clientMessage && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <MessageSquare className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-yellow-800 mb-1">
-                                Tu mensaje:
-                              </p>
-                              <p className="text-sm text-yellow-700">
-                                {contract.clientMessage}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Fecha y hora solicitadas */}
-                      {(contract.requestedDate || contract.requestedTime) && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <Clock className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-purple-800 mb-1">
-                                Fecha y hora solicitadas:
-                              </p>
-                              <div className="text-sm text-purple-700">
-                                {contract.requestedDate && (
-                                  <p>
-                                    📅{" "}
-                                    {new Date(
-                                      contract.requestedDate,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                )}
-                                {contract.requestedTime && (
-                                  <p>🕐 {contract.requestedTime}</p>
-                                )}
+                        {/* Mensaje del proveedor */}
+                        {contract.providerMessage && (
+                          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 bg-gray-500 rounded-lg">
+                                <MessageSquare className="h-4 w-4 text-white" />
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Fecha y hora acordadas */}
-                      {(contract.agreedDate || contract.agreedTime) && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-green-800 mb-1">
-                                Fecha y hora acordadas:
-                              </p>
-                              <div className="text-sm text-green-700">
-                                {contract.agreedDate && (
-                                  <p>
-                                    📅{" "}
-                                    {new Date(
-                                      contract.agreedDate,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                )}
-                                {contract.agreedTime && (
-                                  <p>🕐 {contract.agreedTime}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mensaje del proveedor */}
-                      {contract.providerMessage && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-blue-800 mb-1">
-                                Respuesta del proveedor:
-                              </p>
-                              {contract.propertyType === "virtual" &&
-                              contract.providerMessage &&
-                              contract.providerMessage.startsWith("http") ? (
-                                <a
-                                  href={contract.providerMessage}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-700 underline break-all"
-                                >
-                                  {contract.providerMessage}
-                                </a>
-                              ) : (
-                                <p className="text-sm text-blue-700">
-                                  {contract.providerMessage}
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-gray-800 mb-2">
+                                  Respuesta del proveedor:
                                 </p>
+                                {contract.propertyType === "virtual" &&
+                                contract.providerMessage &&
+                                contract.providerMessage.startsWith("http") ? (
+                                  <a
+                                    href={contract.providerMessage}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-600 hover:text-gray-800 underline break-all font-medium transition-colors duration-200"
+                                  >
+                                    {contract.providerMessage}
+                                  </a>
+                                ) : (
+                                  <p className="text-sm text-gray-700 leading-relaxed">
+                                    {contract.providerMessage}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Acceptance Tokens - Only show when payment is needed */}
+                        {shouldShowPaymentButton(contract) &&
+                          acceptanceTokens && (
+                            <div className="mb-4">
+                              <div className="flex gap-3 flex-row items-start mb-3">
+                                <input
+                                  type="checkbox"
+                                  id={`terms-${contract.id}`}
+                                  checked={acceptPolicy}
+                                  onChange={(e) =>
+                                    setAcceptPolicy(e.target.checked)
+                                  }
+                                  className="mt-1 h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
+                                />
+                                <label
+                                  htmlFor={`terms-${contract.id}`}
+                                  className="text-sm text-gray-700 cursor-pointer"
+                                >
+                                  He leído y acepto los{" "}
+                                  <a
+                                    href={
+                                      acceptanceTokens.presigned_acceptance
+                                        .permalink
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-600 hover:text-gray-800 underline"
+                                  >
+                                    Términos y Condiciones
+                                  </a>
+                                </label>
+                              </div>
+                              <div className="flex gap-3 flex-row items-start mb-3">
+                                <input
+                                  type="checkbox"
+                                  id={`privacy-${contract.id}`}
+                                  checked={acceptPersonal}
+                                  onChange={(e) =>
+                                    setAcceptPersonal(e.target.checked)
+                                  }
+                                  className="mt-1 h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
+                                />
+                                <label
+                                  htmlFor={`privacy-${contract.id}`}
+                                  className="text-sm text-gray-700 cursor-pointer"
+                                >
+                                  Autorizo el tratamiento de mis datos
+                                  personales según la{" "}
+                                  <a
+                                    href={
+                                      acceptanceTokens
+                                        .presigned_personal_data_auth.permalink
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-600 hover:text-gray-800 underline"
+                                  >
+                                    Política de Datos Personales
+                                  </a>
+                                </label>
+                              </div>
+                              {(!acceptPolicy || !acceptPersonal) && (
+                                <div className="text-sm text-red-600 mt-2 flex items-center gap-1">
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                    />
+                                  </svg>
+                                  Debes aceptar ambos términos para continuar
+                                  con el pago
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        {contract.bids.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-blue-600" />
+                              Ofertas Recibidas (
+                              {
+                                contract.bids.filter(
+                                  (bid) =>
+                                    Number(bid.bidder?.id) !== currentUserId,
+                                ).length
+                              }
+                              )
+                            </h4>
+                            <div className="space-y-3">
+                              {contract.bids.map((bid) =>
+                                Number(bid.bidder?.id) !== currentUserId ? (
+                                  <div
+                                    key={bid.id}
+                                    className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <DollarSign className="h-4 w-4 text-green-600" />
+                                          <span className="font-semibold text-green-700">
+                                            ${bid.amount?.toLocaleString()}{" "}
+                                            {translatePriceUnit(
+                                              contract.priceUnit,
+                                            )}
+                                          </span>
+                                        </div>
+                                        {bid.message && (
+                                          <p className="text-sm text-gray-600">
+                                            {bid.message}
+                                          </p>
+                                        )}
+                                      </div>
+                                      {!bid.isAccepted &&
+                                        contract.status ===
+                                          ContractStatus.NEGOTIATING && (
+                                          <button
+                                            onClick={() => {
+                                              if (
+                                                contract.client &&
+                                                typeof contract.client.id ===
+                                                  "number"
+                                              ) {
+                                                handleAcceptBid(
+                                                  bid.id,
+                                                  contract.client.id,
+                                                );
+                                              } else {
+                                                toast.error(
+                                                  "No se encontró el cliente para este contrato.",
+                                                );
+                                              }
+                                            }}
+                                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                          >
+                                            <CheckCircle className="h-4 w-4" />
+                                            Aceptar
+                                          </button>
+                                        )}
+                                    </div>
+                                  </div>
+                                ) : null,
                               )}
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Acceptance Tokens - Only show when payment is needed */}
-                      {shouldShowPaymentButton(contract) &&
-                        acceptanceTokens && (
-                          <div className="mb-4">
-                            <div className="flex gap-3 flex-row items-start mb-3">
-                              <input
-                                type="checkbox"
-                                id={`terms-${contract.id}`}
-                                checked={acceptPolicy}
-                                onChange={(e) =>
-                                  setAcceptPolicy(e.target.checked)
-                                }
-                                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <label
-                                htmlFor={`terms-${contract.id}`}
-                                className="text-sm text-gray-700 cursor-pointer"
-                              >
-                                He leído y acepto los{" "}
-                                <a
-                                  href={
-                                    acceptanceTokens.presigned_acceptance
-                                      .permalink
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline"
-                                >
-                                  Términos y Condiciones
-                                </a>
-                              </label>
-                            </div>
-                            <div className="flex gap-3 flex-row items-start mb-3">
-                              <input
-                                type="checkbox"
-                                id={`privacy-${contract.id}`}
-                                checked={acceptPersonal}
-                                onChange={(e) =>
-                                  setAcceptPersonal(e.target.checked)
-                                }
-                                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <label
-                                htmlFor={`privacy-${contract.id}`}
-                                className="text-sm text-gray-700 cursor-pointer"
-                              >
-                                Autorizo el tratamiento de mis datos personales
-                                según la{" "}
-                                <a
-                                  href={
-                                    acceptanceTokens
-                                      .presigned_personal_data_auth.permalink
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline"
-                                >
-                                  Política de Datos Personales
-                                </a>
-                              </label>
-                            </div>
-                            {(!acceptPolicy || !acceptPersonal) && (
-                              <div className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                  />
-                                </svg>
-                                Debes aceptar ambos términos para continuar con
-                                el pago
-                              </div>
-                            )}
-                          </div>
                         )}
 
-                      {contract.bids.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            Ofertas Recibidas (
-                            {
-                              contract.bids.filter(
-                                (bid) =>
-                                  Number(bid.bidder?.id) !== currentUserId,
-                              ).length
-                            }
-                            )
-                          </h4>
-                          <div className="space-y-3">
-                            {contract.bids.map((bid) =>
-                              Number(bid.bidder?.id) !== currentUserId ? (
-                                <div
-                                  key={bid.id}
-                                  className="bg-gray-50 border border-gray-200 rounded-lg p-4"
-                                >
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <DollarSign className="h-4 w-4 text-green-600" />
-                                        <span className="font-semibold text-green-700">
-                                          ${bid.amount?.toLocaleString()}{" "}
-                                          {translatePriceUnit(
-                                            contract.priceUnit,
-                                          )}
-                                        </span>
-                                      </div>
-                                      {bid.message && (
-                                        <p className="text-sm text-gray-600">
-                                          {bid.message}
-                                        </p>
-                                      )}
-                                    </div>
-                                    {!bid.isAccepted &&
-                                      contract.status ===
-                                        ContractStatus.NEGOTIATING && (
-                                        <button
-                                          onClick={() => {
-                                            if (
-                                              contract.client &&
-                                              typeof contract.client.id ===
-                                                "number"
-                                            ) {
-                                              handleAcceptBid(
-                                                bid.id,
-                                                contract.client.id,
-                                              );
-                                            } else {
-                                              toast.error(
-                                                "No se encontró el cliente para este contrato.",
-                                              );
-                                            }
-                                          }}
-                                          className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-                                        >
-                                          <CheckCircle className="h-4 w-4" />
-                                          Aceptar
-                                        </button>
-                                      )}
-                                  </div>
-                                </div>
-                              ) : null,
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-3 items-center">
-                        {contract.status === ContractStatus.NEGOTIATING && (
-                          <button
-                            onClick={() => {
-                              setSelectedContract(contract);
-                              setIsBidModalOpen(true);
-                            }}
-                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                            Hacer Nueva Oferta
-                          </button>
-                        )}
-
-                        {/* Chat Button - Only for contracted services */}
-                        {contract.provider && contract.provider.id && (
-                          <StartChatButton
-                            recipientId={Number(contract.provider.id)}
-                            recipientName={contract.provider.name}
-                            recipientType="person"
-                            context="job"
-                            className="px-6 py-3"
-                            variant="outline"
-                          />
-                        )}
-
-                        {/* Cash Payment Advice */}
-                        {shouldShowPaymentButton(contract) &&
-                          contract.originalPaymentMethod === "efectivo" && (
-                            <div className="ml-auto mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg max-w-lg">
-                              <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0 mt-0.5">
-                                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                                    <span className="text-amber-600 text-sm">
-                                      💡
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex-1">
-                                  <h4 className="text-sm font-medium text-amber-800 mb-1">
-                                    💰 Consejo para pago en efectivo
-                                  </h4>
-                                  <p className="text-xs text-amber-700 leading-relaxed mb-2">
-                                    Al hacer clic en &quot;Ir a Pagar&quot;,
-                                    selecciona{" "}
-                                    <strong>
-                                      &quot;Paga en efectivo en Corresponsal
-                                      Bancario&quot;
-                                    </strong>{" "}
-                                    en Wompi para completar tu pago de forma
-                                    segura.
-                                  </p>
-                                  <p className="text-xs text-amber-600 font-medium">
-                                    📍 Acércate a un Corresponsal Bancario
-                                    Bancolombia en las próximas{" "}
-                                    <strong>72 horas</strong> con las
-                                    instrucciones que recibirás.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Payment Button or Payment Status */}
-                        {contract.status === ContractStatus.COMPLETED ? (
-                          <div className="flex flex-col gap-3 ml-auto">
-                            {/* Solo mostrar el botón de verificación OTP si no ha sido verificado */}
-                            {!contract.otpVerified && (
-                              <button
-                                onClick={() => handleOTPVerification(contract)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                              >
-                                <Mail className="h-4 w-4" />
-                                Verificar Servicio (OTP)
-                              </button>
-                            )}
-
-                            {/* Mostrar mensaje de confirmación si ya fue verificado */}
-                            {contract.otpVerified && (
-                              <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-                                <div className="flex items-center gap-2 text-green-800">
-                                  <CheckCircle className="h-4 w-4" />
-                                  <span className="text-sm font-medium">
-                                    ✅ Servicio verificado
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {shouldShowPaymentButton(contract) && (
-                              <button
-                                onClick={() => handleGoToPayment(contract)}
-                                disabled={!acceptPolicy || !acceptPersonal}
-                                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
-                                  !acceptPolicy || !acceptPersonal
-                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
-                                }`}
-                              >
-                                <CreditCard className="h-4 w-4" />
-                                Ir a Pagar{" "}
-                                {formatCurrency(contract.totalPrice, {
-                                  showCurrency: true,
-                                })}
-                                <ArrowRight className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        ) : shouldShowPaymentButton(contract) ? (
-                          <button
-                            onClick={() => handleGoToPayment(contract)}
-                            disabled={!acceptPolicy || !acceptPersonal}
-                            className={`px-3 py-2 h-fit ml-auto rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
-                              !acceptPolicy || !acceptPersonal
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
-                            }`}
-                          >
-                            <CreditCard className="h-4 w-4" />
-                            Ir a Pagar{" "}
-                            {formatCurrency(contract.totalPrice, {
-                              showCurrency: true,
-                            })}
-                            <ArrowRight className="h-4 w-4" />
-                          </button>
-                        ) : (
-                          // Mostrar estado de pago donde estaría el botón
-                          (() => {
-                            const paymentStatus =
-                              contractPaymentStatus[contract.id];
-
-                            // Para contratos ACCEPTED, mostrar mensaje de espera
-                            if (contract.status === ContractStatus.ACCEPTED) {
-                              return (
-                                <div className="px-4 py-3 ml-auto bg-blue-50 border border-blue-200 rounded-lg">
-                                  <div className="flex items-center gap-2 text-blue-800">
-                                    <Clock className="h-4 w-4" />
-                                    <span className="text-sm font-medium">
-                                      ⏳ Esperando que se complete el servicio
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-blue-600 mt-1">
-                                    Una vez completado, podrás verificar y
-                                    proceder con el pago
-                                  </p>
-                                </div>
-                              );
-                            }
-
-                            if (paymentStatus?.hasCompletedPayments) {
-                              return (
-                                <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
-                                  <div className="flex items-center gap-2 text-green-800">
-                                    <CheckCircle className="h-4 w-4" />
-                                    <span className="text-sm font-medium">
-                                      ✅ Pago completado
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            if (paymentStatus?.hasPendingPayments) {
-                              return (
-                                <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
-                                  <div className="flex items-center gap-2 text-yellow-800">
-                                    <Clock className="h-4 w-4" />
-                                    <span className="text-sm font-medium">
-                                      ⏳ Pago en proceso
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()
-                        )}
-
-                        {/* Botón de Cancelación */}
-                        {contract.status !== ContractStatus.CANCELLED &&
-                          contract.status !== ContractStatus.COMPLETED && (
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-3 items-center">
+                          {contract.status === ContractStatus.NEGOTIATING && (
                             <button
-                              onClick={() => handleCancelContract(contract)}
-                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 ml-auto"
+                              onClick={() => {
+                                setSelectedContract(contract);
+                                setIsBidModalOpen(true);
+                              }}
+                              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2"
                             >
-                              <XCircle className="h-4 w-4" />
-                              Cancelar Contrato
+                              <MessageSquare className="h-4 w-4" />
+                              Hacer Nueva Oferta
                             </button>
                           )}
 
-                        {/* Cash Payment Info - Now handled through Wompi like other methods */}
-                        {/* {contract.status === ContractStatus.ACCEPTED &&
+                          {/* Chat Button - Only for contracted services */}
+                          {contract.provider && contract.provider.id && (
+                            <button
+                              onClick={() => {
+                                setSelectedChatRecipient({
+                                  id: Number(contract.provider!.id),
+                                  name: contract.provider!.name,
+                                });
+                                setIsChatModalOpen(true);
+                              }}
+                              className="px-6 py-3 border border-gray-300 bg-white text-black hover:bg-gray-50 rounded-md transition-colors text-sm font-medium flex items-center gap-2"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Enviar mensaje
+                            </button>
+                          )}
+
+                          {/* Cash Payment Advice */}
+                          {shouldShowPaymentButton(contract) &&
+                            contract.originalPaymentMethod === "efectivo" && (
+                              <div className="ml-auto mb-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg max-w-lg">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 mt-0.5">
+                                    <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                                      <span className="text-amber-600 text-sm">
+                                        💡
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="text-sm font-medium text-amber-800 mb-1">
+                                      💰 Consejo para pago en efectivo
+                                    </h4>
+                                    <p className="text-xs text-amber-700 leading-relaxed mb-2">
+                                      Al hacer clic en &quot;Ir a Pagar&quot;,
+                                      selecciona{" "}
+                                      <strong>
+                                        &quot;Paga en efectivo en Corresponsal
+                                        Bancario&quot;
+                                      </strong>{" "}
+                                      en Wompi para completar tu pago de forma
+                                      segura.
+                                    </p>
+                                    <p className="text-xs text-amber-600 font-medium">
+                                      📍 Acércate a un Corresponsal Bancario
+                                      Bancolombia en las próximas{" "}
+                                      <strong>72 horas</strong> con las
+                                      instrucciones que recibirás.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Payment Button or Payment Status */}
+                          {contract.status === ContractStatus.COMPLETED ? (
+                            <div className="flex flex-col gap-3 ml-auto">
+                              {/* Solo mostrar el botón de verificación OTP si no ha sido verificado */}
+                              {!contract.otpVerified && (
+                                <button
+                                  onClick={() =>
+                                    handleOTPVerification(contract)
+                                  }
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                  Verificar Servicio (OTP)
+                                </button>
+                              )}
+
+                              {/* Mostrar mensaje de confirmación si ya fue verificado */}
+                              {contract.otpVerified && (
+                                <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                                  <div className="flex items-center gap-2 text-green-800">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span className="text-sm font-medium">
+                                      ✅ Servicio verificado
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {shouldShowPaymentButton(contract) && (
+                                <button
+                                  onClick={() => handleGoToPayment(contract)}
+                                  disabled={!acceptPolicy || !acceptPersonal}
+                                  className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
+                                    !acceptPolicy || !acceptPersonal
+                                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                                  }`}
+                                >
+                                  <CreditCard className="h-4 w-4" />
+                                  Ir a Pagar{" "}
+                                  {formatCurrency(contract.totalPrice, {
+                                    showCurrency: true,
+                                  })}
+                                  <ArrowRight className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          ) : shouldShowPaymentButton(contract) ? (
+                            <button
+                              onClick={() => handleGoToPayment(contract)}
+                              disabled={!acceptPolicy || !acceptPersonal}
+                              className={`px-3 py-2 h-fit ml-auto rounded-lg transition-all duration-200 font-medium shadow-sm flex items-center justify-center gap-2 ${
+                                !acceptPolicy || !acceptPersonal
+                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                              }`}
+                            >
+                              <CreditCard className="h-4 w-4" />
+                              Ir a Pagar{" "}
+                              {formatCurrency(contract.totalPrice, {
+                                showCurrency: true,
+                              })}
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            // Mostrar estado de pago donde estaría el botón
+                            (() => {
+                              const paymentStatus =
+                                contractPaymentStatus[contract.id];
+
+                              // Para contratos ACCEPTED, mostrar mensaje de espera
+                              if (contract.status === ContractStatus.ACCEPTED) {
+                                return (
+                                  <div className="px-4 py-3 ml-auto bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-center gap-2 text-blue-800">
+                                      <Clock className="h-4 w-4" />
+                                      <span className="text-sm font-medium">
+                                        ⏳ Esperando que se complete el servicio
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-blue-600 mt-1">
+                                      Una vez completado, podrás verificar y
+                                      proceder con el pago
+                                    </p>
+                                  </div>
+                                );
+                              }
+
+                              if (paymentStatus?.hasCompletedPayments) {
+                                return (
+                                  <div className="px-4 py-3 ml-auto bg-green-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center gap-2 text-green-800">
+                                      <CheckCircle className="h-4 w-4" />
+                                      <span className="text-sm font-medium">
+                                        ✅ Pago completado
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              if (paymentStatus?.hasPendingPayments) {
+                                return (
+                                  <div className="px-4 py-3 ml-auto bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div className="flex items-center gap-2 text-yellow-800">
+                                      <Clock className="h-4 w-4" />
+                                      <span className="text-sm font-medium">
+                                        ⏳ Pago en proceso
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()
+                          )}
+
+                          {/* Botón de Cancelación */}
+                          {contract.status !== ContractStatus.CANCELLED &&
+                            contract.status !== ContractStatus.COMPLETED && (
+                              <button
+                                onClick={() => handleCancelContract(contract)}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 ml-auto"
+                              >
+                                <XCircle className="h-4 w-4" />
+                                Cancelar Contrato
+                              </button>
+                            )}
+
+                          {/* Cash Payment Info - Now handled through Wompi like other methods */}
+                          {/* {contract.status === ContractStatus.ACCEPTED &&
                           contract.paymentMethod === "efectivo" && (
                             <div className="px-4 ml-auto py-3 bg-amber-50 border border-amber-200 rounded-lg">
                               <div className="flex items-center gap-2 text-amber-800">
@@ -1220,6 +1297,7 @@ export default function ContractsPage() {
                               </div>
                             </div>
                           )} */}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1232,8 +1310,8 @@ export default function ContractsPage() {
           {(activeTab === "provider" || activeTab === "all") && (
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <span className="w-1 h-8 bg-green-500 rounded-full"></span>
-                <Users className="h-6 w-6 text-green-600" />
+                <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
+                <Users className="h-6 w-6 text-gray-600" />
                 Servicios Ofrecidos
               </h2>
 
@@ -1253,308 +1331,358 @@ export default function ContractsPage() {
                   {contracts.asProvider.map((contract) => (
                     <div
                       key={contract.id}
-                      className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                      className="group relative overflow-hidden bg-gradient-to-br from-white via-green-50/30 to-emerald-50/50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl hover:-translate-y-1"
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                            {contract.publication?.title}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              <span>Cliente: {contract.client?.name}</span>
+                      {/* Decorative background elements */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-500/10 to-green-500/10 rounded-full translate-y-12 -translate-x-12"></div>
+
+                      <div className="relative z-10 p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                              {contract.publication?.title}
+                            </h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <User className="h-4 w-4" />
+                                <span>Cliente: {contract.client?.name}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString()}
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(contract.status)} flex items-center gap-1`}
+                          >
+                            {getStatusIcon(contract.status)}
+                            {getStatusText(contract.status)}
+                          </span>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <DollarSign className="h-4 w-4 text-gray-600" />
+                              <span className="text-sm font-medium text-gray-700">
+                                Precio Total
                               </span>
                             </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {formatCurrency(contract.totalPrice || 0)}{" "}
+                              {translatePriceUnit(contract.priceUnit)}
+                            </p>
                           </div>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(contract.status)} flex items-center gap-1`}
-                        >
-                          {getStatusIcon(contract.status)}
-                          {getStatusText(contract.status)}
-                        </span>
-                      </div>
 
-                      <div className="grid md:grid-cols-2 gap-4 mb-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <DollarSign className="h-4 w-4 text-gray-600" />
-                            <span className="text-sm font-medium text-gray-700">
-                              Precio Total
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-800">
-                            {formatCurrency(contract.totalPrice || 0)}{" "}
-                            {translatePriceUnit(contract.priceUnit)}
-                          </p>
-                        </div>
-
-                        <div className="bg-green-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-700">
-                              Precio Actual
-                            </span>
-                          </div>
-                          <p className="text-lg font-semibold text-green-800">
-                            {formatCurrency(
-                              calculatePriceWithTax(
-                                contract.currentPrice || 0,
-                                0.19,
-                                isUserCompany(contract.provider),
-                              ),
-                            )}{" "}
-                            {translatePriceUnit(contract.priceUnit)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {contract.clientMessage && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <MessageSquare className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-yellow-800 mb-1">
-                                Mensaje del cliente:
-                              </p>
-                              <p className="text-sm text-yellow-700">
-                                {contract.clientMessage}
-                              </p>
+                          <div className="bg-green-50 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-700">
+                                Precio Actual
+                              </span>
                             </div>
+                            <p className="text-lg font-semibold text-green-800">
+                              {formatCurrency(
+                                calculatePriceWithTax(
+                                  contract.currentPrice || 0,
+                                  0.19,
+                                  isUserCompany(contract.provider),
+                                ),
+                              )}{" "}
+                              {translatePriceUnit(contract.priceUnit)}
+                            </p>
                           </div>
                         </div>
-                      )}
 
-                      {/* Fecha y hora solicitadas */}
-                      {(contract.requestedDate || contract.requestedTime) && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <Clock className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-purple-800 mb-1">
-                                Fecha y hora solicitadas:
-                              </p>
-                              <div className="text-sm text-purple-700">
-                                {contract.requestedDate && (
-                                  <p>
-                                    📅{" "}
-                                    {new Date(
-                                      contract.requestedDate,
-                                    ).toLocaleDateString()}
+                        {/* Layout optimizado: Mensaje del cliente y Fecha/hora lado a lado */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                          {contract.clientMessage && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 bg-gray-500 rounded-lg">
+                                  <MessageSquare className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold text-gray-800 mb-2">
+                                    Mensaje del cliente:
                                   </p>
+                                  <p className="text-sm text-gray-700 leading-relaxed">
+                                    {contract.clientMessage}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Fecha y hora solicitadas */}
+                          {(contract.requestedDate ||
+                            contract.requestedTime) && (
+                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div className="flex items-start gap-3 mb-3">
+                                <div className="p-2 bg-gray-500 rounded-lg">
+                                  <Clock className="h-4 w-4 text-white" />
+                                </div>
+                                <p className="text-sm font-semibold text-gray-800">
+                                  Fecha y hora solicitadas:
+                                </p>
+                              </div>
+                              <div className="space-y-2 ml-11">
+                                {contract.requestedDate && (
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500">
+                                      Fecha:
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {new Date(
+                                        contract.requestedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      })}
+                                    </p>
+                                  </div>
                                 )}
                                 {contract.requestedTime && (
-                                  <p>🕐 {contract.requestedTime}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Fecha y hora acordadas */}
-                      {(contract.agreedDate || contract.agreedTime) && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium text-green-800 mb-1">
-                                Fecha y hora acordadas:
-                              </p>
-                              <div className="text-sm text-green-700">
-                                {contract.agreedDate && (
-                                  <p>
-                                    📅{" "}
-                                    {new Date(
-                                      contract.agreedDate,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                )}
-                                {contract.agreedTime && (
-                                  <p>🕐 {contract.agreedTime}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mensaje del proveedor */}
-                      {contract.providerMessage && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-2 justify-between">
-                            <div className="flex gap-2">
-                              <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium text-blue-800 mb-1">
-                                  Tu respuesta:
-                                </p>
-                                <p className="text-sm text-blue-700">
-                                  {contract.providerMessage}
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              className="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
-                              onClick={() => {
-                                setSelectedContract(contract);
-                                setIsEditProviderMessageModalOpen(true);
-                              }}
-                            >
-                              Editar
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.bids.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            Ofertas Recibidas (
-                            {
-                              contract.bids.filter(
-                                (bid) =>
-                                  Number(bid.bidder?.id) !== currentUserId,
-                              ).length
-                            }
-                            )
-                          </h4>
-                          <div className="space-y-3">
-                            {contract.bids.map((bid) =>
-                              Number(bid.bidder?.id) !== currentUserId ? (
-                                <div
-                                  key={bid.id}
-                                  className="bg-gray-50 border border-gray-200 rounded-lg p-4"
-                                >
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <DollarSign className="h-4 w-4 text-green-600" />
-                                        <span className="font-semibold text-green-700">
-                                          ${bid.amount?.toLocaleString()}{" "}
-                                          {translatePriceUnit(
-                                            contract.priceUnit,
-                                          )}
-                                        </span>
-                                      </div>
-                                      {bid.message && (
-                                        <p className="text-sm text-gray-600">
-                                          {bid.message}
-                                        </p>
-                                      )}
-                                    </div>
-                                    {!bid.isAccepted &&
-                                      contract.status ===
-                                        ContractStatus.NEGOTIATING && (
-                                        <button
-                                          onClick={() => {
-                                            if (
-                                              contract.client &&
-                                              typeof contract.client.id ===
-                                                "number"
-                                            ) {
-                                              handleAcceptBid(
-                                                bid.id,
-                                                contract.client.id,
-                                              );
-                                            } else {
-                                              toast.error(
-                                                "No se encontró el cliente para este contrato.",
-                                              );
-                                            }
-                                          }}
-                                          className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-                                        >
-                                          <CheckCircle className="h-4 w-4" />
-                                          Aceptar
-                                        </button>
-                                      )}
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500">
+                                      Hora:
+                                    </span>
+                                    <p className="text-sm font-medium text-gray-700">
+                                      {contract.requestedTime}
+                                    </p>
                                   </div>
-                                </div>
-                              ) : null,
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Botones de acción para el proveedor */}
-                      {contract.status === ContractStatus.PENDING && (
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedContract(contract);
-                              setIsProviderResponseModalOpen(true);
-                            }}
-                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Responder Solicitud
-                          </button>
-                        </div>
-                      )}
-
-                      {contract.status === ContractStatus.NEGOTIATING && (
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedContract(contract);
-                              setIsBidModalOpen(true);
-                            }}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                            Hacer Nueva Oferta
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Acciones del Proveedor */}
-                      {currentUserId && (
-                        <div className="mt-4 flex justify-end gap-3">
-                          {contract.status === ContractStatus.COMPLETED ? (
-                            <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 font-medium flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4" />
-                              Servicio Completado
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <>
-                              {canCompleteContract(contract, currentUserId) && (
-                                <button
-                                  onClick={() =>
-                                    handleCompleteContract(contract)
-                                  }
-                                  disabled={isCompleting}
-                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                  {isCompleting
-                                    ? "Completando..."
-                                    : "Marcar como Completado"}
-                                </button>
-                              )}
-
-                              {contract.status !== ContractStatus.CANCELLED && (
-                                <button
-                                  onClick={() => handleCancelContract(contract)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                  Cancelar Contrato
-                                </button>
-                              )}
-                            </>
                           )}
                         </div>
-                      )}
+
+                        {/* Fecha y hora acordadas */}
+                        {(contract.agreedDate || contract.agreedTime) && (
+                          <div className="bg-white border border-green-200 rounded-lg p-4 mb-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500 rounded-lg">
+                                  <CheckCircle className="h-4 w-4 text-white" />
+                                </div>
+                                <p className="text-sm font-semibold text-green-800">
+                                  Fecha y hora acordadas:
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-6 text-sm text-gray-700">
+                                {contract.agreedDate && (
+                                  <div className="text-right">
+                                    <span className="font-medium text-gray-500">
+                                      Fecha:
+                                    </span>
+                                    <p className="font-medium">
+                                      {new Date(
+                                        contract.agreedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
+                                {contract.agreedTime && (
+                                  <div className="text-right">
+                                    <span className="font-medium text-gray-500">
+                                      Hora:
+                                    </span>
+                                    <p className="font-medium">
+                                      {contract.agreedTime}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mensaje del proveedor */}
+                        {contract.providerMessage && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div className="flex items-start gap-2 justify-between">
+                              <div className="flex gap-2">
+                                <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-medium text-blue-800 mb-1">
+                                    Tu respuesta:
+                                  </p>
+                                  <p className="text-sm text-blue-700">
+                                    {contract.providerMessage}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                className="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                                onClick={() => {
+                                  setSelectedContract(contract);
+                                  setIsEditProviderMessageModalOpen(true);
+                                }}
+                              >
+                                Editar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {contract.bids.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-blue-600" />
+                              Ofertas Recibidas (
+                              {
+                                contract.bids.filter(
+                                  (bid) =>
+                                    Number(bid.bidder?.id) !== currentUserId,
+                                ).length
+                              }
+                              )
+                            </h4>
+                            <div className="space-y-3">
+                              {contract.bids.map((bid) =>
+                                Number(bid.bidder?.id) !== currentUserId ? (
+                                  <div
+                                    key={bid.id}
+                                    className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <DollarSign className="h-4 w-4 text-green-600" />
+                                          <span className="font-semibold text-green-700">
+                                            ${bid.amount?.toLocaleString()}{" "}
+                                            {translatePriceUnit(
+                                              contract.priceUnit,
+                                            )}
+                                          </span>
+                                        </div>
+                                        {bid.message && (
+                                          <p className="text-sm text-gray-600">
+                                            {bid.message}
+                                          </p>
+                                        )}
+                                      </div>
+                                      {!bid.isAccepted &&
+                                        contract.status ===
+                                          ContractStatus.NEGOTIATING && (
+                                          <button
+                                            onClick={() => {
+                                              if (
+                                                contract.client &&
+                                                typeof contract.client.id ===
+                                                  "number"
+                                              ) {
+                                                handleAcceptBid(
+                                                  bid.id,
+                                                  contract.client.id,
+                                                );
+                                              } else {
+                                                toast.error(
+                                                  "No se encontró el cliente para este contrato.",
+                                                );
+                                              }
+                                            }}
+                                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                          >
+                                            <CheckCircle className="h-4 w-4" />
+                                            Aceptar
+                                          </button>
+                                        )}
+                                    </div>
+                                  </div>
+                                ) : null,
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Botones de acción para el proveedor */}
+                        {contract.status === ContractStatus.PENDING && (
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                              onClick={() => {
+                                setSelectedContract(contract);
+                                setIsProviderResponseModalOpen(true);
+                              }}
+                              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Responder Solicitud
+                            </button>
+                          </div>
+                        )}
+
+                        {contract.status === ContractStatus.NEGOTIATING && (
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                              onClick={() => {
+                                setSelectedContract(contract);
+                                setIsBidModalOpen(true);
+                              }}
+                              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Hacer Nueva Oferta
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Acciones del Proveedor */}
+                        {currentUserId && (
+                          <div className="mt-4 flex justify-end gap-3">
+                            {contract.status === ContractStatus.COMPLETED ? (
+                              <div className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 font-medium flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                Servicio Completado
+                              </div>
+                            ) : (
+                              <>
+                                {canCompleteContract(
+                                  contract,
+                                  currentUserId,
+                                ) && (
+                                  <button
+                                    onClick={() =>
+                                      handleCompleteContract(contract)
+                                    }
+                                    disabled={isCompleting}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                    {isCompleting
+                                      ? "Completando..."
+                                      : "Marcar como Completado"}
+                                  </button>
+                                )}
+
+                                {contract.status !==
+                                  ContractStatus.CANCELLED && (
+                                  <button
+                                    onClick={() =>
+                                      handleCancelContract(contract)
+                                    }
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                    Cancelar Contrato
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1574,6 +1702,29 @@ export default function ContractsPage() {
             }}
             onBidSubmitted={loadContracts}
           />
+        )}
+
+        {/* Chat Modal Centralizado */}
+        {isChatModalOpen && selectedChatRecipient && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <StartChatButton
+              recipientId={selectedChatRecipient.id}
+              recipientName={selectedChatRecipient.name}
+              recipientType="person"
+              context="job"
+              className="px-6 py-3"
+              variant="outline"
+            />
+            <button
+              onClick={() => {
+                setIsChatModalOpen(false);
+                setSelectedChatRecipient(null);
+              }}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
         )}
 
         {/* Provider Response Modal */}

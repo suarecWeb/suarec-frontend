@@ -177,21 +177,6 @@ export function UserGallery({
               `${selectedImages.length}/${maxSelection} seleccionadas`}
           </p>
         </div>
-
-        {images.length < 10 && !isVisit && (
-          <Button
-            onClick={() => setShowUpload(!showUpload)}
-            disabled={isUploading}
-            className="flex items-center gap-2 bg-[#097EEC] hover:bg-[#0A6BC7] text-white"
-          >
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            Agregar Fotos
-          </Button>
-        )}
       </div>
 
       {/* Error Message */}
@@ -217,6 +202,26 @@ export function UserGallery({
       {/* Gallery Grid */}
       {images.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {/* Botón + funcional cuando hay imágenes */}
+          {images.length < 10 && !isVisit && (
+            <div className="aspect-square flex items-center justify-center">
+              <button
+                onClick={() => setShowUpload(!showUpload)}
+                disabled={isUploading}
+                className="group relative w-16 h-16 bg-white/85 backdrop-blur-md rounded-full border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 hover:rotate-1 cursor-pointer overflow-hidden flex items-center justify-center"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                <div className="relative z-10">
+                  {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-[#097EEC]" />
+                  ) : (
+                    <Plus className="h-6 w-6 text-[#097EEC] group-hover:scale-110 transition-transform duration-300" />
+                  )}
+                </div>
+              </button>
+            </div>
+          )}
           {images.map((image) => (
             <div
               key={image.id}
@@ -281,13 +286,27 @@ export function UserGallery({
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            {!isVisit ? (
-              <Plus className="h-8 w-8 text-gray-400" />
-            ) : (
-              <IconCancel className="h-8 w-8 text-gray-400" />
+          <button
+            onClick={() => !isVisit && setShowUpload(!showUpload)}
+            disabled={isUploading || isVisit}
+            className={`group relative w-16 h-16 ${!isVisit ? "bg-white/85 backdrop-blur-md hover:shadow-2xl hover:-translate-y-1 hover:rotate-1 cursor-pointer" : "bg-gray-100"} rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-500 overflow-hidden border border-gray-200/50 shadow-lg`}
+          >
+            {!isVisit && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+              </>
             )}
-          </div>
+            <div className="relative z-10">
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-[#097EEC]" />
+              ) : !isVisit ? (
+                <Plus className="h-8 w-8 text-[#097EEC] group-hover:scale-110 transition-transform duration-300" />
+              ) : (
+                <IconCancel className="h-8 w-8 text-gray-400" />
+              )}
+            </div>
+          </button>
           <p className="text-gray-600 mb-2">
             {!isVisit
               ? "No tienes imágenes en tu galería"

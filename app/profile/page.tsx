@@ -313,7 +313,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
+        <div className="container mx-auto px-4 mt-8">
           {error && (
             <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-start gap-3">
               <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
@@ -362,9 +362,12 @@ const ProfilePage = () => {
             user && (
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-6 text-white">
-                  <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="relative">
+                <div className="group relative bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-8 text-white overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+
+                  <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative group/avatar">
                       <UserAvatarEditable
                         user={{
                           id: user.id
@@ -403,24 +406,25 @@ const ProfilePage = () => {
                         }}
                       />
                     </div>
-                    <div className="text-center md:text-left">
-                      <div className="text-2xl font-bold flex justify-center items-center gap-2">
+
+                    <div className="text-center md:text-left flex-1">
+                      <div className="text-3xl font-eras-bold flex justify-center md:justify-start items-center gap-3 mb-2 group-hover:scale-102 transition-transform duration-300">
                         {user.name}
                         {userIcons.verified && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger>
-                                <div className="flex items-center gap-1 bg-white rounded-full p-[2px]">
+                                <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-all duration-300 hover:scale-110">
                                   <IconRosetteDiscountCheckFilled
-                                    className={`h-6 w-6 ${
+                                    className={`h-7 w-7 ${
                                       userIcons.verified === "checked-gray"
-                                        ? "text-gray-500"
+                                        ? "text-gray-300"
                                         : userIcons.verified === "checked-blue"
-                                          ? "text-blue-500"
+                                          ? "text-blue-200"
                                           : userIcons.verified ===
                                               "checked-gold"
-                                            ? "text-amber-500"
-                                            : "text-gray-500"
+                                            ? "text-amber-300"
+                                            : "text-gray-300"
                                     }`}
                                   />
                                 </div>
@@ -436,23 +440,16 @@ const ProfilePage = () => {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                      </div>{" "}
-                      {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
-                        {getRoleNames(user.roles).map((roleName, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20"
-                          >
-                            <Shield className="h-3 w-3 mr-1" />
-                            {roleName}
-                          </span>
-                        ))}
-                      </div> */}
+                      </div>
+                      <p className="text-blue-100 font-eras text-lg opacity-90">
+                        {user.email}
+                      </p>
                     </div>
-                    <div className="ml-auto hidden md:block">
+
+                    <div className="ml-auto">
                       <Link href="/profile/edit">
-                        <button className="bg-white text-[#097EEC] px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
-                          <Edit className="h-4 w-4" />
+                        <button className="group/btn bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center gap-2 font-eras-bold border border-white/30 hover:border-white/50 hover:scale-105 shadow-lg hover:shadow-xl">
+                          <Edit className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-300" />
                           <span>Editar perfil</span>
                         </button>
                       </Link>

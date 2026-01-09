@@ -24,12 +24,14 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { maskNit } from "@/components/utils/maskNit";
 
 export default function CompanyDetailsPage({
   params,
@@ -211,15 +213,27 @@ export default function CompanyDetailsPage({
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 md:mb-6 gap-4">
                   <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-                    <div className="w-12 h-12 md:w-16 md:h-16 bg-[#097EEC] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-6 w-6 md:h-8 md:w-8 text-white" />
-                    </div>
+                    {company.user?.profile_image ? (
+                      <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-gray-200 shadow-lg">
+                        <Image
+                          src={company.user.profile_image}
+                          alt={company.name}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-[#097EEC] rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-6 w-6 md:h-8 md:w-8 text-white" />
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <h2 className="text-xl md:text-2xl font-eras-bold text-gray-900 break-words">
                         {company.name}
                       </h2>
                       <p className="text-gray-600 font-eras text-sm md:text-base break-all">
-                        NIT: {company.nit}
+                        NIT: {maskNit(company.nit)}
                       </p>
                     </div>
                   </div>
@@ -240,56 +254,77 @@ export default function CompanyDetailsPage({
                 </div>
 
                 {/* Estadísticas rápidas */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-                  <div className="text-center p-3 md:p-4 bg-gray-50 rounded-lg">
-                    <div className="text-xl md:text-2xl font-eras-bold text-[#097EEC]">
-                      {getCompanyAge()}
-                    </div>
-                    <div className="text-xs md:text-sm text-gray-600 font-eras">
-                      Años de experiencia
-                    </div>
-                  </div>
-                  <div className="text-center p-3 md:p-4 bg-gray-50 rounded-lg">
-                    <div className="text-xl md:text-2xl font-eras-bold text-[#097EEC]">
-                      {company.user ? "1" : "0"}
-                    </div>
-                    <div className="text-xs md:text-sm text-gray-600 font-eras">
-                      Administrador
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                    <div className="relative z-10">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
+                        {getCompanyAge()}
+                      </div>
+                      <div className="text-sm text-gray-600 font-eras">
+                        Años de experiencia
+                      </div>
                     </div>
                   </div>
-                  <div className="text-center p-3 md:p-4 bg-gray-50 rounded-lg">
-                    <div className="text-xl md:text-2xl font-eras-bold text-[#097EEC]">
-                      {new Date(company.created_at).getFullYear()}
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                    <div className="relative z-10">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
+                        {company.user ? "1" : "0"}
+                      </div>
+                      <div className="text-sm text-gray-600 font-eras">
+                        Administrador
+                      </div>
                     </div>
-                    <div className="text-xs md:text-sm text-gray-600 font-eras">
-                      Año de registro
+                  </div>
+                  <div className="group relative text-center p-6 md:p-8 bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                    <div className="relative z-10">
+                      <div className="text-2xl md:text-3xl font-eras-bold text-[#097EEC] mb-2 transition-transform duration-300">
+                        {new Date(company.created_at).getFullYear()}
+                      </div>
+                      <div className="text-sm text-gray-600 font-eras">
+                        Año de registro
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Información de contacto */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <h3 className="text-base md:text-lg font-eras-bold text-gray-900 mb-3 md:mb-4 flex items-center gap-2">
-                      <Mail className="h-4 w-4 md:h-5 md:w-5 text-[#097EEC]" />
-                      Información de Contacto
-                    </h3>
-                    <div className="space-y-2 md:space-y-3">
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <Mail className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-700 font-eras text-sm md:text-base break-all">
+                {/* Información en hilo continuo */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Información de contacto */}
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-[#097EEC] rounded-full flex items-center justify-center">
+                        <Mail className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-eras-bold text-gray-900">
+                        Información de Contacto
+                      </h3>
+                    </div>
+                    <div className="ml-11 space-y-3 relative">
+                      <div className="absolute left-[-22px] top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                      <div className="flex items-center gap-3 relative">
+                        <div className="absolute left-[-26px] w-4 h-4 bg-white border-2 border-[#097EEC] rounded-full"></div>
+                        <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 font-eras text-sm break-all">
                           {company.email}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-700 font-eras text-sm md:text-base">
+                      <div className="flex items-center gap-3 relative">
+                        <div className="absolute left-[-26px] w-4 h-4 bg-white border-2 border-[#097EEC] rounded-full"></div>
+                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 font-eras text-sm">
                           {company.cellphone}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <Calendar className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-700 font-eras text-sm md:text-base">
+                      <div className="flex items-center gap-3 relative">
+                        <div className="absolute left-[-26px] w-4 h-4 bg-white border-2 border-[#097EEC] rounded-full"></div>
+                        <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 font-eras text-sm">
                           Fundada el {formatDate(company.born_at)}
                         </span>
                       </div>
@@ -297,63 +332,74 @@ export default function CompanyDetailsPage({
                   </div>
 
                   {/* Ubicación */}
-                  <div>
-                    <h3 className="text-base md:text-lg font-eras-bold text-gray-900 mb-3 md:mb-4 flex items-center gap-2">
-                      <MapPin className="h-4 w-4 md:h-5 md:w-5 text-[#097EEC]" />
-                      Ubicación
-                    </h3>
-                    {company.latitude && company.longitude ? (
-                      <div className="space-y-2 md:space-y-3">
-                        <div className="flex items-start gap-2 md:gap-3">
-                          <MapPin className="h-3 w-3 md:h-4 md:w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-[#097EEC] rounded-full flex items-center justify-center">
+                        <MapPin className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="text-lg font-eras-bold text-gray-900">
+                        Ubicación
+                      </h3>
+                    </div>
+                    <div className="ml-11">
+                      {company.latitude && company.longitude ? (
+                        <div className="flex items-start gap-3">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0">
-                            <p className="text-gray-700 font-eras text-sm md:text-base break-words">
+                            <p className="text-gray-700 font-eras text-sm break-words">
                               {company.address}
                             </p>
-                            <p className="text-gray-600 font-eras text-sm md:text-base">
+                            <p className="text-gray-600 font-eras text-sm">
                               {company.city}, {company.country}
                             </p>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 font-eras text-sm md:text-base">
-                        No hay ubicación registrada
-                      </p>
-                    )}
+                      ) : (
+                        <div className="flex items-center gap-3 text-gray-500">
+                          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="font-eras text-sm">
+                            No hay ubicación registrada
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Administrador */}
               {company.user && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-                  <h3 className="text-base md:text-lg font-eras-bold text-gray-900 mb-3 md:mb-4 flex items-center gap-2">
-                    <User className="h-4 w-4 md:h-5 md:w-5 text-[#097EEC]" />
-                    Administrador
-                  </h3>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-                      <div className="w-10 h-10 md:w-12 md:h-12 bg-[#097EEC] rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden p-6 md:p-8">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                  <div className="relative z-10">
+                    <h3 className="text-lg font-eras-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <User className="h-5 w-5 text-[#097EEC]" />
+                      Administrador
+                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className="w-12 h-12 bg-[#097EEC] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <User className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-eras-bold text-gray-900 text-base break-words mb-1">
+                            {company.user.name}
+                          </h4>
+                          <p className="text-gray-600 font-eras text-sm break-all">
+                            {company.user.email}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-eras-bold text-gray-900 text-sm md:text-base break-words">
-                          {company.user.name}
-                        </h4>
-                        <p className="text-gray-600 font-eras text-sm md:text-base break-all">
-                          {company.user.email}
-                        </p>
-                      </div>
+                      {canChat() && (
+                        <div className="flex-shrink-0 w-full sm:w-auto">
+                          <StartChatButton
+                            recipientId={parseInt(company.user?.id || "2")}
+                            recipientName={company.user.name || company.name}
+                          />
+                        </div>
+                      )}
                     </div>
-                    {canChat() && (
-                      <div className="flex-shrink-0 w-full sm:w-auto">
-                        <StartChatButton
-                          recipientId={parseInt(company.user?.id || "2")}
-                          recipientName={company.user.name || company.name}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -389,70 +435,74 @@ export default function CompanyDetailsPage({
 
             {/* Sidebar - Acciones */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 lg:sticky lg:top-24">
-                <h3 className="text-base md:text-lg font-eras-bold text-gray-900 mb-3 md:mb-4">
-                  Acciones
-                </h3>
+              <div className="group relative bg-white/85 backdrop-blur-md rounded-2xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden p-6 md:p-8 lg:sticky lg:top-24">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+                <div className="relative z-10">
+                  <h3 className="text-lg font-eras-bold text-gray-900 mb-6">
+                    Acciones
+                  </h3>
 
-                <div className="flex flex-col space-y-3">
-                  {isOwnerOrAdmin() && (
-                    <>
+                  <div className="flex flex-col space-y-3">
+                    {isOwnerOrAdmin() && (
+                      <>
+                        <Link href={`/companies/${company.id}/employees`}>
+                          <Button className="w-full bg-[#097EEC] hover:bg-[#097EEC]/90 font-eras text-sm md:text-base">
+                            <Users className="h-4 w-4 mr-2" />
+                            Gestionar Empleados
+                          </Button>
+                        </Link>
+
+                        <Link href={`/companies/${company.id}/edit`}>
+                          <Button
+                            variant="outline"
+                            className="w-full border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white font-eras text-sm md:text-base"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar Empresa
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+
+                    {canApply() && (
+                      <ApplyCompanyButton
+                        companyId={company.id!}
+                        companyName={company.name}
+                        companyUserId={parseInt(company.id)}
+                        className="w-full mb-4"
+                      />
+                    )}
+
+                    {isOwnerOrAdmin() && (
                       <Link href={`/companies/${company.id}/employees`}>
-                        <Button className="w-full bg-[#097EEC] hover:bg-[#097EEC]/90 font-eras text-sm md:text-base">
-                          <Users className="h-4 w-4 mr-2" />
-                          Gestionar Empleados
-                        </Button>
-                      </Link>
-
-                      <Link href={`/companies/${company.id}/edit`}>
                         <Button
                           variant="outline"
-                          className="w-full border-[#097EEC] text-[#097EEC] hover:bg-[#097EEC] hover:text-white font-eras text-sm md:text-base"
+                          className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-eras text-sm md:text-base"
                         >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar Empresa
+                          <Users className="h-4 w-4 mr-2" />
+                          Ver Empleados
                         </Button>
                       </Link>
-                    </>
-                  )}
+                    )}
+                  </div>
 
-                  {canApply() && (
-                    <ApplyCompanyButton
-                      companyId={company.id!}
-                      companyName={company.name}
-                      companyUserId={parseInt(company.id)}
-                      className="w-full mb-4"
-                    />
-                  )}
-
-                  {isOwnerOrAdmin() && (
-                    <Link href={`/companies/${company.id}/employees`}>
-                      <Button
-                        variant="outline"
-                        className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-eras text-sm md:text-base"
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Ver Empleados
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Información adicional */}
-                <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-100">
-                  <h4 className="text-sm font-eras-bold text-gray-900 mb-3">
-                    Información adicional
-                  </h4>
-                  <div className="space-y-2 text-xs md:text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-eras">Estado</span>
-                      <span className="font-eras-bold text-green-600">
-                        Activa
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-eras">Tipo</span>
-                      <span className="font-eras-bold">Empresa</span>
+                  {/* Información adicional */}
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    <h4 className="text-sm font-eras-bold text-gray-900 mb-3">
+                      Información adicional
+                    </h4>
+                    <div className="space-y-2 text-xs md:text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span className="font-eras">Miembro desde</span>
+                        <span className="font-eras-bold">
+                          {formatDate(company.created_at)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-eras">Tipo</span>
+                        <span className="font-eras-bold">Empresa</span>
+                      </div>
                     </div>
                   </div>
                 </div>
