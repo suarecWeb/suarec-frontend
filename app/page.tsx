@@ -178,7 +178,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-[#097EEC] to-[#097EEC] relative overflow-hidden">
+      <section className="py-24 -mb-10 bg-gradient-to-br from-[#097EEC] to-[#097EEC] relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0">
           <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>

@@ -24,7 +24,7 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="relative bg-gradient-to-t from-[#1a1f3a] via-[#2a3a6e] to-[#097EEC] text-white py-12 mt-auto overflow-hidden rounded-t-[3rem] -mt-12">
+      <footer className="relative bg-gradient-to-t from-[#1a1f3a] via-[#2a3a6e] via-[#097EEC] to-[#097EEC] text-white py-14 mt-auto overflow-hidden rounded-t-[3rem] -mt-12">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
@@ -166,9 +166,15 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
-                  aria-label="Twitter/X"
+                  aria-label="X"
                 >
-                  <Twitter className="h-5 w-5" />
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                 </a>
                 <a
                   href="https://www.facebook.com/share/18shUoxxch/?mibextid=wwXIfr"
