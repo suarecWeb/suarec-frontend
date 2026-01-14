@@ -135,7 +135,7 @@ export default function AdvancedFilters({
     if (filters.type) count++;
     if (filters.category) count++;
     if (filters.categories && filters.categories.length > 0) count++;
-    if (filters.search) count++;
+    // El campo de búsqueda ya no se cuenta aquí porque está en el navbar
     if (filters.minPrice || filters.maxPrice) count++;
     if (filters.sortBy && filters.sortBy !== "created_at") count++;
     if (filters.sortOrder && filters.sortOrder !== "DESC") count++;
@@ -176,24 +176,6 @@ export default function AdvancedFilters({
 
         <CollapsibleContent className="mt-3">
           <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl border border-blue-200/60 p-3 relative shadow-sm">
-            {/* Búsqueda */}
-            <div className="mb-3">
-              <label className="text-xs font-eras-medium text-gray-700 mb-1.5 block">
-                Buscar
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                <Input
-                  placeholder="Título, descripción o categoría..."
-                  value={filters.search || ""}
-                  onChange={(e) =>
-                    handleFilterChange("search", e.target.value || undefined)
-                  }
-                  className="pl-9 h-9 text-sm border-gray-200 focus:border-[#097EEC] focus:ring-[#097EEC]/20"
-                />
-              </div>
-            </div>
-
             {/* Filtros Principales */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               {/* Tipo de publicación - Custom dropdown */}

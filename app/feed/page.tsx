@@ -264,16 +264,30 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden main-content">
-      <Navbar />
+      <Navbar
+        showSearch={true}
+        searchValue={filters.search}
+        onSearchChange={(value) => {
+          const newFilters = {
+            ...filters,
+            search: value || undefined,
+            page: 1,
+          };
+          setFilters(newFilters);
+          // Auto-aplicar búsqueda después de un pequeño delay
+          setTimeout(() => fetchPublications(newFilters), 300);
+        }}
+      />
 
       {/* Header azul extendido como en perfil */}
       <div className="bg-[#097EEC] text-white py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-eras-bold">
-            Feed de Publicaciones
+            Explora servicios y oportunidades.
           </h1>
           <p className="mt-2 text-blue-100 font-eras text-sm md:text-base">
-            Descubre las mejores oportunidades laborales y servicios
+            Encuentra personas y empresas listas para contratar, vender o
+            comprar.
           </p>
         </div>
       </div>
@@ -329,7 +343,7 @@ export default function FeedPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-full hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300 cursor-pointer">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1 font-eras-semibold text-gray-900 text-sm sm:text-base">
-                  ¿Qué estás buscando hoy?
+                  ¿Qué servicio necesitas hoy?
                 </div>
                 <Button
                   onClick={() => verifyCreatePublication()}

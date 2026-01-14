@@ -43,8 +43,8 @@ export default function Footer() {
                 theme="dark"
               />
               <p className="text-white/80 leading-relaxed mb-6 font-eras text-sm">
-                Conectamos talento excepcional con oportunidades extraordinarias
-                para crear un futuro laboral mejor en Colombia.
+                Unimos personas y empresas para contratar, vender y comprar con
+                confianza en Colombia.
               </p>
               <div className="flex items-center gap-2 text-white/70 font-eras text-xs">
                 <Heart className="h-5 w-5 fill-white/70" />
