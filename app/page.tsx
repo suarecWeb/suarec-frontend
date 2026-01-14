@@ -191,8 +191,8 @@ export default function Home() {
               ¿Listo para encontrar tu próxima oportunidad?
             </h2>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-eras">
-              Únete a miles de profesionales que ya han encontrado el trabajo de
-              sus sueños con SUAREC.
+              Contrata y vende servicios con personas y empresas verificadas,
+              todo desde un solo lugar.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
@@ -208,7 +208,7 @@ export default function Home() {
                 href="/publications"
                 className="group border-2 border-white/30 text-white px-8 py-5 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
               >
-                Ver ofertas
+                Explorar servicios y empresas
                 <Briefcase className="h-5 w-5 group-hover:scale-110 transition-transform" />
               </Link>
             </div>

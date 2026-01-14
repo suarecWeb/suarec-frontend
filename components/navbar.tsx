@@ -29,12 +29,23 @@ import {
 } from "lucide-react";
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
+import { Input } from "@/components/ui/input";
 
 interface TokenPayload {
   roles?: { name: string }[];
 }
 
-const Navbar = () => {
+interface NavbarProps {
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  showSearch?: boolean;
+}
+
+const Navbar = ({
+  searchValue,
+  onSearchChange,
+  showSearch = false,
+}: NavbarProps = {}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -133,6 +144,29 @@ const Navbar = () => {
             >
               <SuarecLogo className="w-24 sm:w-28 md:w-32" />
             </Link>
+
+            {/* Search Bar - Desktop */}
+            {showSearch && onSearchChange && (
+              <div className="hidden lg:flex flex-1 max-w-md mx-4">
+                <div className="relative w-full">
+                  <Search
+                    className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                      isScrolled ? "text-gray-500" : "text-white"
+                    }`}
+                  />
+                  <Input
+                    placeholder="Buscar publicaciones..."
+                    value={searchValue || ""}
+                    onChange={(e) => onSearchChange(e.target.value || "")}
+                    className={`pl-11 pr-4 h-10 text-sm rounded-full transition-all duration-300 ${
+                      isScrolled
+                        ? "bg-white/90 border-gray-200/50 text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-[#097EEC] focus:ring-[#097EEC]/20"
+                        : "bg-white/20 border-white/30 text-white placeholder:text-white/80 focus:bg-white/30 focus:border-white/50 focus:ring-white/20"
+                    }`}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex lg:items-center lg:space-x-2">
