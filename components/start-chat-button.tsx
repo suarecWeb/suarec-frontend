@@ -26,6 +26,7 @@ interface StartChatButtonProps {
   recipientType?: "person" | "business"; // Para personalizar los mensajes
   context?: "profile" | "job" | "application" | "general"; // Contexto de donde se usa
   className?: string;
+  buttonClassName?: string;
   variant?: "primary" | "outline"; // Para estilos adicionales si es necesario
 }
 
@@ -43,6 +44,7 @@ const StartChatButton = ({
   recipientType = "person",
   context = "general",
   className = "",
+  buttonClassName = "",
   variant = "primary",
 }: StartChatButtonProps) => {
   const [loading, setLoading] = useState(false);
@@ -215,7 +217,7 @@ const StartChatButton = ({
           disabled={loading}
           className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-sm font-medium
             ${variant === "primary" ? "bg-[#097EEC] text-white hover:bg-[#0A6BC7]" : "border border-gray-300 bg-white text-black hover:bg-gray-50"} 
-            disabled:opacity-50 disabled:cursor-not-allowed ${loading ? "cursor-not-allowed" : ""}`}
+            disabled:opacity-50 disabled:cursor-not-allowed ${loading ? "cursor-not-allowed" : ""} ${buttonClassName}`}
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

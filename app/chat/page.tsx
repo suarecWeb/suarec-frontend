@@ -764,6 +764,7 @@ const ChatPageContent = () => {
     return date.toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -1113,56 +1114,62 @@ const ChatPageContent = () => {
                           <p className="text-gray-500">Cargando mensajes...</p>
                         </div>
                       ) : messages.length > 0 ? (
-                        messages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex items-end gap-3 mb-4 ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
-                          >
-                            {/* Removed profile images for sender */}
-                            <div
-                              className={`chat-message max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-3 rounded-2xl break-words shadow-sm ${
-                                message.sender?.id === currentUserId
-                                  ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md"
-                                  : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 rounded-bl-md border border-gray-200/60"
-                              }`}
-                            >
-                              <div className="message-content">
-                                <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                                  {message.content}
-                                </p>
-                              </div>
-                              <div className="flex items-center justify-end gap-1 mt-2">
-                                <span
-                                  className={`text-xs font-medium ${
+                        messages.map((message, index) => {
+                          const isFirstMessage = index === 0;
+                          const currentDate = new Date(
+                            message.sent_at,
+                          ).toDateString();
+                          const prevDate = !isFirstMessage
+                            ? new Date(
+                                messages[index - 1].sent_at,
+                              ).toDateString()
+                            : null;
+                          const showDateSeparator =
+                            isFirstMessage || currentDate !== prevDate;
+
+                          return (
+                            <div key={message.id} className="w-full">
+                              {showDateSeparator && (
+                                <div className="flex justify-center my-6">
+                                  <span className="bg-gray-100 text-gray-500 text-xs font-medium py-1.5 px-4 rounded-full shadow-sm border border-gray-200/50">
+                                    {formatDate(message.sent_at)}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div
+                                className={`flex items-end gap-3 mb-4 ${message.sender?.id === currentUserId ? "justify-end" : "justify-start"}`}
+                              >
+                                {/* Removed profile images for sender */}
+                                <div
+                                  className={`chat-message max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-3 rounded-2xl break-words shadow-sm ${
                                     message.sender?.id === currentUserId
-                                      ? "text-blue-100"
-                                      : "text-gray-500"
+                                      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md"
+                                      : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 rounded-bl-md border border-gray-200/60"
                                   }`}
                                 >
-                                  {formatTime(message.sent_at)}
-                                </span>
-                                {/* Comentado: Indicadores de leído/enviado
-                                {message.sender?.id === currentUserId && (
-                                  <div className="w-4 h-4 flex items-center justify-center ml-1">
-                                    {message.read ? (
-                                      <div
-                                        className="w-3 h-3 rounded-full bg-green-400 border border-green-500"
-                                        title="Leído"
-                                      ></div>
-                                    ) : (
-                                      <div
-                                        className="w-3 h-3 rounded-full bg-blue-100 border border-blue-200"
-                                        title="Enviado"
-                                      ></div>
-                                    )}
+                                  <div className="message-content">
+                                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                                      {message.content}
+                                    </p>
                                   </div>
-                                )}
-                                */}
+                                  <div className="flex items-center justify-end gap-1 mt-2">
+                                    <span
+                                      className={`text-xs font-medium ${
+                                        message.sender?.id === currentUserId
+                                          ? "text-blue-100"
+                                          : "text-gray-500"
+                                      }`}
+                                    >
+                                      {formatTime(message.sent_at)}
+                                    </span>
+                                  </div>
+                                </div>
+                                {/* Removed profile images for receiver */}
                               </div>
                             </div>
-                            {/* Removed profile images for receiver */}
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="text-center py-8">
                           <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />

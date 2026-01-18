@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { UserService } from "@/services/UsersService";
 
 interface NavbarRoleProps {
   isMobile: boolean;
@@ -46,6 +47,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
   const [token, setToken] = useState<string | undefined>(undefined);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userImage, setUserImage] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -73,10 +75,22 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
         const decoded = jwtDecode<TokenPayload>(tokenValue);
         setUserRole(decoded.roles?.[0]?.name || null); // Tomar el nombre del primer rol
         setUserName(decoded.email || null); // Obtener el email del usuario
+
+        // Fetch full user profile to get the image
+        UserService.getUserById(decoded.id)
+          .then((response) => {
+            if (response.data && response.data.profile_image) {
+              setUserImage(response.data.profile_image);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching user profile for navbar:", error);
+          });
       } catch (error) {
         console.error("Error al decodificar token:", error);
         setUserRole(null);
         setUserName(null);
+        setUserImage(null);
       }
     }
   }, []);
@@ -153,7 +167,15 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               isScrolled ? "bg-[#097EEC] text-white" : "bg-white text-[#097EEC]"
             }`}
           >
-            {getInitial(userName)}
+            {userImage ? (
+              <img
+                src={userImage}
+                alt={getDisplayName(userName)}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              getInitial(userName)
+            )}
           </div>
           <span className="text-sm font-eras-medium truncate max-w-32">
             {getDisplayName(userName)}

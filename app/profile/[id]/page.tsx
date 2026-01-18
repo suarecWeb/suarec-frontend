@@ -282,28 +282,30 @@ const PublicProfilePage = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-8 mt-12">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Button
-                onClick={() => router.back()}
-                variant="ghost"
-                className="text-white px-2 py-1"
-              >
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-4 mb-4 translate-y-1.5 group text-left outline-none"
+            >
+              <div className="text-white p-1 rounded-md group-hover:bg-white/10 transition-colors">
                 <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <p className="text-blue-100">
+              </div>
+              <span className="text-blue-100 group-hover:text-white transition-colors">
                 Información profesional de {user.name}
-              </p>
-            </div>
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
+        <div className="container mx-auto px-4 mt-8">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             {/* Profile Header */}
-            <div className="bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-6 text-white">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="relative">
+            <div className="group relative bg-gradient-to-r from-[#097EEC] to-[#2171BC] p-8 text-white overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"></div>
+
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="relative group/avatar">
                   <UserAvatar
                     user={{
                       id: user.id
@@ -320,15 +322,23 @@ const PublicProfilePage = () => {
                 </div>
 
                 <div className="text-center md:text-left flex-1">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <div className="text-3xl font-eras-bold flex justify-center md:justify-start items-center gap-3 mb-2 group-hover:scale-102 transition-transform duration-300">
                     {user.name}
                     {userIcons.verified && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <div className="flex items-center gap-1 bg-white rounded-full p-[2px]">
+                            <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-all duration-300 hover:scale-110">
                               <IconRosetteDiscountCheckFilled
-                                className={`h-6 w-6 ${getPlanColor(user.plan || ("FREE" as any))}`}
+                                className={`h-7 w-7 ${
+                                  userIcons.verified === "checked-gray"
+                                    ? "text-gray-300"
+                                    : userIcons.verified === "checked-blue"
+                                      ? "text-blue-200"
+                                      : userIcons.verified === "checked-gold"
+                                        ? "text-amber-300"
+                                        : "text-gray-300"
+                                }`}
                               />
                             </div>
                           </TooltipTrigger>
@@ -343,42 +353,32 @@ const PublicProfilePage = () => {
                         </Tooltip>
                       </TooltipProvider>
                     )}
-                  </h2>{" "}
+                  </div>
                   {user.profession && (
-                    <p className="text-blue-100 text-lg mt-1">
+                    <p className="text-blue-100 font-eras text-lg opacity-90 mb-3">
                       {user.profession}
                     </p>
                   )}
-                  {/* <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-                                        {getRoleNames(user.roles).map((roleName, index) => (
-                                            <span
-                                                key={index}
-                                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20"
-                                            >
-                                                <Shield className="h-3 w-3 mr-1" />
-                                                {roleName}
-                                            </span>
-                                        ))}
-                                    </div> */}
+
                   {/* Stats rápidas */}
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm">
+                  <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4 font-eras">
                     {user.born_at && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-sm hover:bg-white/20 transition-colors">
+                        <Calendar className="h-4 w-4 text-blue-100" />
                         <span>{calculateAge(user.born_at)} años</span>
                       </div>
                     )}
                     {user.experiences && user.experiences.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Briefcase className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-sm hover:bg-white/20 transition-colors">
+                        <Briefcase className="h-4 w-4 text-blue-100" />
                         <span>
                           {calculateExperience(user.experiences)} años exp.
                         </span>
                       </div>
                     )}
                     {user.created_at && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-sm hover:bg-white/20 transition-colors">
+                        <Clock className="h-4 w-4 text-blue-100" />
                         <span>Desde {formatDate(user.created_at)}</span>
                       </div>
                     )}
@@ -386,7 +386,7 @@ const PublicProfilePage = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex flex-col gap-3 min-w-0">
+                <div className="flex flex-col gap-3 min-w-0 ml-auto">
                   {currentUser && (
                     <StartChatButton
                       recipientId={parseInt(userId)}
@@ -394,6 +394,8 @@ const PublicProfilePage = () => {
                       variant="outline"
                       recipientType={user.company ? "business" : "person"}
                       context={!user.company ? "profile" : undefined}
+                      className="w-full"
+                      buttonClassName="w-full justify-center group/btn bg-white text-[#097EEC] px-6 py-2.5 rounded-xl hover:bg-blue-50 transition-all duration-300 flex items-center gap-2 font-eras-bold border-0 hover:scale-105 shadow-lg hover:shadow-xl"
                     />
                   )}
 
@@ -401,7 +403,7 @@ const PublicProfilePage = () => {
                     <DownloadCVButton
                       user={user}
                       variant="outline"
-                      className="bg-white text-black hover:text-[#097EEC] hover:bg-gray-100"
+                      className="w-full justify-center group/btn bg-white/20 backdrop-blur-sm text-white px-6 py-2.5 rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center gap-2 font-eras-bold border border-white/30 hover:border-white/50 hover:scale-105 shadow-lg hover:shadow-xl"
                       isPublicProfile={true}
                     />
                   )}

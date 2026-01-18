@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   Award,
   Briefcase,
@@ -66,97 +66,103 @@ export default function SwiperAuto() {
     [],
   );
 
-  const topSequence = cardsData;
-  const bottomSequence = [...cardsData.slice(3), ...cardsData.slice(0, 3)];
-  const durationSeconds = 45;
+  const [angle, setAngle] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const animationRef = useMemo(() => ({ current: 0 }), []);
+  const lastTimeRef = useMemo(() => ({ current: 0 }), []);
 
-  const topLoop = [...topSequence, ...topSequence];
-  const bottomLoop = [...bottomSequence, ...bottomSequence];
+  // Continuous animation loop
+  useEffect(() => {
+    const animate = (time: number) => {
+      if (lastTimeRef.current !== 0 && !isPaused) {
+        const delta = time - lastTimeRef.current;
+        // Ajustar velocidad aquí (0.0005 es lento/fluido)
+        setAngle((prev) => prev - delta * 0.0005);
+      }
+      lastTimeRef.current = time;
+      animationRef.current = requestAnimationFrame(animate);
+    };
 
-  const renderCard = (card: Card, key: string) => {
-    const Icon = card.icon;
-    return (
-      <div
-        key={key}
-        className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#097EEC]/20 w-[340px] flex-shrink-0 text-center flex flex-col items-center"
-      >
-        <div className="bg-gradient-to-br from-[#097EEC] to-[#097EEC] rounded-2xl w-12 h-12 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform mx-auto">
-          <Icon className="h-8 w-8 text-white" />
-        </div>
+    animationRef.current = requestAnimationFrame(animate);
 
-        <h3 className="text-xl font-eras-bold mb-3 text-gray-800">
-          {card.title}
-        </h3>
-        <p
-          className="text-gray-600 leading-relaxed font-eras text-sm"
-          style={{
-            display: "-webkit-box",
-            WebkitBoxOrient: "vertical",
-            WebkitLineClamp: 4,
-            overflow: "hidden",
-          }}
-        >
-          {card.description}
-        </p>
-      </div>
-    );
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [isPaused, lastTimeRef, animationRef]);
+
+  const getCardStyle = (index: number) => {
+    const total = cardsData.length;
+    const theta = angle + index * ((2 * Math.PI) / total);
+
+    // Coordenadas circulares (cilindro)
+    // x = sin(theta) * radio (movimiento horizontal)
+    // z = cos(theta) * radio (profundidad, determina escala/zIndex)
+    const radius = 380; // Radio del carrusel
+    const x = Math.sin(theta) * radius;
+    const z = Math.cos(theta); // -1 (atrás) a 1 (adelante)
+
+    // Escala basada en profundidad (z)
+    // Cuando z es 1 (frente), escala es 1.1
+    // Cuando z es -1 (atrás), escala es 0.7
+    const scale = 0.9 + z * 0.2;
+
+    // Opacidad (desvanece atrás)
+    const opacity = 0.5 + (z + 1) * 0.25; // rango 0.5 a 1.0
+
+    // zIndex para superposición correcta
+    const zIndex = Math.round((z + 1) * 50);
+
+    return {
+      transform: `translateX(${x}px) scale(${scale}) perspective(1000px)`,
+      zIndex,
+      opacity,
+      // No usamos transition aquí para movimiento fluido frame-a-frame
+      // transition: "transform 0.1s linear",
+    };
   };
 
   return (
-    <div className="space-y-8 overflow-hidden">
-      <style jsx>{`
-        @keyframes marquee-left {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(-50%, 0, 0);
-          }
-        }
+    <div
+      className="relative h-[450px] w-full max-w-6xl mx-auto flex items-center justify-center overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Container for cards - centered */}
+      <div className="relative w-full h-full flex items-center justify-center">
+        {cardsData.map((card, index) => {
+          const style = getCardStyle(index);
+          const Icon = card.icon;
 
-        @keyframes marquee-right {
-          0% {
-            transform: translate3d(-50%, 0, 0);
-          }
-          100% {
-            transform: translate3d(0, 0, 0);
-          }
-        }
+          return (
+            <div
+              key={card.id}
+              className="absolute bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-xl border border-gray-100 flex flex-col items-center justify-center text-center hover:border-[#097EEC]/30 cursor-pointer"
+              style={{
+                ...style,
+                width: "260px",
+                height: "380px",
+                willChange: "transform, opacity", // Optimización render
+              }}
+            >
+              <div className="bg-gradient-to-br from-[#097EEC] to-[#005bb5] rounded-2xl w-16 h-16 flex items-center justify-center mb-6 shadow-lg shadow-[#097EEC]/20">
+                <Icon className="h-8 w-8 text-white" />
+              </div>
 
-        .marquee-track {
-          width: max-content;
-          display: flex;
-          gap: 2rem;
-          will-change: transform;
-          animation: marquee-left ${durationSeconds}s linear infinite;
-        }
-
-        .marquee-track-right {
-          width: max-content;
-          display: flex;
-          gap: 2rem;
-          will-change: transform;
-          animation: marquee-right ${durationSeconds}s linear infinite;
-        }
-
-        .marquee:hover .marquee-track,
-        .marquee:hover .marquee-track-right {
-          animation-play-state: paused;
-        }
-      `}</style>
-
-      {/* Fila superior - izquierda (avance normal) */}
-      <div className="relative overflow-hidden marquee">
-        <div className="marquee-track">
-          {topLoop.map((c, idx) => renderCard(c, `top-${c.id}-${idx}`))}
-        </div>
-      </div>
-
-      {/* Fila inferior - derecha */}
-      <div className="relative overflow-hidden marquee">
-        <div className="marquee-track-right">
-          {bottomLoop.map((c, idx) => renderCard(c, `bottom-${c.id}-${idx}`))}
-        </div>
+              <h3 className="text-xl font-eras-bold mb-4 text-gray-800 px-2 leading-tight">
+                {card.title}
+              </h3>
+              <p
+                className="text-gray-600 leading-relaxed font-eras text-sm px-2"
+                style={{
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 5,
+                  overflow: "hidden",
+                }}
+              >
+                {card.description}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
 import AdvancedFilters from "@/components/advanced-filters";
+import FeedBanner from "@/components/feed-banner";
 import PublicationService from "@/services/PublicationsService";
 import {
   Publication,
@@ -354,6 +355,22 @@ export default function FeedPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Feed Banner Component */}
+            <FeedBanner
+              selectedCategory={filters.category}
+              onCategoryClick={(category) => {
+                const newFilters = {
+                  ...filters,
+                  category:
+                    filters.category === category ? undefined : category,
+                  page: 1,
+                };
+                setFilters(newFilters);
+                fetchPublications(newFilters);
+              }}
+            />
+
             {/* Feed */}
             <div className="space-y-4 lg:space-y-6 w-full max-w-full overflow-x-hidden">
               {loading ? (

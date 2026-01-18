@@ -28,6 +28,7 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { maskNit } from "@/components/utils/maskNit";
+import { useNitVisibility } from "@/hooks/useNitVisibility";
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -44,6 +45,9 @@ const CompaniesPageContent = () => {
     hasNextPage: false,
     hasPrevPage: false,
   });
+
+  // Hook para manejar visibilidad del NIT
+  const { getNitVisibilityOptions } = useNitVisibility();
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -222,7 +226,13 @@ const CompaniesPageContent = () => {
                                 {company.name}
                               </h3>
                               <p className="text-xs sm:text-sm text-gray-600 font-semibold bg-gray-100 px-2 py-1 rounded-md inline-block">
-                                NIT: {maskNit(company.nit)}
+                                NIT:{" "}
+                                {maskNit(company.nit, {
+                                  ...getNitVisibilityOptions(),
+                                  companyOwnerId: company.user?.id
+                                    ? parseInt(company.user.id.toString())
+                                    : undefined,
+                                })}
                               </p>
 
                               <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
