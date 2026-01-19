@@ -631,44 +631,48 @@ const ProfileEditPage = () => {
         throw new Error("ID de usuario no disponible");
       }
 
+      // Función auxiliar para crear fecha sin problemas de zona horaria
+      const createLocalDate = (dateString: string): Date => {
+        const date = new Date(dateString + "T12:00:00");
+        return date;
+      };
+
       // Determinar la profesión final
       let finalProfession = formData.profession;
       if (formData.profession === "Otra") {
         finalProfession = formData.customProfession.trim() || "Otra";
       }
 
-      // Filtrar educación válida (con campos requeridos)
+      // Filtrar educación válida (con campos requeridos) y eliminar ID
       const validEducation = formData.education
         .filter((edu) => edu.institution && edu.degree && edu.startDate)
-        .map((edu) => ({
+        .map(({ id, ...edu }) => ({
           ...edu,
           startDate: edu.startDate
-            ? typeof edu.startDate === "string"
-              ? edu.startDate
-              : new Date(edu.startDate).toISOString().split("T")[0]
-            : "",
+            ? createLocalDate(
+                typeof edu.startDate === "string"
+                  ? edu.startDate.split("T")[0]
+                  : new Date(edu.startDate).toISOString().split("T")[0],
+              ).toISOString()
+            : new Date().toISOString(),
           endDate: edu.endDate
-            ? typeof edu.endDate === "string"
-              ? edu.endDate
-              : new Date(edu.endDate).toISOString().split("T")[0]
+            ? createLocalDate(
+                typeof edu.endDate === "string"
+                  ? edu.endDate.split("T")[0]
+                  : new Date(edu.endDate).toISOString().split("T")[0],
+              ).toISOString()
             : undefined,
         }));
 
-      // Filtrar referencias válidas (con campos requeridos)
-      const validReferences = formData.references.filter(
-        (ref) => ref.name && ref.relationship && ref.contact,
-      );
+      // Filtrar referencias válidas (con campos requeridos) y eliminar ID
+      const validReferences = formData.references
+        .filter((ref) => ref.name && ref.relationship && ref.contact)
+        .map(({ id, ...ref }) => ref);
 
-      // Filtrar redes sociales válidas (con campos requeridos)
-      const validSocialLinks = formData.socialLinks.filter(
-        (link) => link.type && link.url,
-      );
-
-      // Función auxiliar para crear fecha sin problemas de zona horaria
-      const createLocalDate = (dateString: string): Date => {
-        const date = new Date(dateString + "T12:00:00");
-        return date;
-      };
+      // Filtrar redes sociales válidas (con campos requeridos) y eliminar ID
+      const validSocialLinks = formData.socialLinks
+        .filter((link) => link.type && link.url)
+        .map(({ id, ...link }) => link);
 
       // Convertir born_at a Date antes de enviarlo y limpiar el payload
       const userData: Partial<UserType> = {
@@ -679,14 +683,11 @@ const ProfileEditPage = () => {
         born_at: createLocalDate(formData.born_at) || undefined,
         cv_url: formData.cv_url || undefined,
         profession: finalProfession || undefined,
-        skills:
-          Array.isArray(formData.skills) && formData.skills.length > 0
-            ? formData.skills
-            : undefined,
+        skills: Array.isArray(formData.skills) ? formData.skills : undefined,
         bio: formData.bio || undefined,
-        education: validEducation.length > 0 ? validEducation : undefined,
-        references: validReferences.length > 0 ? validReferences : undefined,
-        socialLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
+        education: validEducation,
+        references: validReferences,
+        socialLinks: validSocialLinks,
       };
 
       await UserService.updateUser(user.id, userData);
@@ -1216,18 +1217,8 @@ const ProfileEditPage = () => {
                               ...prev,
                               bio: e.target.value,
                             }));
-                            // Auto-expand textarea
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = "auto";
-                            target.style.height = target.scrollHeight + "px";
                           }}
-                          onInput={(e) => {
-                            // Auto-expand on input
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = "auto";
-                            target.style.height = target.scrollHeight + "px";
-                          }}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none overflow-hidden"
+                          className={`w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white resize-none overflow-y-auto ${formData.bio ? "h-[300px]" : "h-[120px]"}`}
                           placeholder="Cuéntanos sobre ti, tu experiencia, intereses, etc."
                         />
                       </div>
@@ -1357,13 +1348,13 @@ const ProfileEditPage = () => {
                                       type="date"
                                       className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!edu.startDate ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
                                       value={
-                                        typeof edu.startDate === "string"
-                                          ? edu.startDate
-                                          : edu.startDate
-                                            ? new Date(edu.startDate)
+                                        edu.startDate
+                                          ? typeof edu.startDate === "string"
+                                            ? edu.startDate.split("T")[0]
+                                            : new Date(edu.startDate)
                                                 .toISOString()
                                                 .split("T")[0]
-                                            : ""
+                                          : ""
                                       }
                                       onChange={(e) =>
                                         setFormData((prev) => {
@@ -1390,13 +1381,13 @@ const ProfileEditPage = () => {
                                       type="date"
                                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                                       value={
-                                        typeof edu.endDate === "string"
-                                          ? edu.endDate
-                                          : edu.endDate
-                                            ? new Date(edu.endDate)
+                                        edu.endDate
+                                          ? typeof edu.endDate === "string"
+                                            ? edu.endDate.split("T")[0]
+                                            : new Date(edu.endDate)
                                                 .toISOString()
                                                 .split("T")[0]
-                                            : ""
+                                          : ""
                                       }
                                       onChange={(e) =>
                                         setFormData((prev) => {

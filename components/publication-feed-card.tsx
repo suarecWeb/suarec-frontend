@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
+import { Comment } from "@/interfaces/comment.interface";
 import {
   translatePriceUnit,
   getPublicationDisplayPrice,
@@ -36,12 +37,15 @@ import GalleryPreview from "@/components/ui/GalleryPreview";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
 import { formatCurrency } from "@/lib/formatCurrency";
 import StartChatButton from "./start-chat-button";
+import CommentService from "@/services/CommentsService";
+import ApplicationService from "@/services/ApplicationService";
 import PublicationService from "@/services/PublicationsService";
+import { UserService } from "@/services/UsersService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import toast from "react-hot-toast";
-import PublicationDetailModal from "./publication-detail-modal";
+import PublicationDetailModal from "./publication-detail-modal-v2";
 
 interface PublicationFeedCardProps {
   publication: Publication;
@@ -62,6 +66,12 @@ const PublicationFeedCard = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsCount, setCommentsCount] = useState(0);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -71,11 +81,124 @@ const PublicationFeedCard = ({
         const decoded = jwtDecode<TokenPayload>(token);
         setCurrentUserId(decoded.id);
         setUserRoles(decoded.roles.map((role) => role.name));
+
+        // Cargar datos completos del usuario incluyendo profile_image
+        loadCurrentUserData(decoded.id);
       } catch (error) {
         console.error("Error al decodificar token:", error);
       }
     }
   }, []);
+
+  // Función para cargar datos completos del usuario actual
+  const loadCurrentUserData = async (userId: number) => {
+    try {
+      const response = await UserService.getUserById(userId);
+      console.log("Current user data loaded:", response.data);
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error("Error loading current user data:", error);
+    }
+  };
+
+  // Función para compartir la publicación
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/feed/${publication.id}`;
+    if (navigator.share) {
+      navigator.share({
+        title: publication.title,
+        text: publication.description || publication.title,
+        url: url,
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Enlace copiado al portapapeles");
+    }
+  };
+
+  // Cargar contador de comentarios automáticamente
+  useEffect(() => {
+    loadCommentsCount();
+  }, [publication.id]);
+
+  // Función para cargar solo el contador de comentarios
+  const loadCommentsCount = async () => {
+    if (!publication?.id) return;
+
+    try {
+      // Obtener la publicación completa con comentarios
+      const response = await PublicationService.getPublicationById(
+        publication.id,
+      );
+      const fullPublication = response.data;
+      const publicationComments = fullPublication.comments || [];
+      setCommentsCount(publicationComments.length);
+    } catch (error) {
+      console.error("Error loading comments count:", error);
+      // Fallback: usar los comentarios que vienen con la publicación (si los hay)
+      const fallbackComments = publication.comments || [];
+      setCommentsCount(fallbackComments.length);
+    }
+  };
+
+  // Función para cargar comentarios completos desde el backend
+  const loadComments = async () => {
+    if (!publication?.id || isLoadingComments) return;
+
+    setIsLoadingComments(true);
+    try {
+      // Obtener la publicación completa con comentarios
+      const response = await PublicationService.getPublicationById(
+        publication.id,
+      );
+      const fullPublication = response.data;
+      const publicationComments = fullPublication.comments || [];
+      setComments(publicationComments);
+      setCommentsCount(publicationComments.length);
+    } catch (error) {
+      console.error("Error loading comments:", error);
+      // Fallback: usar los comentarios que vienen con la publicación (si los hay)
+      const fallbackComments = publication.comments || [];
+      setComments(fallbackComments);
+      setCommentsCount(fallbackComments.length);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  // Manejar clic en botón de comentarios
+  const handleCommentsClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!showComments) {
+      await loadComments();
+    }
+    setShowComments(!showComments);
+  };
+
+  // Función para manejar envío de comentarios (reciclada del modal)
+  const handleSubmitComment = async () => {
+    if (!commentText.trim() || !publication?.id || !currentUserId) return;
+    setIsSubmittingComment(true);
+    try {
+      const response = await CommentService.createComment({
+        description: commentText,
+        publicationId: publication.id,
+        userId: currentUserId,
+        created_at: new Date(),
+      });
+
+      // Recargar comentarios desde el backend para obtener datos completos incluyendo profile_image
+      await loadComments();
+      setCommentText("");
+      toast.success("Comentario agregado exitosamente");
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      toast.error("Error al agregar comentario");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   const {
     likesCount,
@@ -325,14 +448,23 @@ const PublicationFeedCard = ({
               </button>
 
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowComments(!showComments);
-                }}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
+                onClick={handleCommentsClick}
+                disabled={isLoadingComments}
+                className={`flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#097EEC] transition-colors ${
+                  isLoadingComments ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <MessageSquare className="h-4 w-4" />
-                <span>{publication.comments?.length || 0}</span>
+                <span>
+                  {commentsCount || publication.comments?.length || 0}
+                </span>
+              </button>
+
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
               </button>
             </div>
 
@@ -345,7 +477,7 @@ const PublicationFeedCard = ({
                 className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-xs px-3 py-1.5"
                 onClick={() => setShowDetailModal(true)}
               >
-                Expandir
+                Detalles
               </Button>
 
               <StartChatButton
@@ -357,89 +489,92 @@ const PublicationFeedCard = ({
             </div>
           </div>
 
-          {/* Comments Section (Collapsible) */}
+          {/* Comments Section (Collapsible) - Compact Instagram Style */}
           {showComments && (
             <div className="pt-3 border-t border-gray-100">
-              <div className="space-y-3">
-                {publication.comments && publication.comments.length > 0 ? (
-                  publication.comments.map((comment, index) => {
-                    const commentUserId = comment.user?.id || "";
-                    const hasValidCommentUserId =
-                      commentUserId &&
-                      commentUserId !== "" &&
-                      commentUserId !== "undefined";
-
-                    return (
-                      <div key={index} className="flex items-start gap-3">
-                        {hasValidCommentUserId ? (
-                          <Link
-                            href={`/profile/${commentUserId}`}
-                            className="hover:opacity-80 transition-opacity cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <UserAvatarDisplay
-                              user={{
-                                id:
-                                  typeof comment.user?.id === "string"
-                                    ? parseInt(comment.user.id)
-                                    : (comment.user?.id as number) || 0,
-                                name: comment.user?.name || "Usuario",
-                                profile_image: comment.user?.profile_image,
-                                // email: comment.user?.email, // Ocultar email
-                              }}
-                              size="sm"
-                            />
-                          </Link>
-                        ) : (
-                          <UserAvatarDisplay
-                            user={{
-                              id:
-                                typeof comment.user?.id === "string"
-                                  ? parseInt(comment.user.id)
-                                  : (comment.user?.id as number) || 0,
-                              name: comment.user?.name || "Usuario",
-                              profile_image: comment.user?.profile_image,
-                              // email: comment.user?.email, // Ocultar email
-                            }}
-                            size="sm"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              {hasValidCommentUserId ? (
-                                <Link
-                                  href={`/profile/${commentUserId}`}
-                                  className="hover:text-[#097EEC] transition-colors cursor-pointer"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <span className="text-sm font-medium text-gray-900">
-                                    {comment.user?.name || "Usuario"}
-                                  </span>
-                                </Link>
-                              ) : (
-                                <span className="text-sm font-medium text-gray-900">
-                                  {comment.user?.name || "Usuario"}
-                                </span>
-                              )}
-                              <span className="text-xs text-gray-500">
-                                {formatDate(comment.created_at)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-700">
-                              {comment.description}
-                            </p>
-                          </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {comments && comments.length > 0 ? (
+                  comments.map((comment, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <UserAvatarDisplay
+                        user={{
+                          id:
+                            typeof comment.user?.id === "string"
+                              ? parseInt(comment.user.id)
+                              : (comment.user?.id as number) || 0,
+                          name: comment.user?.name || "Usuario",
+                          profile_image: comment.user?.profile_image,
+                        }}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {comment.user?.name || "Usuario"}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(comment.created_at).toLocaleDateString(
+                              "es-ES",
+                            )}
+                          </span>
                         </div>
+                        <p className="text-sm text-gray-700 mt-0.5 leading-tight">
+                          {comment.description}
+                        </p>
                       </div>
-                    );
-                  })
+                    </div>
+                  ))
                 ) : (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-sm text-gray-500 text-center py-2">
                     No hay comentarios aún.
                   </p>
                 )}
               </div>
+
+              {/* Compact Comment Input */}
+              {currentUserId && (
+                <div
+                  className="mt-3 pt-3 border-t border-gray-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-2">
+                    <UserAvatarDisplay
+                      user={{
+                        id: currentUserId,
+                        name: "Tú",
+                      }}
+                      size="sm"
+                    />
+                    <div className="flex-1 flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Deja un comentario..."
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmitComment();
+                          }
+                        }}
+                        className="flex-1 text-sm border border-gray-200 rounded-full px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isSubmittingComment}
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSubmitComment();
+                        }}
+                        disabled={!commentText.trim() || isSubmittingComment}
+                        className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        {isSubmittingComment ? "..." : "Enviar"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

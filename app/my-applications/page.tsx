@@ -848,7 +848,9 @@ const MyApplicationsPageContent = () => {
         {/* Header */}
         <div className="bg-[#097EEC] text-white py-6 sm:py-8 pt-20 sm:pt-24">
           <div className="container mx-auto px-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">Mis Aplicaciones</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Mis Postulaciones
+            </h1>
             <p className="mt-2 text-blue-100 text-sm sm:text-base">
               Gestiona las aplicaciones que enviaste y las que recibiste
             </p>

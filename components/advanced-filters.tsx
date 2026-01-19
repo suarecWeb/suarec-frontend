@@ -54,7 +54,6 @@ export default function AdvancedFilters({
 
   // Estados para dropdowns personalizados
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSortByDropdownOpen, setIsSortByDropdownOpen] = useState(false);
   const [isSortOrderDropdownOpen, setIsSortOrderDropdownOpen] = useState(false);
 
@@ -68,12 +67,8 @@ export default function AdvancedFilters({
           PublicationService.getAvailableTypes(),
         ]);
 
-        // Normalizar categorías a mayúsculas y eliminar duplicados
-        const normalizedCategories = categoriesResponse.data.map(
-          (cat: string) => cat.toUpperCase(),
-        );
-        const uniqueCategories = Array.from(new Set(normalizedCategories));
-        setAvailableCategories(uniqueCategories);
+        // El backend ya devuelve categorías normalizadas y sin duplicados
+        setAvailableCategories(categoriesResponse.data);
         setAvailableTypes(typesResponse.data);
       } catch (error) {
         console.error("Error loading filter options:", error);
@@ -92,7 +87,6 @@ export default function AdvancedFilters({
       const target = event.target as Element;
       if (!target.closest(".dropdown-container")) {
         setIsTypeDropdownOpen(false);
-        setIsCategoryDropdownOpen(false);
         setIsSortByDropdownOpen(false);
         setIsSortOrderDropdownOpen(false);
       }
@@ -177,7 +171,7 @@ export default function AdvancedFilters({
         <CollapsibleContent className="mt-3">
           <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl border border-blue-200/60 p-3 relative shadow-sm">
             {/* Filtros Principales */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-1 gap-3 mb-3">
               {/* Tipo de publicación - Custom dropdown */}
               <div>
                 <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
@@ -237,69 +231,6 @@ export default function AdvancedFilters({
                             {type === PublicationType.SERVICE_REQUEST &&
                               "Solicitudes de Servicios"}
                             {type === PublicationType.JOB && "Empleos"}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Categoría única - Custom dropdown */}
-              <div>
-                <label className="text-xs font-eras-medium text-gray-700 mb-1 block">
-                  Categoría
-                </label>
-                <div className="relative dropdown-container">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
-                    }
-                    className="h-9 w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-lg text-left focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none text-xs flex items-center justify-between hover:border-gray-300"
-                  >
-                    <span
-                      className={
-                        filters.category ? "text-gray-900" : "text-gray-500"
-                      }
-                    >
-                      {filters.category
-                        ? filters.category.charAt(0).toUpperCase() +
-                          filters.category.slice(1).toLowerCase()
-                        : "Seleccionar categoría"}
-                    </span>
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-
-                  {isCategoryDropdownOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleFilterChange("category", undefined);
-                          setIsCategoryDropdownOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100"
-                      >
-                        <div className="font-medium text-gray-900 text-xs">
-                          Todas las categorías
-                        </div>
-                      </button>
-                      {availableCategories.map((category) => (
-                        <button
-                          key={category}
-                          type="button"
-                          onClick={() => {
-                            handleFilterChange("category", category);
-                            setIsCategoryDropdownOpen(false);
-                          }}
-                          className="w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="font-medium text-gray-900 text-xs">
-                            {category.charAt(0).toUpperCase() +
-                              category.slice(1).toLowerCase()}
                           </div>
                         </button>
                       ))}

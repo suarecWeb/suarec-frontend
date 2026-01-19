@@ -22,6 +22,7 @@ import {
   Home,
   TrendingUp,
   Handshake,
+  ShoppingBag, //nuevo icono para la bolsita de compras
   CreditCard,
   Star,
   BarChart3,
@@ -191,10 +192,10 @@ const Navbar = ({
                     </NavLink>
                     <NavLink
                       href="/contracts"
-                      icon={<Handshake className="h-4 w-4" />}
+                      icon={<ShoppingBag className="h-4 w-4" />}
                       isScrolled={isScrolled}
                     >
-                      Contrataciones
+                      Mis compras
                     </NavLink>
                     <NavLink
                       href="/chat"
@@ -236,7 +237,7 @@ const Navbar = ({
                           icon={<Briefcase className="h-4 w-4" />}
                           isScrolled={isScrolled}
                         >
-                          Aplicaciones
+                          Mis Postulaciones
                         </NavLink>
                       </NotificationBadge>
                     )}
@@ -264,10 +265,10 @@ const Navbar = ({
                     {hasRole(["PERSON"]) && (
                       <NavLink
                         href="/contracts"
-                        icon={<Handshake className="h-4 w-4" />}
+                        icon={<ShoppingBag className="h-4 w-4" />}
                         isScrolled={isScrolled}
                       >
-                        Contrataciones
+                        Mis compras
                       </NavLink>
                     )}
                   </>
@@ -369,7 +370,7 @@ const Navbar = ({
                       icon={<UserCheck className="h-5 w-5" />}
                       onClick={closeMenu}
                     >
-                      Mis aplicaciones
+                      Mis Postulaciones
                     </MobileNavLink>
                   )}
 
@@ -396,10 +397,10 @@ const Navbar = ({
                   {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
                     <MobileNavLink
                       href="/contracts"
-                      icon={<Handshake className="h-5 w-5" />}
+                      icon={<ShoppingBag className="h-5 w-5" />}
                       onClick={closeMenu}
                     >
-                      Contrataciones
+                      Mis compras
                     </MobileNavLink>
                   )}
 

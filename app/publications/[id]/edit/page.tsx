@@ -11,6 +11,7 @@ import {
   Publication,
   PublicationType,
 } from "@/interfaces/publication.interface";
+import SupabaseService from "@/services/supabase.service";
 import {
   AlertCircle,
   ArrowLeft,
@@ -53,20 +54,24 @@ const CATEGORIES = [
 
 // Unidades de precio disponibles
 const PRICE_UNITS = [
-  "Por hora",
-  "Por día",
-  "Por semana",
-  "Por mes",
-  "Por proyecto",
-  "Por servicio",
-  "Por unidad",
-  "Por metro cuadrado",
-  "Por kilómetro",
-  "Otro",
+  { value: "hour", label: "Por hora" },
+  { value: "daily", label: "Por día" },
+  { value: "weekly", label: "Por semana" },
+  { value: "monthly", label: "Por mes" },
+  { value: "project", label: "Por proyecto" },
+  { value: "service", label: "Por servicio" },
+  { value: "piece", label: "Por unidad" },
+  { value: "square_meter", label: "Por metro cuadrado" },
+  { value: "kilometer", label: "Por kilómetro" },
+  { value: "other", label: "Otro" },
 ];
 
 // Tipos de publicación
-const PUBLICATION_TYPES = ["Servicio", "Búsqueda", "Oferta", "Demanda"];
+const PUBLICATION_TYPES_OPTIONS = [
+  { value: PublicationType.SERVICE, label: "Oferta de Servicio" },
+  { value: PublicationType.SERVICE_REQUEST, label: "Solicitud de Servicio" },
+  { value: PublicationType.JOB, label: "Oferta de Empleo" },
+];
 
 const EditPublicationPage = () => {
   const params = useParams();
@@ -81,6 +86,14 @@ const EditPublicationPage = () => {
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [originalPublication, setOriginalPublication] =
     useState<Publication | null>(null);
+  const [displayPrice, setDisplayPrice] = useState("");
+
+  const formatCurrency = (value: number | string | undefined) => {
+    if (value === undefined || value === null || value === "") return "";
+    const numberVal = typeof value === "string" ? parseInt(value, 10) : value;
+    if (isNaN(numberVal)) return "";
+    return new Intl.NumberFormat("es-CO").format(numberVal);
+  };
   const router = useRouter();
 
   const {
@@ -163,11 +176,21 @@ const EditPublicationPage = () => {
           "✅ Acceso permitido - Continuando con la carga del formulario",
         );
 
+        // Normalizar categoría (backend may return uppercase)
+        const normalizedCategory =
+          CATEGORIES.find(
+            (c) => c.toUpperCase() === publication.category?.toUpperCase(),
+          ) || publication.category;
+
         // Establecer valores en el formulario
         setValue("title", publication.title);
         setValue("description", publication.description || "");
-        setValue("category", publication.category);
+        setValue("category", normalizedCategory);
         setValue("price", publication.price);
+        if (publication.price) {
+          setDisplayPrice(formatCurrency(publication.price));
+        }
+        setValue("priceUnit", publication.priceUnit || "");
         setValue("priceUnit", publication.priceUnit || "");
         setValue("type", publication.type || "");
         setValue("image_url", publication.image_url || "");
@@ -205,18 +228,16 @@ const EditPublicationPage = () => {
   };
 
   // Función para subir imágenes (simulada)
+  // Función para subir imágenes con Supabase
   const uploadImage = async (file: File): Promise<string> => {
-    // Esta función debería conectarse con tu servicio real de almacenamiento de imágenes
-    // Por ahora, simularemos un retraso y devolveremos una URL falsa
     setUploading(true);
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        setUploading(false);
-        // En un caso real, aquí obtendrías la URL de la imagen subida
-        resolve(`https://example.com/images/${file.name}`);
-      }, 1500);
-    });
+    const result = await SupabaseService.uploadImage(
+      file,
+      "publication-images",
+    );
+    setUploading(false);
+    if (result.error) throw new Error(result.error);
+    return result.url;
   };
 
   const onSubmit = async (data: FormData) => {
@@ -239,7 +260,7 @@ const EditPublicationPage = () => {
       const updatedData: Partial<Publication> = {
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category.toUpperCase(), // Mantener consistencia con Create
         price: data.price,
         priceUnit: data.priceUnit,
         type: data.type as PublicationType,
@@ -418,9 +439,9 @@ const EditPublicationPage = () => {
                         disabled={isLoading}
                       >
                         <option value="">Selecciona un tipo</option>
-                        {PUBLICATION_TYPES.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
+                        {PUBLICATION_TYPES_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
                           </option>
                         ))}
                       </select>
@@ -441,19 +462,46 @@ const EditPublicationPage = () => {
                       </label>
                       <input
                         id="price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
-                          errors.price ? "border-red-500" : "border-gray-200"
-                        }`}
-                        placeholder="Ej. 50000"
+                        type="hidden"
                         {...register("price", {
                           min: {
                             value: 0,
                             message: "El precio no puede ser negativo",
                           },
                         })}
+                      />
+                      <input
+                        type="text"
+                        value={displayPrice}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          const numberVal = val ? parseInt(val, 10) : undefined;
+
+                          // Si borran todo, reseteamos a vacío
+                          if (!val) {
+                            setDisplayPrice("");
+                            setValue("price", undefined, {
+                              shouldValidate: true,
+                            });
+                            return;
+                          }
+
+                          // Formatear visualmente
+                          setDisplayPrice(
+                            new Intl.NumberFormat("es-CO").format(
+                              numberVal as number,
+                            ),
+                          );
+
+                          // Guardar valor numérico real
+                          setValue("price", numberVal, {
+                            shouldValidate: true,
+                          });
+                        }}
+                        className={`w-full px-4 py-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none ${
+                          errors.price ? "border-red-500" : "border-gray-200"
+                        }`}
+                        placeholder="Ej. 50.000"
                         disabled={isLoading}
                       />
                       {errors.price && (
@@ -483,8 +531,8 @@ const EditPublicationPage = () => {
                       >
                         <option value="">Selecciona una unidad</option>
                         {PRICE_UNITS.map((unit) => (
-                          <option key={unit} value={unit}>
-                            {unit}
+                          <option key={unit.value} value={unit.value}>
+                            {unit.label}
                           </option>
                         ))}
                       </select>

@@ -16,6 +16,7 @@ import {
   Users,
   UserCheck,
   Handshake,
+  ShoppingBag, //nuevo icono para la bolsita de compras
   FileText,
   Building2,
   Star,
@@ -27,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
+import { UserService } from "@/services/UsersService";
 
 interface NavbarRoleProps {
   isMobile: boolean;
@@ -46,6 +48,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
   const [token, setToken] = useState<string | undefined>(undefined);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userImage, setUserImage] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -73,10 +76,22 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
         const decoded = jwtDecode<TokenPayload>(tokenValue);
         setUserRole(decoded.roles?.[0]?.name || null); // Tomar el nombre del primer rol
         setUserName(decoded.email || null); // Obtener el email del usuario
+
+        // Fetch full user profile to get the image
+        UserService.getUserById(decoded.id)
+          .then((response) => {
+            if (response.data && response.data.profile_image) {
+              setUserImage(response.data.profile_image);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching user profile for navbar:", error);
+          });
       } catch (error) {
         console.error("Error al decodificar token:", error);
         setUserRole(null);
         setUserName(null);
+        setUserImage(null);
       }
     }
   }, []);
@@ -153,7 +168,15 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               isScrolled ? "bg-[#097EEC] text-white" : "bg-white text-[#097EEC]"
             }`}
           >
-            {getInitial(userName)}
+            {userImage ? (
+              <img
+                src={userImage}
+                alt={getDisplayName(userName)}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              getInitial(userName)
+            )}
           </div>
           <span className="text-sm font-eras-medium truncate max-w-32">
             {getDisplayName(userName)}
@@ -186,7 +209,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               onClick={() => setIsDropdownOpen(false)}
             >
               <UserCheck className="h-4 w-4" />
-              <span className="text-sm">Mis aplicaciones</span>
+              <span className="text-sm">Mis postulaciones</span>
             </Link>
           )}
 
@@ -207,8 +230,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <Handshake className="h-4 w-4" />
-              <span className="text-sm">Contrataciones</span>
+              <ShoppingBag className="h-4 w-4" />
+              <span className="text-sm">Mis compras</span>
             </Link>
           )}
 
