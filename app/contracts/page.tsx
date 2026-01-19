@@ -25,6 +25,7 @@ import {
   ArrowRight,
   Receipt,
   Mail,
+  Search,
 } from "lucide-react";
 import ProviderResponseModal from "@/components/provider-response-modal";
 import EditProviderMessageModal from "@/components/edit-provider-message-modal";
@@ -52,6 +53,7 @@ import Cookies from "js-cookie";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { AccountBalance } from "@/components/contracts/AccountBalance";
 import { KPIs } from "@/components/contracts/kpis";
+import { ContractDetailsModal } from "@/components/contracts/details.contracts";
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<{
@@ -105,6 +107,10 @@ export default function ContractsPage() {
     "provider",
   );
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [contractForDetails, setContractForDetails] = useState<Contract | null>(
+    null,
+  );
 
   useEffect(() => {
     loadContracts();
@@ -543,7 +549,19 @@ export default function ContractsPage() {
             </div>
 
             {/* Main content with right margin to avoid overlap */}
-            <div className="mr-[28rem]">
+            <div className="mr-[28rem] pt-4">
+              {/* Buscador de contratos arriba de las KPIs */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar contratos..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none text-sm"
+                  />
+                </div>
+              </div>
+
               {/* Stats Cards as Tabs */}
               <KPIs
                 contracts={contracts}
@@ -569,24 +587,24 @@ export default function ContractsPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid gap-4">
+                      <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
                         {contracts.asClient.map((contract) => (
                           <div
                             key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
                           >
-                            {/* Imagen del servicio */}
-                            <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                              <Briefcase className="h-16 w-16 text-blue-500" />
+                            {/* Imagen del servicio compacta */}
+                            <div className="h-24 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                              <Briefcase className="h-10 w-10 text-blue-500" />
                             </div>
 
-                            <div className="p-4">
+                            <div className="p-3">
                               {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-1 mb-2">
+                              <div className="flex items-center gap-0.5 mb-1">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <svg
                                     key={star}
-                                    className="w-4 h-4 text-yellow-400 fill-current"
+                                    className="w-3 h-3 text-yellow-400 fill-current"
                                     viewBox="0 0 20 20"
                                   >
                                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
@@ -594,62 +612,44 @@ export default function ContractsPage() {
                                 ))}
                               </div>
 
-                              {/* Título y estado */}
-                              <div className="flex justify-between items-start mb-3">
-                                <h3 className="text-lg font-semibold text-gray-800 flex-1">
-                                  {contract.publication?.title}
-                                </h3>
+                              {/* Título */}
+                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
+                                {contract.publication?.title}
+                              </h3>
+
+                              {/* Precio y estado */}
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-lg font-bold text-gray-900">
+                                  {formatCurrency(contract.totalPrice || 0)}
+                                </span>
                                 <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(contract.status)} ml-2`}
+                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
                                 >
                                   {getStatusText(contract.status)}
                                 </span>
                               </div>
 
-                              {/* Precio */}
-                              <div className="text-2xl font-bold text-gray-900 mb-2">
-                                {formatCurrency(contract.totalPrice || 0)}
-                              </div>
+                              {/* Fecha */}
+                              <p className="text-xs text-gray-500 mb-2">
+                                {new Date(
+                                  contract.createdAt,
+                                ).toLocaleDateString("es-ES", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
 
-                              {/* Información general */}
-                              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                <div className="flex justify-between">
-                                  <span>Título:</span>
-                                  <span className="font-medium">
-                                    {contract.publication?.title}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Estado:</span>
-                                  <span className="font-medium">
-                                    {getStatusText(contract.status)}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Fecha de Creación:</span>
-                                  <span className="font-medium">
-                                    {new Date(
-                                      contract.createdAt,
-                                    ).toLocaleDateString("es-ES", {
-                                      day: "numeric",
-                                      month: "long",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Botones de acción */}
-                              <div className="flex gap-2 pt-2 border-t border-gray-100">
-                                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                                  Ver Detalles
-                                </button>
-                                {contract.status === ContractStatus.PENDING && (
-                                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                                    Cancelar
-                                  </button>
-                                )}
-                              </div>
+                              {/* Botón de acción */}
+                              <button
+                                onClick={() => {
+                                  setContractForDetails(contract);
+                                  setIsDetailsModalOpen(true);
+                                }}
+                                className="w-full bg-blue-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                              >
+                                Ver Detalles
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -677,24 +677,24 @@ export default function ContractsPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid gap-4">
+                      <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
                         {contracts.asProvider.map((contract) => (
                           <div
                             key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
                           >
-                            {/* Imagen del servicio */}
-                            <div className="h-48 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-                              <Users className="h-16 w-16 text-green-500" />
+                            {/* Imagen del servicio compacta */}
+                            <div className="h-24 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                              <Users className="h-10 w-10 text-green-500" />
                             </div>
 
-                            <div className="p-4">
+                            <div className="p-3">
                               {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-1 mb-2">
+                              <div className="flex items-center gap-0.5 mb-1">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <svg
                                     key={star}
-                                    className="w-4 h-4 text-yellow-400 fill-current"
+                                    className="w-3 h-3 text-yellow-400 fill-current"
                                     viewBox="0 0 20 20"
                                   >
                                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
@@ -702,62 +702,47 @@ export default function ContractsPage() {
                                 ))}
                               </div>
 
-                              {/* Título y estado */}
-                              <div className="flex justify-between items-start mb-3">
-                                <h3 className="text-lg font-semibold text-gray-800 flex-1">
-                                  {contract.publication?.title}
-                                </h3>
+                              {/* Título */}
+                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
+                                {contract.publication?.title}
+                              </h3>
+
+                              {/* Precio y estado */}
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-lg font-bold text-gray-900">
+                                  {formatCurrency(contract.totalPrice || 0)}
+                                </span>
                                 <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(contract.status)} ml-2`}
+                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
                                 >
                                   {getStatusText(contract.status)}
                                 </span>
                               </div>
 
-                              {/* Precio */}
-                              <div className="text-2xl font-bold text-gray-900 mb-2">
-                                {formatCurrency(contract.totalPrice || 0)}
-                              </div>
+                              {/* Cliente y fecha */}
+                              <p className="text-xs text-gray-500 truncate mb-1">
+                                {contract.client?.name}
+                              </p>
+                              <p className="text-xs text-gray-400 mb-2">
+                                {new Date(
+                                  contract.createdAt,
+                                ).toLocaleDateString("es-ES", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
 
-                              {/* Información general */}
-                              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                                <div className="flex justify-between">
-                                  <span>Cliente:</span>
-                                  <span className="font-medium">
-                                    {contract.client?.name}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Estado:</span>
-                                  <span className="font-medium">
-                                    {getStatusText(contract.status)}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Fecha de Creación:</span>
-                                  <span className="font-medium">
-                                    {new Date(
-                                      contract.createdAt,
-                                    ).toLocaleDateString("es-ES", {
-                                      day: "numeric",
-                                      month: "long",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Botones de acción */}
-                              <div className="flex gap-2 pt-2 border-t border-gray-100">
-                                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
-                                  Ver Detalles
-                                </button>
-                                {contract.status === ContractStatus.PENDING && (
-                                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                                    Responder
-                                  </button>
-                                )}
-                              </div>
+                              {/* Botón de acción */}
+                              <button
+                                onClick={() => {
+                                  setContractForDetails(contract);
+                                  setIsDetailsModalOpen(true);
+                                }}
+                                className="w-full bg-green-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
+                              >
+                                Ver Detalles
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -947,6 +932,26 @@ export default function ContractsPage() {
             isLoading={isCancelling}
             requiresPenalty={penaltyInfo.requiresPenalty}
             penaltyMessage={penaltyInfo.message}
+          />
+        )}
+
+        {/* Contract Details Modal */}
+        {isDetailsModalOpen && contractForDetails && (
+          <ContractDetailsModal
+            contract={contractForDetails}
+            isOpen={isDetailsModalOpen}
+            onClose={() => {
+              setIsDetailsModalOpen(false);
+              setContractForDetails(null);
+            }}
+            isClientView={activeTab === "client"}
+            onCancelContract={(contract) => {
+              handleCancelContract(contract);
+            }}
+            onRespondContract={(contract) => {
+              setSelectedContract(contract);
+              setIsProviderResponseModalOpen(true);
+            }}
           />
         )}
       </div>

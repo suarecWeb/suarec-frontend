@@ -1,21 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useId } from "react";
-import {
-  Briefcase,
-  Code,
-  Palette,
-  Wrench,
-  Car,
-  Home,
-  Heart,
-  GraduationCap,
-  Utensils,
-  Camera,
-  Music,
-  Gamepad2,
-  TrendingUp,
-} from "lucide-react";
+import { TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import PublicationService from "@/services/PublicationsService";
 
 interface FeedBannerProps {
@@ -28,7 +15,7 @@ interface CategoryKPI {
   name: string;
   originalName: string;
   count: number;
-  icon: React.ComponentType<{ className?: string }>;
+  imagePath: string;
   color: string;
   bgColor: string;
 }
@@ -74,22 +61,24 @@ const CategorySlide = ({
     >
       <div
         onClick={() => onCategoryClick(category.originalName.toUpperCase())}
-        className={`relative w-24 h-24 rounded-xl cursor-pointer transition-all duration-300 hover:scale-110 ${
+        className={`relative w-24 h-28 rounded-xl cursor-pointer transition-all duration-300 hover:scale-110 ${
           isSelected
             ? "bg-[#097EEC] shadow-lg shadow-blue-200"
-            : `${category.bgColor} hover:shadow-md`
+            : "bg-transparent hover:shadow-md"
         }`}
       >
         <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-          <div
-            className={`w-8 h-8 rounded-lg ${isSelected ? "bg-white/20" : "bg-white"} flex items-center justify-center mb-2`}
-          >
-            <category.icon
-              className={`w-5 h-5 ${isSelected ? "text-white" : category.color}`}
+          <div className="w-22 h-22 flex items-center justify-center mb-2">
+            <Image
+              src={category.imagePath}
+              alt={category.name}
+              width={96}
+              height={96}
+              className="w-22 h-22 object-contain"
             />
           </div>
           <h3
-            className={`font-medium text-xs text-center leading-tight ${isSelected ? "text-white" : "text-gray-700"}`}
+            className={`font-medium text-xs text-center leading-tight ${isSelected ? "text-white" : "text-gray-600"}`}
           >
             {category.name}
           </h3>
@@ -112,8 +101,9 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
+  const [showNavButtons, setShowNavButtons] = useState(false);
 
-  // Mapeo de categorías a iconos y colores
+  // Mapeo de categorías a imágenes y colores
   const getCategoryConfig = (category: string) => {
     const categoryLower = category.toLowerCase();
 
@@ -121,27 +111,35 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       categoryLower.includes("tecnologia") ||
       categoryLower.includes("tech")
     ) {
-      return { icon: Code, color: "text-blue-600", bgColor: "bg-blue-50" };
+      return {
+        imagePath: "/categories/teknoloyia.png",
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+      };
     }
     if (
       categoryLower.includes("construccion") ||
       categoryLower.includes("obra")
     ) {
       return {
-        icon: Wrench,
+        imagePath: "/categories/construccion.png",
         color: "text-orange-600",
         bgColor: "bg-orange-50",
       };
     }
     if (categoryLower.includes("salud") || categoryLower.includes("medic")) {
-      return { icon: Heart, color: "text-red-600", bgColor: "bg-red-50" };
+      return {
+        imagePath: "/categories/salud.png",
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+      };
     }
     if (
       categoryLower.includes("educacion") ||
       categoryLower.includes("enseñanza")
     ) {
       return {
-        icon: GraduationCap,
+        imagePath: "/categories/educacion.png",
         color: "text-green-600",
         bgColor: "bg-green-50",
       };
@@ -151,7 +149,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       categoryLower.includes("servic")
     ) {
       return {
-        icon: Briefcase,
+        imagePath: "/categories/servicios.png",
         color: "text-purple-600",
         bgColor: "bg-purple-50",
       };
@@ -160,26 +158,38 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       categoryLower.includes("gastronomia") ||
       categoryLower.includes("comida")
     ) {
-      return { icon: Utensils, color: "text-pink-600", bgColor: "bg-pink-50" };
+      return {
+        imagePath: "/categories/gastro.png",
+        color: "text-pink-600",
+        bgColor: "bg-pink-50",
+      };
     }
     if (
       categoryLower.includes("transporte") ||
       categoryLower.includes("vehiculo")
     ) {
-      return { icon: Car, color: "text-blue-600", bgColor: "bg-blue-50" };
+      return {
+        imagePath: "/categories/el transportador.png",
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+      };
     }
     if (
       categoryLower.includes("manufactura") ||
       categoryLower.includes("fabric")
     ) {
-      return { icon: Wrench, color: "text-gray-600", bgColor: "bg-gray-50" };
+      return {
+        imagePath: "/categories/manufactureiro.png",
+        color: "text-gray-600",
+        bgColor: "bg-gray-50",
+      };
     }
     if (
       categoryLower.includes("finanzas") ||
       categoryLower.includes("financ")
     ) {
       return {
-        icon: TrendingUp,
+        imagePath: "/categories/finanzas.png",
         color: "text-blue-700",
         bgColor: "bg-blue-50",
       };
@@ -188,14 +198,26 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       categoryLower.includes("agricultura") ||
       categoryLower.includes("agro")
     ) {
-      return { icon: Home, color: "text-green-700", bgColor: "bg-green-50" };
+      return {
+        imagePath: "/categories/agricultura.png",
+        color: "text-green-700",
+        bgColor: "bg-green-50",
+      };
     }
     if (categoryLower.includes("otro")) {
-      return { icon: Briefcase, color: "text-gray-600", bgColor: "bg-gray-50" };
+      return {
+        imagePath: "/categories/otros.png",
+        color: "text-gray-600",
+        bgColor: "bg-gray-50",
+      };
     }
 
     // Default
-    return { icon: Briefcase, color: "text-gray-600", bgColor: "bg-gray-50" };
+    return {
+      imagePath: "/categories/otros.png",
+      color: "text-gray-600",
+      bgColor: "bg-gray-50",
+    };
   };
 
   useEffect(() => {
@@ -220,7 +242,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
               // FUNCION PARA MOSTRAR EN UN FUTURO LA CANTIDAD DE SERVICIOS POR CATEGORIA
               // count: Math.floor(Math.random() * 50) + 5, // Datos simulados
               count: 0, // Temporalmente sin mostrar números
-              icon: config.icon,
+              imagePath: config.imagePath,
               color: config.color,
               bgColor: config.bgColor,
             };
@@ -346,15 +368,17 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
                 className={`relative w-full aspect-square rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
                   isSelected
                     ? "bg-[#097EEC] shadow-lg shadow-blue-200"
-                    : `${category.bgColor} hover:shadow-md`
+                    : "bg-transparent hover:shadow-md"
                 }`}
               >
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-                  <div
-                    className={`w-8 h-8 rounded-lg ${isSelected ? "bg-white/20" : "bg-white"} flex items-center justify-center mb-2`}
-                  >
-                    <category.icon
-                      className={`w-5 h-5 ${isSelected ? "text-white" : category.color}`}
+                  <div className="w-14 h-14 flex items-center justify-center mb-2">
+                    <Image
+                      src={category.imagePath}
+                      alt={category.name}
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 object-contain"
                     />
                   </div>
                   <h3
@@ -369,7 +393,11 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
         </div>
       ) : (
         /* Vista colapsada - Carousel 3D */
-        <div className="relative">
+        <div
+          className="relative"
+          onMouseEnter={() => setShowNavButtons(true)}
+          onMouseLeave={() => setShowNavButtons(false)}
+        >
           <div
             ref={carouselRef}
             className="relative h-40 w-full overflow-hidden"
@@ -404,6 +432,26 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
               })}
             </div>
           </div>
+
+          {/* Botones de navegación */}
+          {showNavButtons && categoryStats.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevious}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                aria-label="Categoría anterior"
+              >
+                <ChevronLeft className="w-5 h-5 text-[#097EEC]" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                aria-label="Siguiente categoría"
+              >
+                <ChevronRight className="w-5 h-5 text-[#097EEC]" />
+              </button>
+            </>
+          )}
 
           {/* Indicadores de navegación */}
           <div className="flex justify-center gap-1 w-full mt-4">

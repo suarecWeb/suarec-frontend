@@ -16,6 +16,7 @@ import {
   Users,
   UserCheck,
   Handshake,
+  ShoppingBag, //nuevo icono para la bolsita de compras
   FileText,
   Building2,
   Star,
@@ -208,7 +209,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               onClick={() => setIsDropdownOpen(false)}
             >
               <UserCheck className="h-4 w-4" />
-              <span className="text-sm">Mis aplicaciones</span>
+              <span className="text-sm">Mis postulaciones</span>
             </Link>
           )}
 
@@ -229,8 +230,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
               onClick={() => setIsDropdownOpen(false)}
             >
-              <Handshake className="h-4 w-4" />
-              <span className="text-sm">Contrataciones</span>
+              <ShoppingBag className="h-4 w-4" />
+              <span className="text-sm">Mis compras</span>
             </Link>
           )}
 

@@ -8,27 +8,21 @@ import {
   MapPin,
   Clock,
   DollarSign,
-  User,
   Building2,
-  Star,
-  MessageSquare,
-  Share2,
-  Heart,
-  Edit,
-  Trash2,
-  AlertTriangle,
   Briefcase,
   CheckCircle,
   HandHeart,
-  ChevronLeft,
-  ChevronRight,
+  Heart,
+  Share2,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Publication } from "@/interfaces/publication.interface";
 import { User as UserInterface } from "@/interfaces/user.interface";
 import { Comment } from "@/interfaces/comment.interface";
 import { UserAvatarDisplay } from "@/components/ui/UserAvatar";
-import { translatePriceUnit, getPublicationDisplayPrice } from "@/lib/utils";
+import { translatePriceUnit } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
 import StartChatButton from "./start-chat-button";
 import CommentService from "@/services/CommentsService";
@@ -39,7 +33,6 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import { usePublicationLikes } from "@/hooks/usePublicationLikes";
 import ApplicationService from "@/services/ApplicationService";
 import ContractModal from "./contract-modal";
-import Link from "next/link";
 import { Author } from "./publications/author";
 import { Comments } from "./publications/comments";
 import PublicationService from "@/services/PublicationsService";
@@ -73,7 +66,6 @@ const PublicationDetailModal = ({
   const [applicationPriceUnit, setApplicationPriceUnit] = useState("");
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
-  const [showSidePanel, setShowSidePanel] = useState(false);
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -124,17 +116,13 @@ const PublicationDetailModal = ({
   const loadFullPublication = async () => {
     if (!publication?.id) return;
     try {
-      // Obtener la publicación completa con comentarios usando el servicio
       const response = await PublicationService.getPublicationById(
         publication.id,
       );
       const fullPublication = response.data;
-      console.log("Full publication data:", fullPublication);
-      console.log("Full publication comments:", fullPublication.comments);
       setComments(fullPublication.comments || []);
     } catch (error) {
       console.error("Error loading full publication:", error);
-      // Fallback: usar los comentarios que vienen con la publicación (si los hay)
       setComments(publication.comments || []);
     }
   };
@@ -218,12 +206,11 @@ const PublicationDetailModal = ({
         created_at: new Date(),
       });
 
-      // Agregar el nuevo comentario a la lista local
       const newComment = {
         ...response.data,
         user: {
           id: currentUserId,
-          name: "Tú", // Placeholder temporal
+          name: "Tú",
         },
       };
       setComments((prevComments) => [newComment, ...prevComments]);
@@ -276,62 +263,57 @@ const PublicationDetailModal = ({
     <>
       {/* Modal principal */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
         onClick={onClose}
       >
         <div
-          className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-100"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden"
           onClick={handleModalClick}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-            <div className="flex items-center gap-3">
-              <Tag className="h-6 w-6 text-[#097EEC] hidden lg:block" />
-              <div className="hidden lg:block">
-                <p className="text-sm text-gray-500">
+          {/* Header fijo */}
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <Tag className="h-5 w-5 text-[#097EEC] flex-shrink-0" />
+              <div className="min-w-0">
+                <h2 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                  {publication.title}
+                </h2>
+                <p className="text-xs text-gray-500 truncate">
                   {publication.category} • {formatDate(publication.created_at)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 lg:gap-2 flex-wrap">
-              {/* Botón de aplicar en el header */}
+
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Botones de acción */}
               {currentUserId &&
                 publication.userId !== currentUserId &&
                 !hasApplied &&
                 (publication.type === "SERVICE_REQUEST" ||
                   isCompanyPublication()) && (
-                  <button
+                  <Button
                     onClick={() => setShowApplicationModal(true)}
-                    className="flex items-center gap-1 lg:gap-2 bg-green-600 text-white px-2 lg:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm text-xs lg:text-sm"
+                    className="bg-green-600 hover:bg-green-700 px-2 sm:px-4 py-2 text-xs sm:text-sm"
                     disabled={isApplying}
                   >
-                    <Briefcase className="h-3 w-3 lg:h-4 lg:w-4" />
-                    <span className="hidden sm:inline">
-                      Aplicar a esta{" "}
-                      {publication.type === "SERVICE_REQUEST"
-                        ? "solicitud"
-                        : "oportunidad"}
-                    </span>
-                    <span className="sm:hidden">Aplicar</span>
-                  </button>
+                    <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Aplicar</span>
+                  </Button>
                 )}
 
-              {/* Botón de contratar servicio en el header */}
               {currentUserId &&
                 publication.userId !== currentUserId &&
                 publication.type !== "SERVICE_REQUEST" &&
                 !isCompanyPublication() && (
-                  <button
+                  <Button
                     onClick={handleHire}
-                    className="flex items-center gap-1 lg:gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-2 lg:px-4 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-sm text-xs lg:text-sm"
+                    className="bg-green-600 hover:bg-green-700 px-2 sm:px-4 py-2 text-xs sm:text-sm"
                   >
-                    <HandHeart className="h-3 w-3 lg:h-4 lg:w-4" />
-                    <span className="hidden sm:inline">
-                      Contratar este servicio
-                    </span>
-                    <span className="sm:hidden">Contratar</span>
-                  </button>
+                    <HandHeart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Contratar</span>
+                  </Button>
                 )}
+
               {canEditPublication() && (
                 <>
                   <Button
@@ -343,389 +325,324 @@ const PublicationDetailModal = ({
                         "_blank",
                       )
                     }
-                    className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 text-xs lg:text-sm"
+                    className="px-2 sm:px-3"
                   >
-                    <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
-                    <span className="hidden sm:inline">Editar</span>
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowDeleteModal(true)}
-                    className="flex items-center gap-1 lg:gap-2 text-red-600 hover:text-red-700 px-2 lg:px-3 text-xs lg:text-sm"
+                    className="text-red-600 hover:text-red-700 px-2 sm:px-3"
                   >
-                    <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
-                    <span className="hidden sm:inline">Eliminar</span>
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </>
               )}
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onClose}
-                className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 text-xs lg:text-sm"
+                className="px-2 sm:px-3"
               >
-                <X className="h-3 w-3 lg:h-4 lg:w-4" />
-                <span className="hidden sm:inline">Cerrar</span>
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Content - Two Column Layout */}
-          <div className="flex h-[calc(90vh-80px)] relative">
-            {/* Left Column - Main Content */}
-            <div className="flex-1 overflow-y-auto">
-              {/* Imagen principal */}
-              {publication.image_url && (
-                <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden">
-                  <img
-                    src={publication.image_url}
-                    alt={publication.title}
-                    className="w-full h-full object-cover"
+          {/* Contenido con scroll */}
+          <div className="overflow-y-auto max-h-[calc(95vh-80px)]">
+            {/* Layout de 3 columnas en pantallas grandes */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-6 lg:p-6">
+              {/* Columna izquierda - Info del autor (solo desktop) */}
+              <div className="hidden lg:block lg:col-span-3">
+                <div className="sticky top-6">
+                  <Author
+                    author={author}
+                    publicationType={publication?.type || ""}
+                    userRatingStats={null}
+                    isLoadingRatings={false}
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6">
-                    <div className="text-white">
-                      <h2 className="text-xl md:text-2xl font-bold mb-2">
-                        {publication.title}
-                      </h2>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="inline-flex items-center px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                          <Tag className="h-3.5 w-3.5 mr-1" />
-                          {publication.category}
-                        </span>
-                        {publication.price && (
-                          <span className="inline-flex items-center px-2.5 py-1 bg-green-500/80 backdrop-blur-sm rounded-full font-semibold">
-                            {formatCurrency(publication.price)}
-                            {publication.priceUnit && (
-                              <span className="ml-1 text-xs">
-                                / {translatePriceUnit(publication.priceUnit)}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              )}
+              </div>
 
-              {/* Contenido principal */}
-              <div className="p-6 space-y-6">
-                {/* Descripción */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Descripción
-                  </h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    {publication.description}
-                  </p>
-                </div>
-
-                {/* Detalles específicos según el tipo */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {publication.price && (
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Precio</p>
-                        <p className="font-semibold text-green-700">
+              {/* Columna central - Contenido principal */}
+              <div className="lg:col-span-6">
+                {/* Imagen */}
+                {publication.image_url && (
+                  <div className="relative w-full h-64 sm:h-80 lg:h-96 overflow-hidden lg:rounded-xl">
+                    <img
+                      src={publication.image_url}
+                      alt={publication.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {publication.price && (
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="inline-flex items-center px-4 py-2 bg-green-500/90 backdrop-blur-sm rounded-full text-white font-semibold">
+                          <DollarSign className="h-4 w-4 mr-1" />
                           {formatCurrency(publication.price)}
                           {publication.priceUnit && (
-                            <span className="text-sm text-gray-500 ml-1">
+                            <span className="ml-1 text-xs">
                               / {translatePriceUnit(publication.priceUnit)}
                             </span>
                           )}
-                        </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {publication.location && (
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                      <MapPin className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Ubicación</p>
-                        <p className="font-semibold text-blue-700">
-                          {publication.location}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {publication.urgency && (
-                    <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                      <Clock className="h-5 w-5 text-orange-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Urgencia</p>
-                        <p className="font-semibold text-orange-700 capitalize">
-                          {publication.urgency}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {publication.preferredSchedule && (
-                    <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                      <Calendar className="h-5 w-5 text-purple-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          Horario preferido
-                        </p>
-                        <p className="font-semibold text-purple-700 capitalize">
-                          {publication.preferredSchedule}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {publication.requirements && (
-                    <div className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg md:col-span-2">
-                      <Briefcase className="h-5 w-5 text-yellow-600 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-600">Requisitos</p>
-                        <p className="font-semibold text-yellow-700">
-                          {publication.requirements}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Botones de acción principales */}
-                {currentUserId && publication.userId !== currentUserId && (
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="flex flex-col gap-4">
-                      {/* Mostrar estado de aplicación si ya aplicó */}
-                      {hasApplied &&
-                        (publication.type === "SERVICE_REQUEST" ||
-                          isCompanyPublication()) && (
-                          <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-3 rounded-lg">
-                            <CheckCircle className="h-5 w-5" />
-                            <span className="font-medium">
-                              Ya aplicaste a esta{" "}
-                              {publication.type === "SERVICE_REQUEST"
-                                ? "solicitud"
-                                : "oportunidad"}
-                            </span>
-                          </div>
-                        )}
-                    </div>
+                    )}
                   </div>
                 )}
 
-                {/* Botones de acción secundarios */}
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-200 pb-20 lg:pb-0">
-                  <StartChatButton
-                    recipientId={
-                      publication.user?.id ? Number(publication.user.id) : 0
-                    }
-                    recipientName={publication.user?.name || ""}
-                    className="flex-shrink-0"
+                {/* Info del autor en mobile */}
+                <div className="lg:hidden p-4 border-b border-gray-200">
+                  <Author
+                    author={author}
+                    publicationType={publication?.type || ""}
+                    userRatingStats={null}
+                    isLoadingRatings={false}
                   />
+                </div>
 
-                  <button
-                    onClick={toggleLike}
-                    disabled={isLikeLoading}
-                    className={`flex items-center gap-2 text-sm transition-colors ${
-                      hasLiked
-                        ? "text-red-500"
-                        : "text-gray-500 hover:text-red-500"
-                    } ${isLikeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    <Heart
-                      className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`}
-                    />
-                    <span>{likesCount}</span>
-                  </button>
+                {/* Descripción y detalles */}
+                <div className="p-4 sm:p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Descripción
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      {publication.description}
+                    </p>
+                  </div>
 
-                  <button
-                    onClick={() => {
-                      const url = `${window.location.origin}/feed/${publication.id}`;
-                      if (navigator.share) {
-                        navigator.share({
-                          title: publication.title,
-                          text: publication.description || publication.title,
-                          url: url,
-                        });
-                      } else {
-                        navigator.clipboard.writeText(url);
-                        toast.success("Enlace copiado al portapapeles");
+                  {/* Grid de detalles */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {publication.location && (
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                        <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">Ubicación</p>
+                          <p className="font-semibold text-blue-700 truncate">
+                            {publication.location}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {publication.urgency && (
+                      <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                        <Clock className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">Urgencia</p>
+                          <p className="font-semibold text-orange-700 capitalize truncate">
+                            {publication.urgency}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {publication.preferredSchedule && (
+                      <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                        <Calendar className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">
+                            Horario preferido
+                          </p>
+                          <p className="font-semibold text-purple-700 capitalize truncate">
+                            {publication.preferredSchedule}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {publication.requirements && (
+                      <div className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg sm:col-span-2">
+                        <Briefcase className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-600">Requisitos</p>
+                          <p className="font-semibold text-yellow-700">
+                            {publication.requirements}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Estado de aplicación */}
+                  {hasApplied &&
+                    (publication.type === "SERVICE_REQUEST" ||
+                      isCompanyPublication()) && (
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-3 rounded-lg">
+                        <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                        <span className="font-medium text-sm">
+                          Ya aplicaste a esta{" "}
+                          {publication.type === "SERVICE_REQUEST"
+                            ? "solicitud"
+                            : "oportunidad"}
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Acciones */}
+                  <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
+                    <StartChatButton
+                      recipientId={
+                        publication.user?.id ? Number(publication.user.id) : 0
                       }
-                    }}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    <span>Compartir</span>
-                  </button>
+                      recipientName={publication.user?.name || ""}
+                      className="flex-shrink-0"
+                    />
+
+                    <button
+                      onClick={toggleLike}
+                      disabled={isLikeLoading}
+                      className={`flex items-center gap-2 text-sm transition-colors ${
+                        hasLiked
+                          ? "text-red-500"
+                          : "text-gray-500 hover:text-red-500"
+                      }`}
+                    >
+                      <Heart
+                        className={`h-4 w-4 ${hasLiked ? "fill-current" : ""}`}
+                      />
+                      <span>{likesCount}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/feed/${publication.id}`;
+                        if (navigator.share) {
+                          navigator.share({
+                            title: publication.title,
+                            text: publication.description || publication.title,
+                            url: url,
+                          });
+                        } else {
+                          navigator.clipboard.writeText(url);
+                          toast.success("Enlace copiado");
+                        }
+                      }}
+                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#097EEC] transition-colors"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Compartir</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Floating Button for Mobile */}
-            <button
-              onClick={() => setShowSidePanel(!showSidePanel)}
-              className="lg:hidden fixed bottom-6 right-6 z-20 bg-[#097EEC] text-white p-3 rounded-full shadow-lg hover:bg-[#0A6BC7] transition-all duration-200 flex items-center gap-2"
-            >
-              {showSidePanel ? (
-                <>
-                  <ChevronRight className="h-5 w-5" />
-                  <span className="text-sm font-medium">Publicación</span>
-                </>
-              ) : (
-                <>
-                  <MessageSquare className="h-5 w-5" />
-                  <span className="text-sm font-medium">
-                    Info & Comentarios
-                  </span>
-                </>
-              )}
-            </button>
-
-            {/* Right Column - Author and Comments */}
-            <div
-              className={`
-              lg:w-80 lg:border-l lg:border-gray-200 bg-gray-50 overflow-y-auto
-              ${
-                showSidePanel
-                  ? "fixed inset-0 z-10 w-full lg:relative lg:inset-auto"
-                  : "hidden lg:block"
-              }
-              transition-all duration-300 ease-in-out
-            `}
-            >
-              <div className="p-4 space-y-4">
-                {/* Close button for mobile */}
-                <div className="lg:hidden flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Información del Proveedor
-                  </h3>
-                  <button
-                    onClick={() => setShowSidePanel(false)}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
+              {/* Columna derecha - Comentarios */}
+              <div className="lg:col-span-3 border-t lg:border-t-0 lg:border-l border-gray-200">
+                <div className="lg:sticky lg:top-6 h-[600px] flex flex-col">
+                  <Comments
+                    comments={comments}
+                    commentText={commentText}
+                    setCommentText={setCommentText}
+                    currentUserId={currentUserId}
+                    isSubmittingComment={isSubmittingComment}
+                    onSubmitComment={handleSubmitComment}
+                    formatDate={(date) =>
+                      new Date(date).toLocaleDateString("es-ES")
+                    }
+                    formatTime={(date) =>
+                      new Date(date).toLocaleTimeString("es-ES", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    }
+                  />
                 </div>
-                {/* Author Component */}
-                <Author
-                  author={author}
-                  publicationType={publication?.type || ""}
-                  userRatingStats={null}
-                  isLoadingRatings={false}
-                />
-
-                {/* Comments Component */}
-                <Comments
-                  comments={comments}
-                  commentText={commentText}
-                  setCommentText={setCommentText}
-                  currentUserId={currentUserId}
-                  isSubmittingComment={isSubmittingComment}
-                  onSubmitComment={handleSubmitComment}
-                  formatDate={(date) =>
-                    new Date(date).toLocaleDateString("es-ES")
-                  }
-                  formatTime={(date) =>
-                    new Date(date).toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  }
-                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modals adicionales */}
+      {/* Modal de eliminación */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Eliminar publicación
-              </h3>
-              <p className="text-gray-700 mb-6">
-                ¿Estás seguro de que quieres eliminar esta publicación?
-              </p>
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={isDeleting}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleDeletePublication}
-                  disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  {isDeleting ? "Eliminando..." : "Eliminar"}
-                </Button>
-              </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Eliminar publicación
+            </h3>
+            <p className="text-gray-700 mb-6">
+              ¿Estás seguro de que quieres eliminar esta publicación?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleDeletePublication}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar"}
+              </Button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal de aplicación */}
       {showApplicationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Aplicar a la publicación
-              </h3>
-              <textarea
-                value={applicationMessage}
-                onChange={(e) => setApplicationMessage(e.target.value)}
-                placeholder="Mensaje opcional..."
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-                rows={3}
-              />
-              {publication?.type === "SERVICE_REQUEST" && (
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <input
-                    type="number"
-                    value={applicationPrice}
-                    onChange={(e) => setApplicationPrice(e.target.value)}
-                    placeholder="Precio"
-                    className="w-full p-3 border border-gray-300 rounded-lg"
-                  />
-                  <select
-                    value={applicationPriceUnit}
-                    onChange={(e) => setApplicationPriceUnit(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg"
-                  >
-                    <option value="">Unidad</option>
-                    <option value="HOUR">Por hora</option>
-                    <option value="DAY">Por día</option>
-                    <option value="PROJECT">Por proyecto</option>
-                  </select>
-                </div>
-              )}
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowApplicationModal(false)}
-                  disabled={isApplying}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Aplicar a la publicación
+            </h3>
+            <textarea
+              value={applicationMessage}
+              onChange={(e) => setApplicationMessage(e.target.value)}
+              placeholder="Mensaje opcional..."
+              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
+              rows={3}
+            />
+            {publication?.type === "SERVICE_REQUEST" && (
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <input
+                  type="number"
+                  value={applicationPrice}
+                  onChange={(e) => setApplicationPrice(e.target.value)}
+                  placeholder="Precio"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
+                />
+                <select
+                  value={applicationPriceUnit}
+                  onChange={(e) => setApplicationPriceUnit(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] outline-none"
                 >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleApply}
-                  disabled={isApplying}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isApplying ? "Enviando..." : "Aplicar"}
-                </Button>
+                  <option value="">Unidad</option>
+                  <option value="HOUR">Por hora</option>
+                  <option value="DAY">Por día</option>
+                  <option value="PROJECT">Por proyecto</option>
+                </select>
               </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowApplicationModal(false)}
+                disabled={isApplying}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleApply}
+                disabled={isApplying}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isApplying ? "Enviando..." : "Aplicar"}
+              </Button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal de contrato */}
       {showContractModal && publication && (
         <ContractModal
           isOpen={showContractModal}
