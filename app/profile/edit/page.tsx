@@ -30,6 +30,8 @@ import {
   Education,
 } from "@/interfaces/user.interface";
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
+import UserChangePassword from "@/components/profile/UserChangePassword";
+import SeguroSocial from "@/components/profile/segurosocial";
 import toast from "react-hot-toast";
 import SupabaseService from "@/services/supabase.service";
 import Zoom from "react-medium-image-zoom";
@@ -214,14 +216,6 @@ const ProfileEditPage = () => {
     references: [] as Reference[],
     socialLinks: [] as SocialLink[],
   });
-
-  // Estados para cambiar contraseña
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [changingPassword, setChangingPassword] = useState(false);
 
   const fetchIdPhotos = async () => {
     try {
@@ -722,93 +716,6 @@ const ProfileEditPage = () => {
     ? getRoleNames(user.roles).includes("PERSON")
     : false;
 
-  // Función para manejar cambios en los campos de contraseña
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Función para cambiar contraseña
-  const handleChangePassword = async () => {
-    // Validaciones
-    if (
-      !passwordData.currentPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
-    ) {
-      toast.error("Todos los campos son obligatorios");
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Las contraseñas nuevas no coinciden");
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast.error("La nueva contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      // Toast informativo al iniciar el proceso
-      toast.loading("🔄 Cambiando contraseña...", { id: "changePassword" });
-
-      // Llamada a la API para cambiar la contraseña
-      const response = await AuthService.changePassword(
-        user?.id?.toString() || "",
-        passwordData.newPassword,
-      );
-
-      // Verificar si la respuesta fue exitosa
-      if (response.status === 200 || response.status === 201) {
-        toast.success("✅ Contraseña cambiada exitosamente", {
-          id: "changePassword",
-        });
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-      } else {
-        toast.error("❌ No se pudo cambiar la contraseña", {
-          id: "changePassword",
-        });
-      }
-    } catch (err: any) {
-      // Manejar diferentes tipos de errores
-      if (err.response?.status === 400) {
-        toast.error(
-          "❌ Error: Verifica que la nueva contraseña cumpla con los requisitos",
-          { id: "changePassword" },
-        );
-      } else if (err.response?.status === 401) {
-        toast.error("❌ Error: No tienes permisos para cambiar la contraseña", {
-          id: "changePassword",
-        });
-      } else if (err.response?.status === 404) {
-        toast.error("❌ Error: Usuario no encontrado", {
-          id: "changePassword",
-        });
-      } else if (err.response?.data?.message) {
-        toast.error(`❌ Error: ${err.response.data.message}`, {
-          id: "changePassword",
-        });
-      } else {
-        toast.error(
-          "❌ Error: No se pudo cambiar la contraseña. Intenta nuevamente",
-          { id: "changePassword" },
-        );
-      }
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       fetchIdPhotos();
@@ -972,27 +879,30 @@ const ProfileEditPage = () => {
 
             {/* Formulario principal solo para información personal y empresa */}
             {user && (
-              <form onSubmit={handleSubmit}>
-                <Tabs defaultValue="personal">
-                  <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
-                    <TabsTrigger value="personal" className="flex-1">
-                      Información personal
+              <Tabs defaultValue="personal">
+                <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
+                  <TabsTrigger value="personal" className="flex-1">
+                    Información personal
+                  </TabsTrigger>
+                  {hasBusinessRole && (
+                    <TabsTrigger value="company" className="flex-1">
+                      Información de empresa
                     </TabsTrigger>
-                    {hasBusinessRole && (
-                      <TabsTrigger value="company" className="flex-1">
-                        Información de empresa
-                      </TabsTrigger>
-                    )}
-                    {hasPersonRole && (
-                      <TabsTrigger value="id-photos" className="flex-1">
-                        Fotos de cédula
-                      </TabsTrigger>
-                    )}
-                    <TabsTrigger value="security" className="flex-1">
-                      Seguridad
+                  )}
+                  {hasPersonRole && (
+                    <TabsTrigger value="id-photos" className="flex-1">
+                      Fotos de cédula
                     </TabsTrigger>
-                  </TabsList>
+                  )}
+                  <TabsTrigger value="security" className="flex-1">
+                    Seguridad
+                  </TabsTrigger>
+                  <TabsTrigger value="segurosocial" className="flex-1">
+                    Seguridad Social
+                  </TabsTrigger>
+                </TabsList>
 
+                <form onSubmit={handleSubmit}>
                   <TabsContent
                     value="personal"
                     className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
@@ -1845,94 +1755,10 @@ const ProfileEditPage = () => {
                     value="security"
                     className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
                   >
-                    <div className="max-w-md">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Cambiar contraseña
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-6">
-                        Actualiza tu contraseña para mantener tu cuenta segura
-                      </p>
-
-                      {/* Formulario simplificado sin onSubmit */}
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="currentPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Contraseña actual
-                          </label>
-                          <input
-                            type="password"
-                            id="currentPassword"
-                            name="currentPassword"
-                            value={passwordData.currentPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Ingresa tu contraseña actual"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="newPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Nueva contraseña
-                          </label>
-                          <input
-                            type="password"
-                            id="newPassword"
-                            name="newPassword"
-                            value={passwordData.newPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Mínimo 6 caracteres"
-                            minLength={6}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="confirmPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Confirmar nueva contraseña
-                          </label>
-                          <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={passwordData.confirmPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Repite la nueva contraseña"
-                          />
-                        </div>
-
-                        <div className="pt-4 space-y-3">
-                          {/* Botón principal */}
-                          <button
-                            type="button"
-                            onClick={handleChangePassword}
-                            className="w-full bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                            disabled={changingPassword}
-                          >
-                            {changingPassword ? (
-                              <>
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                <span>Cambiando contraseña...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Save className="h-5 w-5" />
-                                <span>Cambiar contraseña</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <UserChangePassword
+                      userId={user?.id || ""}
+                      userEmail={user?.email || ""}
+                    />
                   </TabsContent>
 
                   {hasPersonRole && (
@@ -2049,8 +1875,16 @@ const ProfileEditPage = () => {
                       )}
                     </button>
                   </div>
-                </Tabs>
-              </form>
+                </form>
+
+                {/* Tab de Seguro Social - Fuera del form para evitar actualizaciones */}
+                <TabsContent
+                  value="segurosocial"
+                  className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                >
+                  <SeguroSocial />
+                </TabsContent>
+              </Tabs>
             )}
           </div>
         </div>

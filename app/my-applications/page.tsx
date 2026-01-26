@@ -907,14 +907,14 @@ const MyApplicationsPageContent = () => {
                   className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-sm px-4 py-2"
                 >
                   <Briefcase className="h-4 w-4 mr-2" />
-                  Aplicaciones Enviadas
+                  Postulaciones Enviadas
                 </TabsTrigger>
                 <TabsTrigger
                   value="received"
                   className="data-[state=active]:bg-[#097EEC] data-[state=active]:text-white text-sm px-4 py-2"
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  Aplicaciones Recibidas
+                  Postulaciones Recibidas
                 </TabsTrigger>
               </TabsList>
 

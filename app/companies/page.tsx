@@ -214,6 +214,7 @@ const CompaniesPageContent = () => {
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  unoptimized={true}
                                 />
                               </div>
                             ) : (

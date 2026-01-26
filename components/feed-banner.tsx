@@ -42,7 +42,7 @@ const CategorySlide = ({
   const relativeAngle = angle - currentAngle;
 
   // Calcular la posición en el círculo expandido para ocupar más ancho
-  const radius = 280; // Aumentado para expandir más el carousel
+  const radius = 480; // Aumentado para expandir más el carousel
   const x = Math.sin((relativeAngle * Math.PI) / 180) * radius;
   const z = Math.cos((relativeAngle * Math.PI) / 180) * radius;
 
@@ -61,24 +61,24 @@ const CategorySlide = ({
     >
       <div
         onClick={() => onCategoryClick(category.originalName.toUpperCase())}
-        className={`relative w-24 h-28 rounded-xl cursor-pointer transition-all duration-300 hover:scale-110 ${
+        className={`relative w-32 h-40 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
           isSelected
             ? "bg-[#097EEC] shadow-lg shadow-blue-200"
             : "bg-transparent hover:shadow-md"
         }`}
       >
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-          <div className="w-22 h-22 flex items-center justify-center mb-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-between px-2 py-3">
+          <div className="w-24 h-24 flex items-center justify-center flex-shrink-0">
             <Image
               src={category.imagePath}
               alt={category.name}
-              width={96}
-              height={96}
-              className="w-22 h-22 object-contain"
+              width={80}
+              height={80}
+              className="w-24 h-24 object-contain"
             />
           </div>
           <h3
-            className={`font-medium text-xs text-center leading-tight ${isSelected ? "text-white" : "text-gray-600"}`}
+            className={`font-medium text-xs text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-600"}`}
           >
             {category.name}
           </h3>
@@ -311,14 +311,10 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
 
   if (loading) {
     return (
-      <div
-        className={`w-full bg-white rounded-xl shadow-sm border border-gray-200 px-2 py-6 mb-6 ${className}`}
-      >
+      <div className={`w-full bg-transparent px-2 py-6 mb-6 ${className}`}>
         <div className="flex items-center gap-2 mb-6 px-4">
           <TrendingUp className="h-5 w-5 text-[#097EEC]" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Categorías Populares
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Categorias</h3>
         </div>
         <div className="flex gap-2 overflow-hidden">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -333,17 +329,11 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
 
   return (
     <div
-      className={`w-full bg-white rounded-xl shadow-sm border border-gray-200 px-2 py-6 mb-6 transition-all duration-500 ${className}`}
+      className={`w-full bg-transparent px-2 py-6 mb-6 transition-all duration-500 ${className}`}
     >
       <div className="flex items-center justify-between mb-6 px-4">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-[#097EEC]" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Categorías Populares
-          </h3>
-          <span className="text-sm text-gray-500">
-            ({categoryStats.length} categorías disponibles)
-          </span>
+          <h3 className="text-lg font-semibold text-gray-900">Categorías</h3>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -355,41 +345,80 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
 
       {isExpanded ? (
         /* Vista expandida - Grid horizontal */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 px-2">
-          {categoryStats.map((category, index) => {
-            const isSelected =
-              selectedCategory === category.originalName.toUpperCase();
-            return (
-              <div
-                key={index}
-                onClick={() =>
-                  onCategoryClick?.(category.originalName.toUpperCase())
-                }
-                className={`relative w-full aspect-square rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
-                  isSelected
-                    ? "bg-[#097EEC] shadow-lg shadow-blue-200"
-                    : "bg-transparent hover:shadow-md"
-                }`}
+        <div className="relative">
+          {/* Botones de navegación */}
+          {categoryStats.length > 1 && (
+            <>
+              <button
+                onClick={() => {
+                  const container =
+                    document.getElementById("category-carousel");
+                  if (container) {
+                    container.scrollBy({ left: -200, behavior: "smooth" });
+                  }
+                }}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                aria-label="Categoría anterior"
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-                  <div className="w-14 h-14 flex items-center justify-center mb-2">
-                    <Image
-                      src={category.imagePath}
-                      alt={category.name}
-                      width={56}
-                      height={56}
-                      className="w-14 h-14 object-contain"
-                    />
+                <ChevronLeft className="w-5 h-5 text-[#097EEC]" />
+              </button>
+              <button
+                onClick={() => {
+                  const container =
+                    document.getElementById("category-carousel");
+                  if (container) {
+                    container.scrollBy({ left: 200, behavior: "smooth" });
+                  }
+                }}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                aria-label="Siguiente categoría"
+              >
+                <ChevronRight className="w-5 h-5 text-[#097EEC]" />
+              </button>
+            </>
+          )}
+
+          {/* Contenedor de categorías */}
+          <div
+            id="category-carousel"
+            className="flex gap-4 px-12 py-8 overflow-x-auto scrollbar-hide scroll-smooth"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {categoryStats.map((category, index) => {
+              const isSelected =
+                selectedCategory === category.originalName.toUpperCase();
+              return (
+                <div
+                  key={index}
+                  onClick={() =>
+                    onCategoryClick?.(category.originalName.toUpperCase())
+                  }
+                  className={`relative flex-shrink-0 w-28 sm:w-32 md:w-36 h-36 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
+                    isSelected
+                      ? "bg-[#097EEC] shadow-lg shadow-blue-200"
+                      : "bg-transparent hover:shadow-md"
+                  }`}
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-between px-2 py-3">
+                    <div className="w-20 h-20 flex items-center justify-center flex-shrink-0">
+                      <Image
+                        src={category.imagePath}
+                        alt={category.name}
+                        width={72}
+                        height={80}
+                        className="w-20 h-20 object-contain"
+                      />
+                    </div>
+                    <h3
+                      className={`font-medium text-xs text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-700"}`}
+                    >
+                      {category.name}
+                    </h3>
                   </div>
-                  <h3
-                    className={`font-medium text-xs text-center leading-tight ${isSelected ? "text-white" : "text-gray-700"}`}
-                  >
-                    {category.name}
-                  </h3>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : (
         /* Vista colapsada - Carousel 3D */
@@ -400,7 +429,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
         >
           <div
             ref={carouselRef}
-            className="relative h-40 w-full overflow-hidden"
+            className="relative h-60 w-full overflow-visible"
             style={{
               perspective: "1500px",
               transformStyle: "preserve-3d",
@@ -438,36 +467,20 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
             <>
               <button
                 onClick={handlePrevious}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                className="absolute -left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
                 aria-label="Categoría anterior"
               >
                 <ChevronLeft className="w-5 h-5 text-[#097EEC]" />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
+                className="absolute -right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 z-10 border border-gray-200"
                 aria-label="Siguiente categoría"
               >
                 <ChevronRight className="w-5 h-5 text-[#097EEC]" />
               </button>
             </>
           )}
-
-          {/* Indicadores de navegación */}
-          <div className="flex justify-center gap-1 w-full mt-4">
-            {categoryStats.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrent(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  current === index
-                    ? "bg-[#097EEC] w-6"
-                    : "bg-gray-300 hover:bg-gray-400"
-                }`}
-                aria-label={`Ir a categoría ${index + 1}`}
-              />
-            ))}
-          </div>
         </div>
       )}
     </div>
