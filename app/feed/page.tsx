@@ -15,6 +15,7 @@ import {
   Building2,
   Tag,
   TrendingUp,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +23,6 @@ import { Pagination } from "@/components/ui/pagination";
 import PublicationFeedCard from "@/components/publication-feed-card";
 import Navbar from "@/components/navbar";
 import PublicationModalManager from "@/components/publication-modal-manager";
-import AdvancedFilters from "@/components/advanced-filters";
 import FeedBanner from "@/components/feed-banner";
 import PublicationService from "@/services/PublicationsService";
 import {
@@ -65,6 +65,7 @@ export default function FeedPage() {
   const [publicationBids, setPublicationBids] = useState<{
     [key: string]: { contracts: Contract[]; totalBids: number };
   }>({});
+  const [showAllPublications, setShowAllPublications] = useState(false);
 
   // Estado para filtros avanzados
   const [filters, setFilters] = useState<PaginationParams>({
@@ -295,103 +296,128 @@ export default function FeedPage() {
 
       {/* Content con margen negativo para que se superponga */}
       <div className="container mx-auto px-4 -mt-6 pb-12 overflow-x-hidden">
-        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8 w-full max-w-full">
-          {/* Sidebar izquierdo - Filtros principales */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-gradient-to-br from-slate-50 to-blue-50/20 rounded-xl shadow-sm border border-slate-200/60 p-6 sticky top-24 hover:shadow-md hover:border-blue-300/60 transition-all duration-200">
-              <h3 className="text-lg font-eras-bold text-gray-900 mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-slate-500/10">
-                  <svg
-                    className="h-4 w-4 text-slate-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                </div>
-                Filtros
-              </h3>
-
-              {/* Componente de filtros avanzados */}
-              <AdvancedFilters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                onApplyFilters={handleApplyFilters}
-                onClearFilters={handleClearFilters}
-              />
-            </div>
-          </div>
-
+        <div className="grid lg:grid-cols-3 gap-4 lg:gap-8 w-full max-w-full">
           {/* Main Content - Feed (centro) */}
-          <div className="lg:col-span-2 col-span-full w-full max-w-full overflow-x-hidden">
-            {/* Filtros móviles */}
-            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 w-full max-w-full">
-              <AdvancedFilters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                onApplyFilters={handleApplyFilters}
-                onClearFilters={handleClearFilters}
-              />
-            </div>
-
-            {/* Create Post Button */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-full hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300 cursor-pointer">
+          <div className="lg:col-span-3 col-span-full w-full max-w-full overflow-x-hidden">
+            {/* Create Post Button with Type Filter */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 w-full max-w-4xl mx-auto hover:shadow-xl hover:-translate-y-1 hover:border-gray-200 transition-all duration-300">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1 font-eras-semibold text-gray-900 text-sm sm:text-base">
                   ¿Qué servicio necesitas hoy?
                 </div>
-                <Button
-                  onClick={() => verifyCreatePublication()}
-                  className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear Publicación
-                </Button>
+
+                {/* Filtro de Tipo */}
+                <div className="relative">
+                  <select
+                    value={filters.type || ""}
+                    onChange={(e) => {
+                      const typeValue = e.target.value as PublicationType | "";
+                      const newFilters = {
+                        ...filters,
+                        type: typeValue || undefined,
+                        page: 1,
+                      };
+                      setFilters(newFilters);
+                      fetchPublications(newFilters);
+                    }}
+                    className="h-10 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none appearance-none pr-8 cursor-pointer hover:border-gray-300"
+                  >
+                    <option value="">Todos los tipos</option>
+                    <option value={PublicationType.SERVICE}>
+                      Servicios (Oferta)
+                    </option>
+                    <option value={PublicationType.SERVICE_REQUEST}>
+                      Solicitudes de Servicios
+                    </option>
+                    <option value={PublicationType.JOB}>Empleos</option>
+                  </select>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg
+                      className="h-4 w-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                      const resetFilters = {
+                        category: undefined,
+                        type: undefined,
+                        search: "",
+                        page: 1,
+                        limit: 10,
+                      };
+                      setFilters(resetFilters);
+                      fetchPublications(resetFilters);
+                    }}
+                    variant="outline"
+                    className="border-gray-300 hover:bg-gray-50 text-gray-700 p-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    onClick={() => verifyCreatePublication()}
+                    className="bg-[#097EEC] hover:bg-[#097EEC]/90 text-white font-eras-medium w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Publicación
+                  </Button>
+                </div>
               </div>
             </div>
 
             {/* Feed Banner Component */}
-            <FeedBanner
-              selectedCategory={filters.category}
-              onCategoryClick={(category) => {
-                const newFilters = {
-                  ...filters,
-                  category:
-                    filters.category === category ? undefined : category,
-                  page: 1,
-                };
-                setFilters(newFilters);
-                fetchPublications(newFilters);
-              }}
-            />
+            <div className="max-w-4xl mx-auto mb-6">
+              <FeedBanner
+                selectedCategory={filters.category}
+                onCategoryClick={(category) => {
+                  const newFilters = {
+                    ...filters,
+                    category:
+                      filters.category === category ? undefined : category,
+                    page: 1,
+                  };
+                  setFilters(newFilters);
+                  fetchPublications(newFilters);
+                }}
+              />
+            </div>
 
             {/* Feed */}
-            <div className="space-y-4 lg:space-y-6 w-full max-w-full overflow-x-hidden">
+            <div className="w-full max-w-full overflow-x-hidden">
               {loading ? (
                 // Loading skeletons
-                Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 w-full max-w-full"
-                  >
-                    <div className="flex items-start gap-4 mb-4">
-                      <Skeleton className="h-12 w-12 rounded-full" />
-                      <div className="flex-1">
-                        <Skeleton className="h-6 w-48 mb-2" />
-                        <Skeleton className="h-4 w-32" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 w-full max-w-full"
+                    >
+                      <div className="flex items-start gap-4 mb-4">
+                        <Skeleton className="h-12 w-12 rounded-full" />
+                        <div className="flex-1">
+                          <Skeleton className="h-6 w-48 mb-2" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
                       </div>
+                      <Skeleton className="h-6 w-full mb-2" />
+                      <Skeleton className="h-4 w-3/4 mb-4" />
+                      <Skeleton className="h-32 w-full" />
                     </div>
-                    <Skeleton className="h-6 w-full mb-2" />
-                    <Skeleton className="h-4 w-3/4 mb-4" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : error ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center w-full max-w-full">
                   <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -401,15 +427,49 @@ export default function FeedPage() {
                   <p className="text-gray-600 font-eras">{error}</p>
                 </div>
               ) : filteredPublications.length > 0 ? (
-                filteredPublications.map((publication) => (
-                  <PublicationFeedCard
-                    key={publication.id}
-                    publication={publication}
-                    userRole={userRoles[0]}
-                    publicationBids={publicationBids[publication.id!]}
-                    onPublicationDeleted={fetchPublications}
-                  />
-                ))
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    {(showAllPublications
+                      ? filteredPublications
+                      : filteredPublications.slice(0, 3)
+                    ).map((publication) => (
+                      <PublicationFeedCard
+                        key={publication.id}
+                        publication={publication}
+                        userRole={userRoles[0]}
+                        publicationBids={publicationBids[publication.id!]}
+                        onPublicationDeleted={fetchPublications}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Botón Ver más */}
+                  {!showAllPublications && filteredPublications.length > 3 && (
+                    <div className="text-center mt-8">
+                      <Button
+                        onClick={() => setShowAllPublications(true)}
+                        variant="outline"
+                        className="bg-white hover:bg-gray-50 text-[#097EEC] border-[#097EEC] hover:border-[#097EEC]/80 font-eras-medium px-8 py-3"
+                      >
+                        Ver más publicaciones ({filteredPublications.length - 3}{" "}
+                        restantes)
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Botón Ver menos */}
+                  {showAllPublications && filteredPublications.length > 3 && (
+                    <div className="text-center mt-8">
+                      <Button
+                        onClick={() => setShowAllPublications(false)}
+                        variant="outline"
+                        className="bg-white hover:bg-gray-50 text-gray-600 border-gray-300 hover:border-gray-400 font-eras-medium px-8 py-3"
+                      >
+                        Ver menos
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8 text-center w-full max-w-full">
                   <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -423,58 +483,28 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Pagination */}
-            {filteredPublications.length > 0 && pagination.totalPages > 1 && (
-              <div className="mt-8 w-full max-w-full overflow-x-hidden">
-                <div className="text-center mb-4 text-sm text-gray-600">
-                  Página {pagination.page} de {pagination.totalPages}
+            {/* Pagination - Solo mostrar si se están viendo todas las publicaciones */}
+            {showAllPublications &&
+              filteredPublications.length > 0 &&
+              pagination.totalPages > 1 && (
+                <div className="mt-8 w-full max-w-full overflow-x-hidden">
+                  <div className="text-center mb-4 text-sm text-gray-600">
+                    Página {pagination.page} de {pagination.totalPages}
+                  </div>
+                  <div className="w-full max-w-full overflow-x-auto">
+                    <Pagination
+                      currentPage={pagination.page}
+                      totalPages={pagination.totalPages}
+                      onPageChange={(page) =>
+                        fetchPublications({
+                          page,
+                          limit: pagination.limit,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="w-full max-w-full overflow-x-auto">
-                  <Pagination
-                    currentPage={pagination.page}
-                    totalPages={pagination.totalPages}
-                    onPageChange={(page) =>
-                      fetchPublications({
-                        page,
-                        limit: pagination.limit,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar derecho - Filtros de categoría y estadísticas */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50/30 rounded-xl shadow-sm border border-green-200/60 p-6 sticky top-24 hover:shadow-md transition-all duration-200">
-              <h3 className="text-lg font-eras-bold text-gray-900 mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-gray-100">
-                  <svg
-                    className="h-4 w-4 text-gray-700"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M3 3v18h18v-2H5V3H3zm4 14h2V9H7v8zm4 0h2V7h-2v10zm4 0h2V5h-2v12z" />
-                  </svg>
-                </div>
-                Estadísticas
-              </h3>
-
-              {/* Estadísticas rápidas */}
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-eras">Total publicaciones</span>
-                  <span className="font-eras-bold">{pagination.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-eras">Página actual</span>
-                  <span className="font-eras-bold">
-                    {pagination.page} de {pagination.totalPages}
-                  </span>
-                </div>
-              </div>
-            </div>
+              )}
           </div>
         </div>
       </div>

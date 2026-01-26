@@ -131,13 +131,10 @@ export function AccountBalance({
         {/* Card content */}
         <div className="relative z-10 p-6 h-full flex flex-col justify-between text-gray-800">
           {/* Header */}
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-4 ">
             <Wallet className="h-6 w-6 text-[#097EEC]" />
             <div>
-              <h3 className="text-lg font-bold text-gray-800">
-                Balance de Cuenta
-              </h3>
-              <p className="text-sm text-gray-600">Gestión financiera</p>
+              <h3 className="text-lg font-bold text-gray-800">Billetera</h3>
             </div>
           </div>
 
