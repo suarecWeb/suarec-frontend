@@ -27,6 +27,7 @@ interface CategorySlideProps {
   current: number;
   isSelected: boolean;
   onCategoryClick: (category: string) => void;
+  onSlideClick: (index: number) => void;
 }
 
 const CategorySlide = ({
@@ -35,6 +36,7 @@ const CategorySlide = ({
   current,
   isSelected,
   onCategoryClick,
+  onSlideClick,
 }: CategorySlideProps) => {
   const totalItems = 11; // Número total de categorías
   const angle = (360 / totalItems) * index;
@@ -60,7 +62,15 @@ const CategorySlide = ({
       }}
     >
       <div
-        onClick={() => onCategoryClick(category.originalName.toUpperCase())}
+        onClick={() => {
+          if (index === current) {
+            // Si es la categoría centrada, seleccionarla
+            onCategoryClick(category.originalName.toUpperCase());
+          } else {
+            // Si no está centrada, primero centrarla
+            onSlideClick(index);
+          }
+        }}
         className={`relative w-32 h-40 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
           isSelected
             ? "bg-[#097EEC] shadow-lg shadow-blue-200"
@@ -263,12 +273,22 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
   // Funciones del carousel
   const handlePrevious = () => {
     const previous = current - 1;
-    setCurrent(previous < 0 ? categoryStats.length - 1 : previous);
+    const newIndex = previous < 0 ? categoryStats.length - 1 : previous;
+    setCurrent(newIndex);
+    // Seleccionar automáticamente la categoría centrada
+    setTimeout(() => {
+      onCategoryClick?.(categoryStats[newIndex].originalName.toUpperCase());
+    }, 300);
   };
 
   const handleNext = () => {
     const next = current + 1;
-    setCurrent(next === categoryStats.length ? 0 : next);
+    const newIndex = next === categoryStats.length ? 0 : next;
+    setCurrent(newIndex);
+    // Seleccionar automáticamente la categoría centrada
+    setTimeout(() => {
+      onCategoryClick?.(categoryStats[newIndex].originalName.toUpperCase());
+    }, 300);
   };
 
   const handleSlideClick = (index: number) => {
@@ -331,12 +351,12 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       className={`w-full bg-transparent px-2 py-6 mb-6 transition-all duration-500 ${className}`}
     >
       <div className="flex items-center justify-between mb-6 px-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900">Categorías</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="text-2xl font-bold text-gray-900">Categorías</h3>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-sm text-[#097EEC] hover:text-blue-700 font-medium transition-colors"
+          className="text-lg text-[#097EEC] hover:text-blue-700 font-semibold transition-colors"
         >
           {isExpanded ? "Ver menos" : "Ver más"}
         </button>
@@ -392,7 +412,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
                   onClick={() =>
                     onCategoryClick?.(category.originalName.toUpperCase())
                   }
-                  className={`relative flex-shrink-0 w-28 sm:w-32 md:w-36 h-36 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
+                  className={`relative flex-shrink-0 w-36 sm:w-40 md:w-44 h-36 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
                     isSelected
                       ? "bg-[#097EEC] shadow-lg shadow-blue-200"
                       : "bg-transparent hover:shadow-md"
@@ -450,6 +470,15 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
                     isSelected={isSelected}
                     onCategoryClick={(cat) => {
                       onCategoryClick?.(cat);
+                    }}
+                    onSlideClick={(idx) => {
+                      setCurrent(idx);
+                      // Después de centrar, seleccionar la categoría
+                      setTimeout(() => {
+                        onCategoryClick?.(
+                          categoryStats[idx].originalName.toUpperCase(),
+                        );
+                      }, 300);
                     }}
                   />
                 );
