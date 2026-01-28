@@ -90,6 +90,8 @@ export default function CreateServiceModal({
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string>("");
+  const [receivesDisplay, setReceivesDisplay] = useState<string>("");
+  const [buyerPaysDisplay, setBuyerPaysDisplay] = useState<string>("");
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isPriceUnitDropdownOpen, setIsPriceUnitDropdownOpen] = useState(false);
@@ -126,7 +128,12 @@ export default function CreateServiceModal({
   // Actualizar el estado cuando cambie el tipo
   useEffect(() => {
     setSelectedType(watchedType);
-  }, [watchedType]);
+    if (watchedType !== "offer") {
+      setReceivesDisplay("");
+      setBuyerPaysDisplay("");
+      setValue("price", undefined);
+    }
+  }, [watchedType, setValue]);
 
   // Cerrar dropdowns al hacer clic fuera
   useEffect(() => {
@@ -147,28 +154,47 @@ export default function CreateServiceModal({
     };
   }, []);
 
-  // Función para formatear el precio con separadores de miles
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remover todo excepto números
-    const cleaned = e.target.value.replace(/[^\d]/g, "");
+  // Comision de plataforma (8%)
+  const COMMISSION_RATE = 0.08;
 
-    if (!cleaned) {
-      e.target.value = "";
+  const parseMoneyInput = (value: string) => {
+    const cleaned = value.replace(/[^\d]/g, "");
+    if (!cleaned) return undefined;
+    return parseInt(cleaned, 10);
+  };
+
+  const formatMoneyInput = (value: number) => value.toLocaleString("es-CO");
+
+  const handleReceivesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = parseMoneyInput(e.target.value);
+
+    if (numericValue == null) {
+      setReceivesDisplay("");
+      setBuyerPaysDisplay("");
       setValue("price", undefined);
       return;
     }
 
-    // Convertir a número
-    const numericValue = parseInt(cleaned, 10);
-
-    // Formatear con separadores de miles (punto como separador)
-    const formatted = numericValue.toLocaleString("es-CO");
-
-    // Actualizar el valor visual del input
-    e.target.value = formatted;
-
-    // Actualizar el formulario con el valor numérico limpio
+    setReceivesDisplay(formatMoneyInput(numericValue));
+    const buyerPays = Math.round(numericValue * (1 + COMMISSION_RATE));
+    setBuyerPaysDisplay(formatMoneyInput(buyerPays));
     setValue("price", numericValue);
+  };
+
+  const handleBuyerPaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const buyerPaysValue = parseMoneyInput(e.target.value);
+
+    if (buyerPaysValue == null) {
+      setBuyerPaysDisplay("");
+      setReceivesDisplay("");
+      setValue("price", undefined);
+      return;
+    }
+
+    setBuyerPaysDisplay(formatMoneyInput(buyerPaysValue));
+    const receives = Math.round(buyerPaysValue * (1 - COMMISSION_RATE));
+    setReceivesDisplay(formatMoneyInput(receives));
+    setValue("price", receives);
   };
 
   // Validar que el usuario esté autenticado
@@ -271,6 +297,8 @@ export default function CreateServiceModal({
       reset();
       setSelectedFile(null);
       setPreviewUrl(null);
+      setReceivesDisplay("");
+      setBuyerPaysDisplay("");
 
       // Cerrar modal y actualizar feed
       setTimeout(() => {
@@ -304,6 +332,8 @@ export default function CreateServiceModal({
       setPreviewUrl(null);
       setSelectedGalleryImages([]);
       setShowGallerySelector(false);
+      setReceivesDisplay("");
+      setBuyerPaysDisplay("");
       setError(null);
       setSuccess(null);
       onClose();
@@ -846,18 +876,19 @@ export default function CreateServiceModal({
 
                 {/* Precio - Solo mostrar para ofertas de servicio */}
                 {selectedType === "offer" && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label
-                        htmlFor="price"
+                        htmlFor="price-receives"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Precio <span className="text-red-500">*</span>
+                        Tu recibes <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="price"
-                        onChange={handlePriceChange}
+                        id="price-receives"
+                        value={receivesDisplay}
+                        onChange={handleReceivesChange}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
                         placeholder="Ej: 10.000"
                       />
@@ -919,6 +950,26 @@ export default function CreateServiceModal({
                           </div>
                         );
                       })()}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="price-pays"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        El comprador paga
+                      </label>
+                      <input
+                        type="text"
+                        id="price-pays"
+                        value={buyerPaysDisplay}
+                        onChange={handleBuyerPaysChange}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm"
+                        placeholder="Ej: 10.800"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Calculado con +8%.
+                      </p>
                     </div>
 
                     <div>

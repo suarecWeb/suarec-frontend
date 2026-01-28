@@ -45,7 +45,6 @@ import {
   PaymentService,
   PaymentStatusByContractDto,
 } from "../../services/PaymentService";
-import { WompiService } from "../../services/WompiService";
 import StartChatButton from "@/components/start-chat-button";
 import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
@@ -97,11 +96,11 @@ export default function ContractsPage() {
   } | null>(null);
   const router = useRouter();
   const { showNotification } = useNotification();
-  const [acceptanceTokens, setAcceptanceTokens] = useState<any>(null);
-  const [acceptPolicy, setAcceptPolicy] = useState(false);
-  const [acceptPersonal, setAcceptPersonal] = useState(false);
   const [contractPaymentStatus, setContractPaymentStatus] = useState<{
     [contractId: string]: PaymentStatusByContractDto;
+  }>({});
+  const [contractPaymentLinks, setContractPaymentLinks] = useState<{
+    [contractId: string]: string | null;
   }>({});
   const [activeTab, setActiveTab] = useState<"client" | "provider" | "all">(
     "provider",
@@ -111,13 +110,12 @@ export default function ContractsPage() {
   const [contractForDetails, setContractForDetails] = useState<Contract | null>(
     null,
   );
+  const [detailsViewRole, setDetailsViewRole] = useState<
+    "client" | "provider" | null
+  >(null);
 
   useEffect(() => {
     loadContracts();
-    const publicKey = process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || "";
-    if (publicKey) {
-      WompiService.getAcceptanceTokens(publicKey).then(setAcceptanceTokens);
-    }
   }, []);
 
   useEffect(() => {
@@ -132,13 +130,11 @@ export default function ContractsPage() {
     }
   }, []);
 
-  // Reiniciar checkboxes cuando se cargan los acceptance tokens
   useEffect(() => {
-    if (acceptanceTokens) {
-      setAcceptPolicy(false);
-      setAcceptPersonal(false);
+    if (isDetailsModalOpen && contractForDetails) {
+      refreshPaymentData(contractForDetails.id);
     }
-  }, [acceptanceTokens]);
+  }, [isDetailsModalOpen, contractForDetails?.id]);
 
   const loadContracts = async () => {
     try {
@@ -160,7 +156,7 @@ export default function ContractsPage() {
 
       setContracts(sortedData);
 
-      // Cargar estado de pagos para contratos como cliente
+      // Cargar estado de pagos y links de pago para contratos como cliente
       const paymentStatusPromises = data.asClient.map(async (contract) => {
         try {
           const paymentStatus = await PaymentService.getPaymentStatusByContract(
@@ -187,6 +183,33 @@ export default function ContractsPage() {
       });
 
       setContractPaymentStatus(paymentStatusMap);
+
+      const paymentLinkPromises = data.asClient.map(async (contract) => {
+        try {
+          const payment = await PaymentService.getPaymentByContract(
+            contract.id,
+          );
+          return {
+            contractId: contract.id,
+            link: payment?.wompi_payment_link || null,
+          };
+        } catch (error) {
+          return { contractId: contract.id, link: null };
+        }
+      });
+
+      const paymentLinks = await Promise.all(paymentLinkPromises);
+      const paymentLinkMap: {
+        [contractId: string]: string | null;
+      } = {};
+
+      paymentLinks.forEach((result) => {
+        if (result) {
+          paymentLinkMap[result.contractId] = result.link;
+        }
+      });
+
+      setContractPaymentLinks(paymentLinkMap);
     } catch (error) {
       toast.error("Error al cargar el estado de pago");
     } finally {
@@ -205,42 +228,31 @@ export default function ContractsPage() {
 
   const handleGoToPayment = async (contract: Contract) => {
     try {
-      // Validar que los checkboxes estén marcados
-      if (!acceptPolicy || !acceptPersonal) {
-        toast.error(
-          "Debes aceptar los términos y condiciones y autorizar el tratamiento de datos personales para continuar.",
-        );
-        return;
+      let link = contractPaymentLinks[contract.id] || null;
+
+      if (!link) {
+        const payment = await PaymentService.createPaymentLink(contract.id);
+        link = payment?.wompi_payment_link || null;
+
+        if (!link) {
+          const fallback = await PaymentService.getPaymentByContract(
+            contract.id,
+          );
+          link = fallback?.wompi_payment_link || null;
+        }
       }
 
-      if (!contract.provider || !contract.provider.id) {
-        toast.error("No se encontró el proveedor para este contrato.");
-        return;
-      }
-      if (!acceptanceTokens) {
-        toast.error("No se pudieron obtener los contratos de Wompi.");
-        return;
-      }
-      const paymentData = {
-        amount: Math.round(Number(contract.totalPrice)),
-        currency: "COP",
-        payment_method: "WOMPI",
-        contract_id: contract.id,
-        payee_id: contract.provider.id,
-        description: contract.publication?.title,
-        acceptance_token:
-          acceptanceTokens.presigned_acceptance.acceptance_token,
-        accept_personal_auth:
-          acceptanceTokens.presigned_personal_data_auth.acceptance_token,
-      };
-      const payment = await PaymentService.createPayment(paymentData);
-      if (payment && payment.wompi_payment_link) {
-        window.location.href = payment.wompi_payment_link;
+      if (link) {
+        setContractPaymentLinks((prev) => ({
+          ...prev,
+          [contract.id]: link,
+        }));
+        window.location.href = link;
       } else {
-        toast.error("No se pudo obtener la URL de pago.");
+        toast.error("No se encontro un enlace de pago disponible.");
       }
     } catch (err) {
-      toast.error("Error al iniciar el pago.");
+      toast.error("Error al obtener el enlace de pago.");
     }
   };
 
@@ -286,21 +298,46 @@ export default function ContractsPage() {
   };
 
   const shouldShowPaymentButton = (contract: Contract) => {
-    const paymentStatus = contractPaymentStatus[contract.id];
-
-    // No mostrar si ya tiene pagos completados o finalizados
-    if (paymentStatus?.hasCompletedPayments) {
-      return false;
-    }
-
-    if (contract.status === ContractStatus.COMPLETED) {
-      return (
-        contract.otpVerified && contract.paymentMethod && contract.totalPrice
-      );
-    }
-
-    return false;
+    const paymentLink = contractPaymentLinks[contract.id];
+    return Boolean(paymentLink);
   };
+
+  const isClientForContract = (contract: Contract) => {
+    if (currentUserId === null) {
+      return activeTab === "client";
+    }
+    const clientId = contract.client?.id ?? contract.clientId;
+    return Number(clientId) === currentUserId;
+  };
+
+  const refreshPaymentData = async (contractId: string) => {
+    try {
+      const payment = await PaymentService.createPaymentLink(contractId);
+      let link = payment?.wompi_payment_link || null;
+
+      if (!link) {
+        const fallback = await PaymentService.getPaymentByContract(contractId);
+        link = fallback?.wompi_payment_link || null;
+      }
+
+      setContractPaymentLinks((prev) => ({
+        ...prev,
+        [contractId]: link,
+      }));
+    } catch (error) {
+      // Silenciar errores; el botÃ³n depende de la disponibilidad del endpoint.
+    }
+  };
+
+  const detailsIsClientView = contractForDetails
+    ? detailsViewRole
+      ? detailsViewRole === "client"
+      : isClientForContract(contractForDetails)
+    : activeTab === "client";
+  const detailsShowPayButton =
+    contractForDetails &&
+    detailsIsClientView &&
+    contractForDetails.status === ContractStatus.ACCEPTED;
 
   const handleCancelContract = async (contract: Contract) => {
     setContractToCancel(contract);
@@ -645,6 +682,10 @@ export default function ContractsPage() {
                                 onClick={() => {
                                   setContractForDetails(contract);
                                   setIsDetailsModalOpen(true);
+                                  setDetailsViewRole("client");
+                                  if (isClientForContract(contract)) {
+                                    refreshPaymentData(contract.id);
+                                  }
                                 }}
                                 className="w-full bg-blue-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
                               >
@@ -738,6 +779,10 @@ export default function ContractsPage() {
                                 onClick={() => {
                                   setContractForDetails(contract);
                                   setIsDetailsModalOpen(true);
+                                  setDetailsViewRole("provider");
+                                  if (isClientForContract(contract)) {
+                                    refreshPaymentData(contract.id);
+                                  }
                                 }}
                                 className="w-full bg-green-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
                               >
@@ -943,8 +988,9 @@ export default function ContractsPage() {
             onClose={() => {
               setIsDetailsModalOpen(false);
               setContractForDetails(null);
+              setDetailsViewRole(null);
             }}
-            isClientView={activeTab === "client"}
+            isClientView={detailsIsClientView}
             onCancelContract={(contract) => {
               handleCancelContract(contract);
             }}
@@ -952,6 +998,10 @@ export default function ContractsPage() {
               setSelectedContract(contract);
               setIsProviderResponseModalOpen(true);
             }}
+            onPayContract={(contract) => {
+              handleGoToPayment(contract);
+            }}
+            showPayButton={Boolean(detailsShowPayButton)}
           />
         )}
       </div>
