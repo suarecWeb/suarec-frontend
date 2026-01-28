@@ -249,9 +249,10 @@ export default function CreateServiceModal({
           selectedGalleryImages.length > 0 ? selectedGalleryImages : undefined,
         price: data.price ? Number(data.price) : undefined, // Convertir explícitamente a número
         priceUnit: data.priceUnit || undefined,
+        // Campos de ubicación (obligatorio)
+        location: data.location,
         // Campos específicos para solicitudes
         requirements: data.requirements || undefined,
-        location: data.location || undefined,
         urgency: data.urgency || undefined,
         preferredSchedule: data.preferredSchedule || undefined,
         created_at: new Date(),
@@ -588,6 +589,33 @@ export default function CreateServiceModal({
                   )}
                 </div>
 
+                {/* Ubicación - Campo obligatorio para TODOS los tipos */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Ubicación <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="location"
+                    type="text"
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
+                      errors.location ? "border-red-500" : "border-gray-200"
+                    }`}
+                    placeholder="Ej. Bogotá, Medellín, Cali..."
+                    {...register("location", {
+                      required: "La ubicación es obligatoria",
+                    })}
+                    disabled={isLoading}
+                  />
+                  {errors.location && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.location.message}
+                    </p>
+                  )}
+                </div>
+
                 {/* Campos específicos para solicitudes de servicio */}
                 {selectedType === "request" && (
                   <>
@@ -625,36 +653,6 @@ export default function CreateServiceModal({
                       {errors.requirements && (
                         <p className="text-red-500 text-xs mt-1">
                           {errors.requirements.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Ubicación */}
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="location"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Ubicación <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="location"
-                        type="text"
-                        className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none text-sm ${
-                          errors.location ? "border-red-500" : "border-gray-200"
-                        }`}
-                        placeholder="Ej. Bogotá, Medellín, Cali..."
-                        {...register("location", {
-                          required:
-                            selectedType === "request"
-                              ? "La ubicación es obligatoria"
-                              : false,
-                        })}
-                        disabled={isLoading}
-                      />
-                      {errors.location && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.location.message}
                         </p>
                       )}
                     </div>

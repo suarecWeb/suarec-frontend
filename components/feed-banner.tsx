@@ -78,7 +78,7 @@ const CategorySlide = ({
             />
           </div>
           <h3
-            className={`font-medium text-xs text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-600"}`}
+            className={`font-medium text-sm text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-600"}`}
           >
             {category.name}
           </h3>
@@ -101,7 +101,6 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const startX = useRef(0);
-  const [showNavButtons, setShowNavButtons] = useState(false);
 
   // Mapeo de categorías a imágenes y colores
   const getCategoryConfig = (category: string) => {
@@ -410,7 +409,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
                       />
                     </div>
                     <h3
-                      className={`font-medium text-xs text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-700"}`}
+                      className={`font-medium text-sm text-center leading-tight px-1 ${isSelected ? "text-white" : "text-gray-700"}`}
                     >
                       {category.name}
                     </h3>
@@ -422,11 +421,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
         </div>
       ) : (
         /* Vista colapsada - Carousel 3D */
-        <div
-          className="relative"
-          onMouseEnter={() => setShowNavButtons(true)}
-          onMouseLeave={() => setShowNavButtons(false)}
-        >
+        <div className="relative">
           <div
             ref={carouselRef}
             className="relative h-60 w-full overflow-visible"
@@ -463,7 +458,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
           </div>
 
           {/* Botones de navegación */}
-          {showNavButtons && categoryStats.length > 1 && (
+          {categoryStats.length > 1 && (
             <>
               <button
                 onClick={handlePrevious}

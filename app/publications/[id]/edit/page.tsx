@@ -176,21 +176,36 @@ const EditPublicationPage = () => {
           "✅ Acceso permitido - Continuando con la carga del formulario",
         );
 
-        // Normalizar categoría (backend may return uppercase)
+        // Normalizar categoría (backend puede devolver en mayúsculas o minúsculas)
+        // Función para normalizar strings (quitar tildes y convertir a minúsculas)
+        const normalizeString = (str: string) =>
+          str
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
         const normalizedCategory =
           CATEGORIES.find(
-            (c) => c.toUpperCase() === publication.category?.toUpperCase(),
+            (c) =>
+              normalizeString(c) ===
+              normalizeString(publication.category || ""),
           ) || publication.category;
+
+        console.log("📋 Debug publicación:", {
+          price: publication.price,
+          priceUnit: publication.priceUnit,
+          category: publication.category,
+          normalizedCategory,
+        });
 
         // Establecer valores en el formulario
         setValue("title", publication.title);
         setValue("description", publication.description || "");
         setValue("category", normalizedCategory);
         setValue("price", publication.price);
-        if (publication.price) {
+        if (publication.price !== undefined && publication.price !== null) {
           setDisplayPrice(formatCurrency(publication.price));
         }
-        setValue("priceUnit", publication.priceUnit || "");
         setValue("priceUnit", publication.priceUnit || "");
         setValue("type", publication.type || "");
         setValue("image_url", publication.image_url || "");

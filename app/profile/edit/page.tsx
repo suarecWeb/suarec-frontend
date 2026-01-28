@@ -1882,7 +1882,7 @@ const ProfileEditPage = () => {
                   value="segurosocial"
                   className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
                 >
-                  <SeguroSocial />
+                  <SeguroSocial userId={user?.id?.toString()} />
                 </TabsContent>
               </Tabs>
             )}

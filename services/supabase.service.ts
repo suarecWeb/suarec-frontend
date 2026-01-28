@@ -207,6 +207,136 @@ const SupabaseService = {
       };
     }
   },
+
+  // ==================== SEGURO SOCIAL BUCKET ====================
+
+  // Subir documento de seguro social a la carpeta user_segurosoc dentro de suarec-media
+  async uploadSocialSecurityDoc(
+    file: File,
+    userId: string,
+    documentType: string,
+  ): Promise<UploadImageResult> {
+    try {
+      this.checkConfig();
+
+      // Generar nombre único para el archivo: user_segurosoc/userId/documentType_timestamp.pdf
+      const fileName = `${documentType}_${Date.now()}.pdf`;
+      const filePath = `user_segurosoc/${userId}/${fileName}`;
+
+      console.log("Uploading social security doc to Supabase:", {
+        bucket: "suarec-media",
+        path: filePath,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
+      // Subir archivo al bucket suarec-media en la carpeta user_segurosoc
+      const { data, error } = await supabase.storage
+        .from("suarec-media")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true, // Permitir sobrescribir si ya existe
+        });
+
+      if (error) {
+        console.error("Supabase upload error:", error);
+        throw new Error(`Error al subir documento: ${error.message}`);
+      }
+
+      // Obtener URL pública
+      const { data: urlData } = supabase.storage
+        .from("suarec-media")
+        .getPublicUrl(filePath);
+
+      console.log("Social security doc upload successful:", urlData.publicUrl);
+
+      return {
+        url: urlData.publicUrl,
+        path: filePath,
+      };
+    } catch (error: any) {
+      console.error("Error uploading social security doc to Supabase:", error);
+      return {
+        url: "",
+        path: "",
+        error: error.message,
+      };
+    }
+  },
+
+  // Eliminar documento de seguro social
+  async deleteSocialSecurityDoc(
+    path: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      this.checkConfig();
+
+      const { error } = await supabase.storage
+        .from("suarec-media")
+        .remove([path]);
+
+      if (error) {
+        throw new Error(`Error al eliminar documento: ${error.message}`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error deleting social security doc from Supabase:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  },
+
+  // Listar documentos de seguro social de un usuario
+  async listSocialSecurityDocs(userId: string): Promise<{
+    files: { name: string; path: string; url: string }[];
+    error?: string;
+  }> {
+    try {
+      this.checkConfig();
+
+      // Listar archivos en la carpeta user_segurosoc/userId
+      const { data, error } = await supabase.storage
+        .from("suarec-media")
+        .list(`user_segurosoc/${userId}`);
+
+      if (error) {
+        throw new Error(`Error al listar documentos: ${error.message}`);
+      }
+
+      const files = (data || []).map((file: any) => {
+        const filePath = `user_segurosoc/${userId}/${file.name}`;
+        const { data: urlData } = supabase.storage
+          .from("suarec-media")
+          .getPublicUrl(filePath);
+
+        return {
+          name: file.name,
+          path: filePath,
+          url: urlData.publicUrl,
+        };
+      });
+
+      return { files };
+    } catch (error: any) {
+      console.error("Error listing social security docs from Supabase:", error);
+      return {
+        files: [],
+        error: error.message,
+      };
+    }
+  },
+
+  // Obtener URL pública de un documento de seguro social
+  getSocialSecurityDocUrl(path: string): string {
+    this.checkConfig();
+
+    const { data } = supabase.storage.from("suarec-media").getPublicUrl(path);
+
+    return data.publicUrl;
+  },
 };
 
 export default SupabaseService;
