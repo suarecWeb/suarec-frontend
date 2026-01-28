@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Shield,
   Check,
@@ -30,9 +30,13 @@ interface SocialSecurityItem {
 
 interface SeguroSocialProps {
   className?: string;
+  userId?: string;
 }
 
-const SeguroSocial: React.FC<SeguroSocialProps> = ({ className = "" }) => {
+const SeguroSocial: React.FC<SeguroSocialProps> = ({
+  className = "",
+  userId,
+}) => {
   const [items, setItems] = useState<SocialSecurityItem[]>([
     {
       id: "eps",
@@ -73,6 +77,48 @@ const SeguroSocial: React.FC<SeguroSocialProps> = ({ className = "" }) => {
   ]);
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Cargar documentos existentes del usuario al montar el componente
+  useEffect(() => {
+    const loadExistingDocs = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const result = await SupabaseService.listSocialSecurityDocs(userId);
+
+        if (result.files && result.files.length > 0) {
+          setItems((prev) =>
+            prev.map((item) => {
+              // Buscar si existe un archivo para este tipo de documento
+              const existingFile = result.files.find((file) =>
+                file.name.startsWith(item.id + "_"),
+              );
+
+              if (existingFile) {
+                return {
+                  ...item,
+                  completed: true,
+                  pdfUrl: existingFile.url,
+                  pdfPath: existingFile.path,
+                };
+              }
+              return item;
+            }),
+          );
+        }
+      } catch (error) {
+        console.error("Error loading existing documents:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadExistingDocs();
+  }, [userId]);
 
   const toggleExpanded = useCallback((id: string) => {
     setExpandedItems((prev) => {
@@ -86,54 +132,64 @@ const SeguroSocial: React.FC<SeguroSocialProps> = ({ className = "" }) => {
     });
   }, []);
 
-  const handleFileUpload = useCallback(async (id: string, file: File) => {
-    if (!file.type.includes("pdf")) {
-      toast.error("Solo se permiten archivos PDF");
-      return;
-    }
-
-    // Update uploading state
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, uploading: true } : item,
-      ),
-    );
-
-    try {
-      const result = await SupabaseService.uploadImage(
-        file,
-        "social-security-docs",
-      );
-
-      if (result.error) {
-        throw new Error(result.error);
+  const handleFileUpload = useCallback(
+    async (id: string, file: File) => {
+      if (!file.type.includes("pdf")) {
+        toast.error("Solo se permiten archivos PDF");
+        return;
       }
 
-      // Update item with PDF info and mark as completed
+      if (!userId) {
+        toast.error("Usuario no identificado");
+        return;
+      }
+
+      // Update uploading state
       setItems((prev) =>
         prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                completed: true,
-                pdfUrl: result.url,
-                pdfPath: result.path,
-                uploading: false,
-              }
-            : item,
+          item.id === id ? { ...item, uploading: true } : item,
         ),
       );
 
-      toast.success("Documento subido correctamente");
-    } catch (error: any) {
-      toast.error(error.message || "Error al subir el documento");
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, uploading: false } : item,
-        ),
-      );
-    }
-  }, []);
+      try {
+        // Usar el nuevo método para subir al bucket user_segurosoc
+        const result = await SupabaseService.uploadSocialSecurityDoc(
+          file,
+          userId,
+          id, // documentType (eps, pension, arl, aportes)
+        );
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        // Update item with PDF info and mark as completed
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  completed: true,
+                  pdfUrl: result.url,
+                  pdfPath: result.path,
+                  uploading: false,
+                }
+              : item,
+          ),
+        );
+
+        toast.success("Documento subido correctamente");
+      } catch (error: any) {
+        toast.error(error.message || "Error al subir el documento");
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, uploading: false } : item,
+          ),
+        );
+      }
+    },
+    [userId],
+  );
 
   const handleFileInputChange = useCallback(
     (id: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,29 +201,36 @@ const SeguroSocial: React.FC<SeguroSocialProps> = ({ className = "" }) => {
     [handleFileUpload],
   );
 
-  const removeDocument = useCallback(async (id: string) => {
-    setItems((prev) => {
-      const item = prev.find((i) => i.id === id);
+  const removeDocument = useCallback(
+    async (id: string) => {
+      const item = items.find((i) => i.id === id);
+
       if (item?.pdfPath) {
-        SupabaseService.deleteImage(item.pdfPath).catch((error) => {
+        try {
+          // Usar el nuevo método para eliminar del bucket user_segurosoc
+          await SupabaseService.deleteSocialSecurityDoc(item.pdfPath);
+        } catch (error) {
           console.error("Error deleting file:", error);
-        });
+        }
       }
 
-      return prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              completed: false,
-              pdfUrl: undefined,
-              pdfPath: undefined,
-            }
-          : item,
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                completed: false,
+                pdfUrl: undefined,
+                pdfPath: undefined,
+              }
+            : item,
+        ),
       );
-    });
 
-    toast.success("Documento eliminado");
-  }, []);
+      toast.success("Documento eliminado");
+    },
+    [items],
+  );
 
   const completedItems = items.filter((item) => item.completed).length;
   const requiredItems = items.filter((item) => item.required).length;
@@ -175,6 +238,21 @@ const SeguroSocial: React.FC<SeguroSocialProps> = ({ className = "" }) => {
     (item) => item.required && item.completed,
   ).length;
   const progressPercentage = (completedItems / items.length) * 100;
+
+  if (isLoading) {
+    return (
+      <div
+        className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${className}`}
+      >
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#097EEC]"></div>
+          <span className="ml-3 text-gray-600 font-eras">
+            Cargando documentos...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

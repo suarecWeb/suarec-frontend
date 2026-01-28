@@ -119,11 +119,14 @@ export default function SwiperAuto() {
     };
   };
 
+  const handleClick = () => {
+    setIsPaused((prev) => !prev);
+  };
+
   return (
     <div
       className="relative h-[450px] w-full max-w-6xl mx-auto flex items-center justify-center overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onClick={handleClick}
     >
       {/* Container for cards - centered */}
       <div className="relative w-full h-full flex items-center justify-center">

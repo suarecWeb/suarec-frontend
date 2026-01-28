@@ -24,6 +24,8 @@ interface ContractDetailsModalProps {
   isClientView?: boolean;
   onCancelContract?: (contract: Contract) => void;
   onRespondContract?: (contract: Contract) => void;
+  onPayContract?: (contract: Contract) => void;
+  showPayButton?: boolean;
 }
 
 export function ContractDetailsModal({
@@ -33,6 +35,8 @@ export function ContractDetailsModal({
   isClientView = true,
   onCancelContract,
   onRespondContract,
+  onPayContract,
+  showPayButton = false,
 }: ContractDetailsModalProps) {
   if (!isOpen) return null;
 
@@ -387,22 +391,42 @@ export function ContractDetailsModal({
               </button>
             )}
 
-          {/* Botón Cancelar Contrato - Para contratos que se pueden cancelar */}
-          {(contract.status === ContractStatus.PENDING ||
-            contract.status === ContractStatus.NEGOTIATING ||
-            contract.status === ContractStatus.ACCEPTED) &&
-            onCancelContract && (
-              <button
-                onClick={() => {
-                  onCancelContract(contract);
-                  onClose();
-                }}
-                className="w-full bg-red-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <XCircle className="h-5 w-5" />
-                Cancelar Contrato
-              </button>
-            )}
+          {(showPayButton ||
+            ((contract.status === ContractStatus.PENDING ||
+              contract.status === ContractStatus.NEGOTIATING ||
+              contract.status === ContractStatus.ACCEPTED) &&
+              onCancelContract)) && (
+            <div className="flex gap-3 items-center">
+              {showPayButton && onPayContract && (
+                <button
+                  onClick={() => {
+                    onPayContract(contract);
+                    onClose();
+                  }}
+                  className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <DollarSign className="h-5 w-5" />
+                  Pagar
+                </button>
+              )}
+
+              {(contract.status === ContractStatus.PENDING ||
+                contract.status === ContractStatus.NEGOTIATING ||
+                contract.status === ContractStatus.ACCEPTED) &&
+                onCancelContract && (
+                  <button
+                    onClick={() => {
+                      onCancelContract(contract);
+                      onClose();
+                    }}
+                    className="flex-1 bg-red-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <XCircle className="h-5 w-5" />
+                    Cancelar Contrato
+                  </button>
+                )}
+            </div>
+          )}
 
           <button
             onClick={onClose}
