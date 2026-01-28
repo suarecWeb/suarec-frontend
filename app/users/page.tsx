@@ -50,7 +50,9 @@ interface RequiredField {
 
 const UsersPageContent = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showBankInfoModal, setShowBankInfoModal] = useState(false);
@@ -96,6 +98,35 @@ const UsersPageContent = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Efecto para manejar la búsqueda con debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm && searchTerm.trim() !== "") {
+        try {
+          setSearching(true);
+          // Usar el endpoint de búsqueda dedicado
+          const response = await UserService.searchUsers(searchTerm, 100);
+          setSearchResults(
+            response.data.map((user: any) => ({
+              ...user,
+              roles: user.roles || [],
+            })),
+          );
+        } catch (err) {
+          console.error("Error al buscar usuarios:", err);
+          toast.error("Error al buscar usuarios");
+          setSearchResults([]);
+        } finally {
+          setSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handlePageChange = (page: number) => {
     fetchUsers({ page, limit: pagination.limit });
@@ -306,19 +337,8 @@ const UsersPageContent = () => {
     setShowRequiredFieldsModal(true);
   };
 
-  const filteredUsers = searchTerm
-    ? users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (user.roles &&
-            user.roles.some((role) =>
-              typeof role === "string"
-                ? role.toLowerCase().includes(searchTerm.toLowerCase())
-                : false,
-            )),
-      )
-    : users;
+  // Mostrar resultados de búsqueda si hay término de búsqueda, sino mostrar usuarios paginados
+  const displayUsers = searchTerm ? searchResults : users;
 
   // Función para obtener el color de fondo según el rol
   const getRoleBadgeColor = (role: string) => {
@@ -464,8 +484,33 @@ const UsersPageContent = () => {
               </div>
             ) : (
               <>
+                {/* Search indicator */}
+                {searchTerm && (
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      {searching ? (
+                        <span className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#097EEC]"></div>
+                          Buscando...
+                        </span>
+                      ) : (
+                        <span>
+                          {searchResults.length} resultado(s) para &quot;
+                          {searchTerm}&quot;
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="text-sm text-[#097EEC] hover:text-[#0A6BC7]"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  </div>
+                )}
+
                 {/* Users List */}
-                {filteredUsers.length > 0 ? (
+                {displayUsers.length > 0 ? (
                   <div className="overflow-x-auto rounded-lg border border-gray-200">
                     <table className="min-w-full divide-y divide-gray-200 overflow-x-scroll">
                       <thead className="bg-gray-50">
@@ -521,7 +566,7 @@ const UsersPageContent = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map((user) => {
+                        {displayUsers.map((user) => {
                           const { completed, total } =
                             getCompletedFieldsCount(user);
                           const progressPercentage = (completed / total) * 100;
@@ -699,8 +744,8 @@ const UsersPageContent = () => {
                   </div>
                 )}
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
+                {/* Pagination - Solo mostrar si no hay búsqueda activa */}
+                {!searchTerm && pagination.totalPages > 1 && (
                   <div className="mt-8 flex justify-center">
                     <Pagination
                       currentPage={pagination.page}
@@ -711,12 +756,15 @@ const UsersPageContent = () => {
                 )}
 
                 {/* Results Summary */}
-                {!loading && !error && filteredUsers.length > 0 && (
-                  <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredUsers.length} de {pagination.total}{" "}
-                    usuarios
-                  </div>
-                )}
+                {!loading &&
+                  !error &&
+                  !searchTerm &&
+                  displayUsers.length > 0 && (
+                    <div className="mt-6 text-sm text-gray-500 text-center">
+                      Mostrando {displayUsers.length} de {pagination.total}{" "}
+                      usuarios
+                    </div>
+                  )}
               </>
             )}
           </div>

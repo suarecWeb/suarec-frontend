@@ -28,6 +28,8 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { maskNit } from "@/components/utils/maskNit";
+import { maskPhone } from "@/components/utils/maskPhone";
+import { maskEmail } from "@/components/utils/maskEmail";
 import { useNitVisibility } from "@/hooks/useNitVisibility";
 
 const CompaniesPageContent = () => {
@@ -141,7 +143,7 @@ const CompaniesPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-20 mt-2.5">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold">Empresas</h1>
             <p className="mt-2 text-blue-100">
@@ -240,12 +242,24 @@ const CompaniesPageContent = () => {
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                                   <span className="truncate">
-                                    {company.email}
+                                    {maskEmail(company.email, {
+                                      ...getNitVisibilityOptions(),
+                                      companyOwnerId: company.user?.id
+                                        ? parseInt(company.user.id.toString())
+                                        : undefined,
+                                    })}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
-                                  <span>{company.cellphone}</span>
+                                  <span>
+                                    {maskPhone(company.cellphone, {
+                                      ...getNitVisibilityOptions(),
+                                      companyOwnerId: company.user?.id
+                                        ? parseInt(company.user.id.toString())
+                                        : undefined,
+                                    })}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
