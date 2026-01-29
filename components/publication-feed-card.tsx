@@ -480,12 +480,12 @@ const PublicationFeedCard = ({
                 Detalles
               </Button>
 
-              <StartChatButton
+              {/* <StartChatButton
                 recipientId={parseInt(publication.user?.id || "0")}
                 recipientName={publication.user?.name || ""}
                 className="flex-shrink-0 text-sm"
                 variant="outline"
-              />
+              /> */}
             </div>
           </div>
 

@@ -64,18 +64,18 @@ export default function HeroSection() {
       <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
         <Link
           href="/auth/select-type"
-          className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-lg font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
+          className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-lg font-eras-bold hover:bg-white/95 transition-colors duration-300 flex items-center gap-3 shadow-2xl"
         >
           Comenzar ahora
-          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="h-5 w-5" />
         </Link>
 
         <Link
           href="/companies"
-          className="group border-2 border-white/30 text-white px-6 py-5 rounded-full text-base font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
+          className="group border-2 border-white/30 text-white px-6 py-5 rounded-full text-base font-eras-medium hover:bg-white/10 hover:border-white/50 transition-colors duration-300 flex items-center gap-3 backdrop-blur-sm"
         >
           Ver empresas
-          <Building2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
+          <Building2 className="h-4 w-4" />
         </Link>
       </div>
     </div>
