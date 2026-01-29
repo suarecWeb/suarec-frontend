@@ -38,12 +38,7 @@ export default function Home() {
       <Navbar isHomePage />
 
       {/* Hero Section Moderna */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#097EEC] via-[#2171BC] to-[#082D50] overflow-hidden pt-20">
-        {/* Efecto de ondas animadas - cubre toda la sección hero */}
-        <div className="absolute inset-0 z-0">
-          <StyleHome />
-        </div>
-
+      <section className="relative min-h-screen flex items-center justify-center bg-[#097EEC] overflow-hidden pt-20">
         {/* Contenido principal */}
         <HeroSection />
 
@@ -65,7 +60,7 @@ export default function Home() {
               ¿Por qué elegir{" "}
               <span className="text-[#097EEC] font-eras-bold-italic">
                 SUAREC
-              </span>
+              </span>{" "}
               ?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">

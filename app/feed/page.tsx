@@ -38,9 +38,13 @@ import Link from "next/link";
 import { ContractService } from "@/services/ContractService";
 import { Contract } from "@/interfaces/contract.interface";
 import toast from "react-hot-toast";
+import CompanyService from "@/services/CompanyService";
+import { Company } from "@/interfaces/company.interface";
+import CompaniesFeed from "@/components/companies-feed";
 
 export default function FeedPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -147,6 +151,19 @@ export default function FeedPage() {
     [filters],
   );
 
+  // Función para cargar empresas
+  const fetchCompanies = async () => {
+    try {
+      const response = await CompanyService.getCompanies({
+        page: 1,
+        limit: 10,
+      });
+      setCompanies(response.data.data);
+    } catch (err) {
+      console.error("Error fetching companies:", err);
+    }
+  };
+
   // Función para manejar cambios en los filtros
   const handleFiltersChange = (newFilters: PaginationParams) => {
     setFilters(newFilters);
@@ -172,6 +189,7 @@ export default function FeedPage() {
   // Cargar datos al montar el componente y cuando cambien los filtros
   useEffect(() => {
     fetchPublications();
+    fetchCompanies();
   }, [fetchPublications]);
 
   // Función para manejar cuando se crea una nueva publicación
@@ -282,12 +300,12 @@ export default function FeedPage() {
       />
 
       {/* Header azul extendido como en perfil */}
-      <div className="bg-[#097EEC] text-white py-8">
+      <div className="bg-[#097EEC] text-white py-8 -mt-5">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-eras-bold">
+          <h1 className="text-2xl md:text-3xl font-jakarta font-bold tracking-tight">
             Explora servicios y oportunidades.
           </h1>
-          <p className="mt-2 text-blue-100 font-eras text-sm md:text-base">
+          <p className="mt-2 text-blue-100 font-jakarta font-normal text-base md:text-lg leading-relaxed">
             Encuentra personas y empresas listas para contratar, vender o
             comprar.
           </p>
@@ -428,10 +446,10 @@ export default function FeedPage() {
                 </div>
               ) : filteredPublications.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                     {(showAllPublications
                       ? filteredPublications
-                      : filteredPublications.slice(0, 3)
+                      : filteredPublications.slice(0, 4)
                     ).map((publication) => (
                       <PublicationFeedCard
                         key={publication.id}
@@ -444,21 +462,21 @@ export default function FeedPage() {
                   </div>
 
                   {/* Botón Ver más */}
-                  {!showAllPublications && filteredPublications.length > 3 && (
+                  {!showAllPublications && filteredPublications.length > 4 && (
                     <div className="text-center mt-8">
                       <Button
                         onClick={() => setShowAllPublications(true)}
                         variant="outline"
                         className="bg-white hover:bg-gray-50 text-[#097EEC] border-[#097EEC] hover:border-[#097EEC]/80 font-eras-medium px-8 py-3"
                       >
-                        Ver más publicaciones ({filteredPublications.length - 3}{" "}
+                        Ver más publicaciones ({filteredPublications.length - 4}{" "}
                         restantes)
                       </Button>
                     </div>
                   )}
 
                   {/* Botón Ver menos */}
-                  {showAllPublications && filteredPublications.length > 3 && (
+                  {showAllPublications && filteredPublications.length > 4 && (
                     <div className="text-center mt-8">
                       <Button
                         onClick={() => setShowAllPublications(false)}
@@ -467,6 +485,13 @@ export default function FeedPage() {
                       >
                         Ver menos
                       </Button>
+                    </div>
+                  )}
+
+                  {/* Companies Feed - Mostrar empresas destacadas */}
+                  {companies.length > 0 && (
+                    <div className="mt-8">
+                      <CompaniesFeed companies={companies} limit={5} />
                     </div>
                   )}
                 </>

@@ -74,6 +74,7 @@ const config = {
       },
       fontFamily: {
         sans: ["Montserrat", "sans-serif"], // Configura Montserrat como la fuente sans-serif principal
+        jakarta: ["var(--font-plus-jakarta)", "sans-serif"],
       },
     },
   },
