@@ -903,16 +903,6 @@ const ChatPageContent = () => {
                   Comunícate con otros usuarios de la plataforma
                 </p>
               </div>
-              <ConnectionStatus
-                isConnected={isConnected}
-                isConnecting={isConnecting}
-                onRetry={() => {
-                  console.log(
-                    "🔄 Reintentando conexión WebSocket manualmente...",
-                  );
-                  window.location.reload();
-                }}
-              />
             </div>
           </div>
         </div>
