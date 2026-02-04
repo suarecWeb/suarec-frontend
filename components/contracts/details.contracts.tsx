@@ -13,7 +13,11 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import { Contract, ContractStatus } from "@/interfaces/contract.interface";
+import {
+  Contract,
+  ContractBid,
+  ContractStatus,
+} from "@/interfaces/contract.interface";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { translatePriceUnit } from "@/lib/utils";
 
@@ -22,23 +26,68 @@ interface ContractDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   isClientView?: boolean;
+  currentUserId?: number | null;
   onCancelContract?: (contract: Contract) => void;
   onRespondContract?: (contract: Contract) => void;
+  onMakeBid?: (contract: Contract) => void;
+  onAcceptBid?: (contract: Contract, bidId: string) => void;
   onPayContract?: (contract: Contract) => void;
   showPayButton?: boolean;
 }
+
+const getLatestBid = (contract: Contract): ContractBid | null => {
+  if (!contract?.bids?.length) return null;
+  return contract.bids.reduce<ContractBid | null>((latest, bid) => {
+    if (!latest) return bid;
+    const latestTime = new Date(latest.createdAt).getTime();
+    const bidTime = new Date(bid.createdAt).getTime();
+    return bidTime > latestTime ? bid : latest;
+  }, null);
+};
+
+const getEffectiveStatus = (
+  contract: Contract,
+  latestBid: ContractBid | null,
+): ContractStatus => {
+  if (latestBid && contract.status === ContractStatus.PENDING) {
+    return ContractStatus.NEGOTIATING;
+  }
+  return contract.status;
+};
 
 export function ContractDetailsModal({
   contract,
   isOpen,
   onClose,
   isClientView = true,
+  currentUserId,
   onCancelContract,
   onRespondContract,
+  onMakeBid,
+  onAcceptBid,
   onPayContract,
   showPayButton = false,
 }: ContractDetailsModalProps) {
   if (!isOpen) return null;
+
+  const latestBid = getLatestBid(contract);
+  const effectiveStatus = getEffectiveStatus(contract, latestBid);
+  const latestBidIsFromCurrentUser =
+    Boolean(latestBid) &&
+    currentUserId !== null &&
+    currentUserId !== undefined &&
+    latestBid!.bidderId === currentUserId;
+  const canRespondToLatestBid =
+    Boolean(latestBid) &&
+    currentUserId !== null &&
+    currentUserId !== undefined &&
+    latestBid!.bidderId !== currentUserId &&
+    effectiveStatus === ContractStatus.NEGOTIATING;
+  const latestBidderLabel = latestBid
+    ? latestBidIsFromCurrentUser
+      ? "Tú"
+      : latestBid.bidder?.name || `Usuario ${latestBid.bidderId}`
+    : "";
 
   const getStatusColor = (status: ContractStatus) => {
     switch (status) {
@@ -133,12 +182,12 @@ export function ContractDetailsModal({
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Estado del contrato */}
           <div
-            className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(contract.status)}`}
+            className={`flex items-center gap-3 p-4 rounded-xl border mb-6 ${getStatusColor(effectiveStatus)}`}
           >
-            {getStatusIcon(contract.status)}
+            {getStatusIcon(effectiveStatus)}
             <div>
               <p className="font-semibold">Estado del Contrato</p>
-              <p className="text-sm">{getStatusText(contract.status)}</p>
+              <p className="text-sm">{getStatusText(effectiveStatus)}</p>
             </div>
           </div>
 
@@ -171,6 +220,47 @@ export function ContractDetailsModal({
               )}
             </div>
           </div>
+
+          {latestBid && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-gray-600" />
+                Última oferta
+              </h3>
+              <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Monto:</span>
+                  <span className="font-bold text-blue-700">
+                    {formatCurrency(latestBid.amount || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Realizada por:</span>
+                  <span className="font-medium text-gray-900">
+                    {latestBidderLabel}
+                  </span>
+                </div>
+                {latestBid.message && (
+                  <div>
+                    <span className="text-gray-600">Mensaje:</span>
+                    <p className="font-medium text-gray-900 mt-1">
+                      {latestBid.message}
+                    </p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Fecha:</span>
+                  <span className="font-medium text-gray-900">
+                    {new Date(latestBid.createdAt).toLocaleDateString("es-ES", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Detalles del contrato */}
           <div className="mb-6">
@@ -377,7 +467,7 @@ export function ContractDetailsModal({
         <div className="p-6 border-t border-gray-200 bg-gray-50 space-y-3">
           {/* Botón Responder Solicitud - Solo para proveedor y contratos pendientes */}
           {!isClientView &&
-            contract.status === ContractStatus.PENDING &&
+            effectiveStatus === ContractStatus.PENDING &&
             onRespondContract && (
               <button
                 onClick={() => {
@@ -391,10 +481,39 @@ export function ContractDetailsModal({
               </button>
             )}
 
+          {canRespondToLatestBid && (onAcceptBid || onMakeBid) && (
+            <div className="flex gap-3 items-center">
+              {onAcceptBid && (
+                <button
+                  onClick={() => {
+                    onAcceptBid(contract, latestBid!.id);
+                    onClose();
+                  }}
+                  className="flex-1 bg-emerald-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="h-5 w-5" />
+                  Aceptar oferta
+                </button>
+              )}
+              {onMakeBid && (
+                <button
+                  onClick={() => {
+                    onMakeBid(contract);
+                    onClose();
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  Enviar contraoferta
+                </button>
+              )}
+            </div>
+          )}
+
           {(showPayButton ||
-            ((contract.status === ContractStatus.PENDING ||
-              contract.status === ContractStatus.NEGOTIATING ||
-              contract.status === ContractStatus.ACCEPTED) &&
+            ((effectiveStatus === ContractStatus.PENDING ||
+              effectiveStatus === ContractStatus.NEGOTIATING ||
+              effectiveStatus === ContractStatus.ACCEPTED) &&
               onCancelContract)) && (
             <div className="flex gap-3 items-center">
               {showPayButton && onPayContract && (
@@ -410,9 +529,9 @@ export function ContractDetailsModal({
                 </button>
               )}
 
-              {(contract.status === ContractStatus.PENDING ||
-                contract.status === ContractStatus.NEGOTIATING ||
-                contract.status === ContractStatus.ACCEPTED) &&
+              {(effectiveStatus === ContractStatus.PENDING ||
+                effectiveStatus === ContractStatus.NEGOTIATING ||
+                effectiveStatus === ContractStatus.ACCEPTED) &&
                 onCancelContract && (
                   <button
                     onClick={() => {
