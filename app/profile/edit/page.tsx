@@ -897,9 +897,11 @@ const ProfileEditPage = () => {
                   <TabsTrigger value="security" className="flex-1">
                     Seguridad
                   </TabsTrigger>
-                  <TabsTrigger value="segurosocial" className="flex-1">
-                    Seguridad Social
-                  </TabsTrigger>
+                  {!hasBusinessRole && (
+                    <TabsTrigger value="segurosocial" className="flex-1">
+                      Seguridad Social
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <form onSubmit={handleSubmit}>
@@ -1878,12 +1880,14 @@ const ProfileEditPage = () => {
                 </form>
 
                 {/* Tab de Seguro Social - Fuera del form para evitar actualizaciones */}
-                <TabsContent
-                  value="segurosocial"
-                  className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
-                >
-                  <SeguroSocial userId={user?.id?.toString()} />
-                </TabsContent>
+                {!hasBusinessRole && (
+                  <TabsContent
+                    value="segurosocial"
+                    className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                  >
+                    <SeguroSocial userId={user?.id?.toString()} />
+                  </TabsContent>
+                )}
               </Tabs>
             )}
           </div>

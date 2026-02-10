@@ -84,6 +84,36 @@ export const Author = ({
             </div>
           </div>
 
+          {/* Estrellas de calificación */}
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => {
+              const rating = userRatingStats?.averageRating || 0;
+              const isFilled = star <= Math.floor(rating);
+              const isHalf = !isFilled && star <= rating + 0.5 && star > rating;
+              return (
+                <Star
+                  key={star}
+                  className={`h-4 w-4 ${
+                    isFilled
+                      ? "text-yellow-400 fill-yellow-400"
+                      : isHalf
+                        ? "text-yellow-400 fill-yellow-400/50"
+                        : "text-gray-300"
+                  }`}
+                />
+              );
+            })}
+            {userRatingStats?.averageRating ? (
+              <span className="text-xs text-gray-500 ml-1">
+                ({userRatingStats.averageRating.toFixed(1)})
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 ml-1">
+                Sin calificaciones
+              </span>
+            )}
+          </div>
+
           {author.skills && author.skills.length > 0 && (
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">

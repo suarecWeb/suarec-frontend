@@ -417,11 +417,21 @@ const PublicationDetailModal = ({
                   {/* Grid de detalles */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {publication.location && (
-                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                      <div
+                        className="flex items-center gap-2 p-3 rounded-lg shadow-sm border border-gray-200/50 relative overflow-hidden"
+                        style={{
+                          background: `
+                            linear-gradient(to right, rgba(156, 163, 175, 0.1) 1px, transparent 1px),
+                            linear-gradient(to bottom, rgba(156, 163, 175, 0.1) 1px, transparent 1px),
+                            linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)
+                          `,
+                          backgroundSize: "12px 12px, 12px 12px, 100% 100%",
+                        }}
+                      >
                         <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-600">Ubicación</p>
-                          <p className="font-semibold text-blue-700 truncate">
+                          <p className="text-xs text-gray-500">Ubicación</p>
+                          <p className="font-semibold text-gray-800 truncate">
                             {publication.location}
                           </p>
                         </div>
@@ -441,13 +451,13 @@ const PublicationDetailModal = ({
                     )}
 
                     {publication.preferredSchedule && (
-                      <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                        <Calendar className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-3 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-lg shadow-sm">
+                        <Calendar className="h-5 w-5 text-gray-600 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-gray-500">
                             Horario preferido
                           </p>
-                          <p className="font-semibold text-purple-700 capitalize truncate">
+                          <p className="font-semibold text-gray-800 capitalize truncate">
                             {publication.preferredSchedule}
                           </p>
                         </div>
@@ -455,11 +465,11 @@ const PublicationDetailModal = ({
                     )}
 
                     {publication.requirements && (
-                      <div className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg sm:col-span-2">
-                        <Briefcase className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex items-start gap-2 p-3 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-lg shadow-sm sm:col-span-2">
+                        <Briefcase className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-600">Requisitos</p>
-                          <p className="font-semibold text-yellow-700">
+                          <p className="text-xs text-gray-500">Requisitos</p>
+                          <p className="font-semibold text-gray-800">
                             {publication.requirements}
                           </p>
                         </div>
