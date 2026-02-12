@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Contract, ContractStatus } from "../../interfaces/contract.interface";
+import {
+  Contract,
+  ContractBid,
+  ContractStatus,
+} from "../../interfaces/contract.interface";
 import { ContractService } from "../../services/ContractService";
 import { useRouter } from "next/navigation";
 import BidModal from "../../components/bid-modal";
@@ -114,6 +118,26 @@ export default function ContractsPage() {
     "client" | "provider" | null
   >(null);
 
+  const getLatestBid = (contract: Contract): ContractBid | null => {
+    if (!contract?.bids?.length) return null;
+    return contract.bids.reduce<ContractBid | null>((latest, bid) => {
+      if (!latest) return bid;
+      const latestTime = new Date(latest.createdAt).getTime();
+      const bidTime = new Date(bid.createdAt).getTime();
+      return bidTime > latestTime ? bid : latest;
+    }, null);
+  };
+
+  const getEffectiveStatus = (
+    contract: Contract,
+    latestBid: ContractBid | null,
+  ): ContractStatus => {
+    if (latestBid && contract.status === ContractStatus.PENDING) {
+      return ContractStatus.NEGOTIATING;
+    }
+    return contract.status;
+  };
+
   useEffect(() => {
     loadContracts();
   }, []);
@@ -217,9 +241,13 @@ export default function ContractsPage() {
     }
   };
 
-  const handleAcceptBid = async (bidId: string, acceptorId: number) => {
+  const handleAcceptBid = async (bidId: string) => {
+    if (!currentUserId) {
+      toast.error("No se pudo identificar al usuario");
+      return;
+    }
     try {
-      await ContractService.acceptBid({ bidId, acceptorId });
+      await ContractService.acceptBid({ bidId, acceptorId: currentUserId });
       loadContracts(); // Recargar para ver los cambios
     } catch (error) {
       toast.error("Error al aceptar la oferta");
@@ -625,75 +653,100 @@ export default function ContractsPage() {
                       </div>
                     ) : (
                       <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
-                        {contracts.asClient.map((contract) => (
-                          <div
-                            key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
-                          >
-                            {/* Imagen del servicio compacta */}
-                            <div className="h-24 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                              <Briefcase className="h-10 w-10 text-blue-500" />
-                            </div>
+                        {contracts.asClient.map((contract) => {
+                          const latestBid = getLatestBid(contract);
+                          const effectiveStatus = getEffectiveStatus(
+                            contract,
+                            latestBid,
+                          );
+                          const latestBidLabel =
+                            latestBid &&
+                            (currentUserId &&
+                            latestBid.bidderId === currentUserId
+                              ? "Tú"
+                              : latestBid.bidder?.name ||
+                                `Usuario ${latestBid.bidderId}`);
 
-                            <div className="p-3">
-                              {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-0.5 mb-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <svg
-                                    key={star}
-                                    className="w-3 h-3 text-yellow-400 fill-current"
-                                    viewBox="0 0 20 20"
+                          return (
+                            <div
+                              key={contract.id}
+                              className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
+                            >
+                              {/* Imagen del servicio compacta */}
+                              <div className="h-24 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                                <Briefcase className="h-10 w-10 text-blue-500" />
+                              </div>
+
+                              <div className="p-3">
+                                {/* Estrellas de calificación */}
+                                <div className="flex items-center gap-0.5 mb-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <svg
+                                      key={star}
+                                      className="w-3 h-3 text-yellow-400 fill-current"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                    </svg>
+                                  ))}
+                                </div>
+
+                                {/* Título */}
+                                <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
+                                  {contract.publication?.title}
+                                </h3>
+
+                                {/* Precio y estado */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-lg font-bold text-gray-900">
+                                    {formatCurrency(contract.totalPrice || 0)}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(effectiveStatus)}`}
                                   >
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                  </svg>
-                                ))}
-                              </div>
+                                    {getStatusText(effectiveStatus)}
+                                  </span>
+                                </div>
 
-                              {/* Título */}
-                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
-                                {contract.publication?.title}
-                              </h3>
+                                {latestBid && (
+                                  <p className="text-xs text-blue-600 mb-1 truncate">
+                                    Última oferta:{" "}
+                                    {formatCurrency(latestBid.amount || 0)}
+                                    {latestBidLabel
+                                      ? ` • ${latestBidLabel}`
+                                      : ""}
+                                  </p>
+                                )}
 
-                              {/* Precio y estado */}
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {formatCurrency(contract.totalPrice || 0)}
-                                </span>
-                                <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
+                                {/* Fecha */}
+                                <p className="text-xs text-gray-500 mb-2">
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString("es-ES", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+
+                                {/* Botón de acción */}
+                                <button
+                                  onClick={() => {
+                                    setContractForDetails(contract);
+                                    setIsDetailsModalOpen(true);
+                                    setDetailsViewRole("client");
+                                    if (isClientForContract(contract)) {
+                                      refreshPaymentData(contract.id);
+                                    }
+                                  }}
+                                  className="w-full bg-blue-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
                                 >
-                                  {getStatusText(contract.status)}
-                                </span>
+                                  Ver Detalles
+                                </button>
                               </div>
-
-                              {/* Fecha */}
-                              <p className="text-xs text-gray-500 mb-2">
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString("es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
-
-                              {/* Botón de acción */}
-                              <button
-                                onClick={() => {
-                                  setContractForDetails(contract);
-                                  setIsDetailsModalOpen(true);
-                                  setDetailsViewRole("client");
-                                  if (isClientForContract(contract)) {
-                                    refreshPaymentData(contract.id);
-                                  }
-                                }}
-                                className="w-full bg-blue-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                              >
-                                Ver Detalles
-                              </button>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -719,78 +772,103 @@ export default function ContractsPage() {
                       </div>
                     ) : (
                       <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
-                        {contracts.asProvider.map((contract) => (
-                          <div
-                            key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
-                          >
-                            {/* Imagen del servicio compacta */}
-                            <div className="h-24 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-                              <Users className="h-10 w-10 text-green-500" />
-                            </div>
+                        {contracts.asProvider.map((contract) => {
+                          const latestBid = getLatestBid(contract);
+                          const effectiveStatus = getEffectiveStatus(
+                            contract,
+                            latestBid,
+                          );
+                          const latestBidLabel =
+                            latestBid &&
+                            (currentUserId &&
+                            latestBid.bidderId === currentUserId
+                              ? "Tú"
+                              : latestBid.bidder?.name ||
+                                `Usuario ${latestBid.bidderId}`);
 
-                            <div className="p-3">
-                              {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-0.5 mb-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <svg
-                                    key={star}
-                                    className="w-3 h-3 text-yellow-400 fill-current"
-                                    viewBox="0 0 20 20"
+                          return (
+                            <div
+                              key={contract.id}
+                              className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
+                            >
+                              {/* Imagen del servicio compacta */}
+                              <div className="h-24 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                                <Users className="h-10 w-10 text-green-500" />
+                              </div>
+
+                              <div className="p-3">
+                                {/* Estrellas de calificación */}
+                                <div className="flex items-center gap-0.5 mb-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <svg
+                                      key={star}
+                                      className="w-3 h-3 text-yellow-400 fill-current"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                    </svg>
+                                  ))}
+                                </div>
+
+                                {/* Título */}
+                                <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
+                                  {contract.publication?.title}
+                                </h3>
+
+                                {/* Precio y estado */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-lg font-bold text-gray-900">
+                                    {formatCurrency(contract.totalPrice || 0)}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(effectiveStatus)}`}
                                   >
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                  </svg>
-                                ))}
-                              </div>
+                                    {getStatusText(effectiveStatus)}
+                                  </span>
+                                </div>
 
-                              {/* Título */}
-                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
-                                {contract.publication?.title}
-                              </h3>
+                                {latestBid && (
+                                  <p className="text-xs text-blue-600 mb-1 truncate">
+                                    Última oferta:{" "}
+                                    {formatCurrency(latestBid.amount || 0)}
+                                    {latestBidLabel
+                                      ? ` • ${latestBidLabel}`
+                                      : ""}
+                                  </p>
+                                )}
 
-                              {/* Precio y estado */}
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {formatCurrency(contract.totalPrice || 0)}
-                                </span>
-                                <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
+                                {/* Cliente y fecha */}
+                                <p className="text-xs text-gray-500 truncate mb-1">
+                                  {contract.client?.name}
+                                </p>
+                                <p className="text-xs text-gray-400 mb-2">
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString("es-ES", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+
+                                {/* Botón de acción */}
+                                <button
+                                  onClick={() => {
+                                    setContractForDetails(contract);
+                                    setIsDetailsModalOpen(true);
+                                    setDetailsViewRole("provider");
+                                    if (isClientForContract(contract)) {
+                                      refreshPaymentData(contract.id);
+                                    }
+                                  }}
+                                  className="w-full bg-green-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
                                 >
-                                  {getStatusText(contract.status)}
-                                </span>
+                                  Ver Detalles
+                                </button>
                               </div>
-
-                              {/* Cliente y fecha */}
-                              <p className="text-xs text-gray-500 truncate mb-1">
-                                {contract.client?.name}
-                              </p>
-                              <p className="text-xs text-gray-400 mb-2">
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString("es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
-
-                              {/* Botón de acción */}
-                              <button
-                                onClick={() => {
-                                  setContractForDetails(contract);
-                                  setIsDetailsModalOpen(true);
-                                  setDetailsViewRole("provider");
-                                  if (isClientForContract(contract)) {
-                                    refreshPaymentData(contract.id);
-                                  }
-                                }}
-                                className="w-full bg-green-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
-                              >
-                                Ver Detalles
-                              </button>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -991,12 +1069,20 @@ export default function ContractsPage() {
               setDetailsViewRole(null);
             }}
             isClientView={detailsIsClientView}
+            currentUserId={currentUserId}
             onCancelContract={(contract) => {
               handleCancelContract(contract);
             }}
             onRespondContract={(contract) => {
               setSelectedContract(contract);
               setIsProviderResponseModalOpen(true);
+            }}
+            onMakeBid={(contract) => {
+              setSelectedContract(contract);
+              setIsBidModalOpen(true);
+            }}
+            onAcceptBid={(_, bidId) => {
+              handleAcceptBid(bidId);
             }}
             onPayContract={(contract) => {
               handleGoToPayment(contract);
