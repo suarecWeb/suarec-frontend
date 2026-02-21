@@ -414,6 +414,9 @@ export default function FeedPage() {
             </div>
 
             {/* Feed */}
+            <h2 className="text-3xl font-eras-bold text-gray-900 mb-4">
+              Publicaciones Recientes
+            </h2>
             <div className="w-full max-w-full overflow-x-hidden">
               {loading ? (
                 // Loading skeletons
