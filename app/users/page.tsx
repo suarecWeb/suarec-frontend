@@ -7,6 +7,7 @@ import Navbar from "@/components/navbar";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 import { IdPhoto, IdPhotosService } from "@/services/IdPhotosService";
+import { RutDocument, RutService } from "@/services/RutService";
 import {
   PlusCircle,
   Edit,
@@ -71,6 +72,15 @@ const UsersPageContent = () => {
   });
   const [rejectingPhotoId, setRejectingPhotoId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rutFiles, setRutFiles] = useState<RutDocument[]>([]);
+
+  const isUserBusiness = (user: User): boolean => {
+    if (!user.roles || !Array.isArray(user.roles)) return false;
+    return user.roles.some((r: any) => {
+      const name = typeof r === "string" ? r : r.name;
+      return name?.toUpperCase() === "BUSINESS";
+    });
+  };
 
   const fetchUsers = async (
     params: PaginationParams = { page: 1, limit: 10 },
@@ -84,6 +94,7 @@ const UsersPageContent = () => {
         response.data.data.map((user: any) => ({
           ...user,
           roles: user.roles || [],
+          idPhotos: user.idPhotos ?? [],
         })),
       );
 
@@ -111,6 +122,7 @@ const UsersPageContent = () => {
             response.data.map((user: any) => ({
               ...user,
               roles: user.roles || [],
+              idPhotos: user.idPhotos ?? [],
             })),
           );
         } catch (err) {
@@ -287,17 +299,30 @@ const UsersPageContent = () => {
         ),
         value: user.profile_image || "No completado",
       },
-      {
-        name: "education",
-        label: "Educación",
-        icon: GraduationCap,
-        isCompleted: !!(
-          user.education &&
-          Array.isArray(user.education) &&
-          user.education.length > 0
-        ),
-        value: user.education || [],
-      },
+      isUserBusiness(user)
+        ? {
+            name: "rut",
+            label: "Documento RUT",
+            icon: FileText,
+            isCompleted: !!(
+              user.rutDocuments &&
+              Array.isArray(user.rutDocuments) &&
+              user.rutDocuments.length > 0 &&
+              user.rutDocuments.some((d) => d.status === "approved")
+            ),
+            value: rutFiles.length > 0 ? rutFiles : user.rutDocuments || [],
+          }
+        : {
+            name: "education",
+            label: "Educación",
+            icon: GraduationCap,
+            isCompleted: !!(
+              user.education &&
+              Array.isArray(user.education) &&
+              user.education.length > 0
+            ),
+            value: user.education || [],
+          },
       {
         name: "idPhotos",
         label: "Fotos de identificación",
@@ -332,9 +357,35 @@ const UsersPageContent = () => {
   };
 
   // Función para mostrar los detalles de los campos obligatorios
-  const handleViewRequiredFields = (user: User) => {
+  const handleViewRequiredFields = async (user: User) => {
     setSelectedUser(user);
     setShowRequiredFieldsModal(true);
+    setRutFiles([]);
+
+    try {
+      const photos = await IdPhotosService.getUserIdPhotosById(Number(user.id));
+      const photosCompat = photos.map((p) => ({
+        ...p,
+        id: String(p.id),
+      })) as User["idPhotos"];
+      const updatedUser: User = { ...user, idPhotos: photosCompat };
+      setSelectedUser(updatedUser);
+      const patch = (u: User): User =>
+        u.id === user.id ? { ...u, idPhotos: photosCompat } : u;
+      setUsers((prev) => prev.map(patch));
+      setSearchResults((prev) => prev.map(patch));
+    } catch (err) {
+      console.warn("Could not load id photos for user", user.id, err);
+    }
+
+    if (isUserBusiness(user)) {
+      try {
+        const docs = await RutService.getUserRutById(user.id!);
+        setRutFiles(docs);
+      } catch (err) {
+        console.warn("Could not load RUT docs for user", user.id, err);
+      }
+    }
   };
 
   // Mostrar resultados de búsqueda si hay término de búsqueda, sino mostrar usuarios paginados
@@ -375,21 +426,20 @@ const UsersPageContent = () => {
         };
         setSelectedUser(updatedUser);
 
-        // También actualizar la lista principal de usuarios
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === selectedUser.id
-              ? {
-                  ...user,
-                  idPhotos: user.idPhotos?.map((photo: any) =>
-                    photo.id === photoId
-                      ? { ...photo, status, description: description }
-                      : photo,
-                  ),
-                }
-              : user,
-          ),
-        );
+        const patchIdPhoto = (user: User): User =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                idPhotos: user.idPhotos?.map((photo: any) =>
+                  photo.id === photoId
+                    ? { ...photo, status, description }
+                    : photo,
+                ),
+              }
+            : user;
+
+        setUsers((prev) => prev.map(patchIdPhoto));
+        setSearchResults((prev) => prev.map(patchIdPhoto));
       }
 
       // Limpiar estados de rechazo
@@ -1049,6 +1099,158 @@ const UsersPageContent = () => {
                                 ) : (
                                   <p className="text-sm text-gray-600">
                                     Sin información educativa
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {field.name === "rut" && (
+                              <div className="bg-white p-3 rounded border">
+                                {field.value && field.value.length > 0 ? (
+                                  <div className="space-y-3">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      Documento RUT ({field.value.length}{" "}
+                                      archivo{field.value.length > 1 ? "s" : ""}
+                                      )
+                                    </p>
+                                    {field.value.map((doc: RutDocument) => (
+                                      <div
+                                        key={doc.id}
+                                        className="bg-gray-50 border rounded-lg p-3 space-y-3"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
+                                            <div className="min-w-0">
+                                              <p className="text-sm font-medium text-gray-900 truncate">
+                                                {doc.file_path.split("/").pop()}
+                                              </p>
+                                              <span
+                                                className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                                  doc.status === "approved"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : doc.status === "rejected"
+                                                      ? "bg-red-100 text-red-800"
+                                                      : "bg-yellow-100 text-yellow-800"
+                                                }`}
+                                              >
+                                                {doc.status === "approved"
+                                                  ? "Aprobado"
+                                                  : doc.status === "rejected"
+                                                    ? "Rechazado"
+                                                    : "Pendiente"}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <a
+                                            href={doc.file_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors flex-shrink-0"
+                                          >
+                                            <Eye className="h-3 w-3" />
+                                            Ver PDF
+                                          </a>
+                                        </div>
+
+                                        {doc.description &&
+                                          doc.status === "rejected" && (
+                                            <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                                              <p className="font-medium text-blue-800">
+                                                Comentarios:
+                                              </p>
+                                              <p className="text-blue-700">
+                                                {doc.description}
+                                              </p>
+                                            </div>
+                                          )}
+
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                await RutService.reviewRut(
+                                                  doc.id,
+                                                  "approved",
+                                                );
+                                                toast.success("RUT aprobado");
+                                                if (selectedUser) {
+                                                  const docs =
+                                                    await RutService.getUserRutById(
+                                                      selectedUser.id!,
+                                                    );
+                                                  setRutFiles(docs);
+                                                }
+                                              } catch (e) {
+                                                toast.error(
+                                                  "Error al aprobar RUT",
+                                                );
+                                              }
+                                            }}
+                                            disabled={doc.status === "approved"}
+                                            className={`flex-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                              doc.status === "approved"
+                                                ? "bg-green-100 text-green-800 cursor-not-allowed"
+                                                : "bg-green-600 text-white hover:bg-green-700"
+                                            }`}
+                                          >
+                                            <CheckCircle className="h-3 w-3 inline mr-1" />
+                                            {doc.status === "approved"
+                                              ? "Aprobado"
+                                              : "Aprobar"}
+                                          </button>
+                                          <button
+                                            onClick={async () => {
+                                              const reason =
+                                                prompt("Razón del rechazo:");
+                                              if (reason === null) return;
+                                              try {
+                                                await RutService.reviewRut(
+                                                  doc.id,
+                                                  "rejected",
+                                                  reason,
+                                                );
+                                                toast.success("RUT rechazado");
+                                                if (selectedUser) {
+                                                  const docs =
+                                                    await RutService.getUserRutById(
+                                                      selectedUser.id!,
+                                                    );
+                                                  setRutFiles(docs);
+                                                }
+                                              } catch (e) {
+                                                toast.error(
+                                                  "Error al rechazar RUT",
+                                                );
+                                              }
+                                            }}
+                                            disabled={doc.status === "rejected"}
+                                            className={`flex-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                              doc.status === "rejected"
+                                                ? "bg-red-100 text-red-800 cursor-not-allowed"
+                                                : "bg-red-600 text-white hover:bg-red-700"
+                                            }`}
+                                          >
+                                            <XCircle className="h-3 w-3 inline mr-1" />
+                                            {doc.status === "rejected"
+                                              ? "Rechazado"
+                                              : "Rechazar"}
+                                          </button>
+                                        </div>
+
+                                        {doc.reviewedBy &&
+                                          doc.status !== "pending" && (
+                                            <p className="text-xs text-gray-500">
+                                              Revisado por:{" "}
+                                              {doc.reviewedBy.name}
+                                            </p>
+                                          )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-600">
+                                    No se ha subido el documento RUT
                                   </p>
                                 )}
                               </div>

@@ -81,6 +81,17 @@ export interface User {
       name: string;
     };
   }[];
+  rutDocuments?: {
+    id: number;
+    file_url: string;
+    file_path: string;
+    status: "pending" | "approved" | "rejected";
+    description?: string;
+    reviewedBy?: {
+      id: string;
+      name: string;
+    };
+  }[];
   company?: Company;
   publications?: Publication[];
   comments?: Comment[];
