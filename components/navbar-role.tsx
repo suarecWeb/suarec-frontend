@@ -20,7 +20,6 @@ import {
   FileText,
   Building2,
   Star,
-  Ticket,
   Briefcase,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -256,16 +255,7 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
             <span className="text-sm">Mis Estadísticas</span>
           </Link>
 
-          {userRoles.includes("ADMIN") ? (
-            <Link
-              href="/payments"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-              onClick={() => setIsDropdownOpen(false)}
-            >
-              <CreditCard className="h-4 w-4" />
-              <span className="text-sm">Pagos</span>
-            </Link>
-          ) : (
+          {!userRoles.includes("ADMIN") && (
             <Link
               href="/payments/history"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
@@ -285,18 +275,6 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
             <Star className="h-4 w-4" />
             <span className="text-sm">Calificaciones</span>
           </Link>
-
-          {/* Tickets de soporte - Solo para ADMIN */}
-          {userRoles.includes("ADMIN") && (
-            <Link
-              href="/admin/tickets"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-300"
-              onClick={() => setIsDropdownOpen(false)}
-            >
-              <Ticket className="h-4 w-4" />
-              <span className="text-sm">Tickets de soporte</span>
-            </Link>
-          )}
 
           <Link
             href="/profile/edit"

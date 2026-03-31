@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import SearchBar from "./utils/searchBar";
 import { NavbarRole } from "./navbar-role";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import {
-  Menu,
-  X,
   ChevronDown,
   Users,
   FileText,
@@ -31,6 +30,9 @@ import {
 import NotificationBadge from "./notification-badge";
 import SuarecLogo from "./logo";
 import { Input } from "@/components/ui/input";
+import StaggeredMenu from "@/components/mobile/StaggeredMenu";
+import type { StaggeredMenuItem } from "@/components/mobile/StaggeredMenu";
+import MobileMenuFooter from "@/components/mobile/MobileMenuFooter";
 
 interface TokenPayload {
   roles?: { name: string }[];
@@ -52,6 +54,14 @@ const Navbar = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
+
+  const isUsersPage = pathname?.startsWith("/users");
+  const isAdminPanel =
+    isUsersPage ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/payments") ||
+    pathname?.startsWith("/wallet");
 
   const updateUserRoles = () => {
     const token = Cookies.get("token");
@@ -125,7 +135,73 @@ const Navbar = ({
     return roles.some((role) => userRoles.includes(role));
   };
 
-  const closeMenu = () => setIsMenuOpen(false);
+  const menuItems: StaggeredMenuItem[] = [
+    hasRole(["ADMIN"]) && {
+      label: "Usuarios",
+      ariaLabel: "Ir a usuarios",
+      link: "/users",
+    },
+    hasRole(["ADMIN", "BUSINESS", "PERSON"]) && {
+      label: "Inicio",
+      ariaLabel: "Ir a inicio",
+      link: "/feed",
+    },
+    hasRole(["ADMIN", "BUSINESS", "PERSON"]) && {
+      label: "Compañías",
+      ariaLabel: "Ir a compañías",
+      link: "/companies",
+    },
+    hasRole(["BUSINESS", "ADMIN"]) && {
+      label: "Aplicaciones",
+      ariaLabel: "Ir a aplicaciones",
+      link: "/applications",
+    },
+    hasRole(["PERSON", "ADMIN"]) && {
+      label: "Mis postulaciones",
+      ariaLabel: "Ir a mis postulaciones",
+      link: "/my-applications",
+    },
+    hasRole(["BUSINESS", "ADMIN"]) && {
+      label: "Mis empleados",
+      ariaLabel: "Ir a mis empleados",
+      link: "/my-employees",
+    },
+    hasRole(["PERSON", "BUSINESS", "ADMIN"]) && {
+      label: "Mensajes",
+      ariaLabel: "Ir a mensajes",
+      link: "/chat",
+    },
+    hasRole(["PERSON", "BUSINESS", "ADMIN"]) && {
+      label: "Mis compras",
+      ariaLabel: "Ir a mis compras",
+      link: "/contracts",
+    },
+    hasRole(["PERSON", "BUSINESS", "ADMIN"]) && {
+      label: "Calificaciones",
+      ariaLabel: "Ir a calificaciones",
+      link: "/ratings",
+    },
+    hasRole(["ADMIN", "BUSINESS", "PERSON"]) && {
+      label: "Estadísticas",
+      ariaLabel: "Ir a estadísticas",
+      link: "/stats",
+    },
+    hasRole(["ADMIN"]) && {
+      label: "Transacciones",
+      ariaLabel: "Ir a transacciones",
+      link: "/payments",
+    },
+    hasRole(["ADMIN"]) && {
+      label: "Tickets de soporte",
+      ariaLabel: "Ir a tickets de soporte",
+      link: "/admin/tickets",
+    },
+    hasRole(["BUSINESS", "PERSON"]) && {
+      label: "Historial de pagos",
+      ariaLabel: "Ir a historial de pagos",
+      link: "/payments/history",
+    },
+  ].filter(Boolean) as StaggeredMenuItem[];
 
   return (
     <>
@@ -140,15 +216,24 @@ const Navbar = ({
       >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16 lg:h-20">
-            {/* Logo */}
-            <Link
-              href="/"
-              className={`transition-all duration-300 hover:scale-105 ${
-                isScrolled ? "text-[#097EEC]" : "text-white"
-              }`}
-            >
-              <SuarecLogo className="w-24 sm:w-28 md:w-32" />
-            </Link>
+            {/* Logo + título de sección */}
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className={`transition-all duration-300 hover:scale-105 ${
+                  isScrolled ? "text-[#097EEC]" : "text-white"
+                }`}
+              >
+                <SuarecLogo
+                  className={
+                    isAdminPanel
+                      ? "w-36 sm:w-44 md:w-52"
+                      : "w-24 sm:w-28 md:w-32"
+                  }
+                  panel={!!isAdminPanel}
+                />
+              </Link>
+            </div>
 
             {/* Search Bar - Desktop */}
             {showSearch && onSearchChange && (
@@ -289,193 +374,37 @@ const Navbar = ({
               </div>
             </div>
 
-            {/* Mobile menu button */}
-            <button
-              className={`flex items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-opacity-20 lg:hidden ${
-                isScrolled
-                  ? "text-[#097EEC] hover:bg-[#097EEC]/10"
-                  : "text-white hover:bg-white/10"
-              }`}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
+            {/* Mobile menu (animated) */}
+            <div className="lg:hidden">
+              <StaggeredMenu
+                position="right"
+                items={menuItems}
+                socialItems={[]}
+                displaySocials={false}
+                displayItemNumbering={false}
+                showLogo={false}
+                isFixed={true}
+                colors={["#097EEC", "#0A6BC7"]}
+                menuButtonColor={isScrolled ? "#097EEC" : "#ffffff"}
+                openMenuButtonColor="#ffffff"
+                changeMenuColorOnOpen={false}
+                accentColor="#097EEC"
+                onMenuOpen={() => setIsMenuOpen(true)}
+                onMenuClose={() => setIsMenuOpen(false)}
+                footer={
+                  <div className="px-1">
+                    <MobileMenuFooter />
+                  </div>
+                }
+              />
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Navigation Overlay */}
+      {/* Backdrop click closes the menu via StaggeredMenu's click-away */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden">
-          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl">
-            <div className="flex h-full flex-col">
-              {/* Mobile Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-                <SuarecLogo className="w-24" theme="light" />
-                <button
-                  onClick={closeMenu}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="h-6 w-6 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Navigation Links */}
-              <div className="flex-1 overflow-y-auto py-4">
-                <div className="flex flex-col space-y-1 px-4">
-                  {hasRole(["ADMIN"]) && (
-                    <MobileNavLink
-                      href="/users"
-                      icon={<Users className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Usuarios
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
-                    <MobileNavLink
-                      href="/feed"
-                      icon={<TrendingUp className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Inicio
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
-                    <MobileNavLink
-                      href="/companies"
-                      icon={<Building2 className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Compañías
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["BUSINESS", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/applications"
-                      icon={<Briefcase className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Aplicaciones
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["PERSON", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/my-applications"
-                      icon={<UserCheck className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Mis Postulaciones
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["BUSINESS", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/my-employees"
-                      icon={<Users className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Mis empleados
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/chat"
-                      icon={<MessageSquare className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Mensajes
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/contracts"
-                      icon={<ShoppingBag className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Mis compras
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["PERSON", "BUSINESS", "ADMIN"]) && (
-                    <MobileNavLink
-                      href="/ratings"
-                      icon={<Star className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Calificaciones
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["ADMIN", "BUSINESS", "PERSON"]) && (
-                    <MobileNavLink
-                      href="/stats"
-                      icon={<BarChart3 className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Estadísticas
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["ADMIN"]) && (
-                    <MobileNavLink
-                      href="/payments"
-                      icon={<CreditCard className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Pagos
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["ADMIN"]) && (
-                    <MobileNavLink
-                      href="/admin/tickets"
-                      icon={<Ticket className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Tickets de Soporte
-                    </MobileNavLink>
-                  )}
-
-                  {hasRole(["BUSINESS", "PERSON"]) && (
-                    <MobileNavLink
-                      href="/payments/history"
-                      icon={<CreditCard className="h-5 w-5" />}
-                      onClick={closeMenu}
-                    >
-                      Historial de Pagos
-                    </MobileNavLink>
-                  )}
-                </div>
-              </div>
-
-              {/* User Profile Section */}
-              <div className="border-t border-gray-200 bg-gray-50 px-4 py-4">
-                <div className="bg-white rounded-lg p-3 shadow-sm">
-                  <NavbarRole isMobile={true} section="logIn" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Backdrop - click to close */}
-          <div
-            className="absolute inset-0 -z-10"
-            onClick={closeMenu}
-            aria-hidden="true"
-          />
-        </div>
+        <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" />
       )}
     </>
   );

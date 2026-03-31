@@ -4,6 +4,7 @@ import { UserService } from "@/services/UsersService";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { User, UserPlan } from "@/interfaces/user.interface";
 import Navbar from "@/components/navbar";
+import AdminSidePanel from "@/components/AdminSidePanel";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 import { IdPhoto, IdPhotosService } from "@/services/IdPhotosService";
@@ -479,20 +480,25 @@ const UsersPageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12">
-        {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
+        {/* Header superior azul */}
+        <div className="bg-[#097EEC] text-white py-8 shadow-sm">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Usuarios</h1>
+            <h1 className="text-3xl font-bold">Panel de usuarios</h1>
             <p className="mt-2 text-blue-100">
               Gestiona todos los usuarios registrados en la plataforma
             </p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Layout con sidebar + contenido */}
+        <div className="container mx-auto px-4 -mt-4 flex gap-6">
+          <div className="hidden md:flex flex-col gap-[24px]">
+            <AdminSidePanel />
+          </div>
+
+          {/* Contenido principal */}
+          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
             {/* Actions Bar */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-md">

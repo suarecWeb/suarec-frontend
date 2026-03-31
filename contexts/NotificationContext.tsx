@@ -1,6 +1,18 @@
 "use client";
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { sileo } from "sileo";
+
+export interface NotificationRecord {
+  id: string;
+  title: string;
+  message: string;
+  senderName: string;
+  senderId?: number;
+  senderAvatar?: string;
+  timestamp: number;
+  read: boolean;
+}
 
 interface NotificationContextType {
   showNotification: (
@@ -11,13 +23,35 @@ interface NotificationContextType {
     message: string,
     senderName: string,
     senderId?: number,
+    senderAvatar?: string,
   ) => void;
   showContractNotification: (
     message: string,
     type: "accepted" | "rejected" | "negotiating" | "created",
     amount?: string,
   ) => void;
+  notifications: NotificationRecord[];
+  clearNotifications: () => void;
+  markAllRead: () => void;
+  unreadCount: number;
 }
+
+const STORAGE_KEY = "suarec_notifications";
+
+const loadFromStorage = (): NotificationRecord[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveToStorage = (records: NotificationRecord[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch {}
+};
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined,
@@ -40,6 +74,33 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
 }) => {
+  const [notifications, setNotifications] = useState<NotificationRecord[]>(() =>
+    loadFromStorage(),
+  );
+
+  const addRecord = (record: NotificationRecord) => {
+    setNotifications((prev) => {
+      const updated = [record, ...prev].slice(0, 50);
+      saveToStorage(updated);
+      return updated;
+    });
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+    saveToStorage([]);
+  };
+
+  const markAllRead = () => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      saveToStorage(updated);
+      return updated;
+    });
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   const showNotification = (
     message: string,
     type: "success" | "error" | "info" = "info",
@@ -61,64 +122,78 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     message: string,
     senderName: string,
     senderId?: number,
+    senderAvatar?: string,
   ) => {
-    console.log("🔔 showMessageNotification llamado con:", {
+    const now = Date.now();
+    const time = new Date(now).toLocaleTimeString("es-CO", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const record: NotificationRecord = {
+      id: `${now}-${Math.random().toString(36).slice(2)}`,
+      title: `Nuevo mensaje de ${senderName}`,
       message,
       senderName,
       senderId,
-    });
+      senderAvatar,
+      timestamp: now,
+      read: false,
+    };
 
-    toast(
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-          <svg
-            className="h-4 w-4 text-[#097EEC]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <p className="font-medium text-sm text-gray-900">
-            Nuevo mensaje de {senderName}
-          </p>
-          <p className="text-xs text-gray-600">Te envió un mensaje</p>
-        </div>
-        <button
-          onClick={() => {
-            // Navegar al chat específico con el senderId
-            if (senderId) {
-              window.location.href = `/chat?sender=${senderId}`;
-            } else {
-              window.location.href = "/chat";
-            }
-          }}
-          className="px-2 py-1 text-xs bg-[#097EEC] text-white rounded hover:bg-[#0A6BC7] transition-colors"
-        >
-          Ver
-        </button>
-      </div>,
-      {
-        duration: 8000,
-        position: "top-right",
-        style: {
-          background: "#fff",
-          color: "#333",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
-      },
+    addRecord(record);
+
+    const avatar = senderAvatar ? (
+      <img
+        src={senderAvatar}
+        alt={senderName}
+        style={{
+          width: 32,
+          height: 32,
+          minWidth: 32,
+          minHeight: 32,
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          minWidth: 32,
+          minHeight: 32,
+          borderRadius: "50%",
+          flexShrink: 0,
+          background: "#097EEC",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 14,
+          fontWeight: 600,
+        }}
+      >
+        {senderName.charAt(0).toUpperCase()}
+      </div>
     );
 
-    console.log("✅ Toast mostrado exitosamente");
+    sileo.info({
+      title: `${senderName} · ${time}`,
+      description: message,
+      position: "top-right",
+      duration: 2500,
+      icon: avatar,
+      button: {
+        title: "Ver",
+        onClick: () => {
+          window.location.href = senderId
+            ? `/chat?sender=${senderId}`
+            : "/chat";
+        },
+      },
+    });
   };
 
   const showContractNotification = (
@@ -144,13 +219,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     const getColor = () => {
       switch (type) {
         case "accepted":
-          return "#10B981"; // Green
+          return "#10B981";
         case "rejected":
-          return "#EF4444"; // Red
+          return "#EF4444";
         case "negotiating":
-          return "#3B82F6"; // Blue
+          return "#3B82F6";
         case "created":
-          return "#8B5CF6"; // Purple
+          return "#8B5CF6";
         default:
           return "#097EEC";
       }
@@ -190,6 +265,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         showNotification,
         showMessageNotification,
         showContractNotification,
+        notifications,
+        clearNotifications,
+        markAllRead,
+        unreadCount,
       }}
     >
       {children}

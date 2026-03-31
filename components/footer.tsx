@@ -18,13 +18,15 @@ import SuarecLogo from "@/components/logo";
 import TermsModal from "@/components/terms-modal";
 import PrivacyModal from "@/components/privacy-modal";
 
-export default function Footer() {
+export default function Footer({ rounded = true }: { rounded?: boolean }) {
   const [isTermsOpen, setTermsOpen] = useState(false);
   const [isPrivacyOpen, setPrivacyOpen] = useState(false);
 
   return (
     <>
-      <footer className="relative bg-gradient-to-t from-[#1a1f3a] via-[#2a3a6e] via-[#097EEC] to-[#097EEC] text-white py-14 mt-auto overflow-hidden rounded-t-[3rem] -mt-12">
+      <footer
+        className={`relative bg-gradient-to-t from-[#1a1f3a] via-[#2a3a6e] via-[#097EEC] to-[#097EEC] text-white py-14 mt-auto overflow-hidden ${rounded ? "rounded-t-[3rem]" : ""}`}
+      >
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>

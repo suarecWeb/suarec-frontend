@@ -59,6 +59,13 @@ const restorePublication = (id: string) => {
   return api.post<Publication>(`${baseURL}/${id}/restore`);
 };
 
+// Obtener publicaciones de un usuario específico
+const getPublicationsByUser = (userId: number, params?: PaginationParams) => {
+  return api.get<PaginationResponse<Publication>>(`${baseURL}/user/${userId}`, {
+    params,
+  });
+};
+
 // Obtener categorías disponibles para filtros
 const getAvailableCategories = () => {
   return api.get<string[]>(`${baseURL}/filters/categories`);
@@ -71,6 +78,7 @@ const getAvailableTypes = () => {
 
 const PublicationService = {
   getPublications,
+  getPublicationsByUser,
   getServiceOffers,
   getServiceRequests,
   getPublicationById,

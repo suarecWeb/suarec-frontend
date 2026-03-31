@@ -14,9 +14,10 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { useSileo } from "@/hooks/useSileo";
 
 const FormLogin = () => {
+  const toast = useSileo();
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
@@ -31,13 +32,17 @@ const FormLogin = () => {
 
     if (verified === "true") {
       toast.success(
-        "¡Correo electrónico verificado exitosamente! Ya puedes iniciar sesión.",
+        "Correo verificado",
+        "¡Ya puedes iniciar sesión!",
+        "bottom-right",
       );
     }
 
     if (expired === "true") {
       toast.error(
-        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        "Sesión expirada",
+        "Por favor, inicia sesión nuevamente.",
+        "bottom-right",
       );
     }
   }, [searchParams]);
@@ -67,7 +72,11 @@ const FormLogin = () => {
         });
 
         if (res.data.token === undefined || res.data.token === null) {
-          toast.error("Error iniciando sesión");
+          toast.error(
+            "Error al iniciar sesión",
+            "No se recibió token. Intenta de nuevo.",
+            "top-center",
+          );
           return;
         }
 
@@ -75,7 +84,11 @@ const FormLogin = () => {
         Cookies.set("email", res.data.email);
         Cookies.set("role", res.data.roles[0].name);
 
-        toast.success("Inicio de sesión exitoso");
+        toast.success(
+          "Bienvenido a SUAREC",
+          "Inicio de sesión exitoso",
+          "top-center",
+        );
 
         // Pequeña pausa para mostrar el mensaje de éxito
         setTimeout(() => {
@@ -91,23 +104,27 @@ const FormLogin = () => {
           errorMessage.toLowerCase().includes("verification")
         ) {
           toast.error(
-            "Tu correo electrónico no ha sido verificado. Por favor, verifica tu correo electrónico antes de iniciar sesión.",
+            "Correo no verificado",
+            "Revisa tu bandeja de entrada. Serás redirigido en unos segundos.",
+            "top-center",
           );
 
-          // Redirigir a la página de verificación después de 3 segundos
           setTimeout(() => {
             router.push(
               `/auth/verify-email?email=${encodeURIComponent(values.email)}`,
             );
           }, 3000);
         } else if (err.response?.data?.error === "COMPANY_NOT_VERIFIED") {
-          toast.error(
-            "Tu empresa no ha sido verificada. Por favor, espera a que tu informacion sea validada.",
+          toast.warning(
+            "Empresa pendiente de verificación",
+            "Espera a que tu información sea validada.",
+            "top-left",
           );
         } else {
-          // Error genérico de credenciales
           toast.error(
-            "Email o contraseña incorrectos. Por favor, verifica tus credenciales.",
+            "Credenciales incorrectas",
+            "Verifica tu email y contraseña.",
+            "bottom-center",
           );
         }
       }
