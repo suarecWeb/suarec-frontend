@@ -1,12 +1,12 @@
 "use client";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import {
-  Award,
-  Briefcase,
-  Building2,
-  Shield,
-  Users,
-  Zap,
+  Sparkles,
+  BadgeCheck,
+  Network,
+  ShieldCheck,
+  Rocket,
+  Gem,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,42 +22,42 @@ export default function SwiperAuto() {
     () => [
       {
         id: 1,
-        icon: Briefcase,
+        icon: Sparkles,
         title: "Ofertas exclusivas",
         description:
           "Accede a oportunidades laborales únicas que no encontrarás en otras plataformas. Trabajamos directamente con las mejores empresas.",
       },
       {
         id: 2,
-        icon: Building2,
+        icon: BadgeCheck,
         title: "Empresas verificadas",
         description:
           "Todas nuestras empresas pasan por un riguroso proceso de verificación para garantizar las mejores condiciones laborales.",
       },
       {
         id: 3,
-        icon: Users,
+        icon: Network,
         title: "Comunidad activa",
         description:
           "Forma parte de una red de profesionales que comparten oportunidades, experiencias y crecen juntos.",
       },
       {
         id: 4,
-        icon: Shield,
+        icon: ShieldCheck,
         title: "Seguridad garantizada",
         description:
           "Tu información está protegida con los más altos estándares de seguridad y privacidad.",
       },
       {
         id: 5,
-        icon: Zap,
+        icon: Rocket,
         title: "Proceso rápido",
         description:
           "Conectamos profesionales con empresas en tiempo récord, sin trámites complicados.",
       },
       {
         id: 6,
-        icon: Award,
+        icon: Gem,
         title: "Calidad premium",
         description:
           "Solo trabajamos con los mejores profesionales y las empresas más prestigiosas del mercado.",

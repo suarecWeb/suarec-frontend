@@ -56,6 +56,7 @@ export default function RootLayout({
             <ConditionalFooter />
             <FloatingMailbox />
             <SileoToaster position="top-right" />
+            <SileoToaster position="bottom-right" />
           </WebSocketProvider>
         </NotificationProvider>
       </body>

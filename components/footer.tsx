@@ -7,12 +7,13 @@ import {
   Building2,
   Users,
   Instagram,
-  Twitter,
   Facebook,
   Linkedin,
   Mail,
   Phone,
   MapPin,
+  Shield,
+  ScrollText,
 } from "lucide-react";
 import SuarecLogo from "@/components/logo";
 import TermsModal from "@/components/terms-modal";
@@ -27,39 +28,106 @@ export default function Footer({ rounded = true }: { rounded?: boolean }) {
       <footer
         className={`relative bg-gradient-to-t from-[#1a1f3a] via-[#2a3a6e] via-[#097EEC] to-[#097EEC] text-white py-14 mt-auto overflow-hidden ${rounded ? "rounded-t-[3rem]" : ""}`}
       >
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        {/* Decorative blur elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        </div>
+
+        {/* Decorative map image */}
+        <div className="absolute right-0 top-0 h-full pointer-events-none select-none opacity-50 hidden lg:block">
+          <img
+            src="/images/latam-map.png"
+            alt=""
+            aria-hidden="true"
+            className="h-[180%] w-auto object-cover object-right -translate-y-[20%] brightness-0 invert opacity-30"
+          />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           {/* Main Footer Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-            {/* Company Info */}
+            {/* Company Info + Social */}
             <div className="lg:col-span-1">
               <SuarecLogo
                 width={120}
                 height={50}
-                className="mb-6"
+                className="mb-4"
                 theme="dark"
               />
-              <p className="text-white/80 leading-relaxed mb-6 font-eras text-sm">
+              <p className="text-white/80 leading-relaxed mb-4 font-eras text-sm">
                 Unimos personas y empresas para contratar, vender y comprar con
                 confianza en Colombia.
               </p>
-              <div className="flex items-center gap-2 text-white/70 font-eras text-xs">
-                <Heart className="h-5 w-5 fill-white/70" />
-                <span className="text-sm">
-                  Hecho en Colombia, para Colombianos
-                </span>
+              <div className="flex items-center gap-2 text-white/70 font-eras text-xs mb-5">
+                <Heart className="h-4 w-4 fill-white/70" />
+                <span>Hecho en Colombia, para Colombianos</span>
+              </div>
+              <p className="text-white/50 font-eras text-xs mb-3 uppercase tracking-wider">
+                Síguenos en nuestras redes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="https://www.instagram.com/suarec.co?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@suarec.co?_t=ZS-8yPgagZaqQS&_r=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
+                  aria-label="TikTok"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://x.com/suarec_?s=11"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
+                  aria-label="X"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://www.facebook.com/share/18shUoxxch/?mibextid=wwXIfr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <div
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 text-white/30 cursor-not-allowed"
+                  title="LinkedIn - Próximamente"
+                >
+                  <Linkedin className="h-4 w-4" />
+                </div>
               </div>
             </div>
 
             {/* Quick Links */}
             <div>
               <h3 className="text-base font-eras-bold mb-4 text-white">
-                Enlaces rápidos
+                Plataforma
               </h3>
               <ul className="space-y-3">
                 <li>
@@ -95,7 +163,7 @@ export default function Footer({ rounded = true }: { rounded?: boolean }) {
             {/* Contact */}
             <div>
               <h3 className="text-base font-eras-bold mb-4 text-white">
-                Contacto
+                Contáctanos
               </h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-white/70 hover:text-white transition-colors group">
@@ -122,7 +190,7 @@ export default function Footer({ rounded = true }: { rounded?: boolean }) {
                   </div>
                 </li>
                 <li className="flex items-start gap-3 text-white/70 group">
-                  <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <div className="font-eras">
                     <span className="block text-xs text-white/50 mb-1">
                       Ubicación
@@ -133,93 +201,40 @@ export default function Footer({ rounded = true }: { rounded?: boolean }) {
               </ul>
             </div>
 
-            {/* Social Media */}
+            {/* Legal */}
             <div>
               <h3 className="text-base font-eras-bold mb-4 text-white">
-                Síguenos
+                Legal
               </h3>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="https://www.instagram.com/suarec.co?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-                <a
-                  href="https://www.tiktok.com/@suarec.co?_t=ZS-8yPgagZaqQS&_r=1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
-                  aria-label="TikTok"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
+              <ul className="space-y-3">
+                <li>
+                  <button
+                    onClick={() => setPrivacyOpen(true)}
+                    className="text-white/70 hover:text-white transition-all duration-300 flex items-center gap-3 group font-eras"
                   >
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-.88-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://x.com/suarec_?s=11"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
-                  aria-label="X"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
+                    <Shield className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    <span>Política de privacidad</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setTermsOpen(true)}
+                    className="text-white/70 hover:text-white transition-all duration-300 flex items-center gap-3 group font-eras"
                   >
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.facebook.com/share/18shUoxxch/?mibextid=wwXIfr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white hover:text-[#097EEC] transition-all duration-300 hover:scale-110"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <div
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-white/30 cursor-not-allowed"
-                  title="LinkedIn - Próximamente"
-                >
-                  <Linkedin className="h-5 w-5" />
-                </div>
-              </div>
+                    <ScrollText className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    <span>Términos y condiciones</span>
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
 
           {/* Bottom Bar */}
-          <div className="border-t border-white/10 pt-6">
-            <div className="flex flex-col md:flex-row justify-center items-center gap-4 text-center">
-              <p className="text-white/50 text-xs font-eras">
-                © {new Date().getFullYear()} SUAREC. Todos los derechos
-                reservados.
-              </p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setPrivacyOpen(true)}
-                  className="text-white/50 hover:text-white text-sm transition-colors font-eras"
-                >
-                  Privacidad
-                </button>
-                <span className="text-white/30">|</span>
-                <button
-                  onClick={() => setTermsOpen(true)}
-                  className="text-white/50 hover:text-white text-sm transition-colors font-eras"
-                >
-                  Términos
-                </button>
-              </div>
-            </div>
+          <div className="pt-6">
+            <p className="text-white/40 text-xs font-eras text-center">
+              © {new Date().getFullYear()} SUAREC. Todos los derechos
+              reservados.
+            </p>
           </div>
         </div>
       </footer>

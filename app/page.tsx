@@ -4,7 +4,6 @@ import SwiperAuto from "@/components/ui/SwiperAuto";
 import ContactModal from "@/components/contact-modal";
 import CookiesModal from "@/components/cookies-modal";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
-import Iridescence from "@/components/Iridescence";
 import { useState } from "react";
 import { CompaniesCarousel } from "@/components/CompaniesCarousel";
 import HeroSection from "@/components/HeroSection";
@@ -14,62 +13,62 @@ export default function Home() {
   const [isCookiesOpen, setCookiesOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar isHomePage />
 
-      {/* Hero Section Moderna */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-        {/* Iridescence shader de fondo */}
-        <div className="absolute inset-0 z-0">
-          <Iridescence
-            color={[0, 0.6, 0.9]}
-            mouseReact
-            amplitude={0.1}
-            speed={1}
-          />
-        </div>
-
-        {/* Contenido principal */}
+      {/* ── Hero ── */}
+      <section
+        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 40%, #1a8ff5 0%, #097EEC 55%, #065fad 100%)",
+        }}
+      >
         <HeroSection />
-
-        {/* Indicador de scroll */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="animate-bounce">
-            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-              <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
-            </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/40 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse" />
           </div>
         </div>
       </section>
 
-      {/* Beneficios */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+      {/* ── Divisor hero → beneficios ── */}
+      <div className="h-px bg-gradient-to-r from-transparent via-[#097EEC]/20 to-transparent" />
+
+      {/* ── Beneficios ── */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">
+            <span className="inline-block text-[#097EEC] text-xs font-eras uppercase tracking-widest mb-4">
+              Por qué elegirnos
+            </span>
+            <h2 className="text-4xl md:text-5xl font-eras-bold text-gray-800 leading-tight mb-5">
               ¿Por qué elegir{" "}
               <span className="text-[#097EEC] font-eras-bold-italic">
                 SUAREC
               </span>{" "}
               ?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto font-eras leading-relaxed">
               Descubre las ventajas que nos hacen la plataforma preferida por
-              profesionales y empresas
+              profesionales y empresas en Colombia.
             </p>
           </div>
-
           <SwiperAuto />
         </div>
       </section>
-      {/* Sección de Alianzas */}
-      <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
-        <div className="container mx-auto px-4">
+
+      {/* ── Divisor beneficios → alianzas ── */}
+      <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+      {/* ── Alianzas ── */}
+      <section className="py-24 bg-[#f8faff]">
+        <div className="container mx-auto px-6">
           <CompaniesCarousel />
         </div>
       </section>
 
-      {/* App Download Banner */}
+      {/* ── Descarga la app ── */}
       <AppDownloadBanner />
 
       <ContactModal

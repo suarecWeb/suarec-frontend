@@ -1,6 +1,12 @@
 import Image from "next/image";
-import { Smartphone } from "lucide-react";
+import { Briefcase, Building2, Star } from "lucide-react";
 import SuarecLogo from "@/components/logo";
+
+const features = [
+  { icon: Briefcase, text: "Publica y encuentra trabajo fácilmente" },
+  { icon: Building2, text: "Gestiona tu equipo y contratos" },
+  { icon: Star, text: "Califica y construye tu reputación" },
+];
 
 export default function AppDownloadBanner() {
   return (
@@ -9,11 +15,41 @@ export default function AppDownloadBanner() {
       style={{ minHeight: "460px" }}
     >
       <div className="flex flex-col md:flex-row" style={{ minHeight: "460px" }}>
-        {/* MITAD IZQUIERDA — estilo ARQ: limpio, directo, sin pill */}
-        <div className="w-full md:w-1/2 bg-white flex flex-col justify-center gap-8 px-14 py-12 md:py-0">
-          {/* Heading principal */}
+        {/* MITAD IZQUIERDA — mockup */}
+        <div
+          className="w-full md:w-1/2 relative flex items-center justify-center overflow-hidden"
+          style={{
+            minHeight: "460px",
+            background: "#f8faff",
+          }}
+        >
+          <div
+            className="absolute z-10"
+            style={{
+              width: "770px",
+              height: "710px",
+              bottom: "-80px",
+              left: "-60px",
+            }}
+          >
+            <Image
+              src="/store-mockup.png"
+              alt="SUAREC App mockup"
+              fill
+              className="object-contain object-center drop-shadow-2xl"
+              priority
+              sizes="620px"
+            />
+          </div>
+        </div>
+
+        {/* MITAD DERECHA */}
+        <div className="w-full md:w-1/2 bg-[#f8faff] flex flex-col justify-center gap-6 px-14 py-12 md:py-0">
+          {/* Pill */}
+
+          {/* Título */}
           <div>
-            <div className="flex items-end gap-2 mb-4">
+            <div className="flex items-end gap-2 mb-3">
               <h2 className="text-4xl md:text-5xl font-eras-bold text-gray-900 leading-none whitespace-nowrap pb-1">
                 Descarga
               </h2>
@@ -27,28 +63,39 @@ export default function AppDownloadBanner() {
                 .
               </span>
             </div>
-            <p className="text-lg font-eras text-gray-400 leading-relaxed max-w-xs">
-              Conectamos profesionales y empresas.
-              <br />
-              Todo en un solo lugar.
+            <p className="text-base font-eras text-gray-400 leading-relaxed max-w-sm">
+              Conecta con profesionales y empresas de Colombia desde tu celular.
             </p>
           </div>
 
-          {/* QR + badges al estilo ARQ */}
-          <div className="flex flex-row items-center justify-between w-full">
-            {/* QR */}
-            <div className="w-24 h-24 flex-shrink-0 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center">
-              <div className="w-20 h-20 border-2 border-dashed border-[#097EEC]/30 rounded-xl flex flex-col items-center justify-center gap-1">
-                <Smartphone className="w-7 h-7 text-[#097EEC]/40" />
-                <span className="text-[9px] text-[#097EEC]/50 font-eras text-center leading-tight">
-                  QR
+          {/* Features */}
+          <ul className="space-y-2.5">
+            {features.map(({ icon: Icon, text }) => (
+              <li
+                key={text}
+                className="flex items-center gap-3 text-gray-600 font-eras text-sm"
+              >
+                <span className="w-7 h-7 rounded-full bg-[#097EEC]/10 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-[#097EEC]" />
                 </span>
-              </div>
+                {text}
+              </li>
+            ))}
+          </ul>
+
+          {/* QR + Badges */}
+          <div className="flex flex-row items-center gap-5">
+            <div className="w-28 h-28 flex-shrink-0 bg-white border border-gray-200 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden">
+              <Image
+                src="/qr-suarec.png"
+                alt="Código QR para descargar SUAREC"
+                width={112}
+                height={112}
+                className="object-contain"
+              />
             </div>
 
-            {/* Badges */}
             <div className="flex flex-col gap-2">
-              {/* Google Play — fondo negro, ícono con los 4 colores oficiales */}
               <div className="flex items-center gap-3 bg-black rounded-xl px-4 py-2.5 w-[168px] cursor-not-allowed select-none">
                 <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24">
                   <path
@@ -78,7 +125,6 @@ export default function AppDownloadBanner() {
                 </div>
               </div>
 
-              {/* App Store — fondo negro, ícono Apple blanco oficial */}
               <div className="flex items-center gap-3 bg-black rounded-xl px-4 py-2.5 w-[168px] cursor-not-allowed select-none">
                 <svg
                   className="w-6 h-6 flex-shrink-0"
@@ -98,20 +144,6 @@ export default function AppDownloadBanner() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* MITAD DERECHA — mockup */}
-        <div
-          className="w-full md:w-1/2 relative bg-[#097EEC]"
-          style={{ minHeight: "460px" }}
-        >
-          <Image
-            src="/app-mockup.png"
-            alt="SUAREC App"
-            fill
-            className="object-contain object-center"
-            priority
-          />
         </div>
       </div>
     </section>

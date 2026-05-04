@@ -246,7 +246,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       </div>,
       {
         duration: 4000,
-        position: "top-right",
+        position: "top-center",
         style: {
           background: "#fff",
           color: "#333",
@@ -272,7 +272,29 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       }}
     >
       {children}
-      <Toaster />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            textAlign: "center",
+            justifyContent: "center",
+            maxWidth: "360px",
+            padding: "12px 16px",
+          },
+          success: {
+            style: {
+              textAlign: "center",
+              justifyContent: "center",
+            },
+          },
+          error: {
+            style: {
+              textAlign: "center",
+              justifyContent: "center",
+            },
+          },
+        }}
+      />
     </NotificationContext.Provider>
   );
 };

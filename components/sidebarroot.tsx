@@ -38,7 +38,7 @@ const SidebarRoot = () => {
       delay={0}
       className="hidden md:block"
     >
-      <aside className="w-64 flex flex-col bg-white rounded-2xl shadow-xl pt-6 pb-4 px-4 bg-opacity-100">
+      <aside className="w-full flex flex-col bg-white rounded-2xl shadow-xl pt-6 pb-4 px-4 bg-opacity-100">
         <div className="mb-6">
           <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide">
             Navegación

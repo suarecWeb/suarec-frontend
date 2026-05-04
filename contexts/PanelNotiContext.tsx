@@ -11,12 +11,54 @@ import React, {
 } from "react";
 import { io, Socket } from "socket.io-client";
 import Cookies from "js-cookie";
+import { sileo } from "sileo";
 import { IdPhotosService, IdPhoto } from "@/services/IdPhotosService";
 import ModerationService, {
   ContentReport,
   ReportStatus,
 } from "@/services/ModerationService";
 import { PaymentService, PaymentStatus } from "@/services/PaymentService";
+
+// ─── Helpers para toasts ─────────────────────────────────────────────────────
+
+const nowTime = () =>
+  new Date().toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  publication: "Publicación",
+  comment: "Comentario",
+  message: "Mensaje",
+  user_profile: "Perfil",
+};
+
+const REASON_LABELS: Record<string, string> = {
+  spam: "Spam",
+  harassment: "Acoso",
+  hate_speech: "Discurso de odio",
+  violence: "Violencia",
+  sexual_content: "Cont. sexual",
+  misinformation: "Desinformación",
+  intellectual_property: "Prop. intelectual",
+  illegal_activity: "Act. ilegal",
+  other: "Otro",
+};
+
+const iconStyle = (bg: string): React.CSSProperties => ({
+  width: 30,
+  height: 30,
+  minWidth: 30,
+  borderRadius: "50%",
+  background: bg,
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 15,
+  flexShrink: 0,
+});
 
 // ─── Tipos públicos ──────────────────────────────────────────────────────────
 
@@ -32,6 +74,8 @@ export interface PanelNotiState {
   loading: boolean;
   isConnected: boolean;
   refresh: () => void;
+  /** Marca un reporte como under_review en el backend y lo quita del badge */
+  markReportSeen: (id: number) => Promise<void>;
 }
 
 // ─── Contexto ────────────────────────────────────────────────────────────────
@@ -114,6 +158,19 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
       setPendingPhotos((prev) =>
         prev.some((p) => p.id === photo.id) ? prev : [photo, ...prev],
       );
+      sileo.info({
+        title: `Foto de ID · ${nowTime()}`,
+        description: `${photo.photo_type === "front" ? "Frente" : "Reverso"} · usuario #${photo.user_id}`,
+        position: "bottom-right",
+        duration: 6000,
+        icon: <div style={iconStyle("#F97316")}>🪪</div>,
+        button: {
+          title: "Revisar",
+          onClick: () => {
+            window.location.href = "/users";
+          },
+        },
+      });
     });
 
     socket.on("admin:photo_reviewed", (data: { photoId: number }) => {
@@ -124,6 +181,25 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
       setPendingReports((prev) =>
         prev.some((r) => r.id === report.id) ? prev : [report, ...prev],
       );
+      sileo.info({
+        title: `Nuevo reporte · ${nowTime()}`,
+        description: `${CONTENT_TYPE_LABELS[report.content_type] ?? report.content_type} — ${REASON_LABELS[report.reason] ?? report.reason}`,
+        position: "bottom-right",
+        duration: 6000,
+        fill: "#097EEC",
+        icon: <div style={iconStyle("#ffffff")}>🛡️</div>,
+        styles: {
+          title: "!text-black",
+          description: "!text-black",
+          button: "!text-white",
+        },
+        button: {
+          title: "Revisar",
+          onClick: () => {
+            window.location.href = "/admin/tickets";
+          },
+        },
+      });
     });
 
     socket.on("admin:report_resolved", (data: { reportId: number }) => {
@@ -132,6 +208,19 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
 
     socket.on("admin:new_payment", () => {
       setPendingPaymentsCount((n) => n + 1);
+      sileo.info({
+        title: `Nuevo pago · ${nowTime()}`,
+        description: "Pago pendiente de desembolso",
+        position: "bottom-right",
+        duration: 6000,
+        icon: <div style={iconStyle("#097EEC")}>💳</div>,
+        button: {
+          title: "Ver",
+          onClick: () => {
+            window.location.href = "/payments";
+          },
+        },
+      });
     });
 
     socket.on("admin:payment_processed", () => {
@@ -167,6 +256,22 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [fetchData, connectSocket, startPolling, stopPolling]);
 
+  const markReportSeen = useCallback(
+    async (id: number) => {
+      // Optimistic: quitar del array local antes de esperar la red
+      setPendingReports((prev) => prev.filter((r) => r.id !== id));
+      try {
+        await ModerationService.updateReportStatus(id, {
+          status: ReportStatus.UNDER_REVIEW,
+        });
+      } catch {
+        // Si falla, volvemos a hacer un fetch silencioso para restaurar el estado real
+        fetchData(true);
+      }
+    },
+    [fetchData],
+  );
+
   const totalPending = pendingPhotos.length + pendingReports.length;
 
   return (
@@ -179,6 +284,7 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
         loading,
         isConnected,
         refresh: () => fetchData(true),
+        markReportSeen,
       }}
     >
       {children}

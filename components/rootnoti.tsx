@@ -6,6 +6,7 @@ import AnimatedContent from "@/components/AnimatedContent";
 import { usePanelNoti } from "@/contexts/PanelNotiContext";
 import { IdPhoto } from "@/services/IdPhotosService";
 import { ContentReport } from "@/services/ModerationService";
+import ReportDetailModal from "@/components/ReportDetailModal";
 import {
   ShieldAlert,
   CreditCard,
@@ -38,13 +39,24 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   user_profile: "Perfil",
 };
 
-const timeAgo = (date: string) => {
-  const diff = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `hace ${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs}h`;
-  return `hace ${Math.floor(hrs / 24)}d`;
+const formatPhotoTime = (date: string) => {
+  const d = new Date(date);
+  const now = new Date();
+  const time = d.toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  if (isToday) return `Hoy ${time}`;
+  if (isYesterday) return `Ayer ${time}`;
+  return (
+    d.toLocaleDateString("es-CO", { day: "numeric", month: "short" }) +
+    ` · ${time}`
+  );
 };
 
 // ─── Panel interno (consume el contexto) ─────────────────────────────────────
@@ -59,9 +71,12 @@ const PanelNotiInner = () => {
     refresh,
   } = usePanelNoti();
   const [tab, setTab] = useState<"fotos" | "reportes">("fotos");
+  const [selectedReport, setSelectedReport] = useState<ContentReport | null>(
+    null,
+  );
 
   return (
-    <aside className="w-64 rounded-2xl bg-white shadow-xl p-4 min-h-[920px] flex flex-col font-jakarta">
+    <aside className="w-full rounded-2xl bg-white shadow-xl p-4 min-h-[300px] flex flex-col font-jakarta">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -170,10 +185,21 @@ const PanelNotiInner = () => {
           />
         ) : (
           pendingReports.map((report) => (
-            <ReportCard key={report.id} report={report} />
+            <ReportCard
+              key={report.id}
+              report={report}
+              onOpen={() => setSelectedReport(report)}
+            />
           ))
         )}
       </div>
+
+      {selectedReport && (
+        <ReportDetailModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+        />
+      )}
     </aside>
   );
 };
@@ -194,7 +220,10 @@ const EmptyState = ({
 );
 
 const PhotoCard = ({ photo }: { photo: IdPhoto }) => (
-  <Link href="/users" className="block">
+  <Link
+    href={`/users?userId=${photo.user_id}&openModal=requiredFields`}
+    className="block"
+  >
     <div className="rounded-xl border border-orange-100 bg-orange-50 p-3 hover:border-orange-300 transition-colors">
       <div className="flex items-start gap-2">
         <AlertTriangle className="h-3.5 w-3.5 text-orange-500 mt-0.5 flex-shrink-0" />
@@ -207,7 +236,7 @@ const PhotoCard = ({ photo }: { photo: IdPhoto }) => (
           <div className="flex items-center justify-between mt-1.5">
             <span className="inline-flex items-center gap-1 text-xs text-orange-600">
               <Clock className="h-3 w-3" />
-              {photo.created_at ? timeAgo(photo.created_at) : "—"}
+              {photo.created_at ? formatPhotoTime(photo.created_at) : "—"}
             </span>
             <ChevronRight className="h-3 w-3 text-gray-400" />
           </div>
@@ -217,34 +246,41 @@ const PhotoCard = ({ photo }: { photo: IdPhoto }) => (
   </Link>
 );
 
-const ReportCard = ({ report }: { report: ContentReport }) => (
-  <Link href="/users" className="block">
-    <div className="rounded-xl border border-red-100 bg-red-50 p-3 hover:border-red-300 transition-colors">
-      <div className="flex items-start gap-2">
-        <ShieldAlert className="h-3.5 w-3.5 text-red-500 mt-0.5 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-gray-800 truncate">
-            {CONTENT_TYPE_LABELS[report.content_type] ?? report.content_type}
+const ReportCard = ({
+  report,
+  onOpen,
+}: {
+  report: ContentReport;
+  onOpen: () => void;
+}) => (
+  <button
+    onClick={onOpen}
+    className="w-full text-left rounded-xl border border-red-100 bg-red-50 p-3 hover:border-red-300 hover:bg-red-100/60 transition-colors"
+  >
+    <div className="flex items-start gap-2">
+      <ShieldAlert className="h-3.5 w-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-gray-800 truncate">
+          {CONTENT_TYPE_LABELS[report.content_type] ?? report.content_type}
+        </p>
+        <p className="text-xs text-gray-500">
+          {REASON_LABELS[report.reason] ?? report.reason}
+        </p>
+        {report.reportedUser && (
+          <p className="text-xs text-gray-400 truncate">
+            {report.reportedUser.name ?? report.reportedUser.email}
           </p>
-          <p className="text-xs text-gray-500">
-            {REASON_LABELS[report.reason] ?? report.reason}
-          </p>
-          {report.reportedUser && (
-            <p className="text-xs text-gray-400 truncate">
-              {report.reportedUser.name ?? report.reportedUser.email}
-            </p>
-          )}
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="inline-flex items-center gap-1 text-xs text-red-600">
-              <Clock className="h-3 w-3" />
-              {timeAgo(report.created_at)}
-            </span>
-            <ChevronRight className="h-3 w-3 text-gray-400" />
-          </div>
+        )}
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="inline-flex items-center gap-1 text-xs text-red-600">
+            <Clock className="h-3 w-3" />
+            {formatPhotoTime(report.created_at)}
+          </span>
+          <ChevronRight className="h-3 w-3 text-gray-400" />
         </div>
       </div>
     </div>
-  </Link>
+  </button>
 );
 
 // ─── Export: el provider viene del AdminSidePanel padre ──────────────────────

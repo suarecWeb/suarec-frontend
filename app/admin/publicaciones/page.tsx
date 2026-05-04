@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
 import PublicationService from "@/services/PublicationsService";
 import { UserService } from "@/services/UsersService";
 import {
@@ -12,6 +13,7 @@ import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { Pagination } from "@/components/ui/pagination";
+import { PublicationDetailModal } from "./PublicationDetailModal";
 import {
   Search,
   Briefcase,
@@ -51,6 +53,7 @@ const TYPE_LABELS: Record<
 };
 
 const PublicacionesPageContent = () => {
+  const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +76,10 @@ const PublicacionesPageContent = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [selectedPub, setSelectedPub] = useState<
+    (Publication & { deleted_at?: Date }) | null
+  >(null);
 
   const [pagination, setPagination] = useState({
     total: 0,
@@ -232,12 +239,24 @@ const PublicacionesPageContent = () => {
         </div>
 
         {/* Layout sidebar + contenido */}
-        <div className="container mx-auto px-4 -mt-4 flex gap-6">
-          <div className="hidden md:flex flex-col gap-6">
+        <div className="container mx-auto px-4 -mt-4 flex">
+          {/* Columna izquierda redimensionable */}
+          <div
+            className="hidden md:flex flex-col gap-6 flex-shrink-0"
+            style={{ width: panelWidth }}
+          >
             <AdminSidePanel />
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* Handle de arrastre */}
+          <div
+            className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none"
+            onMouseDown={onPanelDrag}
+          >
+            <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
+          </div>
+
+          <div className="flex-1 min-w-0 ml-3">
             {/* Tabs */}
             <div className="flex gap-2 mb-4">
               <button
@@ -401,7 +420,15 @@ const PublicacionesPageContent = () => {
               ) : (
                 <div className="divide-y divide-gray-100">
                   {publications.map((pub) => (
-                    <PublicationRow key={pub.id} pub={pub} />
+                    <PublicationRow
+                      key={pub.id}
+                      pub={pub}
+                      onOpen={() =>
+                        setSelectedPub(
+                          pub as Publication & { deleted_at?: Date },
+                        )
+                      }
+                    />
                   ))}
                 </div>
               )}
@@ -420,14 +447,23 @@ const PublicacionesPageContent = () => {
           </div>
         </div>
       </div>
+
+      {selectedPub && (
+        <PublicationDetailModal
+          pub={selectedPub}
+          onClose={() => setSelectedPub(null)}
+        />
+      )}
     </>
   );
 };
 
 const PublicationRow = ({
   pub,
+  onOpen,
 }: {
   pub: Publication & { deleted_at?: Date };
+  onOpen: () => void;
 }) => {
   const isDeleted = !!pub.deleted_at;
   const typeInfo = TYPE_LABELS[pub.type] ?? {
@@ -446,7 +482,11 @@ const PublicationRow = ({
 
   return (
     <div
-      className={`flex gap-4 p-4 transition-colors ${isDeleted ? "bg-red-50 hover:bg-red-100 opacity-75" : "hover:bg-gray-50"}`}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === "Enter" && onOpen()}
+      className={`flex gap-4 p-4 cursor-pointer transition-colors ${isDeleted ? "bg-red-50 hover:bg-red-100 opacity-75" : "hover:bg-blue-50/60"}`}
     >
       {/* Imagen */}
       <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">

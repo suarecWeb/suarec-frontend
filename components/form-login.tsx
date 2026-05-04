@@ -34,7 +34,7 @@ const FormLogin = () => {
       toast.success(
         "Correo verificado",
         "¡Ya puedes iniciar sesión!",
-        "bottom-right",
+        "top-center",
       );
     }
 
@@ -42,7 +42,7 @@ const FormLogin = () => {
       toast.error(
         "Sesión expirada",
         "Por favor, inicia sesión nuevamente.",
-        "bottom-right",
+        "top-center",
       );
     }
   }, [searchParams]);
@@ -118,13 +118,13 @@ const FormLogin = () => {
           toast.warning(
             "Empresa pendiente de verificación",
             "Espera a que tu información sea validada.",
-            "top-left",
+            "top-center",
           );
         } else {
           toast.error(
             "Credenciales incorrectas",
             "Verifica tu email y contraseña.",
-            "bottom-center",
+            "top-center",
           );
         }
       }
