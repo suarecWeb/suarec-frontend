@@ -131,7 +131,7 @@ const UserTypeForm = () => {
 
       <button
         onClick={handleNext}
-        className="w-full bg-[#097EEC] text-white py-3 px-4 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-gradient-to-r from-[#097EEC] to-[#082D50] text-white py-3 px-4 rounded-full shadow-md hover:shadow-lg hover:opacity-90 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!userType}
       >
         Continuar

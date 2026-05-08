@@ -223,7 +223,7 @@ const FormLogin = () => {
       <div className="pt-2 space-y-3">
         <button
           type="submit"
-          className="w-full bg-[#097EEC] text-white font-medium py-3 px-4 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center"
+          className="w-full bg-gradient-to-r from-[#097EEC] to-[#082D50] text-white font-medium py-3 px-4 rounded-full shadow-md hover:shadow-lg hover:opacity-90 transition-all flex justify-center items-center"
           disabled={isPending}
         >
           {isPending ? (
@@ -238,7 +238,7 @@ const FormLogin = () => {
 
         <button
           type="button"
-          className="w-full bg-transparent text-gray-700 font-medium py-3 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex justify-center items-center"
+          className="w-full bg-transparent text-gray-700 font-medium py-3 px-4 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors flex justify-center items-center"
           disabled={isPending}
           onClick={() => router.push("/")}
         >
