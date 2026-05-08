@@ -1,14 +1,21 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import ConditionalFooter from "@/components/conditional-footer";
 import { FloatingMailbox } from "@/components/FloatingMailbox";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { Toaster as SileoToaster } from "sileo";
 
 const inter = Inter({ subsets: ["latin"] });
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-plus-jakarta",
+});
 
 export const metadata: Metadata = {
   title:
@@ -42,12 +49,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${plusJakarta.variable}`}>
         <NotificationProvider>
           <WebSocketProvider>
             <div className="flex-1 flex flex-col">{children}</div>
             <ConditionalFooter />
             <FloatingMailbox />
+            <SileoToaster position="top-right" />
+            <SileoToaster position="bottom-right" />
           </WebSocketProvider>
         </NotificationProvider>
       </body>

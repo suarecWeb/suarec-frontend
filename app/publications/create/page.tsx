@@ -67,6 +67,8 @@ const CreatePublicationPage = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [receivesPrice, setReceivesPrice] = useState<string>("");
+  const [buyerPaysPrice, setBuyerPaysPrice] = useState<string>("");
   const router = useRouter();
 
   const {
@@ -75,6 +77,7 @@ const CreatePublicationPage = () => {
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<FormData>({
     defaultValues: {
       title: "",
@@ -94,6 +97,73 @@ const CreatePublicationPage = () => {
       router.push("/auth/login");
     }
   }, [router]);
+
+  const COMMISSION_RATE = 0.08;
+
+  const roundCurrency = (value: number) => Math.round(value * 100) / 100;
+
+  const formatDerivedPrice = (value: number) => {
+    const rounded = roundCurrency(value);
+    return Number.isInteger(rounded) ? `${rounded}` : rounded.toFixed(2);
+  };
+
+  const handleReceivesPriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const rawValue = e.target.value;
+    setReceivesPrice(rawValue);
+
+    if (rawValue === "") {
+      setBuyerPaysPrice("");
+      setValue("price", undefined, { shouldValidate: true });
+      return;
+    }
+
+    const numericValue = Number(rawValue);
+    if (isNaN(numericValue)) {
+      setBuyerPaysPrice("");
+      setValue("price", undefined, { shouldValidate: true });
+      return;
+    }
+
+    const buyerPays = formatDerivedPrice(numericValue * (1 + COMMISSION_RATE));
+    setBuyerPaysPrice(buyerPays);
+    setValue("price", numericValue, { shouldValidate: true });
+  };
+
+  const handleBuyerPaysPriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const rawValue = e.target.value;
+    setBuyerPaysPrice(rawValue);
+
+    if (rawValue === "") {
+      setReceivesPrice("");
+      setValue("price", undefined, { shouldValidate: true });
+      return;
+    }
+
+    const numericValue = Number(rawValue);
+    if (isNaN(numericValue)) {
+      setReceivesPrice("");
+      setValue("price", undefined, { shouldValidate: true });
+      return;
+    }
+
+    const receives = roundCurrency(numericValue * (1 - COMMISSION_RATE));
+    setReceivesPrice(formatDerivedPrice(receives));
+    setValue("price", receives, { shouldValidate: true });
+  };
+
+  const watchedType = watch("type");
+
+  useEffect(() => {
+    if (watchedType !== "offer") {
+      setReceivesPrice("");
+      setBuyerPaysPrice("");
+      setValue("price", undefined, { shouldValidate: true });
+    }
+  }, [watchedType, setValue]);
 
   // Manejar la selección de archivos
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,6 +246,8 @@ const CreatePublicationPage = () => {
       reset();
       setSelectedFile(null);
       setPreviewUrl(null);
+      setReceivesPrice("");
+      setBuyerPaysPrice("");
 
       // Redirigir después de 2 segundos
       setTimeout(() => {
@@ -385,64 +457,154 @@ const CreatePublicationPage = () => {
                   </div>
 
                   {/* Precio */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="price"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Precio (opcional)
-                      </label>
+                  {watchedType === "offer" ? (
+                    <>
                       <input
-                        type="number"
-                        id="price"
-                        step="0.01"
-                        min="0"
+                        type="hidden"
                         {...register("price", {
                           min: {
                             value: 0,
                             message: "El precio debe ser mayor a 0",
                           },
                         })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                        placeholder="Ej: 50.00"
                       />
-                      {errors.price && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.price.message}
-                        </p>
-                      )}
-                    </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label
+                            htmlFor="price-receives"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Tu recibes <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            id="price-receives"
+                            step="0.01"
+                            min="0"
+                            value={receivesPrice}
+                            onChange={handleReceivesPriceChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            placeholder="Ej: 50.00"
+                          />
+                          {errors.price && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.price.message}
+                            </p>
+                          )}
+                        </div>
 
-                    <div>
-                      <label
-                        htmlFor="priceUnit"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Unidad de precio
-                      </label>
-                      <select
-                        id="priceUnit"
-                        {...register("priceUnit")}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                      >
-                        <option value="">Seleccionar unidad</option>
-                        <option value="hour">Por hora</option>
-                        <option value="project">Por proyecto</option>
-                        <option value="event">Por evento</option>
-                        <option value="monthly">Mensual</option>
-                        <option value="daily">Diario</option>
-                        <option value="weekly">Semanal</option>
-                        <option value="piece">Por pieza</option>
-                        <option value="service">Por servicio</option>
-                      </select>
-                      {errors.priceUnit && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.priceUnit.message}
-                        </p>
-                      )}
+                        <div>
+                          <label
+                            htmlFor="price-pays"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            El comprador paga
+                          </label>
+                          <input
+                            type="number"
+                            id="price-pays"
+                            step="0.01"
+                            min="0"
+                            value={buyerPaysPrice}
+                            onChange={handleBuyerPaysPriceChange}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                            placeholder="Ej: 54.00"
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            Calculado con +8%.
+                          </p>
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="priceUnit"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Unidad de precio
+                          </label>
+                          <select
+                            id="priceUnit"
+                            {...register("priceUnit")}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          >
+                            <option value="">Seleccionar unidad</option>
+                            <option value="hour">Por hora</option>
+                            <option value="project">Por proyecto</option>
+                            <option value="event">Por evento</option>
+                            <option value="monthly">Mensual</option>
+                            <option value="daily">Diario</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="piece">Por pieza</option>
+                            <option value="service">Por servicio</option>
+                          </select>
+                          {errors.priceUnit && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.priceUnit.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="price"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Precio (opcional)
+                        </label>
+                        <input
+                          type="number"
+                          id="price"
+                          step="0.01"
+                          min="0"
+                          {...register("price", {
+                            min: {
+                              value: 0,
+                              message: "El precio debe ser mayor a 0",
+                            },
+                          })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                          placeholder="Ej: 50.00"
+                        />
+                        {errors.price && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.price.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="priceUnit"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Unidad de precio
+                        </label>
+                        <select
+                          id="priceUnit"
+                          {...register("priceUnit")}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                        >
+                          <option value="">Seleccionar unidad</option>
+                          <option value="hour">Por hora</option>
+                          <option value="project">Por proyecto</option>
+                          <option value="event">Por evento</option>
+                          <option value="monthly">Mensual</option>
+                          <option value="daily">Diario</option>
+                          <option value="weekly">Semanal</option>
+                          <option value="piece">Por pieza</option>
+                          <option value="service">Por servicio</option>
+                        </select>
+                        {errors.priceUnit && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.priceUnit.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">
                     <div className="flex">

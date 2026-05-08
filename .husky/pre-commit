@@ -1,26 +1,27 @@
-echo "🔍 Analizando TODO el proyecto (primera ejecución)..."
+
+echo " Analizando TODO el proyecto (primera ejecución)..."
 
 # 1. Verificación de tipos TypeScript
-echo "🔍 TypeScript: Verificando tipos..."
+echo " TypeScript: Verificando tipos..."
 npm run type-check || {
-  echo "❌ Errores de tipos TypeScript encontrados"
+  echo "Errores de tipos TypeScript encontrados"
   exit 1
 }
 
 # 2. Linting completo (todos los archivos)
-echo "🧹 ESLint: Verificando todos los archivos..."
+echo "ESLint: Verificando todos los archivos..."
 npm run lint || {
-  echo "❌ ESLint encontró errores irreparables"
+  echo " ESLint encontró errores irreparables"
   exit 1
 }
 
 # 3. Formateo completo
-echo "🎨 Prettier: Formateando todo el código..."
+echo " Prettier: Formateando todo el código..."
 npm run format || {
-  echo "❌ Error al formatear"
+  echo " Error al formatear"
   exit 1
 }
 
 # 4. Opcional: Añade los cambios de formato al commit
 git add .
-echo "✅ Análisis completo! Archivos formateados añadidos al commit"
+echo " Análisis completo! Archivos formateados añadidos al commit"

@@ -236,52 +236,6 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
         </h3>
         <UserBadgesCard userBadges={userBadges} catalogBadges={catalogBadges} />
       </div>
-
-      {/* Requirements Section */}
-      {levelData &&
-        levelData.next_level &&
-        levelData.requirements.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Requisitos para {levelData.next_level}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {levelData.requirements.map((req, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-xl border-2 ${
-                    req.pass
-                      ? "bg-green-50 border-green-300"
-                      : "bg-gray-50 border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-gray-700 capitalize">
-                      {req.key.replace(/_/g, " ")}
-                    </span>
-                    {req.pass ? (
-                      <span className="text-green-600 font-bold">✓</span>
-                    ) : (
-                      <span className="text-gray-400 font-bold">○</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {req.current} / {req.target}
-                    </span>
-                    <span
-                      className={`font-bold ${
-                        req.pass ? "text-green-600" : "text-gray-500"
-                      }`}
-                    >
-                      {req.pass ? "Completado" : "En progreso"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
     </div>
   );
 };

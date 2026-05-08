@@ -28,6 +28,9 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { maskNit } from "@/components/utils/maskNit";
+import { maskPhone } from "@/components/utils/maskPhone";
+import { maskEmail } from "@/components/utils/maskEmail";
+import { useNitVisibility } from "@/hooks/useNitVisibility";
 
 const CompaniesPageContent = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -44,6 +47,9 @@ const CompaniesPageContent = () => {
     hasNextPage: false,
     hasPrevPage: false,
   });
+
+  // Hook para manejar visibilidad del NIT
+  const { getNitVisibilityOptions } = useNitVisibility();
 
   // Obtener información del usuario al cargar
   useEffect(() => {
@@ -137,7 +143,7 @@ const CompaniesPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12">
         {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+        <div className="bg-[#097EEC] text-white py-20 mt-2.5">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold">Empresas</h1>
             <p className="mt-2 text-blue-100">
@@ -210,6 +216,7 @@ const CompaniesPageContent = () => {
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  unoptimized={true}
                                 />
                               </div>
                             ) : (
@@ -222,19 +229,37 @@ const CompaniesPageContent = () => {
                                 {company.name}
                               </h3>
                               <p className="text-xs sm:text-sm text-gray-600 font-semibold bg-gray-100 px-2 py-1 rounded-md inline-block">
-                                NIT: {maskNit(company.nit)}
+                                NIT:{" "}
+                                {maskNit(company.nit, {
+                                  ...getNitVisibilityOptions(),
+                                  companyOwnerId: company.user?.id
+                                    ? parseInt(company.user.id.toString())
+                                    : undefined,
+                                })}
                               </p>
 
                               <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                                   <span className="truncate">
-                                    {company.email}
+                                    {maskEmail(company.email, {
+                                      ...getNitVisibilityOptions(),
+                                      companyOwnerId: company.user?.id
+                                        ? parseInt(company.user.id.toString())
+                                        : undefined,
+                                    })}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
-                                  <span>{company.cellphone}</span>
+                                  <span>
+                                    {maskPhone(company.cellphone, {
+                                      ...getNitVisibilityOptions(),
+                                      companyOwnerId: company.user?.id
+                                        ? parseInt(company.user.id.toString())
+                                        : undefined,
+                                    })}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />

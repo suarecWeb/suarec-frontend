@@ -5,10 +5,11 @@ import Footer from "./footer";
 export default function ConditionalFooter() {
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith("/auth");
+  const isHomePage = pathname === "/";
 
   if (isAuthPage) {
     return null;
   }
 
-  return <Footer />;
+  return <Footer rounded={!isHomePage} />;
 }

@@ -57,6 +57,31 @@ export interface PaymentStatusByContractDto {
   latestStatus?: PaymentStatus;
 }
 
+export interface PaymentByContractDto {
+  wompi_payment_link?: string;
+  [key: string]: any;
+}
+
+const normalizePaymentResponse = (payload: any): PaymentByContractDto => {
+  if (!payload) return {};
+  if (payload.wompi_payment_link) return payload;
+  if (payload.data) return normalizePaymentResponse(payload.data);
+  if (payload.payment) return normalizePaymentResponse(payload.payment);
+  if (Array.isArray(payload.payments)) {
+    const withLink = payload.payments.find(
+      (item: PaymentByContractDto) => item?.wompi_payment_link,
+    );
+    return withLink || payload.payments[0] || {};
+  }
+  if (Array.isArray(payload)) {
+    const withLink = payload.find(
+      (item: PaymentByContractDto) => item?.wompi_payment_link,
+    );
+    return withLink || payload[0] || {};
+  }
+  return payload;
+};
+
 export class PaymentService {
   static async createPayment(data: any) {
     const response = await api.post("suarec/payments", data);
@@ -131,5 +156,33 @@ export class PaymentService {
       },
     );
     return response.data;
+  }
+
+  static async getPaymentByContract(
+    contractId: string,
+  ): Promise<PaymentByContractDto> {
+    const token = Cookies.get("token");
+    const response = await api.get(`suarec/payments/contract/${contractId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return normalizePaymentResponse(response.data);
+  }
+
+  static async createPaymentLink(
+    contractId: string,
+  ): Promise<PaymentByContractDto> {
+    const token = Cookies.get("token");
+    const response = await api.post(
+      `suarec/contracts/${contractId}/create-payment-link`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return normalizePaymentResponse(response.data);
   }
 }

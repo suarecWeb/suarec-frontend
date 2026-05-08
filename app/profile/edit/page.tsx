@@ -30,6 +30,8 @@ import {
   Education,
 } from "@/interfaces/user.interface";
 import ProfessionAutocomplete from "@/components/ProfessionAutocomplete";
+import UserChangePassword from "@/components/profile/UserChangePassword";
+import SeguroSocial from "@/components/profile/segurosocial";
 import toast from "react-hot-toast";
 import SupabaseService from "@/services/supabase.service";
 import Zoom from "react-medium-image-zoom";
@@ -214,14 +216,6 @@ const ProfileEditPage = () => {
     references: [] as Reference[],
     socialLinks: [] as SocialLink[],
   });
-
-  // Estados para cambiar contraseña
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [changingPassword, setChangingPassword] = useState(false);
 
   const fetchIdPhotos = async () => {
     try {
@@ -631,44 +625,48 @@ const ProfileEditPage = () => {
         throw new Error("ID de usuario no disponible");
       }
 
+      // Función auxiliar para crear fecha sin problemas de zona horaria
+      const createLocalDate = (dateString: string): Date => {
+        const date = new Date(dateString + "T12:00:00");
+        return date;
+      };
+
       // Determinar la profesión final
       let finalProfession = formData.profession;
       if (formData.profession === "Otra") {
         finalProfession = formData.customProfession.trim() || "Otra";
       }
 
-      // Filtrar educación válida (con campos requeridos)
+      // Filtrar educación válida (con campos requeridos) y eliminar ID
       const validEducation = formData.education
         .filter((edu) => edu.institution && edu.degree && edu.startDate)
-        .map((edu) => ({
+        .map(({ id, ...edu }) => ({
           ...edu,
           startDate: edu.startDate
-            ? typeof edu.startDate === "string"
-              ? edu.startDate
-              : new Date(edu.startDate).toISOString().split("T")[0]
-            : "",
+            ? createLocalDate(
+                typeof edu.startDate === "string"
+                  ? edu.startDate.split("T")[0]
+                  : new Date(edu.startDate).toISOString().split("T")[0],
+              ).toISOString()
+            : new Date().toISOString(),
           endDate: edu.endDate
-            ? typeof edu.endDate === "string"
-              ? edu.endDate
-              : new Date(edu.endDate).toISOString().split("T")[0]
+            ? createLocalDate(
+                typeof edu.endDate === "string"
+                  ? edu.endDate.split("T")[0]
+                  : new Date(edu.endDate).toISOString().split("T")[0],
+              ).toISOString()
             : undefined,
         }));
 
-      // Filtrar referencias válidas (con campos requeridos)
-      const validReferences = formData.references.filter(
-        (ref) => ref.name && ref.relationship && ref.contact,
-      );
+      // Filtrar referencias válidas (con campos requeridos) y eliminar ID
+      const validReferences = formData.references
+        .filter((ref) => ref.name && ref.relationship && ref.contact)
+        .map(({ id, ...ref }) => ref);
 
-      // Filtrar redes sociales válidas (con campos requeridos)
-      const validSocialLinks = formData.socialLinks.filter(
-        (link) => link.type && link.url,
-      );
-
-      // Función auxiliar para crear fecha sin problemas de zona horaria
-      const createLocalDate = (dateString: string): Date => {
-        const date = new Date(dateString + "T12:00:00");
-        return date;
-      };
+      // Filtrar redes sociales válidas (con campos requeridos) y eliminar ID
+      const validSocialLinks = formData.socialLinks
+        .filter((link) => link.type && link.url)
+        .map(({ id, ...link }) => link);
 
       // Convertir born_at a Date antes de enviarlo y limpiar el payload
       const userData: Partial<UserType> = {
@@ -679,14 +677,11 @@ const ProfileEditPage = () => {
         born_at: createLocalDate(formData.born_at) || undefined,
         cv_url: formData.cv_url || undefined,
         profession: finalProfession || undefined,
-        skills:
-          Array.isArray(formData.skills) && formData.skills.length > 0
-            ? formData.skills
-            : undefined,
+        skills: Array.isArray(formData.skills) ? formData.skills : undefined,
         bio: formData.bio || undefined,
-        education: validEducation.length > 0 ? validEducation : undefined,
-        references: validReferences.length > 0 ? validReferences : undefined,
-        socialLinks: validSocialLinks.length > 0 ? validSocialLinks : undefined,
+        education: validEducation,
+        references: validReferences,
+        socialLinks: validSocialLinks,
       };
 
       await UserService.updateUser(user.id, userData);
@@ -720,93 +715,6 @@ const ProfileEditPage = () => {
   const hasPersonRole = user?.roles
     ? getRoleNames(user.roles).includes("PERSON")
     : false;
-
-  // Función para manejar cambios en los campos de contraseña
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Función para cambiar contraseña
-  const handleChangePassword = async () => {
-    // Validaciones
-    if (
-      !passwordData.currentPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
-    ) {
-      toast.error("Todos los campos son obligatorios");
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Las contraseñas nuevas no coinciden");
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast.error("La nueva contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      // Toast informativo al iniciar el proceso
-      toast.loading("🔄 Cambiando contraseña...", { id: "changePassword" });
-
-      // Llamada a la API para cambiar la contraseña
-      const response = await AuthService.changePassword(
-        user?.id?.toString() || "",
-        passwordData.newPassword,
-      );
-
-      // Verificar si la respuesta fue exitosa
-      if (response.status === 200 || response.status === 201) {
-        toast.success("✅ Contraseña cambiada exitosamente", {
-          id: "changePassword",
-        });
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-      } else {
-        toast.error("❌ No se pudo cambiar la contraseña", {
-          id: "changePassword",
-        });
-      }
-    } catch (err: any) {
-      // Manejar diferentes tipos de errores
-      if (err.response?.status === 400) {
-        toast.error(
-          "❌ Error: Verifica que la nueva contraseña cumpla con los requisitos",
-          { id: "changePassword" },
-        );
-      } else if (err.response?.status === 401) {
-        toast.error("❌ Error: No tienes permisos para cambiar la contraseña", {
-          id: "changePassword",
-        });
-      } else if (err.response?.status === 404) {
-        toast.error("❌ Error: Usuario no encontrado", {
-          id: "changePassword",
-        });
-      } else if (err.response?.data?.message) {
-        toast.error(`❌ Error: ${err.response.data.message}`, {
-          id: "changePassword",
-        });
-      } else {
-        toast.error(
-          "❌ Error: No se pudo cambiar la contraseña. Intenta nuevamente",
-          { id: "changePassword" },
-        );
-      }
-    } finally {
-      setChangingPassword(false);
-    }
-  };
 
   useEffect(() => {
     if (user) {
@@ -971,27 +879,32 @@ const ProfileEditPage = () => {
 
             {/* Formulario principal solo para información personal y empresa */}
             {user && (
-              <form onSubmit={handleSubmit}>
-                <Tabs defaultValue="personal">
-                  <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
-                    <TabsTrigger value="personal" className="flex-1">
-                      Información personal
+              <Tabs defaultValue="personal">
+                <TabsList className="w-full mb-10 flex flex-wrap sm:mb-6">
+                  <TabsTrigger value="personal" className="flex-1">
+                    Información personal
+                  </TabsTrigger>
+                  {hasBusinessRole && (
+                    <TabsTrigger value="company" className="flex-1">
+                      Información de empresa
                     </TabsTrigger>
-                    {hasBusinessRole && (
-                      <TabsTrigger value="company" className="flex-1">
-                        Información de empresa
-                      </TabsTrigger>
-                    )}
-                    {hasPersonRole && (
-                      <TabsTrigger value="id-photos" className="flex-1">
-                        Fotos de cédula
-                      </TabsTrigger>
-                    )}
-                    <TabsTrigger value="security" className="flex-1">
-                      Seguridad
+                  )}
+                  {hasPersonRole && (
+                    <TabsTrigger value="id-photos" className="flex-1">
+                      Fotos de cédula
                     </TabsTrigger>
-                  </TabsList>
+                  )}
+                  <TabsTrigger value="security" className="flex-1">
+                    Seguridad
+                  </TabsTrigger>
+                  {!hasBusinessRole && (
+                    <TabsTrigger value="segurosocial" className="flex-1">
+                      Seguridad Social
+                    </TabsTrigger>
+                  )}
+                </TabsList>
 
+                <form onSubmit={handleSubmit}>
                   <TabsContent
                     value="personal"
                     className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
@@ -1216,18 +1129,8 @@ const ProfileEditPage = () => {
                               ...prev,
                               bio: e.target.value,
                             }));
-                            // Auto-expand textarea
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = "auto";
-                            target.style.height = target.scrollHeight + "px";
                           }}
-                          onInput={(e) => {
-                            // Auto-expand on input
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = "auto";
-                            target.style.height = target.scrollHeight + "px";
-                          }}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white min-h-[100px] resize-none overflow-hidden"
+                          className={`w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white resize-none overflow-y-auto ${formData.bio ? "h-[300px]" : "h-[120px]"}`}
                           placeholder="Cuéntanos sobre ti, tu experiencia, intereses, etc."
                         />
                       </div>
@@ -1357,13 +1260,13 @@ const ProfileEditPage = () => {
                                       type="date"
                                       className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none ${!edu.startDate ? "border-red-300 bg-red-50/50" : "border-gray-200 bg-white"}`}
                                       value={
-                                        typeof edu.startDate === "string"
-                                          ? edu.startDate
-                                          : edu.startDate
-                                            ? new Date(edu.startDate)
+                                        edu.startDate
+                                          ? typeof edu.startDate === "string"
+                                            ? edu.startDate.split("T")[0]
+                                            : new Date(edu.startDate)
                                                 .toISOString()
                                                 .split("T")[0]
-                                            : ""
+                                          : ""
                                       }
                                       onChange={(e) =>
                                         setFormData((prev) => {
@@ -1390,13 +1293,13 @@ const ProfileEditPage = () => {
                                       type="date"
                                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-all outline-none bg-white"
                                       value={
-                                        typeof edu.endDate === "string"
-                                          ? edu.endDate
-                                          : edu.endDate
-                                            ? new Date(edu.endDate)
+                                        edu.endDate
+                                          ? typeof edu.endDate === "string"
+                                            ? edu.endDate.split("T")[0]
+                                            : new Date(edu.endDate)
                                                 .toISOString()
                                                 .split("T")[0]
-                                            : ""
+                                          : ""
                                       }
                                       onChange={(e) =>
                                         setFormData((prev) => {
@@ -1854,94 +1757,10 @@ const ProfileEditPage = () => {
                     value="security"
                     className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
                   >
-                    <div className="max-w-md">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Cambiar contraseña
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-6">
-                        Actualiza tu contraseña para mantener tu cuenta segura
-                      </p>
-
-                      {/* Formulario simplificado sin onSubmit */}
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="currentPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Contraseña actual
-                          </label>
-                          <input
-                            type="password"
-                            id="currentPassword"
-                            name="currentPassword"
-                            value={passwordData.currentPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Ingresa tu contraseña actual"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="newPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Nueva contraseña
-                          </label>
-                          <input
-                            type="password"
-                            id="newPassword"
-                            name="newPassword"
-                            value={passwordData.newPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Mínimo 6 caracteres"
-                            minLength={6}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label
-                            htmlFor="confirmPassword"
-                            className="block text-sm font-medium text-gray-700"
-                          >
-                            Confirmar nueva contraseña
-                          </label>
-                          <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={passwordData.confirmPassword}
-                            onChange={handlePasswordChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                            placeholder="Repite la nueva contraseña"
-                          />
-                        </div>
-
-                        <div className="pt-4 space-y-3">
-                          {/* Botón principal */}
-                          <button
-                            type="button"
-                            onClick={handleChangePassword}
-                            className="w-full bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                            disabled={changingPassword}
-                          >
-                            {changingPassword ? (
-                              <>
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                <span>Cambiando contraseña...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Save className="h-5 w-5" />
-                                <span>Cambiar contraseña</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <UserChangePassword
+                      userId={user?.id || ""}
+                      userEmail={user?.email || ""}
+                    />
                   </TabsContent>
 
                   {hasPersonRole && (
@@ -2058,8 +1877,18 @@ const ProfileEditPage = () => {
                       )}
                     </button>
                   </div>
-                </Tabs>
-              </form>
+                </form>
+
+                {/* Tab de Seguro Social - Fuera del form para evitar actualizaciones */}
+                {!hasBusinessRole && (
+                  <TabsContent
+                    value="segurosocial"
+                    className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
+                  >
+                    <SeguroSocial userId={user?.id?.toString()} />
+                  </TabsContent>
+                )}
+              </Tabs>
             )}
           </div>
         </div>

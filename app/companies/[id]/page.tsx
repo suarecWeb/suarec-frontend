@@ -32,6 +32,9 @@ import { TokenPayload } from "@/interfaces/auth.interface";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { maskNit } from "@/components/utils/maskNit";
+import { maskPhone } from "@/components/utils/maskPhone";
+import { maskEmail } from "@/components/utils/maskEmail";
+import { useNitVisibility } from "@/hooks/useNitVisibility";
 
 export default function CompanyDetailsPage({
   params,
@@ -44,6 +47,9 @@ export default function CompanyDetailsPage({
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+
+  // Hook para manejar visibilidad de datos sensibles
+  const { getNitVisibilityOptions } = useNitVisibility();
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -233,7 +239,13 @@ export default function CompanyDetailsPage({
                         {company.name}
                       </h2>
                       <p className="text-gray-600 font-eras text-sm md:text-base break-all">
-                        NIT: {maskNit(company.nit)}
+                        NIT:{" "}
+                        {maskNit(company.nit, {
+                          ...getNitVisibilityOptions(),
+                          companyOwnerId: company.user?.id
+                            ? parseInt(company.user.id.toString())
+                            : undefined,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -311,14 +323,24 @@ export default function CompanyDetailsPage({
                         <div className="absolute left-[-26px] w-4 h-4 bg-white border-2 border-[#097EEC] rounded-full"></div>
                         <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         <span className="text-gray-700 font-eras text-sm break-all">
-                          {company.email}
+                          {maskEmail(company.email, {
+                            ...getNitVisibilityOptions(),
+                            companyOwnerId: company.user?.id
+                              ? parseInt(company.user.id.toString())
+                              : undefined,
+                          })}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 relative">
                         <div className="absolute left-[-26px] w-4 h-4 bg-white border-2 border-[#097EEC] rounded-full"></div>
                         <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         <span className="text-gray-700 font-eras text-sm">
-                          {company.cellphone}
+                          {maskPhone(company.cellphone, {
+                            ...getNitVisibilityOptions(),
+                            companyOwnerId: company.user?.id
+                              ? parseInt(company.user.id.toString())
+                              : undefined,
+                          })}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 relative">
@@ -387,7 +409,12 @@ export default function CompanyDetailsPage({
                             {company.user.name}
                           </h4>
                           <p className="text-gray-600 font-eras text-sm break-all">
-                            {company.user.email}
+                            {maskEmail(company.user.email, {
+                              ...getNitVisibilityOptions(),
+                              companyOwnerId: company.user?.id
+                                ? parseInt(company.user.id.toString())
+                                : undefined,
+                            })}
                           </p>
                         </div>
                       </div>

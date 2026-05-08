@@ -1,12 +1,16 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { UserService } from "@/services/UsersService";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { User, UserPlan } from "@/interfaces/user.interface";
 import Navbar from "@/components/navbar";
+import AdminSidePanel from "@/components/AdminSidePanel";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 import { IdPhoto, IdPhotosService } from "@/services/IdPhotosService";
+import { RutDocument, RutService } from "@/services/RutService";
 import {
   PlusCircle,
   Edit,
@@ -49,8 +53,13 @@ interface RequiredField {
 }
 
 const UsersPageContent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
   const [users, setUsers] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showBankInfoModal, setShowBankInfoModal] = useState(false);
@@ -69,6 +78,16 @@ const UsersPageContent = () => {
   });
   const [rejectingPhotoId, setRejectingPhotoId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rutFiles, setRutFiles] = useState<RutDocument[]>([]);
+  const processedUserIdRef = useRef<string | null>(null);
+
+  const isUserBusiness = (user: User): boolean => {
+    if (!user.roles || !Array.isArray(user.roles)) return false;
+    return user.roles.some((r: any) => {
+      const name = typeof r === "string" ? r : r.name;
+      return name?.toUpperCase() === "BUSINESS";
+    });
+  };
 
   const fetchUsers = async (
     params: PaginationParams = { page: 1, limit: 10 },
@@ -82,6 +101,7 @@ const UsersPageContent = () => {
         response.data.data.map((user: any) => ({
           ...user,
           roles: user.roles || [],
+          idPhotos: user.idPhotos ?? [],
         })),
       );
 
@@ -96,6 +116,36 @@ const UsersPageContent = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Efecto para manejar la búsqueda con debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm && searchTerm.trim() !== "") {
+        try {
+          setSearching(true);
+          // Usar el endpoint de búsqueda dedicado
+          const response = await UserService.searchUsers(searchTerm, 100);
+          setSearchResults(
+            response.data.map((user: any) => ({
+              ...user,
+              roles: user.roles || [],
+              idPhotos: user.idPhotos ?? [],
+            })),
+          );
+        } catch (err) {
+          console.error("Error al buscar usuarios:", err);
+          toast.error("Error al buscar usuarios");
+          setSearchResults([]);
+        } finally {
+          setSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handlePageChange = (page: number) => {
     fetchUsers({ page, limit: pagination.limit });
@@ -256,17 +306,30 @@ const UsersPageContent = () => {
         ),
         value: user.profile_image || "No completado",
       },
-      {
-        name: "education",
-        label: "Educación",
-        icon: GraduationCap,
-        isCompleted: !!(
-          user.education &&
-          Array.isArray(user.education) &&
-          user.education.length > 0
-        ),
-        value: user.education || [],
-      },
+      isUserBusiness(user)
+        ? {
+            name: "rut",
+            label: "Documento RUT",
+            icon: FileText,
+            isCompleted: !!(
+              user.rutDocuments &&
+              Array.isArray(user.rutDocuments) &&
+              user.rutDocuments.length > 0 &&
+              user.rutDocuments.some((d) => d.status === "approved")
+            ),
+            value: rutFiles.length > 0 ? rutFiles : user.rutDocuments || [],
+          }
+        : {
+            name: "education",
+            label: "Educación",
+            icon: GraduationCap,
+            isCompleted: !!(
+              user.education &&
+              Array.isArray(user.education) &&
+              user.education.length > 0
+            ),
+            value: user.education || [],
+          },
       {
         name: "idPhotos",
         label: "Fotos de identificación",
@@ -301,24 +364,83 @@ const UsersPageContent = () => {
   };
 
   // Función para mostrar los detalles de los campos obligatorios
-  const handleViewRequiredFields = (user: User) => {
+  const handleViewRequiredFields = async (user: User) => {
     setSelectedUser(user);
     setShowRequiredFieldsModal(true);
+    setRutFiles([]);
+
+    try {
+      const photos = await IdPhotosService.getUserIdPhotosById(Number(user.id));
+      const photosCompat = photos.map((p) => ({
+        ...p,
+        id: String(p.id),
+      })) as User["idPhotos"];
+      const updatedUser: User = { ...user, idPhotos: photosCompat };
+      setSelectedUser(updatedUser);
+      const patch = (u: User): User =>
+        u.id === user.id ? { ...u, idPhotos: photosCompat } : u;
+      setUsers((prev) => prev.map(patch));
+      setSearchResults((prev) => prev.map(patch));
+    } catch (err) {
+      console.warn("Could not load id photos for user", user.id, err);
+    }
+
+    if (isUserBusiness(user)) {
+      try {
+        const docs = await RutService.getUserRutById(user.id!);
+        setRutFiles(docs);
+      } catch (err) {
+        console.warn("Could not load RUT docs for user", user.id, err);
+      }
+    }
   };
 
-  const filteredUsers = searchTerm
-    ? users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (user.roles &&
-            user.roles.some((role) =>
-              typeof role === "string"
-                ? role.toLowerCase().includes(searchTerm.toLowerCase())
-                : false,
-            )),
-      )
-    : users;
+  // Abrir modal automáticamente si viene desde el panel de pendientes
+  useEffect(() => {
+    const userIdParam = searchParams.get("userId");
+    const openModalParam = searchParams.get("openModal");
+
+    // Reset si no hay query params de modal
+    if (openModalParam !== "requiredFields" || !userIdParam) {
+      processedUserIdRef.current = null;
+      return;
+    }
+
+    // Si ya procesamos este userId, no repetir
+    if (processedUserIdRef.current === userIdParam) return;
+
+    // Esperar a que los usuarios terminen de cargar
+    if (loading) return;
+
+    processedUserIdRef.current = userIdParam;
+    const targetId = Number(userIdParam);
+    const allUsers = searchTerm ? searchResults : users;
+    const targetUser = allUsers.find((u) => u.id === String(targetId));
+
+    if (targetUser) {
+      handleViewRequiredFields(targetUser);
+      router.replace("/users", { scroll: false });
+      return;
+    }
+
+    // Si el usuario no está en la página actual, buscarlo directamente
+    UserService.getUserById(targetId)
+      .then((res) => {
+        const user = res.data;
+        if (user) {
+          handleViewRequiredFields(user);
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudo cargar el usuario por ID:", err);
+      })
+      .finally(() => {
+        router.replace("/users", { scroll: false });
+      });
+  }, [searchParams, users, searchResults, loading, searchTerm, router]);
+
+  // Mostrar resultados de búsqueda si hay término de búsqueda, sino mostrar usuarios paginados
+  const displayUsers = searchTerm ? searchResults : users;
 
   // Función para obtener el color de fondo según el rol
   const getRoleBadgeColor = (role: string) => {
@@ -355,21 +477,20 @@ const UsersPageContent = () => {
         };
         setSelectedUser(updatedUser);
 
-        // También actualizar la lista principal de usuarios
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id === selectedUser.id
-              ? {
-                  ...user,
-                  idPhotos: user.idPhotos?.map((photo: any) =>
-                    photo.id === photoId
-                      ? { ...photo, status, description: description }
-                      : photo,
-                  ),
-                }
-              : user,
-          ),
-        );
+        const patchIdPhoto = (user: User): User =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                idPhotos: user.idPhotos?.map((photo: any) =>
+                  photo.id === photoId
+                    ? { ...photo, status, description }
+                    : photo,
+                ),
+              }
+            : user;
+
+        setUsers((prev) => prev.map(patchIdPhoto));
+        setSearchResults((prev) => prev.map(patchIdPhoto));
       }
 
       // Limpiar estados de rechazo
@@ -409,20 +530,37 @@ const UsersPageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12">
-        {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
+        {/* Header superior azul */}
+        <div className="bg-[#097EEC] text-white py-8 shadow-sm">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Usuarios</h1>
+            <h1 className="text-3xl font-bold">Panel de usuarios</h1>
             <p className="mt-2 text-blue-100">
               Gestiona todos los usuarios registrados en la plataforma
             </p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Layout con sidebar + contenido */}
+        <div className="container mx-auto px-4 -mt-4 flex">
+          {/* Columna izquierda redimensionable */}
+          <div
+            className="hidden md:flex flex-col gap-[24px] flex-shrink-0"
+            style={{ width: panelWidth }}
+          >
+            <AdminSidePanel />
+          </div>
+
+          {/* Handle de arrastre */}
+          <div
+            className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none"
+            onMouseDown={onPanelDrag}
+          >
+            <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
+          </div>
+
+          {/* Contenido principal */}
+          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto ml-3">
             {/* Actions Bar */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
@@ -464,8 +602,33 @@ const UsersPageContent = () => {
               </div>
             ) : (
               <>
+                {/* Search indicator */}
+                {searchTerm && (
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      {searching ? (
+                        <span className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#097EEC]"></div>
+                          Buscando...
+                        </span>
+                      ) : (
+                        <span>
+                          {searchResults.length} resultado(s) para &quot;
+                          {searchTerm}&quot;
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="text-sm text-[#097EEC] hover:text-[#0A6BC7]"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  </div>
+                )}
+
                 {/* Users List */}
-                {filteredUsers.length > 0 ? (
+                {displayUsers.length > 0 ? (
                   <div className="overflow-x-auto rounded-lg border border-gray-200">
                     <table className="min-w-full divide-y divide-gray-200 overflow-x-scroll">
                       <thead className="bg-gray-50">
@@ -478,7 +641,7 @@ const UsersPageContent = () => {
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
                             Email
                           </th>
@@ -486,7 +649,7 @@ const UsersPageContent = () => {
                             scope="col"
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
                           >
-                            # Cedula
+                            # ID
                           </th>
                           <th
                             scope="col"
@@ -521,7 +684,7 @@ const UsersPageContent = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map((user) => {
+                        {displayUsers.map((user) => {
                           const { completed, total } =
                             getCompletedFieldsCount(user);
                           const progressPercentage = (completed / total) * 100;
@@ -540,7 +703,7 @@ const UsersPageContent = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                              <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center gap-1">
                                   <Mail className="h-3 w-3 text-gray-400" />
                                   <span className="text-sm text-gray-500">
@@ -699,8 +862,8 @@ const UsersPageContent = () => {
                   </div>
                 )}
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
+                {/* Pagination - Solo mostrar si no hay búsqueda activa */}
+                {!searchTerm && pagination.totalPages > 1 && (
                   <div className="mt-8 flex justify-center">
                     <Pagination
                       currentPage={pagination.page}
@@ -711,12 +874,15 @@ const UsersPageContent = () => {
                 )}
 
                 {/* Results Summary */}
-                {!loading && !error && filteredUsers.length > 0 && (
-                  <div className="mt-6 text-sm text-gray-500 text-center">
-                    Mostrando {filteredUsers.length} de {pagination.total}{" "}
-                    usuarios
-                  </div>
-                )}
+                {!loading &&
+                  !error &&
+                  !searchTerm &&
+                  displayUsers.length > 0 && (
+                    <div className="mt-6 text-sm text-gray-500 text-center">
+                      Mostrando {displayUsers.length} de {pagination.total}{" "}
+                      usuarios
+                    </div>
+                  )}
               </>
             )}
           </div>
@@ -1001,6 +1167,158 @@ const UsersPageContent = () => {
                                 ) : (
                                   <p className="text-sm text-gray-600">
                                     Sin información educativa
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {field.name === "rut" && (
+                              <div className="bg-white p-3 rounded border">
+                                {field.value && field.value.length > 0 ? (
+                                  <div className="space-y-3">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      Documento RUT ({field.value.length}{" "}
+                                      archivo{field.value.length > 1 ? "s" : ""}
+                                      )
+                                    </p>
+                                    {field.value.map((doc: RutDocument) => (
+                                      <div
+                                        key={doc.id}
+                                        className="bg-gray-50 border rounded-lg p-3 space-y-3"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
+                                            <div className="min-w-0">
+                                              <p className="text-sm font-medium text-gray-900 truncate">
+                                                {doc.file_path.split("/").pop()}
+                                              </p>
+                                              <span
+                                                className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                                  doc.status === "approved"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : doc.status === "rejected"
+                                                      ? "bg-red-100 text-red-800"
+                                                      : "bg-yellow-100 text-yellow-800"
+                                                }`}
+                                              >
+                                                {doc.status === "approved"
+                                                  ? "Aprobado"
+                                                  : doc.status === "rejected"
+                                                    ? "Rechazado"
+                                                    : "Pendiente"}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <a
+                                            href={doc.file_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors flex-shrink-0"
+                                          >
+                                            <Eye className="h-3 w-3" />
+                                            Ver PDF
+                                          </a>
+                                        </div>
+
+                                        {doc.description &&
+                                          doc.status === "rejected" && (
+                                            <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                                              <p className="font-medium text-blue-800">
+                                                Comentarios:
+                                              </p>
+                                              <p className="text-blue-700">
+                                                {doc.description}
+                                              </p>
+                                            </div>
+                                          )}
+
+                                        <div className="flex gap-2">
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                await RutService.reviewRut(
+                                                  doc.id,
+                                                  "approved",
+                                                );
+                                                toast.success("RUT aprobado");
+                                                if (selectedUser) {
+                                                  const docs =
+                                                    await RutService.getUserRutById(
+                                                      selectedUser.id!,
+                                                    );
+                                                  setRutFiles(docs);
+                                                }
+                                              } catch (e) {
+                                                toast.error(
+                                                  "Error al aprobar RUT",
+                                                );
+                                              }
+                                            }}
+                                            disabled={doc.status === "approved"}
+                                            className={`flex-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                              doc.status === "approved"
+                                                ? "bg-green-100 text-green-800 cursor-not-allowed"
+                                                : "bg-green-600 text-white hover:bg-green-700"
+                                            }`}
+                                          >
+                                            <CheckCircle className="h-3 w-3 inline mr-1" />
+                                            {doc.status === "approved"
+                                              ? "Aprobado"
+                                              : "Aprobar"}
+                                          </button>
+                                          <button
+                                            onClick={async () => {
+                                              const reason =
+                                                prompt("Razón del rechazo:");
+                                              if (reason === null) return;
+                                              try {
+                                                await RutService.reviewRut(
+                                                  doc.id,
+                                                  "rejected",
+                                                  reason,
+                                                );
+                                                toast.success("RUT rechazado");
+                                                if (selectedUser) {
+                                                  const docs =
+                                                    await RutService.getUserRutById(
+                                                      selectedUser.id!,
+                                                    );
+                                                  setRutFiles(docs);
+                                                }
+                                              } catch (e) {
+                                                toast.error(
+                                                  "Error al rechazar RUT",
+                                                );
+                                              }
+                                            }}
+                                            disabled={doc.status === "rejected"}
+                                            className={`flex-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                              doc.status === "rejected"
+                                                ? "bg-red-100 text-red-800 cursor-not-allowed"
+                                                : "bg-red-600 text-white hover:bg-red-700"
+                                            }`}
+                                          >
+                                            <XCircle className="h-3 w-3 inline mr-1" />
+                                            {doc.status === "rejected"
+                                              ? "Rechazado"
+                                              : "Rechazar"}
+                                          </button>
+                                        </div>
+
+                                        {doc.reviewedBy &&
+                                          doc.status !== "pending" && (
+                                            <p className="text-xs text-gray-500">
+                                              Revisado por:{" "}
+                                              {doc.reviewedBy.name}
+                                            </p>
+                                          )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-600">
+                                    No se ha subido el documento RUT
                                   </p>
                                 )}
                               </div>

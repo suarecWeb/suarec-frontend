@@ -20,12 +20,9 @@ import {
   Calendar,
   Receipt,
 } from "lucide-react";
-import {
-  translatePriceUnit,
-  calculatePriceWithTax,
-  isUserCompany,
-} from "@/lib/utils";
+import { translatePriceUnit, isUserCompany } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { calculatePricing } from "@/lib/pricing";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
@@ -105,7 +102,6 @@ export default function ContractModal({
   const isProviderCompany = isUserCompany(publication.user);
 
   // Calcular precios
-  // Cambia la lógica de isUnitary para que sea true para cualquier unidad distinta de las excluidas
   const excludedUnits = [
     "servicio",
     "proyecto",
@@ -117,13 +113,20 @@ export default function ContractModal({
   const isUnitary =
     publication.priceUnit &&
     !excludedUnits.includes((publication.priceUnit || "").toLowerCase());
-  // Asegúrate de que los cálculos usen (quantity || 1) para evitar NaN
+
+  // basePrice = precio neto del proveedor (lo que quiere recibir)
   const basePrice = Number(
     (contractType === "accept" ? publication.price! : customPrice) *
       (isUnitary ? quantity || 1 : 1),
   );
-  const iva = isProviderCompany ? Math.round(basePrice * 0.19) : 0; // Solo aplicar IVA si es empresa
-  const totalPrice = basePrice + iva;
+
+  // Cálculo canónico: gross-up con comisiones SUAREC + Wompi
+  const pricing = calculatePricing(basePrice);
+  // IVA solo si el proveedor es empresa (se añade sobre el total ya con comisiones)
+  const iva = isProviderCompany
+    ? Math.round(pricing.customer_total_amount * 0.19)
+    : 0;
+  const totalPrice = pricing.customer_total_amount + iva;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,9 +205,11 @@ export default function ContractModal({
       // Construcción de contractData
       const contractData: any = {
         publicationId: publication.id!,
-        clientId: Number(decoded.id), // Agregar el clientId del usuario autenticado
-        initialPrice: Number(customPrice || basePrice),
-        totalPrice: Number(totalPrice),
+        clientId: Number(decoded.id),
+        initialPrice: pricing.provider_net_amount, // neto del proveedor
+        totalPrice: pricing.customer_total_amount, // total que paga el cliente (sin IVA empresa)
+        suarec_fee_amount: pricing.suarec_fee_amount,
+        payment_processing_fee: pricing.payment_processing_fee,
         priceUnit: publication.priceUnit || "project",
         clientMessage: message || undefined,
         requestedDate: new Date(requestedDate),
@@ -288,14 +293,8 @@ export default function ContractModal({
               <div className="flex items-center gap-2 text-green-600 font-semibold">
                 <span className="text-lg">
                   {formatCurrency(
-                    calculatePriceWithTax(
-                      publication.price!,
-                      0.19,
-                      isProviderCompany,
-                    ),
-                    {
-                      showCurrency: true,
-                    },
+                    calculatePricing(publication.price!).customer_total_amount,
+                    { showCurrency: true },
                   )}
                 </span>
                 <span className="text-sm text-gray-600">
@@ -334,11 +333,8 @@ export default function ContractModal({
                     </div>
                     <p className="text-sm text-gray-600">
                       {formatCurrency(
-                        calculatePriceWithTax(
-                          publication.price!,
-                          0.19,
-                          isProviderCompany,
-                        ),
+                        calculatePricing(publication.price!)
+                          .customer_total_amount,
                       )}{" "}
                       {translatePriceUnit(publication.priceUnit || "")}
                     </p>
@@ -413,7 +409,7 @@ export default function ContractModal({
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.valueAsNumber)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
-                    placeholder={`Ej: ${calculatePriceWithTax(publication.price!, 0.19, isProviderCompany)}`}
+                    placeholder={`Ej: ${publication.price}`}
                     required
                     min="0"
                     step="1000"
@@ -698,15 +694,23 @@ export default function ContractModal({
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Precio base:</span>
+                  <span className="text-gray-600">Precio del servicio:</span>
                   <span className="font-medium">
-                    {formatCurrency(basePrice)}
+                    {formatCurrency(pricing.provider_net_amount)}
                   </span>
                 </div>
+                <div className="flex justify-between items-center text-gray-500">
+                  <span>Comisión plataforma (12%):</span>
+                  <span>{formatCurrency(pricing.suarec_fee_amount)}</span>
+                </div>
+                <div className="flex justify-between items-center text-gray-500">
+                  <span>Fee pasarela de pago:</span>
+                  <span>{formatCurrency(pricing.payment_processing_fee)}</span>
+                </div>
                 {isProviderCompany && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">IVA (19%):</span>
-                    <span className="font-medium">{formatCurrency(iva)}</span>
+                  <div className="flex justify-between items-center text-gray-500">
+                    <span>IVA (19%):</span>
+                    <span>{formatCurrency(iva)}</span>
                   </div>
                 )}
                 <hr className="border-gray-300" />

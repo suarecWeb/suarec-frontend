@@ -56,6 +56,8 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import RatingService from "@/services/RatingService";
 import { Star } from "lucide-react";
 import toast from "react-hot-toast";
+import { Author } from "@/components/publications/author";
+import { Comments } from "@/components/publications/comments";
 
 const PublicationDetailPage = () => {
   const params = useParams();
@@ -1442,127 +1444,16 @@ const PublicationDetailPage = () => {
                         )}
 
                       {/* Comments section */}
-                      <div className="border-t border-gray-200 pt-6 mt-8">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-                          <span className="w-1 h-6 bg-[#097EEC] rounded-full"></span>
-                          <MessageSquare className="h-5 w-5 text-[#097EEC]" />
-                          Comentarios
-                        </h3>
-
-                        {/* Comment form */}
-                        <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
-                          <textarea
-                            placeholder="Deja un comentario..."
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none resize-none"
-                            rows={3}
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            disabled={!currentUserId || isSubmittingComment}
-                          ></textarea>
-                          <div className="flex justify-between items-center mt-4">
-                            <p className="text-sm text-gray-500">
-                              {!currentUserId && (
-                                <span>
-                                  <Link
-                                    href="/auth/login"
-                                    className="text-[#097EEC] hover:underline font-medium"
-                                  >
-                                    Inicia sesión
-                                  </Link>{" "}
-                                  para comentar
-                                </span>
-                              )}
-                            </p>
-                            <button
-                              className="px-6 py-2 bg-[#097EEC] text-white rounded-lg hover:bg-[#097EEC]/90 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                              disabled={
-                                !commentText.trim() ||
-                                !currentUserId ||
-                                isSubmittingComment
-                              }
-                              onClick={handleSubmitComment}
-                            >
-                              {isSubmittingComment ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Enviando...
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Comentar
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Comments list */}
-                        <div className="space-y-4">
-                          {comments.length > 0 ? (
-                            comments.map((comment) => (
-                              <div
-                                key={comment.id}
-                                className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div className="flex items-start gap-4">
-                                    {comment.user?.id &&
-                                    comment.user.id !== "" &&
-                                    comment.user.id !== "undefined" ? (
-                                      <Link
-                                        href={`/profile/${comment.user.id}`}
-                                        className="hover:opacity-80 transition-opacity cursor-pointer"
-                                      >
-                                        <div className="bg-[#097EEC] rounded-full p-3 text-white">
-                                          <UserIcon className="h-5 w-5" />
-                                        </div>
-                                      </Link>
-                                    ) : (
-                                      <div className="bg-[#097EEC] rounded-full p-3 text-white">
-                                        <UserIcon className="h-5 w-5" />
-                                      </div>
-                                    )}
-                                    <div className="flex-1">
-                                      {comment.user?.id &&
-                                      comment.user.id !== "" &&
-                                      comment.user.id !== "undefined" ? (
-                                        <Link
-                                          href={`/profile/${comment.user.id}`}
-                                          className="hover:text-[#097EEC] transition-colors cursor-pointer"
-                                        >
-                                          <p className="font-semibold text-gray-800">
-                                            {comment.user?.name || "Usuario"}
-                                          </p>
-                                        </Link>
-                                      ) : (
-                                        <p className="font-semibold text-gray-800">
-                                          {comment.user?.name || "Usuario"}
-                                        </p>
-                                      )}
-                                      <p className="text-sm text-gray-500 mb-2">
-                                        {formatDate(comment.created_at)} a las{" "}
-                                        {formatTime(comment.created_at)}
-                                      </p>
-                                      <p className="text-gray-700 leading-relaxed">
-                                        {comment.description}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center py-8 text-gray-500">
-                              <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                              <p>
-                                No hay comentarios aún. ¡Sé el primero en
-                                comentar!
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      <Comments
+                        comments={comments}
+                        commentText={commentText}
+                        setCommentText={setCommentText}
+                        currentUserId={currentUserId}
+                        isSubmittingComment={isSubmittingComment}
+                        onSubmitComment={handleSubmitComment}
+                        formatDate={formatDate}
+                        formatTime={formatTime}
+                      />
                     </div>
 
                     {/* Right column - Author info and pricing */}
@@ -1632,160 +1523,12 @@ const PublicationDetailPage = () => {
                       )}
 
                       {/* Author info */}
-                      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                          <span className="w-1 h-5 bg-[#097EEC] rounded-full"></span>
-                          {publication?.type === "SERVICE_REQUEST"
-                            ? "Información del Solicitante"
-                            : "Información del Proveedor"}
-                        </h3>
-
-                        {author ? (
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                              {author.id &&
-                              author.id !== "" &&
-                              author.id !== "undefined" ? (
-                                <Link
-                                  href={`/profile/${author.id}`}
-                                  className="hover:opacity-80 transition-opacity cursor-pointer"
-                                >
-                                  <UserAvatarDisplay
-                                    user={{
-                                      id: author.id
-                                        ? typeof author.id === "string"
-                                          ? parseInt(author.id)
-                                          : author.id
-                                        : 0,
-                                      name: author.name,
-                                      profile_image: author.profile_image,
-                                      // email: author.email, // Ocultar email
-                                    }}
-                                    size="lg"
-                                  />
-                                </Link>
-                              ) : (
-                                <UserAvatarDisplay
-                                  user={{
-                                    id: author.id
-                                      ? typeof author.id === "string"
-                                        ? parseInt(author.id)
-                                        : author.id
-                                      : 0,
-                                    name: author.name,
-                                    profile_image: author.profile_image,
-                                    // email: author.email, // Ocultar email
-                                  }}
-                                  size="lg"
-                                />
-                              )}
-                              <div>
-                                {author.id &&
-                                author.id !== "" &&
-                                author.id !== "undefined" ? (
-                                  <Link
-                                    href={`/profile/${author.id}`}
-                                    className="hover:text-[#097EEC] transition-colors cursor-pointer"
-                                  >
-                                    <p className="font-semibold text-gray-800">
-                                      {author.name}
-                                    </p>
-                                  </Link>
-                                ) : (
-                                  <p className="font-semibold text-gray-800">
-                                    {author.name}
-                                  </p>
-                                )}
-                                {author.profession && (
-                                  <p className="text-sm text-gray-600">
-                                    {author.profession}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            {author.skills && author.skills.length > 0 && (
-                              <div>
-                                <p className="text-sm font-medium text-gray-700 mb-2">
-                                  Habilidades:
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {author.skills
-                                    .slice(0, 5)
-                                    .map((skill: string, index: number) => (
-                                      <span
-                                        key={index}
-                                        className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                                      >
-                                        {skill}
-                                      </span>
-                                    ))}
-                                  {author.skills.length > 5 && (
-                                    <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full">
-                                      +{author.skills.length - 5} más
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Ocultar información privada del autor
-                            <div className="space-y-2">
-                              {author.email && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Mail className="h-4 w-4" />
-                                  <span>{author.email}</span>
-                                </div>
-                              )}
-                              {author.cellphone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Phone className="h-4 w-4" />
-                                  <span>{author.cellphone}</span>
-                                </div>
-                              )}
-                            </div>
-                            */}
-
-                            {/* Rating section */}
-                            {userRatingStats &&
-                              userRatingStats.totalRatings > 0 && (
-                                <div className="pt-3 border-t border-gray-200">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex items-center">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <Star
-                                          key={star}
-                                          className={`h-4 w-4 ${
-                                            star <=
-                                            userRatingStats.averageRating
-                                              ? "text-yellow-400 fill-current"
-                                              : "text-gray-300"
-                                          }`}
-                                        />
-                                      ))}
-                                    </div>
-                                    <span className="text-sm text-gray-600">
-                                      (
-                                      {userRatingStats.averageRating.toFixed(1)}
-                                      )
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {userRatingStats.totalRatings} calificación
-                                    {userRatingStats.totalRatings !== 1
-                                      ? "es"
-                                      : ""}
-                                  </p>
-                                </div>
-                              )}
-                          </div>
-                        ) : (
-                          <div className="text-center py-4 text-gray-500">
-                            <UserIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                            <p>Información del proveedor no disponible</p>
-                          </div>
-                        )}
-                      </div>
+                      <Author
+                        author={author}
+                        publicationType={publication?.type || ""}
+                        userRatingStats={userRatingStats}
+                        isLoadingRatings={isLoadingRatings}
+                      />
 
                       {/* Publication stats */}
                       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">

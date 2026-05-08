@@ -1,220 +1,75 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
 import Navbar from "@/components/navbar";
-import CountdownTimer from "@/components/countdown-timer";
 import SwiperAuto from "@/components/ui/SwiperAuto";
-import {
-  ArrowRight,
-  Briefcase,
-  Building2,
-  Users,
-  CheckCircle,
-  Star,
-  TrendingUp,
-  Shield,
-  Zap,
-  Globe,
-  Award,
-} from "lucide-react";
-import logoImage from "@/public/CafeYFogon.png";
-import logoImageDos from "@/public/veens.png";
-import logoImageTres from "@/public/enfacol.png";
-import logoImageCuatro from "@/public/OlimpoCocktail.png";
 import ContactModal from "@/components/contact-modal";
 import CookiesModal from "@/components/cookies-modal";
+import AppDownloadBanner from "@/components/AppDownloadBanner";
 import { useState } from "react";
-import SuarecLogo from "@/components/logo";
 import { CompaniesCarousel } from "@/components/CompaniesCarousel";
+import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   const [isContactOpen, setContactOpen] = useState(false);
   const [isCookiesOpen, setCookiesOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar isHomePage />
 
-      {/* Hero Section Moderna */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#097EEC] via-[#2171BC] to-[#082D50] overflow-hidden pt-20">
-        {/* Elementos decorativos de fondo */}
-        <div className="absolute inset-0">
-          {/* Círculos decorativos animados */}
-          <div className="absolute top-20 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/2 rounded-full blur-3xl animate-pulse delay-500"></div>
-
-          {/* Grid sutil */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-
-          {/* Partículas flotantes */}
-          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-bounce"></div>
-          <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-bounce delay-300"></div>
-          <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-white/25 rounded-full animate-bounce delay-700"></div>
-        </div>
-
-        {/* Contenido principal */}
-        <div className="relative z-10 container mx-auto px-4 text-center mt-4">
-          {/* Contador regresivo */}
-          {/* <CountdownTimer /> */}
-
-          {/* Logo/Título principal */}
-          <div className="mb-8">
-            <SuarecLogo
-              width={550}
-              height={100}
-              className="mx-auto mb-4 w-[70%] drop-shadow-2xl"
-              theme="dark"
-            />
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-3"></div>
-            <div className="w-12 h-1 bg-white/30 mx-auto"></div>
-          </div>
-
-          {/* Subtítulo elegante */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-eras text-white/95 leading-relaxed">
-              Conectamos{" "}
-              <span className="font-eras-bold-italic text-[#97CBFF]">
-                talento excepcional
-              </span>
-              <br />
-              <span className="text-[#97CBFF] font-eras-bold-italic">
-                con oportunidades extraordinarias
-              </span>
-            </h2>
-          </div>
-
-          {/* Descripción minimalista */}
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 font-eras leading-relaxed">
-            La plataforma donde los mejores profesionales encuentran
-            <br />
-            <span className="font-eras-bold">
-              las empresas que transformarán su carrera.
-            </span>
-          </p>
-
-          {/* Estadísticas */}
-          {/* <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-16">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">500+</div>
-              <div className="text-white/70 text-sm font-eras">Empresas activas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">10K+</div>
-              <div className="text-white/70 text-sm font-eras">Profesionales</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-eras-bold text-white mb-2">95%</div>
-              <div className="text-white/70 text-sm font-eras">Satisfacción</div>
-            </div>
-          </div> */}
-
-          {/* Botón de acción */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
-            <Link
-              href="/auth/select-type"
-              className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-lg font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
-            >
-              Comenzar ahora
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/companies"
-              className="group border-2 border-white/30 text-white px-6 py-5 rounded-full text-base font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
-            >
-              Ver empresas
-              <Building2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Indicador de scroll */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="animate-bounce">
-            <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-              <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
-            </div>
+      {/* ── Hero ── */}
+      <section
+        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 40%, #1a8ff5 0%, #097EEC 55%, #065fad 100%)",
+        }}
+      >
+        <HeroSection />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/40 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse" />
           </div>
         </div>
       </section>
 
-      {/* Beneficios */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+      {/* ── Divisor hero → beneficios ── */}
+      <div className="h-px bg-gradient-to-r from-transparent via-[#097EEC]/20 to-transparent" />
+
+      {/* ── Beneficios ── */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-eras-bold mb-6 text-gray-800">
+            <span className="inline-block text-[#097EEC] text-xs font-eras uppercase tracking-widest mb-4">
+              Por qué elegirnos
+            </span>
+            <h2 className="text-4xl md:text-5xl font-eras-bold text-gray-800 leading-tight mb-5">
               ¿Por qué elegir{" "}
               <span className="text-[#097EEC] font-eras-bold-italic">
                 SUAREC
-              </span>
+              </span>{" "}
               ?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto font-eras leading-relaxed">
               Descubre las ventajas que nos hacen la plataforma preferida por
-              profesionales y empresas
+              profesionales y empresas en Colombia.
             </p>
           </div>
-
           <SwiperAuto />
         </div>
       </section>
-      {/* Sección de Alianzas */}
-      <section className="py-16 bg-gradient-to-br from-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-eras-bold mb-4 text-gray-800">
-              Nuestras alianzas estratégicas
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-eras">
-              Trabajamos con empresas líderes para ofrecerte las mejores
-              oportunidades laborales del mercado.
-            </p>
-          </div>
 
-          {/* Carousel de Empresas Aliadas */}
+      {/* ── Divisor beneficios → alianzas ── */}
+      <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
+      {/* ── Alianzas ── */}
+      <section className="py-24 bg-[#f8faff]">
+        <div className="container mx-auto px-6">
           <CompaniesCarousel />
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 -mb-10 bg-gradient-to-br from-[#097EEC] to-[#097EEC] relative overflow-hidden">
-        {/* Elementos decorativos */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-10 right-10 w-40 h-40 bg-white/3 rounded-full blur-2xl"></div>
-        </div>
-
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-eras-bold text-white mb-8">
-              ¿Listo para encontrar tu próxima oportunidad?
-            </h2>
-            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-eras">
-              Únete a miles de profesionales que ya han encontrado el trabajo de
-              sus sueños con SUAREC.
-            </p>
-
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-              <Link
-                href="/auth/select-type"
-                className="group bg-white text-[#097EEC] px-10 py-5 rounded-full text-xl font-eras-bold hover:bg-white/95 transition-all duration-300 flex items-center gap-3 shadow-2xl hover:shadow-3xl hover:scale-105 transform"
-              >
-                Comenzar ahora
-                <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
-              </Link>
-
-              <Link
-                href="/publications"
-                className="group border-2 border-white/30 text-white px-8 py-5 rounded-full text-lg font-eras-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300 flex items-center gap-3 backdrop-blur-sm"
-              >
-                Ver ofertas
-                <Briefcase className="h-5 w-5 group-hover:scale-110 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── Descarga la app ── */}
+      <AppDownloadBanner />
 
       <ContactModal
         isOpen={isContactOpen}
