@@ -306,12 +306,8 @@ export const NavbarRole: React.FC<NavbarRoleProps> = ({
     <Link
       href="/auth/login"
       className={`
-        flex items-center gap-2 px-4 py-2 rounded-lg font-eras-medium transition-all duration-300 ${
-          isMobile
-            ? "py-3 px-4 text-lg justify-center bg-[#097EEC] hover:bg-[#097EEC]/90 text-white shadow-lg"
-            : isScrolled
-              ? "bg-[#097EEC] text-white hover:bg-[#097EEC]/90 shadow-lg hover:shadow-xl"
-              : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+        flex items-center gap-2 px-4 py-2 rounded-full font-eras-medium transition-all duration-300 bg-gradient-to-r from-[#097EEC] to-[#082D50] text-white shadow-md hover:shadow-lg hover:opacity-90 ${
+          isMobile ? "py-3 px-4 text-lg justify-center" : ""
         }
       `}
     >

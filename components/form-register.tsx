@@ -1246,7 +1246,7 @@ const FormRegister = () => {
             <div className="mt-8 space-y-3">
               <button
                 type="submit"
-                className="w-full bg-[#097EEC] text-white py-3 px-6 rounded-lg hover:bg-[#0A6BC7] transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-[#097EEC] to-[#082D50] text-white py-3 px-6 rounded-full shadow-md hover:shadow-lg hover:opacity-90 transition-all flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isPending || !acceptedTerms}
               >
                 {isPending ? (
@@ -1262,7 +1262,7 @@ const FormRegister = () => {
               <button
                 type="button"
                 onClick={() => router.push("/auth/select-type")}
-                className="w-full border border-[#097EEC] text-[#097EEC] py-3 px-6 rounded-lg hover:bg-[#097EEC]/5 transition-colors flex justify-center items-center"
+                className="w-full border border-[#097EEC] text-[#097EEC] py-3 px-6 rounded-full hover:bg-[#097EEC]/5 transition-colors flex justify-center items-center"
               >
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 Volver
