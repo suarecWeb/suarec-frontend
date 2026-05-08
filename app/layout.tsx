@@ -7,6 +7,7 @@ import ConditionalFooter from "@/components/conditional-footer";
 import { FloatingMailbox } from "@/components/FloatingMailbox";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { Toaster as SileoToaster } from "sileo";
 
 const inter = Inter({ subsets: ["latin"] });
 const plusJakarta = Plus_Jakarta_Sans({
@@ -54,6 +55,8 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col">{children}</div>
             <ConditionalFooter />
             <FloatingMailbox />
+            <SileoToaster position="top-right" />
+            <SileoToaster position="bottom-right" />
           </WebSocketProvider>
         </NotificationProvider>
       </body>

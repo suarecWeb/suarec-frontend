@@ -236,6 +236,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
               data.message.content,
               data.message.sender.name,
               data.message.sender.id,
+              data.message.sender.profile_image,
             );
           } else {
             console.log("🔕 No mostrando notificación - mensaje propio");

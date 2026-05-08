@@ -142,7 +142,7 @@ export const FloatingMailbox = () => {
 
       {/* Panel del buzón */}
       <div
-        className={`fixed right-6 bottom-24 z-40 w-96 bg-white rounded-2xl shadow-2xl transition-all duration-300 transform ${
+        className={`fixed right-4 sm:right-6 bottom-24 z-40 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-2xl shadow-2xl transition-all duration-300 transform ${
           isOpen
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-4 scale-95 pointer-events-none"

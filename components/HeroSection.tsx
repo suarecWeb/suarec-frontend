@@ -10,36 +10,34 @@ export default function HeroSection() {
       {/* <CountdownTimer /> */}
 
       {/* Logo/Título principal */}
-      <div className="mb-8">
+      <div className="mb-6">
         <SuarecLogo
           width={550}
           height={100}
-          className="mx-auto mb-4 w-[70%] drop-shadow-2xl"
+          className="mx-auto mb-5 w-[65%] md:w-[45%] drop-shadow-2xl"
           theme="dark"
         />
-        <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto mb-3"></div>
-        <div className="w-12 h-1 bg-white/30 mx-auto"></div>
+        <div className="w-32 h-[2px] bg-gradient-to-r from-transparent via-white/60 to-transparent mx-auto" />
       </div>
 
       {/* Subtítulo elegante */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <h2 className="text-2xl md:text-3xl lg:text-4xl font-eras text-white leading-relaxed">
+      <div className="max-w-3xl mx-auto mb-6">
+        <h2 className="text-2xl md:text-3xl lg:text-[2.1rem] font-eras text-white/90 leading-relaxed">
           Conectamos{" "}
           <span className="font-eras-bold-italic text-white">
             talento excepcional
-          </span>
-          <br />
-          <span className="text-white font-eras-bold-italic">
-            con oportunidades extraordinarias
+          </span>{" "}
+          con{" "}
+          <span className="font-eras-bold-italic text-white">
+            oportunidades extraordinarias
           </span>
         </h2>
       </div>
 
       {/* Descripción minimalista */}
-      <p className="text-lg md:text-xl text-white max-w-2xl mx-auto mb-8 font-eras leading-relaxed">
-        La plataforma donde los mejores profesionales encuentran
-        <br />
-        <span className="font-eras-bold">
+      <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto mb-10 font-eras leading-relaxed">
+        La plataforma donde los mejores profesionales encuentran{" "}
+        <span className="font-eras-bold text-white">
           las empresas que transformarán su carrera.
         </span>
       </p>

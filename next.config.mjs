@@ -14,7 +14,13 @@ const nextConfig = {
         },
       ],
     },
+    compiler: {
+      // En producción elimina todos los console.* excepto console.error
+      removeConsole: process.env.NODE_ENV === 'production'
+        ? { exclude: ['error'] }
+        : false,
+    },
   };
-  
+
   export default nextConfig;
   

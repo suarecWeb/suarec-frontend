@@ -40,7 +40,7 @@ const MessageNotification: React.FC<MessageNotificationProps> = ({
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-in slide-in-from-right-2">
+    <div className="fixed top-4 right-4 z-50 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 animate-in slide-in-from-right-2">
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0">

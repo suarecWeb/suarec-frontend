@@ -578,15 +578,20 @@ export default function ContractsPage() {
         </div>
 
         <div className="container mx-auto px-4 -mt-6 pb-12">
+          {/* MOBILE: Billetera como barra compacta arriba */}
+          <div className="lg:hidden mb-4 pt-4">
+            <AccountBalance />
+          </div>
+
           {/* Main content with Balance Card on the right */}
           <div className="relative">
-            {/* Balance Card positioned on the right */}
-            <div className="absolute top-0 right-0 w-96 z-10">
+            {/* DESKTOP: Balance Card positioned on the right */}
+            <div className="hidden lg:block absolute top-0 right-0 w-96 z-10">
               <AccountBalance />
             </div>
 
-            {/* Main content with right margin to avoid overlap */}
-            <div className="mr-[28rem] pt-4">
+            {/* Main content — margen derecho solo en desktop */}
+            <div className="lg:mr-[28rem] pt-4">
               {/* Buscador de contratos arriba de las KPIs */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
                 <div className="relative">
@@ -604,198 +609,411 @@ export default function ContractsPage() {
                 contracts={contracts}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                clientContent={
-                  <div className="mb-12">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                      <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
-                      <Briefcase className="h-6 w-6 text-gray-600" />
-                      Contrataciones Solicitadas
-                    </h2>
-
-                    {contracts.asClient.length === 0 ? (
-                      <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
-                        <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                          No has solicitado contrataciones
-                        </h3>
-                        <p className="text-gray-500">
-                          Cuando contrates servicios, aparecerán aquí para que
-                          puedas gestionarlos.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
-                        {contracts.asClient.map((contract) => (
-                          <div
-                            key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
-                          >
-                            {/* Imagen del servicio compacta */}
-                            <div className="h-24 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                              <Briefcase className="h-10 w-10 text-blue-500" />
-                            </div>
-
-                            <div className="p-3">
-                              {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-0.5 mb-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <svg
-                                    key={star}
-                                    className="w-3 h-3 text-yellow-400 fill-current"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                  </svg>
-                                ))}
-                              </div>
-
-                              {/* Título */}
-                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
-                                {contract.publication?.title}
-                              </h3>
-
-                              {/* Precio y estado */}
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {formatCurrency(contract.totalPrice || 0)}
-                                </span>
-                                <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
-                                >
-                                  {getStatusText(contract.status)}
-                                </span>
-                              </div>
-
-                              {/* Fecha */}
-                              <p className="text-xs text-gray-500 mb-2">
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString("es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
-
-                              {/* Botón de acción */}
-                              <button
-                                onClick={() => {
-                                  setContractForDetails(contract);
-                                  setIsDetailsModalOpen(true);
-                                  setDetailsViewRole("client");
-                                  if (isClientForContract(contract)) {
-                                    refreshPaymentData(contract.id);
-                                  }
-                                }}
-                                className="w-full bg-blue-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                              >
-                                Ver Detalles
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                }
-                providerContent={
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                      <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
-                      <Users className="h-6 w-6 text-gray-600" />
-                      Servicios Ofrecidos
-                    </h2>
-
-                    {contracts.asProvider.length === 0 ? (
-                      <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
-                        <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                          No has recibido solicitudes
-                        </h3>
-                        <p className="text-gray-500">
-                          Cuando alguien contrate tus servicios, aparecerán aquí
-                          para que puedas gestionarlos.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex gap-4 overflow-x-auto pb-4 -mr-[28rem] pr-4">
-                        {contracts.asProvider.map((contract) => (
-                          <div
-                            key={contract.id}
-                            className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex-shrink-0 w-64"
-                          >
-                            {/* Imagen del servicio compacta */}
-                            <div className="h-24 bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
-                              <Users className="h-10 w-10 text-green-500" />
-                            </div>
-
-                            <div className="p-3">
-                              {/* Estrellas de calificación */}
-                              <div className="flex items-center gap-0.5 mb-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <svg
-                                    key={star}
-                                    className="w-3 h-3 text-yellow-400 fill-current"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                  </svg>
-                                ))}
-                              </div>
-
-                              {/* Título */}
-                              <h3 className="text-sm font-semibold text-gray-800 truncate mb-1">
-                                {contract.publication?.title}
-                              </h3>
-
-                              {/* Precio y estado */}
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {formatCurrency(contract.totalPrice || 0)}
-                                </span>
-                                <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(contract.status)}`}
-                                >
-                                  {getStatusText(contract.status)}
-                                </span>
-                              </div>
-
-                              {/* Cliente y fecha */}
-                              <p className="text-xs text-gray-500 truncate mb-1">
-                                {contract.client?.name}
-                              </p>
-                              <p className="text-xs text-gray-400 mb-2">
-                                {new Date(
-                                  contract.createdAt,
-                                ).toLocaleDateString("es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </p>
-
-                              {/* Botón de acción */}
-                              <button
-                                onClick={() => {
-                                  setContractForDetails(contract);
-                                  setIsDetailsModalOpen(true);
-                                  setDetailsViewRole("provider");
-                                  if (isClientForContract(contract)) {
-                                    refreshPaymentData(contract.id);
-                                  }
-                                }}
-                                className="w-full bg-green-600 text-white py-1.5 px-3 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
-                              >
-                                Ver Detalles
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                }
               />
+            </div>
+            {/* ── FIN del contenedor con margen para billetera ── */}
+
+            {/* ── Cards de contratos: ancho completo ── */}
+            <div className="mt-6">
+              {/* Contrataciones Solicitadas */}
+              {(activeTab === "client" || activeTab === "all") && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
+                    <Briefcase className="h-6 w-6 text-gray-600" />
+                    Contrataciones Solicitadas
+                  </h2>
+
+                  {contracts.asClient.length === 0 ? (
+                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
+                      <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                        No has solicitado contrataciones
+                      </h3>
+                      <p className="text-gray-500">
+                        Cuando contrates servicios, aparecerán aquí para que
+                        puedas gestionarlos.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-4">
+                      {contracts.asClient.map((contract) => (
+                        <div
+                          key={contract.id}
+                          onClick={() => {
+                            setContractForDetails(contract);
+                            setIsDetailsModalOpen(true);
+                            setDetailsViewRole("client");
+                            if (isClientForContract(contract)) {
+                              refreshPaymentData(contract.id);
+                            }
+                          }}
+                          className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-[#5a93fc]/20 transition-all duration-300 overflow-hidden cursor-pointer"
+                        >
+                          {/* Header */}
+                          <div className="relative bg-gradient-to-r from-[#5a93fc]/10 via-[#097EEC]/5 to-[#5a93fc]/10 px-5 py-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#5a93fc]/10 group-hover:shadow-md transition-all mt-0.5">
+                                <Briefcase className="h-5 w-5 text-[#5a93fc]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-bold text-gray-800 truncate">
+                                  {contract.publication?.title}
+                                </h3>
+                                {contract.publication?.description && (
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                    {contract.publication.description}
+                                  </p>
+                                )}
+                              </div>
+                              <span
+                                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${getStatusColor(contract.status)}`}
+                              >
+                                {getStatusText(contract.status)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="px-5 py-4 space-y-3">
+                            {/* Precio */}
+                            <div className="flex items-baseline justify-between">
+                              <div>
+                                <span className="text-2xl font-bold text-gray-900">
+                                  {formatCurrency(contract.totalPrice || 0)}
+                                </span>
+                                {contract.priceUnit && (
+                                  <span className="text-xs text-gray-400 ml-1">
+                                    / {translatePriceUnit(contract.priceUnit)}
+                                  </span>
+                                )}
+                              </div>
+                              {contract.quantity && (
+                                <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-lg">
+                                  Cant: {contract.quantity}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Info grid */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Proveedor */}
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <User className="h-3.5 w-3.5 text-[#5a93fc] shrink-0" />
+                                <span className="truncate">
+                                  {contract.provider?.name || "—"}
+                                </span>
+                              </div>
+                              {/* Fecha */}
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <Calendar className="h-3.5 w-3.5 text-[#5a93fc] shrink-0" />
+                                <span>
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString("es-ES", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                              {/* Ubicación */}
+                              {contract.serviceAddress && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <MapPin className="h-3.5 w-3.5 text-[#5a93fc] shrink-0" />
+                                  <span className="truncate">
+                                    {contract.neighborhood ||
+                                      contract.serviceAddress}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Método de pago */}
+                              {(contract.originalPaymentMethod ||
+                                contract.paymentMethod) && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <CreditCard className="h-3.5 w-3.5 text-[#5a93fc] shrink-0" />
+                                  <span className="truncate capitalize">
+                                    {contract.originalPaymentMethod ||
+                                      contract.paymentMethod}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Fechas solicitada/acordada */}
+                            {(contract.requestedDate ||
+                              contract.agreedDate) && (
+                              <div className="bg-gray-50 rounded-xl px-3 py-2 space-y-1">
+                                {contract.requestedDate && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">
+                                      Fecha solicitada
+                                    </span>
+                                    <span className="text-gray-700 font-medium">
+                                      {new Date(
+                                        contract.requestedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        day: "numeric",
+                                        month: "short",
+                                      })}
+                                      {contract.requestedTime &&
+                                        ` · ${contract.requestedTime}`}
+                                    </span>
+                                  </div>
+                                )}
+                                {contract.agreedDate && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">
+                                      Fecha acordada
+                                    </span>
+                                    <span className="text-gray-700 font-medium">
+                                      {new Date(
+                                        contract.agreedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        day: "numeric",
+                                        month: "short",
+                                      })}
+                                      {contract.agreedTime &&
+                                        ` · ${contract.agreedTime}`}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Mensaje del cliente */}
+                            {contract.clientMessage && (
+                              <div className="flex items-start gap-2 bg-blue-50/50 rounded-xl px-3 py-2">
+                                <MessageSquare className="h-3.5 w-3.5 text-[#5a93fc] shrink-0 mt-0.5" />
+                                <p className="text-xs text-gray-600 line-clamp-2">
+                                  {contract.clientMessage}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Divider + Botón */}
+                            <div className="h-px bg-gray-100"></div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setContractForDetails(contract);
+                                setIsDetailsModalOpen(true);
+                                setDetailsViewRole("client");
+                                if (isClientForContract(contract)) {
+                                  refreshPaymentData(contract.id);
+                                }
+                              }}
+                              className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-[#097EEC] bg-[#097EEC]/8 hover:bg-[#097EEC]/15 border border-[#097EEC]/10 hover:border-[#097EEC]/25 transition-all duration-200 flex items-center justify-center gap-1.5"
+                            >
+                              Ver Detalles
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Servicios Ofrecidos */}
+              {(activeTab === "provider" || activeTab === "all") && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <span className="w-1 h-8 bg-gray-500 rounded-full"></span>
+                    <Users className="h-6 w-6 text-gray-600" />
+                    Servicios Ofrecidos
+                  </h2>
+
+                  {contracts.asProvider.length === 0 ? (
+                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
+                      <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                        No has recibido solicitudes
+                      </h3>
+                      <p className="text-gray-500">
+                        Cuando alguien contrate tus servicios, aparecerán aquí
+                        para que puedas gestionarlos.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-4">
+                      {contracts.asProvider.map((contract) => (
+                        <div
+                          key={contract.id}
+                          onClick={() => {
+                            setContractForDetails(contract);
+                            setIsDetailsModalOpen(true);
+                            setDetailsViewRole("provider");
+                            if (isClientForContract(contract)) {
+                              refreshPaymentData(contract.id);
+                            }
+                          }}
+                          className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-[#097EEC]/20 transition-all duration-300 overflow-hidden cursor-pointer"
+                        >
+                          {/* Header */}
+                          <div className="relative bg-gradient-to-r from-[#097EEC]/10 via-[#5a93fc]/5 to-[#097EEC]/10 px-5 py-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2.5 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#097EEC]/10 group-hover:shadow-md transition-all mt-0.5">
+                                <Users className="h-5 w-5 text-[#097EEC]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-bold text-gray-800 truncate">
+                                  {contract.publication?.title}
+                                </h3>
+                                {contract.publication?.description && (
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                    {contract.publication.description}
+                                  </p>
+                                )}
+                              </div>
+                              <span
+                                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${getStatusColor(contract.status)}`}
+                              >
+                                {getStatusText(contract.status)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="px-5 py-4 space-y-3">
+                            {/* Precio */}
+                            <div className="flex items-baseline justify-between">
+                              <div>
+                                <span className="text-2xl font-bold text-gray-900">
+                                  {formatCurrency(contract.totalPrice || 0)}
+                                </span>
+                                {contract.priceUnit && (
+                                  <span className="text-xs text-gray-400 ml-1">
+                                    / {translatePriceUnit(contract.priceUnit)}
+                                  </span>
+                                )}
+                              </div>
+                              {contract.quantity && (
+                                <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-lg">
+                                  Cant: {contract.quantity}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Info grid */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Cliente */}
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <User className="h-3.5 w-3.5 text-[#097EEC] shrink-0" />
+                                <span className="truncate">
+                                  {contract.client?.name || "—"}
+                                </span>
+                              </div>
+                              {/* Fecha */}
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <Calendar className="h-3.5 w-3.5 text-[#097EEC] shrink-0" />
+                                <span>
+                                  {new Date(
+                                    contract.createdAt,
+                                  ).toLocaleDateString("es-ES", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                              {/* Ubicación */}
+                              {contract.serviceAddress && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <MapPin className="h-3.5 w-3.5 text-[#097EEC] shrink-0" />
+                                  <span className="truncate">
+                                    {contract.neighborhood ||
+                                      contract.serviceAddress}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Método de pago */}
+                              {(contract.originalPaymentMethod ||
+                                contract.paymentMethod) && (
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <CreditCard className="h-3.5 w-3.5 text-[#097EEC] shrink-0" />
+                                  <span className="truncate capitalize">
+                                    {contract.originalPaymentMethod ||
+                                      contract.paymentMethod}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Fechas solicitada/acordada */}
+                            {(contract.requestedDate ||
+                              contract.agreedDate) && (
+                              <div className="bg-gray-50 rounded-xl px-3 py-2 space-y-1">
+                                {contract.requestedDate && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">
+                                      Fecha solicitada
+                                    </span>
+                                    <span className="text-gray-700 font-medium">
+                                      {new Date(
+                                        contract.requestedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        day: "numeric",
+                                        month: "short",
+                                      })}
+                                      {contract.requestedTime &&
+                                        ` · ${contract.requestedTime}`}
+                                    </span>
+                                  </div>
+                                )}
+                                {contract.agreedDate && (
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500">
+                                      Fecha acordada
+                                    </span>
+                                    <span className="text-gray-700 font-medium">
+                                      {new Date(
+                                        contract.agreedDate,
+                                      ).toLocaleDateString("es-ES", {
+                                        day: "numeric",
+                                        month: "short",
+                                      })}
+                                      {contract.agreedTime &&
+                                        ` · ${contract.agreedTime}`}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Mensaje del proveedor */}
+                            {contract.providerMessage && (
+                              <div className="flex items-start gap-2 bg-blue-50/50 rounded-xl px-3 py-2">
+                                <MessageSquare className="h-3.5 w-3.5 text-[#097EEC] shrink-0 mt-0.5" />
+                                <p className="text-xs text-gray-600 line-clamp-2">
+                                  {contract.providerMessage}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Divider + Botón */}
+                            <div className="h-px bg-gray-100"></div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setContractForDetails(contract);
+                                setIsDetailsModalOpen(true);
+                                setDetailsViewRole("provider");
+                                if (isClientForContract(contract)) {
+                                  refreshPaymentData(contract.id);
+                                }
+                              }}
+                              className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-[#097EEC] bg-[#097EEC]/8 hover:bg-[#097EEC]/15 border border-[#097EEC]/10 hover:border-[#097EEC]/25 transition-all duration-200 flex items-center justify-center gap-1.5"
+                            >
+                              Ver Detalles
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

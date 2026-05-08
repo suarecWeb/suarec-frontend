@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { UserService } from "@/services/UsersService";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { User, UserPlan } from "@/interfaces/user.interface";
 import Navbar from "@/components/navbar";
+import AdminSidePanel from "@/components/AdminSidePanel";
 import { Pagination } from "@/components/ui/pagination";
 import RoleGuard from "@/components/role-guard";
 import { IdPhoto, IdPhotosService } from "@/services/IdPhotosService";
@@ -50,6 +53,9 @@ interface RequiredField {
 }
 
 const UsersPageContent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
   const [users, setUsers] = useState<User[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +79,7 @@ const UsersPageContent = () => {
   const [rejectingPhotoId, setRejectingPhotoId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [rutFiles, setRutFiles] = useState<RutDocument[]>([]);
+  const processedUserIdRef = useRef<string | null>(null);
 
   const isUserBusiness = (user: User): boolean => {
     if (!user.roles || !Array.isArray(user.roles)) return false;
@@ -388,6 +395,50 @@ const UsersPageContent = () => {
     }
   };
 
+  // Abrir modal automáticamente si viene desde el panel de pendientes
+  useEffect(() => {
+    const userIdParam = searchParams.get("userId");
+    const openModalParam = searchParams.get("openModal");
+
+    // Reset si no hay query params de modal
+    if (openModalParam !== "requiredFields" || !userIdParam) {
+      processedUserIdRef.current = null;
+      return;
+    }
+
+    // Si ya procesamos este userId, no repetir
+    if (processedUserIdRef.current === userIdParam) return;
+
+    // Esperar a que los usuarios terminen de cargar
+    if (loading) return;
+
+    processedUserIdRef.current = userIdParam;
+    const targetId = Number(userIdParam);
+    const allUsers = searchTerm ? searchResults : users;
+    const targetUser = allUsers.find((u) => u.id === String(targetId));
+
+    if (targetUser) {
+      handleViewRequiredFields(targetUser);
+      router.replace("/users", { scroll: false });
+      return;
+    }
+
+    // Si el usuario no está en la página actual, buscarlo directamente
+    UserService.getUserById(targetId)
+      .then((res) => {
+        const user = res.data;
+        if (user) {
+          handleViewRequiredFields(user);
+        }
+      })
+      .catch((err) => {
+        console.warn("No se pudo cargar el usuario por ID:", err);
+      })
+      .finally(() => {
+        router.replace("/users", { scroll: false });
+      });
+  }, [searchParams, users, searchResults, loading, searchTerm, router]);
+
   // Mostrar resultados de búsqueda si hay término de búsqueda, sino mostrar usuarios paginados
   const displayUsers = searchTerm ? searchResults : users;
 
@@ -479,20 +530,37 @@ const UsersPageContent = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12">
-        {/* Header */}
-        <div className="bg-[#097EEC] text-white py-8">
+      <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
+        {/* Header superior azul */}
+        <div className="bg-[#097EEC] text-white py-8 shadow-sm">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Usuarios</h1>
+            <h1 className="text-3xl font-bold">Panel de usuarios</h1>
             <p className="mt-2 text-blue-100">
               Gestiona todos los usuarios registrados en la plataforma
             </p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 -mt-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Layout con sidebar + contenido */}
+        <div className="container mx-auto px-4 -mt-4 flex">
+          {/* Columna izquierda redimensionable */}
+          <div
+            className="hidden md:flex flex-col gap-[24px] flex-shrink-0"
+            style={{ width: panelWidth }}
+          >
+            <AdminSidePanel />
+          </div>
+
+          {/* Handle de arrastre */}
+          <div
+            className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none"
+            onMouseDown={onPanelDrag}
+          >
+            <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
+          </div>
+
+          {/* Contenido principal */}
+          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto ml-3">
             {/* Actions Bar */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
@@ -573,7 +641,7 @@ const UsersPageContent = () => {
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
                             Email
                           </th>
@@ -635,7 +703,7 @@ const UsersPageContent = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                              <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center gap-1">
                                   <Mail className="h-3 w-3 text-gray-400" />
                                   <span className="text-sm text-gray-500">

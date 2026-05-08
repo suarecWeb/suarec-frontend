@@ -35,6 +35,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
 import { formatCurrency } from "@/lib/formatCurrency";
 import toast from "react-hot-toast";
+import { PaymentDetailModal } from "./PaymentDetailModal";
 
 const AdminPaymentsPage = () => {
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
@@ -42,6 +43,8 @@ const AdminPaymentsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPayment, setSelectedPayment] =
+    useState<PaymentTransaction | null>(null);
 
   // Estados de filtros
   const [filters, setFilters] = useState<AdminPaymentFilterDto>({
@@ -238,7 +241,27 @@ const AdminPaymentsPage = () => {
         <div className="bg-[#097EEC] text-white py-6 md:py-8">
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.back()}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex-shrink-0"
+                  title="Volver"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold">
                     Gestión de Pagos
@@ -513,14 +536,22 @@ const AdminPaymentsPage = () => {
 
                         {/* Monto y acciones */}
                         <div className="flex items-center justify-between sm:flex-col sm:items-end gap-4 sm:gap-2">
-                          {/* Monto */}
-                          <div className="text-left sm:text-right">
+                          {/* Monto + botón detalle */}
+                          <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end gap-3">
                             <p className="text-lg sm:text-xl font-semibold text-gray-900">
                               {formatCurrency(payment.amount, {
                                 showSymbol: true,
                                 showCurrency: true,
                               })}
                             </p>
+                            <button
+                              onClick={() => setSelectedPayment(payment)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#097EEC] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                              title="Ver detalle"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Ver detalle
+                            </button>
                           </div>
 
                           {/* Checkbox para marcar como FINISHED (solo si es COMPLETED) */}
@@ -568,6 +599,13 @@ const AdminPaymentsPage = () => {
           </div>
         </div>
       </div>
+
+      {selectedPayment && (
+        <PaymentDetailModal
+          payment={selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+        />
+      )}
     </RoleGuard>
   );
 };

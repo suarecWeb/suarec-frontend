@@ -65,6 +65,10 @@ const updateTicketStatus = (messageId: string, status: string) =>
 const getTicketMessages = (ticketId: string) =>
   api.get<Message[]>(`${baseURL}/ticket/${ticketId}/messages`);
 
+// Enviar aviso de moderación desde la plataforma (aparece como "Suarec Soporte")
+const sendModerationNotice = (data: { recipientId: number; content: string }) =>
+  api.post<Message>(`${baseURL}/moderation-notify`, data);
+
 // Agregar mensaje a un ticket existente
 const addMessageToTicket = (
   ticketId: string,
@@ -77,6 +81,7 @@ const MessageService = {
   getConversations,
   getMessagesBetweenUsers,
   createMessage,
+  sendModerationNotice,
   sendAdminReply,
   markAsRead,
   countUnreadMessages,
