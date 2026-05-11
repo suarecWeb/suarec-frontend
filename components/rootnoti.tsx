@@ -61,6 +61,8 @@ const formatPhotoTime = (date: string) => {
 
 // ─── Panel interno (consume el contexto) ─────────────────────────────────────
 
+const VISIBLE_LIMIT = 7;
+
 const PanelNotiInner = () => {
   const {
     pendingPhotos,
@@ -74,6 +76,8 @@ const PanelNotiInner = () => {
   const [selectedReport, setSelectedReport] = useState<ContentReport | null>(
     null,
   );
+  const [showAllReports, setShowAllReports] = useState(false);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   return (
     <aside className="w-full rounded-2xl bg-white shadow-xl p-4 min-h-[300px] flex flex-col font-jakarta">
@@ -162,7 +166,7 @@ const PanelNotiInner = () => {
       </div>
 
       {/* Lista */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
+      <div className="space-y-2 pr-0.5">
         {loading ? (
           <div className="flex items-center justify-center pt-12">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#097EEC]" />
@@ -174,9 +178,24 @@ const PanelNotiInner = () => {
               text="Sin fotos pendientes"
             />
           ) : (
-            pendingPhotos.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} />
-            ))
+            <>
+              {(showAllPhotos
+                ? pendingPhotos
+                : pendingPhotos.slice(0, VISIBLE_LIMIT)
+              ).map((photo) => (
+                <PhotoCard key={photo.id} photo={photo} />
+              ))}
+              {pendingPhotos.length > VISIBLE_LIMIT && (
+                <button
+                  onClick={() => setShowAllPhotos((v) => !v)}
+                  className="w-full text-center text-xs text-gray-400 hover:text-[#097EEC] transition-colors py-1.5 rounded-lg hover:bg-gray-50"
+                >
+                  {showAllPhotos
+                    ? "Ver menos"
+                    : `Ver ${pendingPhotos.length - VISIBLE_LIMIT} más`}
+                </button>
+              )}
+            </>
           )
         ) : pendingReports.length === 0 ? (
           <EmptyState
@@ -184,13 +203,28 @@ const PanelNotiInner = () => {
             text="Sin reportes pendientes"
           />
         ) : (
-          pendingReports.map((report) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              onOpen={() => setSelectedReport(report)}
-            />
-          ))
+          <>
+            {(showAllReports
+              ? pendingReports
+              : pendingReports.slice(0, VISIBLE_LIMIT)
+            ).map((report) => (
+              <ReportCard
+                key={report.id}
+                report={report}
+                onOpen={() => setSelectedReport(report)}
+              />
+            ))}
+            {pendingReports.length > VISIBLE_LIMIT && (
+              <button
+                onClick={() => setShowAllReports((v) => !v)}
+                className="w-full text-center text-xs text-gray-400 hover:text-amber-600 transition-colors py-1.5 rounded-lg hover:bg-amber-50"
+              >
+                {showAllReports
+                  ? "Ver menos"
+                  : `Ver ${pendingReports.length - VISIBLE_LIMIT} más`}
+              </button>
+            )}
+          </>
         )}
       </div>
 

@@ -42,6 +42,14 @@ const resetPasswordWithCode = (
   });
 };
 
+const inviteSuperAdmin = (email: string) => {
+  return api.post("/suarec/super-admin/invite", { email });
+};
+
+const activateSuperAdmin = (token: string) => {
+  return api.post("/suarec/super-admin/activate", { token });
+};
+
 const AuthService = {
   login,
   forgotPassword,
@@ -51,6 +59,8 @@ const AuthService = {
   sendPasswordResetCode,
   verifyPasswordResetCode,
   resetPasswordWithCode,
+  inviteSuperAdmin,
+  activateSuperAdmin,
 };
 
 export default AuthService;

@@ -12,10 +12,22 @@ import {
 import AnimatedContent from "@/components/AnimatedContent";
 import { NotifBadge } from "@/components/ui/NotifBadge";
 import { usePanelNoti } from "@/contexts/PanelNotiContext";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 
 const SidebarRoot = () => {
+  const { user } = useAuth();
   const { pendingPhotos, pendingReports, pendingPaymentsCount } =
     usePanelNoti();
+
+  if (!user?.isSuperAdmin) {
+    return null;
+  }
 
   const photosCount = pendingPhotos.length;
   const reportsCount = pendingReports.length;
@@ -50,13 +62,22 @@ const SidebarRoot = () => {
 
         <nav className="flex-1 space-y-1 text-sm font-jakarta">
           {/* Wallet */}
-          <Link
-            href="/wallet"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <Wallet className="h-4 w-4" />
-            <span>wallet</span>
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-400 cursor-not-allowed select-none">
+                  <Wallet className="h-4 w-4" />
+                  <span>wallet</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>
+                  Futura actualización en estudio para realizar con el
+                  respectivo desarrollo.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Transacciones — badge de pagos pendientes (desembolso) */}
           <Link
@@ -68,14 +89,13 @@ const SidebarRoot = () => {
             <NotifBadge count={pendingPaymentsCount} variant="amber" />
           </Link>
 
-          {/* Tickets — badge de reportes de moderación pendientes */}
+          {/* Tickets de soporte */}
           <Link
             href="/admin/tickets"
             className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
           >
             <Ticket className="h-4 w-4" />
             <span>tickets de soporte</span>
-            <NotifBadge count={ticketsCount} />
           </Link>
 
           {/* Publicaciones */}

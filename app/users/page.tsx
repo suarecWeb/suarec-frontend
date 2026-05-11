@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { UserService } from "@/services/UsersService";
+import AuthService from "@/services/AuthService";
+import { useAuth } from "@/hooks/useAuth";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { User, UserPlan } from "@/interfaces/user.interface";
 import Navbar from "@/components/navbar";
@@ -53,6 +55,7 @@ interface RequiredField {
 }
 
 const UsersPageContent = () => {
+  const { user: currentUser } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
@@ -160,6 +163,16 @@ const UsersPageContent = () => {
       } catch (err) {
         toast.error("Error al eliminar el usuario");
       }
+    }
+  };
+
+  const handleInviteSuperAdmin = async (email: string) => {
+    if (!confirm(`¿Enviar invitación de super admin a ${email}?`)) return;
+    try {
+      await AuthService.inviteSuperAdmin(email);
+      toast.success(`Invitación enviada a ${email}`);
+    } catch {
+      toast.error("Error al enviar la invitación");
     }
   };
 
@@ -832,6 +845,17 @@ const UsersPageContent = () => {
                                   >
                                     <CreditCard className="h-5 w-5" />
                                   </button>
+                                  {currentUser?.isSuperAdmin && user.email && (
+                                    <button
+                                      onClick={() =>
+                                        handleInviteSuperAdmin(user.email!)
+                                      }
+                                      className="text-purple-600 hover:text-purple-700 transition-colors"
+                                      title="Invitar como super admin"
+                                    >
+                                      <Shield className="h-5 w-5" />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() =>
                                       user.id && handleDelete(user.id)
