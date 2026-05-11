@@ -27,9 +27,9 @@ const getUserByEmail = (email: string) =>
   api.get<User>(`${baseURL}/email/${email}`);
 
 // Buscar usuarios por nombre o email
-const searchUsers = (query: string, limit: number = 10, role?: string) =>
+const searchUsers = (query: string, limit: number = 10) =>
   api.get<User[]>(`${baseURL}/search`, {
-    params: { q: query, limit, ...(role ? { role } : {}) },
+    params: { q: query, limit },
   });
 
 // Obtener usuarios por empleador

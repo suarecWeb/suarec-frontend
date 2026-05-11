@@ -12,5 +12,4 @@ export interface PaginationParams {
   maxPrice?: number;
   sortBy?: string;
   sortOrder?: "ASC" | "DESC";
-  role?: string;
 }
