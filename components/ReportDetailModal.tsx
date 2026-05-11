@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   ShieldAlert,
@@ -173,11 +174,11 @@ const ReportDetailModal = ({ report, onClose }: Props) => {
     setActionStep("idle");
   };
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 flex items-end sm:items-start justify-center p-0 sm:p-4 sm:pt-16 transition-colors duration-300 ${
+        className={`fixed inset-0 z-[9999] flex items-end sm:items-start justify-center p-0 sm:p-4 sm:pt-16 transition-colors duration-300 ${
           visible ? "bg-black/50" : "bg-black/0"
         }`}
         onClick={actionStep === "sending" ? undefined : handleClose}
@@ -346,7 +347,8 @@ const ReportDetailModal = ({ report, onClose }: Props) => {
           onClose={() => setShowPubModal(false)}
         />
       )}
-    </>
+    </>,
+    document.body,
   );
 };
 

@@ -18,10 +18,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 
 const SidebarRoot = () => {
+  const { user } = useAuth();
   const { pendingPhotos, pendingReports, pendingPaymentsCount } =
     usePanelNoti();
+
+  if (!user?.isSuperAdmin) {
+    return null;
+  }
 
   const photosCount = pendingPhotos.length;
   const reportsCount = pendingReports.length;

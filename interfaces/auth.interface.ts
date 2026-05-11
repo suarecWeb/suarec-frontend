@@ -8,4 +8,5 @@ export interface TokenPayload {
   email: string;
   roles: { id: string; name: string }[];
   isVerify: boolean;
+  isSuperAdmin: boolean;
 }
