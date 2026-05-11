@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AuthService from "@/services/AuthService";
+import Cookies from "js-cookie";
 import { Shield, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 type Status = "loading" | "success" | "error" | "missing";
@@ -31,9 +32,16 @@ function SuperAdminActivateContent() {
       });
   }, []);
 
-  const handleContinue = () => {
-    // Forzar re-login para que el nuevo JWT incluya isSuperAdmin: true
-    router.push("/auth/logout");
+  const handleContinue = async () => {
+    // Limpiar sesión para forzar re-login con el nuevo JWT que incluye isSuperAdmin: true
+    try {
+      await AuthService.logout();
+    } catch {
+      // ignorar error de logout
+    }
+    Cookies.remove("token");
+    Cookies.remove("refreshToken");
+    router.push("/auth/login");
   };
 
   return (
@@ -65,7 +73,7 @@ function SuperAdminActivateContent() {
               onClick={handleContinue}
               className="w-full bg-[#097EEC] hover:bg-[#0A6BC7] text-white font-jakarta font-semibold py-3 rounded-xl transition-colors"
             >
-              Continuar al inicio de sesión
+              Iniciar sesión e ir al panel de admin
             </button>
           </>
         )}

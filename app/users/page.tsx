@@ -166,11 +166,23 @@ const UsersPageContent = () => {
     }
   };
 
-  const handleInviteSuperAdmin = async (email: string) => {
-    if (!confirm(`¿Enviar invitación de super admin a ${email}?`)) return;
+  const handleInviteSuperAdmin = async (user: User) => {
+    const isAdmin = user.roles?.some((r: any) => {
+      const name = typeof r === "string" ? r : r.name;
+      return name?.toUpperCase() === "ADMIN";
+    });
+
+    if (!isAdmin) {
+      toast.error(
+        `${user.name} no tiene rol Admin. Cámbialo a Admin antes de invitarlo como Super Admin.`,
+      );
+      return;
+    }
+
+    if (!confirm(`¿Enviar invitación de super admin a ${user.email}?`)) return;
     try {
-      await AuthService.inviteSuperAdmin(email);
-      toast.success(`Invitación enviada a ${email}`);
+      await AuthService.inviteSuperAdmin(user.email!);
+      toast.success(`Invitación enviada a ${user.email}`);
     } catch {
       toast.error("Error al enviar la invitación");
     }
@@ -245,6 +257,33 @@ const UsersPageContent = () => {
       );
     } catch (err) {
       toast.error("Error al actualizar la verificación del usuario");
+    }
+  };
+
+  const getPrimaryRole = (user: User): string => {
+    if (!user.roles || user.roles.length === 0) return "PERSON";
+    const names = user.roles.map((r: any) =>
+      typeof r === "string" ? r : r.name,
+    );
+    if (names.includes("ADMIN")) return "ADMIN";
+    if (names.includes("BUSINESS")) return "BUSINESS";
+    return "PERSON";
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      await UserService.partialUpdateUser(userId, { roles: [newRole] });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, roles: [newRole] } : u)),
+      );
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, roles: [newRole] } : u)),
+      );
+      toast.success(
+        `Rol actualizado a ${newRole.charAt(0) + newRole.slice(1).toLowerCase()}`,
+      );
+    } catch {
+      toast.error("Error al actualizar el rol del usuario");
     }
   };
 
@@ -733,29 +772,18 @@ const UsersPageContent = () => {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                {user.roles && user.roles.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {user.roles.map((role, index) => (
-                                      <span
-                                        key={index}
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role.toString())}`}
-                                      >
-                                        <Shield className="h-3 w-3 mr-1" />
-                                        {typeof role === "string"
-                                          ? role
-                                              .toLowerCase()
-                                              .includes(
-                                                searchTerm.toLowerCase(),
-                                              )
-                                          : role.name}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    Sin rol
-                                  </span>
-                                )}
+                                <select
+                                  value={getPrimaryRole(user)}
+                                  onChange={(e) =>
+                                    user.id &&
+                                    handleRoleChange(user.id, e.target.value)
+                                  }
+                                  className={`px-2 py-1 text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-[#097EEC] ${getRoleBadgeColor(getPrimaryRole(user))}`}
+                                >
+                                  <option value="PERSON">Person</option>
+                                  <option value="BUSINESS">Business</option>
+                                  <option value="ADMIN">Admin</option>
+                                </select>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <div className="flex items-center justify-center">
@@ -848,7 +876,7 @@ const UsersPageContent = () => {
                                   {currentUser?.isSuperAdmin && user.email && (
                                     <button
                                       onClick={() =>
-                                        handleInviteSuperAdmin(user.email!)
+                                        handleInviteSuperAdmin(user)
                                       }
                                       className="text-purple-600 hover:text-purple-700 transition-colors"
                                       title="Invitar como super admin"
