@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AuthService from "@/services/AuthService";
 import { Shield, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 type Status = "loading" | "success" | "error" | "missing";
 
-export default function SuperAdminActivatePage() {
+function SuperAdminActivateContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<Status>("loading");
@@ -109,5 +109,19 @@ export default function SuperAdminActivatePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SuperAdminActivatePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="h-12 w-12 text-[#097EEC] animate-spin" />
+        </div>
+      }
+    >
+      <SuperAdminActivateContent />
+    </Suspense>
   );
 }
