@@ -600,7 +600,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         </aside>
       </div>
 
-      <style>{`
+      <style suppressHydrationWarning>{`
 .sm-scope .staggered-menu-wrapper { position: relative; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
 .sm-scope .staggered-menu-header { position: absolute; top: 0; left: 0; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 2em; background: transparent; pointer-events: none; z-index: 20; }
 .sm-scope .staggered-menu-header > * { pointer-events: auto; }
