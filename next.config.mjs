@@ -12,6 +12,11 @@ const nextConfig = {
           hostname: 'xkwybhxcytfhnqrdvcel.supabase.co',
           pathname: '/**',
         },
+        {
+          protocol: 'https',
+          hostname: 'lh3.googleusercontent.com',
+          pathname: '/**',
+        },
       ],
     },
     compiler: {
