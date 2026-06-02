@@ -15,6 +15,8 @@ interface RoleGuardProps {
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { isAuthorized, isLoading } = useRoleGuard(allowedRoles);
 
+  //spinner loadin.
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
