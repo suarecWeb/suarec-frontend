@@ -13,6 +13,7 @@ import RootNotiInner from "@/components/rootnoti";
 const AdminSidePanel = () => (
   <PanelNotiProvider>
     <SidebarRootInner />
+
     <RootNotiInner />
   </PanelNotiProvider>
 );
