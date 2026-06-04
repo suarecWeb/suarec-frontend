@@ -1,5 +1,6 @@
 import api from "./axios_config";
 import { CreateEventoDto, Evento } from "@/interfaces/event.interface";
+import { TransaccionBoleta } from "@/interfaces/boleta.interface";
 
 const BASE = "/suarec/events";
 
@@ -44,6 +45,13 @@ const EventsService = {
   },
 
   deleteEvent: (id: string): Promise<void> => api.delete(`${BASE}/${id}`),
+
+  getAllTransacciones: (): Promise<{
+    data: { transacciones: TransaccionBoleta[] };
+  }> => api.get(`${BASE}/boletas/transacciones`),
+
+  getBoletasValidadas: (): Promise<{ data: { validadas: any[] } }> =>
+    api.get(`${BASE}/boletas/validadas`),
 };
 
 export default EventsService;

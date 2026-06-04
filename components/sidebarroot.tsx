@@ -9,6 +9,7 @@ import {
   FileText,
   Users,
   CalendarDays,
+  Ticket as TicketIcon,
 } from "lucide-react";
 import AnimatedContent from "@/components/AnimatedContent";
 import { NotifBadge } from "@/components/ui/NotifBadge";
@@ -118,14 +119,13 @@ const SidebarRoot = () => {
             <NotifBadge count={validationCount} />
           </Link>
 
-          {/* Eventos */}
+          {/* Boletería */}
           <Link
-            href="/admin/events"
+            href="/admin/boleteria"
             className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
           >
-            <CalendarDays className="h-4 w-4" />
-
-            <span>Eventos</span>
+            <TicketIcon className="h-4 w-4" />
+            <span>Boletería</span>
           </Link>
         </nav>
       </aside>
