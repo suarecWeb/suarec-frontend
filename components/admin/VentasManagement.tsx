@@ -175,7 +175,11 @@ const VentasManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-50">
               {filtered.map((tx, i) => {
-                const sc = ESTADO_CONFIG[tx.estadoPago];
+                const sc = ESTADO_CONFIG[tx.estadoPago] ?? {
+                  label: tx.estadoPago || "Desconocido",
+                  color: "bg-gray-100 text-gray-700 border-gray-200",
+                  icon: <Clock className="h-3.5 w-3.5" />,
+                };
                 return (
                   <motion.tr
                     key={tx.id}
