@@ -268,6 +268,7 @@ const UsersPageContent = () => {
       typeof r === "string" ? r : r.name,
     );
     if (names.includes("ADMIN")) return "ADMIN";
+    if (names.includes("ORGANIZADOR")) return "ORGANIZADOR";
     if (names.includes("BUSINESS")) return "BUSINESS";
     return "PERSON";
   };
@@ -501,6 +502,8 @@ const UsersPageContent = () => {
     switch (role) {
       case "ADMIN":
         return "bg-purple-100 text-purple-800";
+      case "ORGANIZADOR":
+        return "bg-orange-100 text-orange-800";
       case "BUSINESS":
         return "bg-blue-100 text-blue-800";
       case "PERSON":
@@ -789,6 +792,9 @@ const UsersPageContent = () => {
                                 >
                                   <option value="PERSON">Person</option>
                                   <option value="BUSINESS">Business</option>
+                                  <option value="ORGANIZADOR">
+                                    Organizador
+                                  </option>
                                   <option value="ADMIN">Admin</option>
                                 </select>
                               </td>

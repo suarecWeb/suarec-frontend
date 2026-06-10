@@ -50,6 +50,8 @@ const ChatPageContent = () => {
   const [showUserSearch, setShowUserSearch] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [loadingTicket, setLoadingTicket] = useState(false);
+  const [isTypingRecipient, setIsTypingRecipient] = useState(false);
+  const typingCleanupRef = useRef<(() => void) | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -70,7 +72,37 @@ const ChatPageContent = () => {
     onNewMessage,
     onMessageRead,
     onConversationUpdated,
+    sendTypingStatus,
+    onUserTyping,
   } = useWebSocketContext();
+
+  // Cleanup typing timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Escuchar typing del otro usuario
+  useEffect(() => {
+    if (!selectedConversation?.user?.id) return;
+
+    const cleanup = onUserTyping(
+      (data: { userId: number; isTyping: boolean }) => {
+        if (data.userId === selectedConversation.user.id) {
+          setIsTypingRecipient(data.isTyping);
+        }
+      },
+    );
+
+    typingCleanupRef.current = cleanup;
+    return () => {
+      cleanup();
+      setIsTypingRecipient(false);
+    };
+  }, [selectedConversation?.user?.id, onUserTyping]);
 
   // Verificar conexión WebSocket al cargar la página
   useEffect(() => {
@@ -600,6 +632,15 @@ const ChatPageContent = () => {
     )
       return;
 
+    // Detener indicador de typing al enviar
+    if (selectedConversation?.user?.id) {
+      sendTypingStatus(selectedConversation.user.id, false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    }
+
     try {
       setSendingMessage(true);
       const messageData = {
@@ -750,13 +791,35 @@ const ChatPageContent = () => {
     }
   };
 
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleTypingChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
+    const value = e.target.value;
+    setNewMessage(value);
 
     // Auto resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+
+    // Enviar estado de typing
+    const recipientId = selectedConversation?.user?.id;
+    if (recipientId) {
+      if (value.length > 0) {
+        sendTypingStatus(recipientId, true);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+        typingTimeoutRef.current = setTimeout(() => {
+          sendTypingStatus(recipientId, false);
+        }, 2000);
+      } else {
+        sendTypingStatus(recipientId, false);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+      }
+    }
   };
 
   const formatTime = (dateString: Date | string) => {
@@ -1166,6 +1229,26 @@ const ChatPageContent = () => {
                           <p className="text-gray-500">
                             No hay mensajes en esta conversación
                           </p>
+                        </div>
+                      )}
+                      {isTypingRecipient && (
+                        <div className="flex items-end gap-3 mb-4 justify-start">
+                          <div className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 rounded-2xl rounded-bl-md border border-gray-200/60 px-4 py-3 shadow-sm max-w-[120px]">
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "0ms" }}
+                              />
+                              <span
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "150ms" }}
+                              />
+                              <span
+                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                style={{ animationDelay: "300ms" }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                       <div ref={messagesEndRef} />
