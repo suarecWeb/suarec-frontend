@@ -4,6 +4,13 @@ export enum BoletaEstado {
   CANCELADA = "cancelada",
 }
 
+export interface ValidacionUsuario {
+  nombre: boolean;
+  telefono: boolean;
+  cedula: boolean;
+  email: boolean;
+}
+
 export interface BoletaSoporte {
   boletaId: number;
   qrToken: string;
@@ -15,6 +22,7 @@ export interface BoletaSoporte {
   compradorEmail: string;
   eventoNombre: string;
   eventoFecha: string;
+  validacion: ValidacionUsuario;
 }
 
 export enum TransaccionEstado {
