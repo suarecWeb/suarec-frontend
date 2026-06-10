@@ -14,6 +14,7 @@ import {
   Settings,
   AlertCircle,
   Users,
+  Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -83,7 +84,39 @@ const parseNumberInput = (raw: string): number | undefined => {
   return Number(digits);
 };
 
+const DIAS_SEMANA = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+];
+
+const SCHEDULE_INFO = [
+  {
+    dias: "Jueves · Sábado · Domingo",
+    regla: "Fijo",
+    valor: "$600 COP por boleta",
+    color: "text-amber-700 bg-amber-50 border-amber-200",
+  },
+  {
+    dias: "Viernes",
+    regla: "Porcentaje",
+    valor: "6% del precio de la boleta",
+    color: "text-blue-700 bg-blue-50 border-blue-200",
+  },
+  {
+    dias: "Lunes · Martes · Miércoles",
+    regla: "Sin comisión",
+    valor: "$0",
+    color: "text-gray-600 bg-gray-50 border-gray-200",
+  },
+];
+
 interface EditableEvent extends Evento {
+  comisionEstimada?: number;
   _estado: EventoEstado;
   _comision?: number;
   _precioBase?: number;
@@ -102,10 +135,10 @@ const ConfiguracionManagement = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    EventsService.getAllEvents()
+    EventsService.getAllEventsAdmin()
       .then((res) =>
         setEvents(
-          res.data.map((e) => ({
+          (res.data as any[]).map((e) => ({
             ...e,
             _estado: e.estado,
             _comision: e.comision,
@@ -116,6 +149,7 @@ const ConfiguracionManagement = () => {
             _aforoTotalText: formatNumberInput(e.aforoTotal),
             _aforoDisponibleText: formatNumberInput(e.aforoDisponible),
             _comisionText: formatNumberInput(e.comision),
+            comisionEstimada: e.comisionEstimada,
           })),
         ),
       )
@@ -135,46 +169,63 @@ const ConfiguracionManagement = () => {
   };
 
   const handleComisionChange = (id: number, raw: string) => {
-    const num = parseNumberInput(raw);
     setEvents((prev) =>
       prev.map((e) =>
         e.id === id
           ? {
               ...e,
-              _comision: num,
-              _comisionText: formatNumberInput(num),
+              _comision: parseNumberInput(raw),
+              _comisionText: raw,
               _dirty: true,
             }
+          : e,
+      ),
+    );
+  };
+
+  const handleComisionBlur = (id: number) => {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === id
+          ? { ...e, _comisionText: formatNumberInput(e._comision) }
           : e,
       ),
     );
   };
 
   const handlePrecioChange = (id: number, raw: string) => {
-    const num = parseNumberInput(raw);
     setEvents((prev) =>
       prev.map((e) =>
         e.id === id
           ? {
               ...e,
-              _precioBase: num,
-              _precioBaseText: formatNumberInput(num),
+              _precioBase: parseNumberInput(raw),
+              _precioBaseText: raw,
               _dirty: true,
             }
+          : e,
+      ),
+    );
+  };
+
+  const handlePrecioBlur = (id: number) => {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === id
+          ? { ...e, _precioBaseText: formatNumberInput(e._precioBase) }
           : e,
       ),
     );
   };
 
   const handleAforoChange = (id: number, raw: string) => {
-    const num = parseNumberInput(raw);
     setEvents((prev) =>
       prev.map((e) =>
         e.id === id
           ? {
               ...e,
-              _aforoTotal: num,
-              _aforoTotalText: formatNumberInput(num),
+              _aforoTotal: parseNumberInput(raw),
+              _aforoTotalText: raw,
               _dirty: true,
             }
           : e,
@@ -182,16 +233,38 @@ const ConfiguracionManagement = () => {
     );
   };
 
+  const handleAforoBlur = (id: number) => {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === id
+          ? { ...e, _aforoTotalText: formatNumberInput(e._aforoTotal) }
+          : e,
+      ),
+    );
+  };
+
   const handleAforoDisponibleChange = (id: number, raw: string) => {
-    const num = parseNumberInput(raw);
     setEvents((prev) =>
       prev.map((e) =>
         e.id === id
           ? {
               ...e,
-              _aforoDisponible: num,
-              _aforoDisponibleText: formatNumberInput(num),
+              _aforoDisponible: parseNumberInput(raw),
+              _aforoDisponibleText: raw,
               _dirty: true,
+            }
+          : e,
+      ),
+    );
+  };
+
+  const handleAforoDisponibleBlur = (id: number) => {
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              _aforoDisponibleText: formatNumberInput(e._aforoDisponible),
             }
           : e,
       ),
@@ -286,6 +359,35 @@ const ConfiguracionManagement = () => {
         <span className="text-xs text-gray-400">({events.length})</span>
       </div>
 
+      {/* Banner comisión SUAREC */}
+      <div className="rounded-xl border border-[#097EEC]/20 bg-[#097EEC]/5 p-4 mb-2">
+        <div className="flex items-center gap-2 mb-3">
+          <Info className="h-4 w-4 text-[#097EEC] shrink-0" />
+          <span className="text-sm font-semibold text-[#097EEC]">
+            Comisión SUAREC por boleta vendida — varía según el día
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {SCHEDULE_INFO.map((s) => (
+            <div
+              key={s.dias}
+              className={`flex flex-col px-3 py-2 rounded-lg border text-xs ${s.color}`}
+            >
+              <span className="font-semibold">{s.dias}</span>
+              <span className="mt-0.5 opacity-80">
+                {s.regla} · <strong>{s.valor}</strong>
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] text-[#097EEC]/70">
+          El campo <strong>Comisión (%)</strong> en cada evento es un porcentaje
+          de ganancia adicional para el organizador, independiente de la
+          comisión SUAREC. El valor de <strong>Comisión estimada hoy</strong> es
+          lo que SUAREC cobra por cada boleta vendida este día.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {events
           .sort(
@@ -342,10 +444,10 @@ const ConfiguracionManagement = () => {
                 </div>
 
                 {/* Info grid */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   <div className="bg-gray-50 rounded-lg p-2.5 text-center">
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">
-                      Precio
+                      Precio boleta
                     </p>
                     <p className="text-sm font-semibold text-gray-700 mt-0.5">
                       {formatCurrency(event._precioBase ?? event.precioBase)}
@@ -365,6 +467,16 @@ const ConfiguracionManagement = () => {
                     </p>
                     <p className="text-sm font-semibold text-gray-700 mt-0.5">
                       {vendidas} ({porcentaje}%)
+                    </p>
+                  </div>
+                  <div className="bg-[#097EEC]/5 border border-[#097EEC]/15 rounded-lg p-2.5 text-center">
+                    <p className="text-[10px] text-[#097EEC]/70 uppercase tracking-wide">
+                      Comisión hoy
+                    </p>
+                    <p className="text-sm font-semibold text-[#097EEC] mt-0.5">
+                      {event.comisionEstimada !== undefined
+                        ? formatCurrency(event.comisionEstimada)
+                        : "—"}
                     </p>
                   </div>
                 </div>
@@ -434,6 +546,7 @@ const ConfiguracionManagement = () => {
                         onChange={(e) =>
                           handlePrecioChange(event.id!, e.target.value)
                         }
+                        onBlur={() => handlePrecioBlur(event.id!)}
                         className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
                         placeholder="0"
                       />
@@ -454,6 +567,7 @@ const ConfiguracionManagement = () => {
                         onChange={(e) =>
                           handleAforoChange(event.id!, e.target.value)
                         }
+                        onBlur={() => handleAforoBlur(event.id!)}
                         className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
                         placeholder="0"
                       />
@@ -474,30 +588,31 @@ const ConfiguracionManagement = () => {
                         onChange={(e) =>
                           handleAforoDisponibleChange(event.id!, e.target.value)
                         }
+                        onBlur={() => handleAforoDisponibleBlur(event.id!)}
                         className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
                         placeholder="0"
                       />
                     </div>
                   </div>
 
-                  {/* Comisión */}
+                  {/* Comisión organizador */}
                   <div>
                     <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1.5 block">
-                      Comisión (%)
+                      % adicional organizador
                     </label>
                     <div className="relative">
                       <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
                         type="text"
-                        inputMode="numeric"
+                        disabled
                         value={event._comisionText ?? ""}
-                        onChange={(e) =>
-                          handleComisionChange(event.id!, e.target.value)
-                        }
-                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed outline-none"
                         placeholder="0"
                       />
                     </div>
+                    <p className="mt-1 text-[10px] text-gray-400 leading-tight">
+                      Informativo · no afecta el cobro SUAREC
+                    </p>
                   </div>
                 </div>
 

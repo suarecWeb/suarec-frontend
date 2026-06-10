@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import EventsService from "@/services/EventsService";
+import { Evento } from "@/interfaces/event.interface";
 import {
   TransaccionBoleta,
   TransaccionEstado,
@@ -15,6 +16,7 @@ import {
   CheckCircle,
   XCircle,
   Inbox,
+  Filter,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -59,15 +61,23 @@ const formatDate = (dateString: string) => {
 
 const VentasManagement = () => {
   const [transacciones, setTransacciones] = useState<TransaccionBoleta[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | TransaccionEstado>(
     "all",
   );
+  const [eventoFilter, setEventoFilter] = useState<"all" | number>("all");
 
   useEffect(() => {
-    EventsService.getAllTransacciones()
-      .then((res) => setTransacciones(res.data.transacciones))
+    Promise.all([
+      EventsService.getAllTransacciones(),
+      EventsService.getAllEventsAdmin(),
+    ])
+      .then(([txRes, evRes]) => {
+        setTransacciones(txRes.data.transacciones);
+        setEventos(evRes.data);
+      })
       .catch(() => toast.error("Error al cargar las transacciones"))
       .finally(() => setLoading(false));
   }, []);
@@ -83,42 +93,77 @@ const VentasManagement = () => {
     const matchesStatus =
       statusFilter === "all" || tx.estadoPago === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesEvento =
+      eventoFilter === "all" || tx.evento?.id === eventoFilter;
+
+    return matchesSearch && matchesStatus && matchesEvento;
   });
 
   return (
     <div>
       {/* Search + filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Buscar por referencia, comprador o evento..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por referencia, comprador o evento..."
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-1.5">
+            {[
+              { value: "all", label: "Todos" },
+              { value: TransaccionEstado.APROBADO, label: "Aprobado" },
+              { value: TransaccionEstado.PENDIENTE, label: "Pendiente" },
+              { value: TransaccionEstado.RECHAZADO, label: "Rechazado" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStatusFilter(opt.value as any)}
+                className={`text-xs px-3 py-2 rounded-xl font-medium transition-colors ${
+                  statusFilter === opt.value
+                    ? "bg-[#097EEC] text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          {[
-            { value: "all", label: "Todos" },
-            { value: TransaccionEstado.APROBADO, label: "Aprobado" },
-            { value: TransaccionEstado.PENDIENTE, label: "Pendiente" },
-            { value: TransaccionEstado.RECHAZADO, label: "Rechazado" },
-          ].map((opt) => (
+
+        {/* Filtro por evento */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
+          <select
+            value={eventoFilter}
+            onChange={(e) =>
+              setEventoFilter(
+                e.target.value === "all" ? "all" : Number(e.target.value),
+              )
+            }
+            className="flex-1 sm:max-w-xs text-sm border border-gray-200 rounded-xl bg-gray-50 px-3 py-2 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all text-gray-600"
+          >
+            <option value="all">Todos los eventos</option>
+            {eventos.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.nombre}
+                {ev.visible === false ? " (oculto)" : ""}
+              </option>
+            ))}
+          </select>
+          {eventoFilter !== "all" && (
             <button
-              key={opt.value}
-              onClick={() => setStatusFilter(opt.value as any)}
-              className={`text-xs px-3 py-2 rounded-xl font-medium transition-colors ${
-                statusFilter === opt.value
-                  ? "bg-[#097EEC] text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+              onClick={() => setEventoFilter("all")}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {opt.label}
+              Limpiar
             </button>
-          ))}
+          )}
         </div>
       </div>
 

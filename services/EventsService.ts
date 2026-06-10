@@ -7,6 +7,9 @@ const BASE = "/suarec/events";
 const EventsService = {
   getAllEvents: (): Promise<{ data: Evento[] }> => api.get(BASE),
 
+  getAllEventsAdmin: (): Promise<{ data: Evento[] }> =>
+    api.get(`${BASE}/admin/all`),
+
   getEventById: (id: number): Promise<{ data: Evento }> =>
     api.get(`${BASE}/${id}`),
 
@@ -43,6 +46,9 @@ const EventsService = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+
+  setVisibility: (id: number, visible: boolean): Promise<void> =>
+    api.patch(`${BASE}/${id}/visibility`, { visible }),
 
   deleteEvent: (id: string): Promise<void> => api.delete(`${BASE}/${id}`),
 

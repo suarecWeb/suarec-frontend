@@ -126,13 +126,8 @@ const EstadisticasManagement = () => {
         setTransacciones(r.data.transacciones),
       ),
       EventsService.getBoletasValidadas()
-        .then((r) => {
-          console.log("[DEBUG] Validadas response:", r.data);
-          setValidadas(r.data.validadas || []);
-        })
-        .catch((err) => {
-          console.error("[DEBUG] Error validadas:", err);
-        }),
+        .then((r) => setValidadas(r.data.validadas || []))
+        .catch(() => {}),
     ])
       .catch(() => toast.error("Error al cargar estadísticas"))
       .finally(() => setLoading(false));

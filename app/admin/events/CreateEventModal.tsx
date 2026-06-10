@@ -9,7 +9,6 @@ import {
   DollarSign,
   FileText,
   Upload,
-  Percent,
   Smartphone,
   Monitor,
 } from "lucide-react";
@@ -153,14 +152,8 @@ export default function CreateEventModal({
         next.aforoTotal = "El aforo no puede superar 4000";
     }
 
-    if (form.precioBase !== undefined && form.precioBase < 0)
-      next.precioBase = "El precio no puede ser negativo";
-
-    if (
-      form.comision !== undefined &&
-      (form.comision < 0 || form.comision > 100)
-    )
-      next.comision = "La comisión debe estar entre 0 y 100";
+    if (form.precioBase !== undefined && form.precioBase < 2000)
+      next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
 
     if (!form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
@@ -423,8 +416,8 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* Boletas + Precio + Comisión */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Boletas + Precio */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
                 <Ticket className="h-3 w-3 inline mr-1" />
@@ -465,29 +458,6 @@ export default function CreateEventModal({
               />
               {errors.precioBase && (
                 <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                <Percent className="h-3 w-3 inline mr-1" />
-                Comisión
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={form.comision ?? ""}
-                onChange={(e) =>
-                  handleChange(
-                    "comision",
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-                placeholder="0"
-                className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.comision ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-              />
-              {errors.comision && (
-                <p className="mt-1 text-xs text-red-500">{errors.comision}</p>
               )}
             </div>
           </div>

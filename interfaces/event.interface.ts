@@ -29,6 +29,7 @@ export interface Evento {
   formatId?: number;
   format?: EventoFormat;
   organizadorId?: number;
+  visible?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

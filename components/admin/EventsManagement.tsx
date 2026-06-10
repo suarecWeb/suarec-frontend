@@ -8,7 +8,6 @@ import {
 } from "@/interfaces/event.interface";
 import EventsService from "@/services/EventsService";
 import CreateEventModal from "@/app/admin/events/CreateEventModal";
-import DeleteEventModal from "@/app/admin/events/DeleteEventModal";
 import EditEventModal from "@/app/admin/events/EditEventModal";
 import {
   CalendarDays,
@@ -16,7 +15,8 @@ import {
   MapPin,
   Ticket,
   DollarSign,
-  Trash2,
+  EyeOff,
+  Eye,
   Edit,
   Smartphone,
   Monitor,
@@ -47,10 +47,9 @@ const EventsManagement = () => {
   const [events, setEvents] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<Evento | null>(null);
   const [eventToEdit, setEventToEdit] = useState<Evento | null>(null);
 
-  const isAnyModalOpen = showCreateModal || !!eventToEdit || !!eventToDelete;
+  const isAnyModalOpen = showCreateModal || !!eventToEdit;
 
   useEffect(() => {
     document.body.style.overflow = isAnyModalOpen ? "hidden" : "";
@@ -62,7 +61,7 @@ const EventsManagement = () => {
   }, [isAnyModalOpen]);
 
   useEffect(() => {
-    EventsService.getAllEvents()
+    EventsService.getAllEventsAdmin()
       .then((res) => setEvents(res.data))
       .catch(() => toast.error("Error al cargar los eventos"))
       .finally(() => setLoading(false));
@@ -85,13 +84,21 @@ const EventsManagement = () => {
     toast.success("Evento actualizado");
   };
 
-  const handleDelete = async (id: number) => {
+  const handleToggleVisibility = async (event: Evento) => {
+    if (!event.id) return;
+    const newVisible = event.visible === false ? true : false;
     try {
-      await EventsService.deleteEvent(String(id));
-      setEvents((prev) => prev.filter((e) => e.id !== id));
-      toast.success("Evento eliminado");
+      await EventsService.setVisibility(event.id, newVisible);
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === event.id ? { ...e, visible: newVisible } : e,
+        ),
+      );
+      toast.success(
+        newVisible ? "Evento visible en la app" : "Evento oculto de la app",
+      );
     } catch {
-      toast.error("Error al eliminar el evento");
+      toast.error("Error al cambiar visibilidad del evento");
     }
   };
 
@@ -155,7 +162,7 @@ const EventsManagement = () => {
           {events.map((event, i) => (
             <div
               key={event.id}
-              className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 group opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards]"
+              className={`border rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 group opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards] ${event.visible === false ? "border-gray-200 opacity-60" : "border-gray-100"}`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="h-36 bg-gradient-to-br from-[#097EEC]/10 to-[#097EEC]/20 flex items-center justify-center relative">
@@ -163,7 +170,7 @@ const EventsManagement = () => {
                   <img
                     src={event.imagenUrl}
                     alt={event.nombre}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover ${event.visible === false ? "grayscale" : ""}`}
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display =
                         "none";
@@ -172,11 +179,18 @@ const EventsManagement = () => {
                 ) : (
                   <CalendarDays className="h-10 w-10 text-[#097EEC]/40" />
                 )}
-                <span
-                  className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_CONFIG[event.estado].color}`}
-                >
-                  {ESTADO_CONFIG[event.estado].label}
-                </span>
+                <div className="absolute top-2 right-2 flex gap-1">
+                  {event.visible === false && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-800/70 text-white flex items-center gap-1">
+                      <EyeOff className="h-3 w-3" /> Oculto
+                    </span>
+                  )}
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_CONFIG[event.estado].color}`}
+                  >
+                    {ESTADO_CONFIG[event.estado].label}
+                  </span>
+                </div>
               </div>
 
               <div className="p-4">
@@ -246,11 +260,23 @@ const EventsManagement = () => {
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => setEventToDelete(event)}
-                    className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    title="Eliminar"
+                    onClick={() => handleToggleVisibility(event)}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      event.visible === false
+                        ? "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    }`}
+                    title={
+                      event.visible === false
+                        ? "Mostrar en app"
+                        : "Ocultar de app"
+                    }
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {event.visible === false ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -271,14 +297,6 @@ const EventsManagement = () => {
           event={eventToEdit}
           onClose={() => setEventToEdit(null)}
           onSubmit={handleEdit}
-        />
-      )}
-
-      {eventToDelete && (
-        <DeleteEventModal
-          event={eventToDelete}
-          onClose={() => setEventToDelete(null)}
-          onConfirm={handleDelete}
         />
       )}
     </>
