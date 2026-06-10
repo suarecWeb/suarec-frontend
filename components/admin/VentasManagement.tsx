@@ -17,6 +17,8 @@ import {
   XCircle,
   Inbox,
   Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -68,6 +70,8 @@ const VentasManagement = () => {
     "all",
   );
   const [eventoFilter, setEventoFilter] = useState<"all" | number>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     Promise.all([
@@ -81,6 +85,10 @@ const VentasManagement = () => {
       .catch(() => toast.error("Error al cargar las transacciones"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, eventoFilter]);
 
   const filtered = transacciones.filter((tx) => {
     const matchesSearch =
@@ -98,6 +106,54 @@ const VentasManagement = () => {
 
     return matchesSearch && matchesStatus && matchesEvento;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice(
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage,
+  );
+
+  const getPageButtons = () => {
+    const pageItems: { type: "page" | "ellipsis"; value: number | string }[] =
+      [];
+    for (let p = 1; p <= totalPages; p++) {
+      if (
+        totalPages <= 5 ||
+        p === 1 ||
+        p === totalPages ||
+        Math.abs(p - safePage) <= 1
+      ) {
+        if (
+          pageItems.length > 0 &&
+          pageItems[pageItems.length - 1].type === "page" &&
+          p > (pageItems[pageItems.length - 1].value as number) + 1
+        ) {
+          pageItems.push({ type: "ellipsis", value: "..." });
+        }
+        pageItems.push({ type: "page", value: p });
+      }
+    }
+    return pageItems.map((item, i) =>
+      item.type === "ellipsis" ? (
+        <span key={`ellipsis-${i}`} className="px-2 text-xs text-gray-400">
+          {item.value}
+        </span>
+      ) : (
+        <button
+          key={item.value}
+          onClick={() => setCurrentPage(item.value as number)}
+          className={`min-w-[2rem] h-8 px-2 rounded-lg text-xs font-medium transition-colors ${
+            safePage === (item.value as number)
+              ? "bg-[#097EEC] text-white"
+              : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          {item.value}
+        </button>
+      ),
+    );
+  };
 
   return (
     <div>
@@ -188,114 +244,174 @@ const VentasManagement = () => {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Evento
-                </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Comprador
-                </th>
-                <th className="px-4 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Cant.
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Monto
-                </th>
-                <th className="px-4 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Referencia
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-50">
-              {filtered.map((tx, i) => {
-                const sc = ESTADO_CONFIG[tx.estadoPago] ?? {
-                  label: tx.estadoPago || "Desconocido",
-                  color: "bg-gray-100 text-gray-700 border-gray-200",
-                  icon: <Clock className="h-3.5 w-3.5" />,
-                };
-                return (
-                  <motion.tr
-                    key={tx.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03, duration: 0.2 }}
-                    className="hover:bg-blue-50/20 transition-colors"
-                  >
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-700">
-                        #{tx.id}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-3.5 w-3.5 text-gray-300 flex-shrink-0" />
-                        <span className="text-sm text-gray-700 truncate max-w-[180px]">
-                          {tx.evento?.nombre || "—"}
+        <>
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gray-50/80 border-b border-gray-100">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Evento
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Comprador
+                  </th>
+                  <th className="px-4 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Cant.
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Monto
+                  </th>
+                  <th className="px-4 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    Referencia
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-50">
+                {paginated.map((tx, i) => {
+                  const sc = ESTADO_CONFIG[tx.estadoPago] ?? {
+                    label: tx.estadoPago || "Desconocido",
+                    color: "bg-gray-100 text-gray-700 border-gray-200",
+                    icon: <Clock className="h-3.5 w-3.5" />,
+                  };
+                  return (
+                    <motion.tr
+                      key={tx.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03, duration: 0.2 }}
+                      className="hover:bg-blue-50/20 transition-colors"
+                    >
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-700">
+                          #{tx.id}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#097EEC] to-[#0562C7] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {tx.comprador?.name?.charAt(0)?.toUpperCase() || "U"}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5 text-gray-300 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 truncate max-w-[180px]">
+                            {tx.evento?.nombre || "—"}
+                          </span>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate max-w-[140px]">
-                            {tx.comprador?.name || "—"}
-                          </p>
-                          <p className="text-[11px] text-gray-400 truncate max-w-[140px]">
-                            {tx.comprador?.email || "—"}
-                          </p>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#097EEC] to-[#0562C7] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            {tx.comprador?.name?.charAt(0)?.toUpperCase() ||
+                              "U"}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate max-w-[140px]">
+                              {tx.comprador?.name || "—"}
+                            </p>
+                            <p className="text-[11px] text-gray-400 truncate max-w-[140px]">
+                              {tx.comprador?.email || "—"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
-                        <Ticket className="h-3.5 w-3.5 text-gray-300" />
-                        {tx.cantidad}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                      <span className="text-sm font-semibold text-gray-700">
-                        {formatCurrency(tx.monto)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${sc.color}`}
-                      >
-                        {sc.icon}
-                        {sc.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="text-xs text-gray-500">
-                        {formatDate(tx.createdAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="text-[11px] text-gray-400 font-mono truncate max-w-[120px] block">
-                        {tx.referencia}
-                      </span>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
+                          <Ticket className="h-3.5 w-3.5 text-gray-300" />
+                          {tx.cantidad}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {formatCurrency(tx.monto)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${sc.color}`}
+                        >
+                          {sc.icon}
+                          {sc.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(tx.createdAt)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="text-[11px] text-gray-400 font-mono truncate max-w-[120px] block">
+                          {tx.referencia}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginación */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span>
+                Mostrando{" "}
+                <span className="font-medium text-gray-700">
+                  {filtered.length > 0 ? (safePage - 1) * itemsPerPage + 1 : 0}
+                </span>{" "}
+                -{" "}
+                <span className="font-medium text-gray-700">
+                  {Math.min(safePage * itemsPerPage, filtered.length)}
+                </span>{" "}
+                de{" "}
+                <span className="font-medium text-gray-700">
+                  {filtered.length}
+                </span>{" "}
+                resultados
+              </span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="ml-2 text-xs border border-gray-200 rounded-lg bg-white px-2 py-1 focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none"
+              >
+                {[5, 10, 25, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n} / pág.
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+
+              {getPageButtons()}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={safePage >= totalPages}
+                className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

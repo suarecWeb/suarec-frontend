@@ -1,6 +1,9 @@
 import api from "./axios_config";
 import { CreateEventoDto, Evento } from "@/interfaces/event.interface";
-import { TransaccionBoleta } from "@/interfaces/boleta.interface";
+import {
+  BoletaSoporte,
+  TransaccionBoleta,
+} from "@/interfaces/boleta.interface";
 
 const BASE = "/suarec/events";
 
@@ -58,6 +61,18 @@ const EventsService = {
 
   getBoletasValidadas: (): Promise<{ data: { validadas: any[] } }> =>
     api.get(`${BASE}/boletas/validadas`),
+
+  adminGetBoletasSoporte: (
+    email?: string,
+  ): Promise<{ data: { boletas: BoletaSoporte[] } }> =>
+    api.get(`${BASE}/boletas/admin/soporte`, {
+      params: email ? { email } : {},
+    }),
+
+  adminReenviarEmail: (
+    boletaId: number,
+  ): Promise<{ data: { success: boolean } }> =>
+    api.post(`${BASE}/boletas/${boletaId}/admin-reenviar`),
 };
 
 export default EventsService;

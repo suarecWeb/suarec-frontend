@@ -1,3 +1,22 @@
+export enum BoletaEstado {
+  ACTIVA = "activa",
+  USADA = "usada",
+  CANCELADA = "cancelada",
+}
+
+export interface BoletaSoporte {
+  boletaId: number;
+  qrToken: string;
+  estado: BoletaEstado;
+  precioPagado: number;
+  pdfUrl: string | null;
+  createdAt: string;
+  compradorNombre: string;
+  compradorEmail: string;
+  eventoNombre: string;
+  eventoFecha: string;
+}
+
 export enum TransaccionEstado {
   PENDIENTE = "pendiente",
   APROBADO = "aprobado",
