@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import toast from "react-hot-toast";
+import { formatDisplayDate } from "@/lib/TimeZone";
 
 const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
   [EventoEstado.PREVENTA]: {
@@ -216,13 +217,7 @@ const EventsManagement = () => {
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <CalendarDays className="h-3 w-3 text-gray-300 flex-shrink-0" />
-                    {new Date(event.fechaEvento).toLocaleString("es-CO", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatDisplayDate(event.fechaEvento)}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <MapPin className="h-3 w-3 text-gray-300 flex-shrink-0" />

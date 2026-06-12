@@ -2,6 +2,7 @@ import api from "./axios_config";
 import { CreateEventoDto, Evento } from "@/interfaces/event.interface";
 import {
   BoletaSoporte,
+  DetalleTransaccion,
   TransaccionBoleta,
 } from "@/interfaces/boleta.interface";
 
@@ -73,6 +74,21 @@ const EventsService = {
     boletaId: number,
   ): Promise<{ data: { success: boolean } }> =>
     api.post(`${BASE}/boletas/${boletaId}/admin-reenviar`),
+
+  adminGetDetalleTransaccion: (
+    id: number,
+  ): Promise<{ data: DetalleTransaccion }> =>
+    api.get(`${BASE}/boletas/transacciones/${id}/detalle`),
+
+  adminSincronizarTransaccion: (
+    id: number,
+  ): Promise<{ data: { sincronizado: boolean; estadoFinal: string } }> =>
+    api.post(`${BASE}/boletas/transacciones/${id}/sincronizar`),
+
+  adminForzarGeneracion: (
+    id: number,
+  ): Promise<{ data: { generado: boolean; boletaIds: number[] } }> =>
+    api.post(`${BASE}/boletas/transacciones/${id}/forzar-generacion`),
 };
 
 export default EventsService;

@@ -29,6 +29,8 @@ export enum TransaccionEstado {
   PENDIENTE = "pendiente",
   APROBADO = "aprobado",
   RECHAZADO = "rechazado",
+  CANCELADO = "cancelado",
+  EXPIRADO = "expirado",
 }
 
 export enum Pasarela {
@@ -64,5 +66,23 @@ export interface TransaccionBoleta {
   precioPorBoleta: number;
   comisionPorBoleta: number;
   boletaIds: number[] | null;
+  wompiEnvironment: string | null;
   createdAt: string;
+}
+
+export interface WompiIntento {
+  id: string;
+  status: string;
+  amount_in_cents: number;
+  reference: string;
+  customer_email: string;
+  payment_method_type: string;
+  created_at: string;
+  finalized_at: string | null;
+}
+
+export interface DetalleTransaccion {
+  transaccion: TransaccionBoleta;
+  wompiData: WompiIntento | null;
+  wompiError: string | null;
 }

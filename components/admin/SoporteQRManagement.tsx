@@ -18,6 +18,7 @@ import {
   CreditCard,
   ShieldCheck,
   ShieldX,
+  Zap,
 } from "lucide-react";
 import EventsService from "@/services/EventsService";
 import {
@@ -105,13 +106,14 @@ const ValidacionBar = ({ validacion }: { validacion: ValidacionUsuario }) => {
 };
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleString("es-CO", {
+  new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }).format(new Date(d));
 
 const SoporteQRManagement = () => {
   const [email, setEmail] = useState("");
@@ -123,6 +125,13 @@ const SoporteQRManagement = () => {
   const [newBoletaId, setNewBoletaId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevFirstIdRef = useRef<number | null>(null);
+
+  const [txIdInput, setTxIdInput] = useState("");
+  const [forzando, setForzando] = useState(false);
+  const [forzarResult, setForzarResult] = useState<{
+    generado: boolean;
+    boletaIds: number[];
+  } | null>(null);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -160,6 +169,34 @@ const SoporteQRManagement = () => {
       toast.error("No se pudo reenviar el email");
     } finally {
       setSending(null);
+    }
+  };
+
+  const handleForzarGeneracion = async () => {
+    const id = parseInt(txIdInput.trim(), 10);
+    if (!id || isNaN(id)) {
+      toast.error("Ingresa un ID de transacción válido");
+      return;
+    }
+    setForzando(true);
+    setForzarResult(null);
+    try {
+      const { data } = await EventsService.adminForzarGeneracion(id);
+      setForzarResult(data);
+      if (data.generado) {
+        toast.success(`Boletas generadas: IDs ${data.boletaIds.join(", ")}`);
+      } else {
+        toast.success(
+          `Transacción ya aprobada. Boletas: ${data.boletaIds.join(", ")}`,
+        );
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "Error al forzar generación";
+      toast.error(msg);
+    } finally {
+      setForzando(false);
     }
   };
 
@@ -222,6 +259,67 @@ const SoporteQRManagement = () => {
           Deja el campo vacío y presiona Buscar para ver las 50 boletas más
           recientes
         </p>
+      </div>
+
+      {/* Forzar generación de boletas */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="h-4 w-4 text-amber-600" />
+          <div>
+            <p className="text-xs font-semibold text-amber-800">
+              Forzar generación de boletas
+            </p>
+            <p className="text-[11px] text-amber-600">
+              Usa esto cuando Wompi cobró pero SUAREC no generó las boletas.
+              Ingresa el ID de la transacción.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={txIdInput}
+            onChange={(e) => {
+              setTxIdInput(e.target.value);
+              setForzarResult(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleForzarGeneracion()}
+            placeholder="ID de transacción (ej: 279)"
+            className="flex-1 px-3 py-2 text-sm border border-amber-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+          />
+          <button
+            onClick={handleForzarGeneracion}
+            disabled={forzando || !txIdInput.trim()}
+            className="px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
+          >
+            {forzando ? (
+              <div className="h-3.5 w-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Zap className="h-3.5 w-3.5" />
+            )}
+            {forzando ? "Generando…" : "Forzar"}
+          </button>
+        </div>
+
+        {forzarResult && (
+          <div
+            className={`mt-3 p-3 rounded-lg border text-xs ${forzarResult.generado ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-blue-50 border-blue-200 text-blue-700"}`}
+          >
+            {forzarResult.generado ? (
+              <>
+                <span className="font-semibold">
+                  Boletas generadas correctamente.
+                </span>{" "}
+                IDs: {forzarResult.boletaIds.join(", ")}
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Ya estaban generadas.</span> IDs
+                existentes: {forzarResult.boletaIds.join(", ")}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Resultados */}
