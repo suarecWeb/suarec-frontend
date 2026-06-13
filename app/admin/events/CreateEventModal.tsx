@@ -293,10 +293,9 @@ export default function CreateEventModal({
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors ${selectedFormat?.ratio ?? "h-40"} ${selectedFormat?.width ?? "w-full"}`}
+            <label
+              htmlFor="create-event-image-input"
+              className={`cursor-pointer border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors ${selectedFormat?.ratio ?? "h-40"} ${selectedFormat?.width ?? "w-full"}`}
             >
               <Upload className="h-6 w-6" />
               <span className="text-xs">Haz clic para subir una imagen</span>
@@ -305,9 +304,10 @@ export default function CreateEventModal({
                   Selecciona un formato primero
                 </span>
               )}
-            </button>
+            </label>
           )}
           <input
+            id="create-event-image-input"
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -388,7 +388,6 @@ export default function CreateEventModal({
               </label>
               <input
                 type="datetime-local"
-                value={form.fechaEvento}
                 onChange={(e) => handleChange("fechaEvento", e.target.value)}
                 className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.fechaEvento ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
               />

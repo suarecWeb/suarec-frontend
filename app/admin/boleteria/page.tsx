@@ -9,10 +9,22 @@ import EventsManagement from "@/components/admin/EventsManagement";
 import VentasManagement from "@/components/admin/VentasManagement";
 import EstadisticasManagement from "@/components/admin/EstadisticasManagement";
 import ConfiguracionManagement from "@/components/admin/ConfiguracionManagement";
-import { CalendarDays, Ticket, BarChart3, Settings } from "lucide-react";
+import SoporteQRManagement from "@/components/admin/SoporteQRManagement";
+import {
+  CalendarDays,
+  Ticket,
+  BarChart3,
+  Settings,
+  QrCode,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type BoleteriaTab = "eventos" | "ventas" | "estadisticas" | "config";
+type BoleteriaTab =
+  | "eventos"
+  | "ventas"
+  | "estadisticas"
+  | "config"
+  | "soporteqr";
 
 const TAB_CONFIG: Record<
   BoleteriaTab,
@@ -33,6 +45,10 @@ const TAB_CONFIG: Record<
   config: {
     label: "Configuración",
     icon: <Settings className="h-4 w-4" />,
+  },
+  soporteqr: {
+    label: "Soporte QR",
+    icon: <QrCode className="h-4 w-4" />,
   },
 };
 
@@ -120,6 +136,8 @@ const BoleteriaPageContent = () => {
                   {activeTab === "estadisticas" && <EstadisticasManagement />}
 
                   {activeTab === "config" && <ConfiguracionManagement />}
+
+                  {activeTab === "soporteqr" && <SoporteQRManagement />}
                 </motion.div>
               </AnimatePresence>
             </div>
