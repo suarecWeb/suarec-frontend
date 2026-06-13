@@ -30,6 +30,7 @@ import {
   GraduationCap,
   Camera,
   User as UserIconSolid,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -83,6 +84,7 @@ const UsersPageContent = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [rutFiles, setRutFiles] = useState<RutDocument[]>([]);
   const processedUserIdRef = useRef<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"home" | "accounts">("home");
 
   const isUserBusiness = (user: User): boolean => {
     if (!user.roles || !Array.isArray(user.roles)) return false;
@@ -166,11 +168,23 @@ const UsersPageContent = () => {
     }
   };
 
-  const handleInviteSuperAdmin = async (email: string) => {
-    if (!confirm(`¿Enviar invitación de super admin a ${email}?`)) return;
+  const handleInviteSuperAdmin = async (user: User) => {
+    const isAdmin = user.roles?.some((r: any) => {
+      const name = typeof r === "string" ? r : r.name;
+      return name?.toUpperCase() === "ADMIN";
+    });
+
+    if (!isAdmin) {
+      toast.error(
+        `${user.name} no tiene rol Admin. Cámbialo a Admin antes de invitarlo como Super Admin.`,
+      );
+      return;
+    }
+
+    if (!confirm(`¿Enviar invitación de super admin a ${user.email}?`)) return;
     try {
-      await AuthService.inviteSuperAdmin(email);
-      toast.success(`Invitación enviada a ${email}`);
+      await AuthService.inviteSuperAdmin(user.email!);
+      toast.success(`Invitación enviada a ${user.email}`);
     } catch {
       toast.error("Error al enviar la invitación");
     }
@@ -245,6 +259,34 @@ const UsersPageContent = () => {
       );
     } catch (err) {
       toast.error("Error al actualizar la verificación del usuario");
+    }
+  };
+
+  const getPrimaryRole = (user: User): string => {
+    if (!user.roles || user.roles.length === 0) return "PERSON";
+    const names = user.roles.map((r: any) =>
+      typeof r === "string" ? r : r.name,
+    );
+    if (names.includes("ADMIN")) return "ADMIN";
+    if (names.includes("ORGANIZADOR")) return "ORGANIZADOR";
+    if (names.includes("BUSINESS")) return "BUSINESS";
+    return "PERSON";
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      await UserService.partialUpdateUser(userId, { roles: [newRole] });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, roles: [newRole] } : u)),
+      );
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, roles: [newRole] } : u)),
+      );
+      toast.success(
+        `Rol actualizado a ${newRole.charAt(0) + newRole.slice(1).toLowerCase()}`,
+      );
+    } catch {
+      toast.error("Error al actualizar el rol del usuario");
     }
   };
 
@@ -460,6 +502,8 @@ const UsersPageContent = () => {
     switch (role) {
       case "ADMIN":
         return "bg-purple-100 text-purple-800";
+      case "ORGANIZADOR":
+        return "bg-orange-100 text-orange-800";
       case "BUSINESS":
         return "bg-blue-100 text-blue-800";
       case "PERSON":
@@ -573,26 +617,26 @@ const UsersPageContent = () => {
           </div>
 
           {/* Contenido principal */}
-          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto ml-3">
+          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-x-auto ml-3">
+            {/* Lista de usuarios */}
+
             {/* Actions Bar */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div className="relative flex-1 max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Buscar usuarios..."
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#097EEC] focus:border-[#097EEC] transition-colors outline-none"
+                  className="pl-9 pr-4 py-2 w-full text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] transition-all outline-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
               <Link href="/users/create">
-                <button className="bg-[#097EEC] text-white px-4 py-2 rounded-lg hover:bg-[#0A6BC7] transition-colors flex items-center gap-2">
-                  <PlusCircle className="h-5 w-5" />
-                  <span>Crear Usuario</span>
+                <button className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100">
+                  <PlusCircle className="h-4 w-4" />
+                  Crear Usuario
                 </button>
               </Link>
             </div>
@@ -642,123 +686,121 @@ const UsersPageContent = () => {
 
                 {/* Users List */}
                 {displayUsers.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200 overflow-x-scroll">
-                      <thead className="bg-gray-50">
-                        <tr>
+                  <div className="overflow-x-auto rounded-xl border border-gray-100">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50/80 border-b border-gray-100">
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Usuario
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Email
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                            className="px-5 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell"
                           >
                             # ID
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Rol
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Verificado
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Plan
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
-                            Campos Obligatorios
+                            Campos
                           </th>
                           <th
                             scope="col"
-                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-5 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
                           >
                             Acciones
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white divide-y divide-gray-50">
                         {displayUsers.map((user) => {
                           const { completed, total } =
                             getCompletedFieldsCount(user);
                           const progressPercentage = (completed / total) * 100;
 
                           return (
-                            <tr key={user.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-10 w-10 bg-[#097EEC]/10 rounded-full flex items-center justify-center">
-                                    <UserIcon className="h-5 w-5 text-[#097EEC]" />
+                            <tr
+                              key={user.id}
+                              className="hover:bg-blue-50/20 transition-colors border-b border-gray-50 last:border-0 group"
+                            >
+                              {/* Usuario */}
+                              <td className="px-5 py-3.5 whitespace-nowrap">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#097EEC] to-[#0562C7] flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                                    {user.name?.charAt(0)?.toUpperCase() || "U"}
                                   </div>
-                                  <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {user.name}
-                                    </div>
-                                  </div>
+                                  <span className="text-sm font-medium text-gray-800">
+                                    {user.name}
+                                  </span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center gap-1">
-                                  <Mail className="h-3 w-3 text-gray-400" />
+                              {/* Email */}
+                              <td className="px-5 py-3.5 whitespace-nowrap">
+                                <div className="flex items-center gap-1.5">
+                                  <Mail className="h-3 w-3 text-gray-300 flex-shrink-0" />
                                   <span className="text-sm text-gray-500">
                                     {user.email}
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                                <div className="flex items-center gap-1">
-                                  <IconId className="h-3 w-3 text-gray-400" />
+                              {/* Cédula */}
+                              <td className="px-5 py-3.5 whitespace-nowrap hidden md:table-cell">
+                                <div className="flex items-center gap-1.5">
+                                  <IconId className="h-3 w-3 text-gray-300 flex-shrink-0" />
                                   <span className="text-sm text-gray-500">
-                                    {user.cedula || "Ninguna"}
+                                    {user.cedula || "—"}
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                {user.roles && user.roles.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {user.roles.map((role, index) => (
-                                      <span
-                                        key={index}
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(role.toString())}`}
-                                      >
-                                        <Shield className="h-3 w-3 mr-1" />
-                                        {typeof role === "string"
-                                          ? role
-                                              .toLowerCase()
-                                              .includes(
-                                                searchTerm.toLowerCase(),
-                                              )
-                                          : role.name}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">
-                                    Sin rol
-                                  </span>
-                                )}
+                              {/* Rol */}
+                              <td className="px-5 py-3.5 whitespace-nowrap">
+                                <select
+                                  value={getPrimaryRole(user)}
+                                  onChange={(e) =>
+                                    user.id &&
+                                    handleRoleChange(user.id, e.target.value)
+                                  }
+                                  className="px-2.5 py-1 text-sm font-medium rounded-full cursor-pointer focus:ring-2 focus:ring-[#097EEC]/30 outline-none bg-white/70 backdrop-blur-sm border border-white/40 shadow-sm text-gray-700"
+                                >
+                                  <option value="PERSON">Person</option>
+                                  <option value="BUSINESS">Business</option>
+                                  <option value="ORGANIZADOR">
+                                    Organizador
+                                  </option>
+                                  <option value="ADMIN">Admin</option>
+                                </select>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <div className="flex items-center justify-center">
+                              {/* Verificado */}
+                              <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                <div className="flex items-center justify-center gap-1.5">
                                   <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                       type="checkbox"
@@ -772,16 +814,17 @@ const UsersPageContent = () => {
                                         )
                                       }
                                     />
-                                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#097EEC]"></div>
+                                    <div className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#097EEC]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#097EEC]"></div>
                                   </label>
                                   {user.isVerify ? (
-                                    <CheckCircle className="h-5 w-5 text-green-500 ml-2" />
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
                                   ) : (
-                                    <XCircle className="h-5 w-5 text-red-500 ml-2" />
+                                    <XCircle className="h-4 w-4 text-red-400" />
                                   )}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-center">
+                              {/* Plan */}
+                              <td className="px-5 py-3.5 whitespace-nowrap text-center">
                                 <select
                                   value={user.plan || UserPlan.FREE}
                                   onChange={(e) =>
@@ -791,7 +834,7 @@ const UsersPageContent = () => {
                                       e.target.value as UserPlan,
                                     )
                                   }
-                                  className={`px-2 py-1 text-xs font-medium rounded-full border-0 focus:ring-2 focus:ring-[#097EEC] ${getPlanBadgeColor(user.plan)}`}
+                                  className={`px-2.5 py-1 text-xs font-medium rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-[#097EEC]/30 outline-none ${getPlanBadgeColor(user.plan)}`}
                                 >
                                   <option value={UserPlan.FREE}>Free</option>
                                   <option value={UserPlan.PREMIUM}>
@@ -802,67 +845,71 @@ const UsersPageContent = () => {
                                   </option>
                                 </select>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-center">
-                                <div className="flex flex-col items-center space-y-2">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm font-medium text-gray-700">
-                                      {completed}/{total}
-                                    </span>
-                                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                              {/* Campos */}
+                              <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                <div className="flex flex-col items-center gap-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-20 bg-gray-100 rounded-full h-1.5">
                                       <div
-                                        className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(completed, total)}`}
+                                        className={`h-1.5 rounded-full transition-all duration-500 ${getProgressColor(completed, total)}`}
                                         style={{
                                           width: `${progressPercentage}%`,
                                         }}
-                                      ></div>
+                                      />
                                     </div>
+                                    <span className="text-xs font-medium text-gray-500 tabular-nums">
+                                      {completed}/{total}
+                                    </span>
                                   </div>
                                   <button
                                     onClick={() =>
                                       handleViewRequiredFields(user)
                                     }
-                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                                    className="text-[11px] text-[#097EEC] hover:text-[#0562C7] font-medium flex items-center gap-1 hover:underline transition-colors"
                                   >
                                     <Eye className="h-3 w-3" />
-                                    Ver detalles
+                                    Ver
                                   </button>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex justify-end gap-3">
+                              {/* Acciones */}
+                              <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                                <div className="flex justify-end items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={() =>
                                       alert(`Editar usuario con ID: ${user.id}`)
                                     }
-                                    className="text-amber-600 hover:text-amber-700 transition-colors"
+                                    className="p-1.5 rounded-md text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+                                    title="Editar"
                                   >
-                                    <Edit className="h-5 w-5" />
+                                    <Edit className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleViewBankInfo(user)}
-                                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                                    className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
                                     title="Ver información bancaria"
                                   >
-                                    <CreditCard className="h-5 w-5" />
+                                    <CreditCard className="h-4 w-4" />
                                   </button>
                                   {currentUser?.isSuperAdmin && user.email && (
                                     <button
                                       onClick={() =>
-                                        handleInviteSuperAdmin(user.email!)
+                                        handleInviteSuperAdmin(user)
                                       }
-                                      className="text-purple-600 hover:text-purple-700 transition-colors"
+                                      className="p-1.5 rounded-md text-gray-400 hover:text-purple-500 hover:bg-purple-50 transition-colors"
                                       title="Invitar como super admin"
                                     >
-                                      <Shield className="h-5 w-5" />
+                                      <Shield className="h-4 w-4" />
                                     </button>
                                   )}
                                   <button
                                     onClick={() =>
                                       user.id && handleDelete(user.id)
                                     }
-                                    className="text-red-600 hover:text-red-700 transition-colors"
+                                    className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    title="Eliminar"
                                   >
-                                    <Trash2 className="h-5 w-5" />
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
                                 </div>
                               </td>
@@ -873,14 +920,14 @@ const UsersPageContent = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="py-16 text-center">
-                    <div className="bg-gray-50 inline-flex rounded-full p-6 mb-4">
-                      <UserIcon className="h-10 w-10 text-gray-400" />
+                  <div className="py-20 text-center">
+                    <div className="bg-gray-50 border border-gray-100 inline-flex rounded-full p-5 mb-4">
+                      <UserIcon className="h-9 w-9 text-gray-300" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-base font-semibold text-gray-700">
                       No hay usuarios disponibles
                     </h3>
-                    <p className="mt-2 text-gray-500">
+                    <p className="mt-1.5 text-sm text-gray-400">
                       No se encontraron usuarios que coincidan con tu búsqueda.
                     </p>
                   </div>
@@ -902,8 +949,15 @@ const UsersPageContent = () => {
                   !error &&
                   !searchTerm &&
                   displayUsers.length > 0 && (
-                    <div className="mt-6 text-sm text-gray-500 text-center">
-                      Mostrando {displayUsers.length} de {pagination.total}{" "}
+                    <div className="mt-5 text-xs text-gray-400 text-center">
+                      Mostrando{" "}
+                      <span className="font-medium text-gray-600">
+                        {displayUsers.length}
+                      </span>{" "}
+                      de{" "}
+                      <span className="font-medium text-gray-600">
+                        {pagination.total}
+                      </span>{" "}
                       usuarios
                     </div>
                   )}

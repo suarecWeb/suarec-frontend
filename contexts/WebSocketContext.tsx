@@ -39,6 +39,10 @@ interface WebSocketContextType {
       conversationId: string;
     }) => void,
   ) => () => void;
+  sendTypingStatus: (recipientId: number, isTyping: boolean) => void;
+  onUserTyping: (
+    callback: (data: { userId: number; isTyping: boolean }) => void,
+  ) => () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(
@@ -514,6 +518,33 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     [],
   );
 
+  const sendTypingStatus = useCallback(
+    (recipientId: number, isTyping: boolean) => {
+      if (socketRef.current?.connected) {
+        socketRef.current.emit("typing", { recipientId, isTyping });
+      }
+    },
+    [],
+  );
+
+  const onUserTyping = useCallback(
+    (callback: (data: { userId: number; isTyping: boolean }) => void) => {
+      const listeners = eventListenersRef.current.get("user_typing") || [];
+      listeners.push(callback);
+      eventListenersRef.current.set("user_typing", listeners);
+
+      return () => {
+        const currentListeners =
+          eventListenersRef.current.get("user_typing") || [];
+        const filteredListeners = currentListeners.filter(
+          (listener) => listener !== callback,
+        );
+        eventListenersRef.current.set("user_typing", filteredListeners);
+      };
+    },
+    [],
+  );
+
   const onConversationUpdated = useCallback(
     (
       callback: (data: {
@@ -595,6 +626,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         onMessageRead,
         onConversationUpdated,
         onMessageNotification,
+        sendTypingStatus,
+        onUserTyping,
       }}
     >
       {children}

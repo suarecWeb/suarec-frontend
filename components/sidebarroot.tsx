@@ -8,6 +8,8 @@ import {
   Wallet,
   FileText,
   Users,
+  CalendarDays,
+  Ticket as TicketIcon,
 } from "lucide-react";
 import AnimatedContent from "@/components/AnimatedContent";
 import { NotifBadge } from "@/components/ui/NotifBadge";
@@ -67,7 +69,7 @@ const SidebarRoot = () => {
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-400 cursor-not-allowed select-none">
                   <Wallet className="h-4 w-4" />
-                  <span>wallet</span>
+                  <span>Wallet</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -85,7 +87,7 @@ const SidebarRoot = () => {
             className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
           >
             <ArrowRightLeft className="h-4 w-4" />
-            <span>transacciones</span>
+            <span>Transacciones</span>
             <NotifBadge count={pendingPaymentsCount} variant="amber" />
           </Link>
 
@@ -104,7 +106,7 @@ const SidebarRoot = () => {
             className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
           >
             <FileText className="h-4 w-4" />
-            <span>publicaciones</span>
+            <span>Publicaciones</span>
           </Link>
 
           {/* Accounts — badge de fotos de ID pendientes (verificación) */}
@@ -113,8 +115,17 @@ const SidebarRoot = () => {
             className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
           >
             <Users className="h-4 w-4" />
-            <span>accounts</span>
+            <span>Accounts</span>
             <NotifBadge count={validationCount} />
+          </Link>
+
+          {/* Boletería */}
+          <Link
+            href="/admin/boleteria"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
+          >
+            <TicketIcon className="h-4 w-4" />
+            <span>Boletería</span>
           </Link>
         </nav>
       </aside>
