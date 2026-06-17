@@ -454,6 +454,9 @@ const VentasManagement = () => {
     "all",
   );
   const [eventoFilter, setEventoFilter] = useState<"all" | number>("all");
+  const [ambienteFilter, setAmbienteFilter] = useState<
+    "all" | "production" | "test"
+  >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedTxId, setSelectedTxId] = useState<number | null>(null);
@@ -478,7 +481,7 @@ const VentasManagement = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, eventoFilter]);
+  }, [searchTerm, statusFilter, eventoFilter, ambienteFilter]);
 
   const handleSincronizado = (estadoFinal: string) => {
     setTransacciones((prev) =>
@@ -504,7 +507,10 @@ const VentasManagement = () => {
     const matchesEvento =
       eventoFilter === "all" || tx.evento?.id === eventoFilter;
 
-    return matchesSearch && matchesStatus && matchesEvento;
+    const matchesAmbiente =
+      ambienteFilter === "all" || tx.wompiEnvironment === ambienteFilter;
+
+    return matchesSearch && matchesStatus && matchesEvento && matchesAmbiente;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
@@ -643,6 +649,32 @@ const VentasManagement = () => {
             </button>
           )}
         </div>
+
+        {/* Filtro por ambiente Wompi */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-500">Ambiente:</span>
+          <div className="flex gap-1.5">
+            {[
+              { value: "all", label: "Todos" },
+              { value: "production", label: "Producción" },
+              { value: "test", label: "Sandbox" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() =>
+                  setAmbienteFilter(opt.value as "all" | "production" | "test")
+                }
+                className={`text-xs px-3 py-1.5 rounded-xl font-medium transition-colors ${
+                  ambienteFilter === opt.value
+                    ? "bg-[#097EEC] text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -660,7 +692,10 @@ const VentasManagement = () => {
             No hay transacciones
           </h3>
           <p className="mt-1.5 text-sm text-gray-400">
-            {searchTerm || statusFilter !== "all"
+            {searchTerm ||
+            statusFilter !== "all" ||
+            eventoFilter !== "all" ||
+            ambienteFilter !== "all"
               ? "Ninguna transacción coincide con los filtros."
               : "Aún no hay compras de boletas registradas."}
           </p>
