@@ -122,7 +122,7 @@ const EstadisticasManagement = () => {
   useEffect(() => {
     Promise.all([
       EventsService.getAllEvents().then((r) => setEvents(r.data)),
-      EventsService.getAllTransacciones().then((r) =>
+      EventsService.getAllTransacciones(true).then((r) =>
         setTransacciones(r.data.transacciones),
       ),
       EventsService.getBoletasValidadas()
@@ -143,6 +143,9 @@ const EstadisticasManagement = () => {
   ).length;
   const rechazado = transacciones.filter(
     (t) => t.estadoPago === TransaccionEstado.RECHAZADO,
+  ).length;
+  const expirado = transacciones.filter(
+    (t) => t.estadoPago === TransaccionEstado.EXPIRADO,
   ).length;
   const recaudado = transacciones
     .filter((t) => t.estadoPago === TransaccionEstado.APROBADO)
@@ -208,6 +211,7 @@ const EstadisticasManagement = () => {
               {pendiente} pend.
             </span>
             <span className="text-red-500 font-medium">{rechazado} rech.</span>
+            <span className="text-orange-500 font-medium">{expirado} exp.</span>
           </div>
         </motion.div>
 
