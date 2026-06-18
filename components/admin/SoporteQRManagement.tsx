@@ -68,9 +68,21 @@ const VALIDACION_ITEMS: {
   { key: "email", label: "Correo", icon: <Mail className="h-3 w-3" /> },
 ];
 
-const ValidacionBar = ({ validacion }: { validacion: ValidacionUsuario }) => {
+const VALIDACION_VACIA: ValidacionUsuario = {
+  nombre: false,
+  telefono: false,
+  cedula: false,
+  email: false,
+};
+
+const ValidacionBar = ({
+  validacion,
+}: {
+  validacion?: ValidacionUsuario | null;
+}) => {
+  const datos = validacion ?? VALIDACION_VACIA;
   const total = VALIDACION_ITEMS.length;
-  const completos = VALIDACION_ITEMS.filter((i) => validacion[i.key]).length;
+  const completos = VALIDACION_ITEMS.filter((i) => datos[i.key]).length;
   const todoOk = completos === total;
 
   return (
@@ -91,7 +103,7 @@ const ValidacionBar = ({ validacion }: { validacion: ValidacionUsuario }) => {
             key={item.key}
             title={item.label}
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
-              validacion[item.key]
+              datos[item.key]
                 ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                 : "bg-gray-50 text-gray-400 border-gray-200 line-through"
             }`}
