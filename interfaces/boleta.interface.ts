@@ -22,7 +22,7 @@ export interface BoletaSoporte {
   compradorEmail: string;
   eventoNombre: string;
   eventoFecha: string;
-  validacion: ValidacionUsuario;
+  validacion?: ValidacionUsuario | null;
 }
 
 export enum TransaccionEstado {

@@ -786,7 +786,7 @@ const VentasManagement = () => {
           </div>
 
           {/* Paginación */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+          <div className="flex flex-col items-center gap-3 mt-4">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span>
                 Mostrando{" "}

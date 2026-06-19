@@ -56,9 +56,14 @@ const EventsService = {
 
   deleteEvent: (id: string): Promise<void> => api.delete(`${BASE}/${id}`),
 
-  getAllTransacciones: (): Promise<{
+  getAllTransacciones: (
+    onlyProduction?: boolean,
+  ): Promise<{
     data: { transacciones: TransaccionBoleta[] };
-  }> => api.get(`${BASE}/boletas/transacciones`),
+  }> =>
+    api.get(`${BASE}/boletas/transacciones`, {
+      params: onlyProduction ? { environment: "production" } : {},
+    }),
 
   getBoletasValidadas: (): Promise<{ data: { validadas: any[] } }> =>
     api.get(`${BASE}/boletas/validadas`),
@@ -87,8 +92,11 @@ const EventsService = {
 
   adminForzarGeneracion: (
     id: number,
+    wompiTransactionId: string,
   ): Promise<{ data: { generado: boolean; boletaIds: number[] } }> =>
-    api.post(`${BASE}/boletas/transacciones/${id}/forzar-generacion`),
+    api.post(`${BASE}/boletas/transacciones/${id}/forzar-generacion`, {
+      wompiTransactionId,
+    }),
 };
 
 export default EventsService;
