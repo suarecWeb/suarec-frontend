@@ -97,6 +97,14 @@ const EventsService = {
     api.post(`${BASE}/boletas/transacciones/${id}/forzar-generacion`, {
       wompiTransactionId,
     }),
+
+  adminReenviarBoletasPorTransaccion: (
+    id: number,
+    email: string,
+  ): Promise<{ data: { success: boolean; enviadas: number; email: string } }> =>
+    api.post(`${BASE}/boletas/transacciones/${id}/reenviar-correo`, {
+      email,
+    }),
 };
 
 export default EventsService;

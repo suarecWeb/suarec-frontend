@@ -146,6 +146,10 @@ const SoporteQRManagement = () => {
     boletaIds: number[];
   } | null>(null);
 
+  const [reenvioTxIdInput, setReenvioTxIdInput] = useState("");
+  const [reenvioEmailInput, setReenvioEmailInput] = useState("");
+  const [reenviando, setReenviando] = useState(false);
+
   const handleSearch = async () => {
     setLoading(true);
     setSearched(true);
@@ -220,6 +224,38 @@ const SoporteQRManagement = () => {
       toast.error(msg);
     } finally {
       setForzando(false);
+    }
+  };
+
+  const handleReenviarPorTransaccion = async () => {
+    const id = parseInt(reenvioTxIdInput.trim(), 10);
+    if (!id || isNaN(id)) {
+      toast.error("Ingresa un ID de transacción válido");
+      return;
+    }
+    const correo = reenvioEmailInput.trim().toLowerCase();
+    if (!/\S+@\S+\.\S+/.test(correo)) {
+      toast.error("Ingresa un correo válido");
+      return;
+    }
+    setReenviando(true);
+    try {
+      const { data } = await EventsService.adminReenviarBoletasPorTransaccion(
+        id,
+        correo,
+      );
+      toast.success(
+        `${data.enviadas} boleta${data.enviadas !== 1 ? "s" : ""} reenviada${
+          data.enviadas !== 1 ? "s" : ""
+        } a ${data.email}`,
+      );
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "No se pudieron reenviar las boletas";
+      toast.error(msg);
+    } finally {
+      setReenviando(false);
     }
   };
 
@@ -355,6 +391,61 @@ const SoporteQRManagement = () => {
             )}
           </div>
         )}
+      </div>
+
+      {/* Reenviar boletas a un correo */}
+      <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <SendHorizonal className="h-4 w-4 text-sky-600" />
+          <div>
+            <p className="text-xs font-semibold text-sky-800">
+              Reenviar boletas a un correo
+            </p>
+            <p className="text-[11px] text-sky-600">
+              Reenvía las boletas ya generadas de una transacción aprobada a un
+              correo real. Útil cuando el usuario entró con Apple y ocultó su
+              correo. No genera boletas nuevas.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="number"
+            value={reenvioTxIdInput}
+            onChange={(e) => setReenvioTxIdInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && handleReenviarPorTransaccion()
+            }
+            placeholder="ID de transacción (ej: 279)"
+            className="flex-1 px-3 py-2 text-sm border border-sky-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 transition-all"
+          />
+          <input
+            type="email"
+            value={reenvioEmailInput}
+            onChange={(e) => setReenvioEmailInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && handleReenviarPorTransaccion()
+            }
+            placeholder="correo@ejemplo.com"
+            className="flex-1 px-3 py-2 text-sm border border-sky-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 transition-all"
+          />
+          <button
+            onClick={handleReenviarPorTransaccion}
+            disabled={
+              reenviando ||
+              !reenvioTxIdInput.trim() ||
+              !reenvioEmailInput.trim()
+            }
+            className="px-4 py-2 text-sm font-medium text-white bg-sky-500 rounded-lg hover:bg-sky-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
+          >
+            {reenviando ? (
+              <div className="h-3.5 w-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <SendHorizonal className="h-3.5 w-3.5" />
+            )}
+            {reenviando ? "Enviando…" : "Reenviar"}
+          </button>
+        </div>
       </div>
 
       {/* Resultados */}

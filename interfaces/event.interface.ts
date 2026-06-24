@@ -5,6 +5,12 @@ export enum EventoEstado {
   CANCELADO = "cancelado",
 }
 
+// Tipo de evento — los valores deben coincidir EXACTAMENTE con el enum de la BD (mayúsculas)
+export enum EventoTipo {
+  GENERAL = "GENERAL",
+  VIP = "VIP",
+}
+
 export type ImageFormat = "phone" | "web";
 
 export interface EventoFormat {
@@ -25,6 +31,8 @@ export interface Evento {
   aforoDisponible?: number;
   precioBase?: number;
   comision?: number;
+  cargoSuarec?: number;
+  tipo?: EventoTipo;
   estado: EventoEstado;
   formatId?: number;
   format?: EventoFormat;
@@ -42,6 +50,8 @@ export interface CreateEventoDto {
   aforoTotal?: number;
   precioBase?: number;
   comision?: number;
+  cargoSuarec?: number;
+  tipo?: EventoTipo;
   estado?: EventoEstado;
   formatId?: number;
   removeImage?: boolean;
