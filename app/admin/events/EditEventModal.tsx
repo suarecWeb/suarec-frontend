@@ -11,11 +11,14 @@ import {
   Upload,
   Smartphone,
   Monitor,
+  Star,
+  User,
 } from "lucide-react";
 import {
   Evento,
   CreateEventoDto,
   EventoEstado,
+  EventoTipo,
 } from "@/interfaces/event.interface";
 import { toDatetimeLocal } from "@/lib/TimeZone";
 
@@ -98,6 +101,16 @@ export default function EditEventModal({
     estado: event.estado,
     formatId: event.formatId,
   });
+  // Tipo (VIP / GENERAL) y cargo por SUAREC — precargados del evento.
+  // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
+  const [tipoEvento, setTipoEvento] = useState<EventoTipo | null>(
+    event.tipo ?? null,
+  );
+  const [cargoSuarec, setCargoSuarec] = useState<number | undefined>(
+    event.cargoSuarec !== undefined
+      ? Math.round(Number(event.cargoSuarec))
+      : undefined,
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateEventoDto, string>>
@@ -181,6 +194,8 @@ export default function EditEventModal({
     if (!form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
 
+    if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -224,7 +239,12 @@ export default function EditEventModal({
     try {
       await onSubmit(
         event.id,
-        { ...form, removeImage: imageRemoved },
+        {
+          ...form,
+          tipo: tipoEvento ?? undefined,
+          cargoSuarec,
+          removeImage: imageRemoved,
+        },
         imageFile ?? undefined,
       );
       onClose();
@@ -471,6 +491,70 @@ export default function EditEventModal({
                 <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
               )}
             </div>
+          </div>
+
+          {/* Tipo de evento (VIP / General) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Tipo de evento <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.GENERAL);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.GENERAL
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                General
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.VIP);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.VIP
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Star className="h-4 w-4" />
+                VIP
+              </button>
+            </div>
+            {errors.tipo && (
+              <p className="mt-1 text-xs text-red-500">{errors.tipo}</p>
+            )}
+          </div>
+
+          {/* Cargo por SUAREC (comisión) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              <span>Cargo SUAREC</span>
+              <span className="text-gray-400">COP</span>
+            </label>
+            <input
+              type="text"
+              name="cargo suarec"
+              inputMode="numeric"
+              value={formatPriceDisplay(cargoSuarec)}
+              onChange={(e) => setCargoSuarec(parsePriceInput(e.target.value))}
+              placeholder="0"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
+            />
           </div>
 
           <div className="flex gap-3 pt-2">

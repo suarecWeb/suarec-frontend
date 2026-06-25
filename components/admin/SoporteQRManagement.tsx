@@ -68,9 +68,21 @@ const VALIDACION_ITEMS: {
   { key: "email", label: "Correo", icon: <Mail className="h-3 w-3" /> },
 ];
 
-const ValidacionBar = ({ validacion }: { validacion: ValidacionUsuario }) => {
+const VALIDACION_VACIA: ValidacionUsuario = {
+  nombre: false,
+  telefono: false,
+  cedula: false,
+  email: false,
+};
+
+const ValidacionBar = ({
+  validacion,
+}: {
+  validacion?: ValidacionUsuario | null;
+}) => {
+  const datos = validacion ?? VALIDACION_VACIA;
   const total = VALIDACION_ITEMS.length;
-  const completos = VALIDACION_ITEMS.filter((i) => validacion[i.key]).length;
+  const completos = VALIDACION_ITEMS.filter((i) => datos[i.key]).length;
   const todoOk = completos === total;
 
   return (
@@ -91,7 +103,7 @@ const ValidacionBar = ({ validacion }: { validacion: ValidacionUsuario }) => {
             key={item.key}
             title={item.label}
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
-              validacion[item.key]
+              datos[item.key]
                 ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                 : "bg-gray-50 text-gray-400 border-gray-200 line-through"
             }`}
@@ -127,11 +139,16 @@ const SoporteQRManagement = () => {
   const prevFirstIdRef = useRef<number | null>(null);
 
   const [txIdInput, setTxIdInput] = useState("");
+  const [wompiTxIdInput, setWompiTxIdInput] = useState("");
   const [forzando, setForzando] = useState(false);
   const [forzarResult, setForzarResult] = useState<{
     generado: boolean;
     boletaIds: number[];
   } | null>(null);
+
+  const [reenvioTxIdInput, setReenvioTxIdInput] = useState("");
+  const [reenvioEmailInput, setReenvioEmailInput] = useState("");
+  const [reenviando, setReenviando] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -178,10 +195,20 @@ const SoporteQRManagement = () => {
       toast.error("Ingresa un ID de transacción válido");
       return;
     }
+    const wompiTransactionId = wompiTxIdInput.trim();
+    if (!wompiTransactionId) {
+      toast.error(
+        "Ingresa el ID de transacción de Wompi para verificar el pago",
+      );
+      return;
+    }
     setForzando(true);
     setForzarResult(null);
     try {
-      const { data } = await EventsService.adminForzarGeneracion(id);
+      const { data } = await EventsService.adminForzarGeneracion(
+        id,
+        wompiTransactionId,
+      );
       setForzarResult(data);
       if (data.generado) {
         toast.success(`Boletas generadas: IDs ${data.boletaIds.join(", ")}`);
@@ -197,6 +224,38 @@ const SoporteQRManagement = () => {
       toast.error(msg);
     } finally {
       setForzando(false);
+    }
+  };
+
+  const handleReenviarPorTransaccion = async () => {
+    const id = parseInt(reenvioTxIdInput.trim(), 10);
+    if (!id || isNaN(id)) {
+      toast.error("Ingresa un ID de transacción válido");
+      return;
+    }
+    const correo = reenvioEmailInput.trim().toLowerCase();
+    if (!/\S+@\S+\.\S+/.test(correo)) {
+      toast.error("Ingresa un correo válido");
+      return;
+    }
+    setReenviando(true);
+    try {
+      const { data } = await EventsService.adminReenviarBoletasPorTransaccion(
+        id,
+        correo,
+      );
+      toast.success(
+        `${data.enviadas} boleta${data.enviadas !== 1 ? "s" : ""} reenviada${
+          data.enviadas !== 1 ? "s" : ""
+        } a ${data.email}`,
+      );
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "No se pudieron reenviar las boletas";
+      toast.error(msg);
+    } finally {
+      setReenviando(false);
     }
   };
 
@@ -270,12 +329,13 @@ const SoporteQRManagement = () => {
               Forzar generación de boletas
             </p>
             <p className="text-[11px] text-amber-600">
-              Usa esto cuando Wompi cobró pero SUAREC no generó las boletas.
-              Ingresa el ID de la transacción.
+              Usa esto cuando Wompi cobró pero SUAREC no generó las boletas. Se
+              verifica el pago en Wompi antes de generar — necesitas el ID de
+              transacción interno y el ID de transacción de Wompi.
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="number"
             value={txIdInput}
@@ -284,12 +344,23 @@ const SoporteQRManagement = () => {
               setForzarResult(null);
             }}
             onKeyDown={(e) => e.key === "Enter" && handleForzarGeneracion()}
-            placeholder="ID de transacción (ej: 279)"
+            placeholder="ID de transacción interno (ej: 279)"
+            className="flex-1 px-3 py-2 text-sm border border-amber-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+          />
+          <input
+            type="text"
+            value={wompiTxIdInput}
+            onChange={(e) => {
+              setWompiTxIdInput(e.target.value);
+              setForzarResult(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleForzarGeneracion()}
+            placeholder="ID de transacción de Wompi"
             className="flex-1 px-3 py-2 text-sm border border-amber-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
           />
           <button
             onClick={handleForzarGeneracion}
-            disabled={forzando || !txIdInput.trim()}
+            disabled={forzando || !txIdInput.trim() || !wompiTxIdInput.trim()}
             className="px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
           >
             {forzando ? (
@@ -297,7 +368,7 @@ const SoporteQRManagement = () => {
             ) : (
               <Zap className="h-3.5 w-3.5" />
             )}
-            {forzando ? "Generando…" : "Forzar"}
+            {forzando ? "Verificando…" : "Forzar"}
           </button>
         </div>
 
@@ -320,6 +391,61 @@ const SoporteQRManagement = () => {
             )}
           </div>
         )}
+      </div>
+
+      {/* Reenviar boletas a un correo */}
+      <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <SendHorizonal className="h-4 w-4 text-sky-600" />
+          <div>
+            <p className="text-xs font-semibold text-sky-800">
+              Reenviar boletas a un correo
+            </p>
+            <p className="text-[11px] text-sky-600">
+              Reenvía las boletas ya generadas de una transacción aprobada a un
+              correo real. Útil cuando el usuario entró con Apple y ocultó su
+              correo. No genera boletas nuevas.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="number"
+            value={reenvioTxIdInput}
+            onChange={(e) => setReenvioTxIdInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && handleReenviarPorTransaccion()
+            }
+            placeholder="ID de transacción (ej: 279)"
+            className="flex-1 px-3 py-2 text-sm border border-sky-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 transition-all"
+          />
+          <input
+            type="email"
+            value={reenvioEmailInput}
+            onChange={(e) => setReenvioEmailInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && handleReenviarPorTransaccion()
+            }
+            placeholder="correo@ejemplo.com"
+            className="flex-1 px-3 py-2 text-sm border border-sky-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 transition-all"
+          />
+          <button
+            onClick={handleReenviarPorTransaccion}
+            disabled={
+              reenviando ||
+              !reenvioTxIdInput.trim() ||
+              !reenvioEmailInput.trim()
+            }
+            className="px-4 py-2 text-sm font-medium text-white bg-sky-500 rounded-lg hover:bg-sky-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
+          >
+            {reenviando ? (
+              <div className="h-3.5 w-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <SendHorizonal className="h-3.5 w-3.5" />
+            )}
+            {reenviando ? "Enviando…" : "Reenviar"}
+          </button>
+        </div>
       </div>
 
       {/* Resultados */}

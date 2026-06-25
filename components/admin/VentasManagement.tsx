@@ -260,8 +260,21 @@ const DetalleModal = ({
                   <span className="text-gray-400 flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5" /> Evento
                   </span>
-                  <span className="font-medium text-gray-700 truncate max-w-[200px]">
-                    {tx?.evento?.nombre ?? "—"}
+                  <span className="font-medium text-gray-700 flex items-center gap-1.5 justify-end">
+                    <span className="truncate max-w-[150px]">
+                      {tx?.evento?.nombre ?? "—"}
+                    </span>
+                    {tx?.evento?.tipo && (
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                          tx.evento.tipo === "VIP"
+                            ? "bg-amber-100 text-amber-700 border-amber-200"
+                            : "bg-gray-100 text-gray-600 border-gray-200"
+                        }`}
+                      >
+                        {tx.evento.tipo === "VIP" ? "VIP" : "General"}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-gray-50">
@@ -273,6 +286,13 @@ const DetalleModal = ({
                   </span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-gray-50">
+                  <span className="text-gray-400">Cargo SUAREC</span>
+                  <span className="font-medium text-gray-700">
+                    {tx?.cantidad} × {formatCurrency(tx?.cargoPorBoleta ?? 0)}
+                  </span>
+                </div>
+                {/* Comisión total — oculta temporalmente
+                <div className="flex justify-between py-1.5 border-b border-gray-50">
                   <span className="text-gray-400">Comisión total</span>
                   <span className="font-medium text-gray-700">
                     {formatCurrency(
@@ -280,6 +300,7 @@ const DetalleModal = ({
                     )}
                   </span>
                 </div>
+                */}
                 <div className="flex justify-between py-1.5 border-b border-gray-50">
                   <span className="text-gray-400">Monto total</span>
                   <span className="font-semibold text-gray-800">
@@ -821,7 +842,7 @@ const VentasManagement = () => {
           </div>
 
           {/* Paginación */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+          <div className="flex flex-col items-center gap-3 mt-4">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span>
                 Mostrando{" "}
