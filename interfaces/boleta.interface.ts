@@ -50,6 +50,7 @@ export interface EventoResumen {
   nombre: string;
   fechaEvento: string;
   ubicacion: string;
+  tipo?: "GENERAL" | "VIP" | null;
 }
 
 export interface TransaccionBoleta {
@@ -65,6 +66,7 @@ export interface TransaccionBoleta {
   monto: number;
   precioPorBoleta: number;
   comisionPorBoleta: number;
+  cargoPorBoleta: number;
   boletaIds: number[] | null;
   wompiEnvironment: string | null;
   createdAt: string;
