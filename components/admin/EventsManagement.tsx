@@ -68,18 +68,38 @@ const EventsManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCreate = async (dto: CreateEventoDto, imageFile?: File) => {
+  const generarCodigos = async (eventoId: number, cantidad?: number) => {
+    if (!cantidad || cantidad <= 0) return;
+    try {
+      const res = await EventsService.generarCodigosRegalo(eventoId, cantidad);
+      toast.success(`Se generaron ${res.data.cantidad} códigos de regalo`);
+    } catch {
+      toast.error(
+        "El evento se guardó, pero falló la generación de códigos. Puedes reintentar desde Editar.",
+      );
+    }
+  };
+
+  const handleCreate = async (
+    dto: CreateEventoDto,
+    imageFile?: File,
+    codigosACrear?: number,
+  ) => {
     const res = await EventsService.createEvent(dto, imageFile);
-    setEvents((prev) => [res.data as unknown as Evento, ...prev]);
+    const creado = res.data as unknown as Evento;
+    setEvents((prev) => [creado, ...prev]);
     toast.success("Evento creado correctamente");
+    if (creado.id) await generarCodigos(creado.id, codigosACrear);
   };
 
   const handleEdit = async (
     id: number,
     dto: Partial<CreateEventoDto>,
     imageFile?: File,
+    codigosACrear?: number,
   ) => {
     await EventsService.updateEvent(String(id), dto, imageFile);
+    await generarCodigos(id, codigosACrear);
     const updated = await EventsService.getEventById(id);
     setEvents((prev) => prev.map((e) => (e.id === id ? updated.data : e)));
     toast.success("Evento actualizado");

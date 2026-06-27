@@ -13,13 +13,17 @@ import {
   Monitor,
   Star,
   User,
+  Gift,
+  Download,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import {
   Evento,
   CreateEventoDto,
   EventoEstado,
   EventoTipo,
 } from "@/interfaces/event.interface";
+import EventsService from "@/services/EventsService";
 import { toDatetimeLocal } from "@/lib/TimeZone";
 
 interface EditEventModalProps {
@@ -110,6 +114,16 @@ export default function EditEventModal({
     event.cargoSuarec !== undefined
       ? Math.round(Number(event.cargoSuarec))
       : undefined,
+  );
+  // Códigos de regalo: acción independiente del guardado (generar + descargar sin cerrar el modal)
+  const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
+    undefined,
+  );
+  const [generandoCodigos, setGenerandoCodigos] = useState(false);
+  const [descargandoCodigos, setDescargandoCodigos] = useState(false);
+  // Arranca según el evento; se vuelve true apenas se generan códigos (para mostrar "Descargar")
+  const [codigosDisponibles, setCodigosDisponibles] = useState(
+    !!event.permiteCodigoRegalo,
   );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
@@ -230,6 +244,44 @@ export default function EditEventModal({
     setImageFile(null);
     setImageRemoved(true);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDescargarCodigos = async () => {
+    if (!event.id) return;
+    setDescargandoCodigos(true);
+    try {
+      await EventsService.descargarCodigosRegalo(event.id, event.nombre);
+    } catch {
+      toast.error("No se pudo descargar el Excel de códigos");
+    } finally {
+      setDescargandoCodigos(false);
+    }
+  };
+
+  // Generar códigos como acción independiente: no cierra el modal y deja descargar al instante
+  const handleGenerarCodigos = async () => {
+    if (!event.id) return;
+    if (!cantidadCodigos || cantidadCodigos < 1) {
+      setErrors(
+        (prev) =>
+          ({ ...prev, _codigos: "Indica una cantidad (mínimo 1)" }) as any,
+      );
+      return;
+    }
+    setGenerandoCodigos(true);
+    try {
+      const res = await EventsService.generarCodigosRegalo(
+        event.id,
+        cantidadCodigos,
+      );
+      toast.success(`Se generaron ${res.data.cantidad} códigos de regalo`);
+      setCantidadCodigos(undefined);
+      setCodigosDisponibles(true);
+    } catch {
+      toast.error("No se pudieron generar los códigos");
+    } finally {
+      setGenerandoCodigos(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -555,6 +607,73 @@ export default function EditEventModal({
               placeholder="0"
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
             />
+          </div>
+
+          {/* Códigos de regalo — acción independiente del guardado */}
+          <div className="rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="h-4 w-4 text-[#097EEC]" />
+              <span className="text-sm font-medium text-gray-700">
+                Códigos de regalo
+              </span>
+            </div>
+
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Generar códigos
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={10000}
+                value={cantidadCodigos ?? ""}
+                onChange={(e) => {
+                  setCantidadCodigos(
+                    e.target.value ? Number(e.target.value) : undefined,
+                  );
+                  setErrors(
+                    (prev) => ({ ...prev, _codigos: undefined }) as any,
+                  );
+                }}
+                placeholder="Ej. 1000"
+                className={`flex-1 px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                  (errors as any)._codigos
+                    ? "border-red-400"
+                    : "border-gray-200"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleGenerarCodigos}
+                disabled={generandoCodigos}
+                className="px-4 py-2 rounded-lg bg-[#097EEC] text-white text-sm font-medium hover:bg-[#0562C7] disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {generandoCodigos ? "Generando..." : "Generar"}
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-gray-400">
+              Se suman al aforo del evento. No necesitas guardar para
+              generarlos.
+            </p>
+            {(errors as any)._codigos && (
+              <p className="mt-1 text-xs text-red-500">
+                {(errors as any)._codigos}
+              </p>
+            )}
+
+            {codigosDisponibles && (
+              <button
+                type="button"
+                onClick={handleDescargarCodigos}
+                disabled={descargandoCodigos}
+                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                {descargandoCodigos
+                  ? "Descargando..."
+                  : "Descargar Excel de códigos"}
+              </button>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
