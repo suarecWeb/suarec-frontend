@@ -60,14 +60,22 @@ const EventsService = {
   ): Promise<{ data: { cantidad: number; codigos: string[] } }> =>
     api.post(`${BASE}/${eventoId}/codigos-regalo`, { cantidad }),
 
-  descargarCodigosRegalo: async (eventoId: number): Promise<void> => {
+  descargarCodigosRegalo: async (
+    eventoId: number,
+    nombreEvento?: string,
+  ): Promise<void> => {
     const res = await api.get(`${BASE}/${eventoId}/codigos-regalo/export`, {
       responseType: "blob",
     });
+    // Nombre del archivo con el nombre del evento (sin caracteres inválidos)
+    const limpio = (nombreEvento ?? "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const filename = limpio
+      ? `Códigos - ${limpio}.xlsx`
+      : `codigos-evento-${eventoId}.xlsx`;
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `codigos-evento-${eventoId}.xlsx`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();

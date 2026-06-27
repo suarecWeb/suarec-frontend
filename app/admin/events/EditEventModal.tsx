@@ -33,7 +33,6 @@ interface EditEventModalProps {
     id: number,
     dto: Partial<CreateEventoDto>,
     imageFile?: File,
-    codigosACrear?: number,
   ) => Promise<void>;
 }
 
@@ -116,12 +115,16 @@ export default function EditEventModal({
       ? Math.round(Number(event.cargoSuarec))
       : undefined,
   );
-  // Códigos de regalo: generar N códigos adicionales para este evento
-  const [generarCodigos, setGenerarCodigos] = useState(false);
+  // Códigos de regalo: acción independiente del guardado (generar + descargar sin cerrar el modal)
   const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
     undefined,
   );
+  const [generandoCodigos, setGenerandoCodigos] = useState(false);
   const [descargandoCodigos, setDescargandoCodigos] = useState(false);
+  // Arranca según el evento; se vuelve true apenas se generan códigos (para mostrar "Descargar")
+  const [codigosDisponibles, setCodigosDisponibles] = useState(
+    !!event.permiteCodigoRegalo,
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateEventoDto, string>>
@@ -207,9 +210,6 @@ export default function EditEventModal({
 
     if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
 
-    if (generarCodigos && (!cantidadCodigos || cantidadCodigos < 1))
-      (next as any)._codigos = "Indica cuántos códigos generar (mínimo 1)";
-
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -250,11 +250,37 @@ export default function EditEventModal({
     if (!event.id) return;
     setDescargandoCodigos(true);
     try {
-      await EventsService.descargarCodigosRegalo(event.id);
+      await EventsService.descargarCodigosRegalo(event.id, event.nombre);
     } catch {
       toast.error("No se pudo descargar el Excel de códigos");
     } finally {
       setDescargandoCodigos(false);
+    }
+  };
+
+  // Generar códigos como acción independiente: no cierra el modal y deja descargar al instante
+  const handleGenerarCodigos = async () => {
+    if (!event.id) return;
+    if (!cantidadCodigos || cantidadCodigos < 1) {
+      setErrors(
+        (prev) =>
+          ({ ...prev, _codigos: "Indica una cantidad (mínimo 1)" }) as any,
+      );
+      return;
+    }
+    setGenerandoCodigos(true);
+    try {
+      const res = await EventsService.generarCodigosRegalo(
+        event.id,
+        cantidadCodigos,
+      );
+      toast.success(`Se generaron ${res.data.cantidad} códigos de regalo`);
+      setCantidadCodigos(undefined);
+      setCodigosDisponibles(true);
+    } catch {
+      toast.error("No se pudieron generar los códigos");
+    } finally {
+      setGenerandoCodigos(false);
     }
   };
 
@@ -272,7 +298,6 @@ export default function EditEventModal({
           removeImage: imageRemoved,
         },
         imageFile ?? undefined,
-        generarCodigos ? cantidadCodigos : undefined,
       );
       onClose();
     } catch (err: any) {
@@ -584,82 +609,70 @@ export default function EditEventModal({
             />
           </div>
 
-          {/* Códigos de regalo */}
+          {/* Códigos de regalo — acción independiente del guardado */}
           <div className="rounded-lg border border-gray-200 p-3">
-            {event.permiteCodigoRegalo && (
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="h-4 w-4 text-[#097EEC]" />
+              <span className="text-sm font-medium text-gray-700">
+                Códigos de regalo
+              </span>
+            </div>
+
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Generar códigos
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={10000}
+                value={cantidadCodigos ?? ""}
+                onChange={(e) => {
+                  setCantidadCodigos(
+                    e.target.value ? Number(e.target.value) : undefined,
+                  );
+                  setErrors(
+                    (prev) => ({ ...prev, _codigos: undefined }) as any,
+                  );
+                }}
+                placeholder="Ej. 1000"
+                className={`flex-1 px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                  (errors as any)._codigos
+                    ? "border-red-400"
+                    : "border-gray-200"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleGenerarCodigos}
+                disabled={generandoCodigos}
+                className="px-4 py-2 rounded-lg bg-[#097EEC] text-white text-sm font-medium hover:bg-[#0562C7] disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {generandoCodigos ? "Generando..." : "Generar"}
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-gray-400">
+              Se suman al aforo del evento. No necesitas guardar para
+              generarlos.
+            </p>
+            {(errors as any)._codigos && (
+              <p className="mt-1 text-xs text-red-500">
+                {(errors as any)._codigos}
+              </p>
+            )}
+
+            {codigosDisponibles && (
               <button
                 type="button"
                 onClick={handleDescargarCodigos}
                 disabled={descargandoCodigos}
-                className="w-full mb-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
+                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
               >
                 <Download className="h-4 w-4" />
                 {descargandoCodigos
                   ? "Descargando..."
                   : "Descargar Excel de códigos"}
               </button>
-            )}
-            <label className="flex items-center justify-between cursor-pointer">
-              <div className="flex items-center gap-2">
-                <Gift className="h-4 w-4 text-[#097EEC]" />
-                <span className="text-sm font-medium text-gray-700">
-                  Generar códigos de regalo
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setGenerarCodigos((v) => !v);
-                  setErrors(
-                    (prev) => ({ ...prev, _codigos: undefined }) as any,
-                  );
-                }}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  generarCodigos ? "bg-[#097EEC]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    generarCodigos ? "translate-x-4" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </label>
-
-            {generarCodigos && (
-              <div className="mt-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Cantidad de códigos
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={cantidadCodigos ?? ""}
-                  onChange={(e) => {
-                    setCantidadCodigos(
-                      e.target.value ? Number(e.target.value) : undefined,
-                    );
-                    setErrors(
-                      (prev) => ({ ...prev, _codigos: undefined }) as any,
-                    );
-                  }}
-                  placeholder="Ej. 1000"
-                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
-                    (errors as any)._codigos
-                      ? "border-red-400"
-                      : "border-gray-200"
-                  }`}
-                />
-                <p className="mt-1 text-[11px] text-gray-400">
-                  Se sumarán al aforo del evento y podrás descargarlos en Excel.
-                </p>
-                {(errors as any)._codigos && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {(errors as any)._codigos}
-                  </p>
-                )}
-              </div>
             )}
           </div>
 

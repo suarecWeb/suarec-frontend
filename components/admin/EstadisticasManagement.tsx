@@ -20,6 +20,7 @@ import {
   Search,
   Inbox,
   AlertCircle,
+  Gift,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -121,7 +122,7 @@ const EstadisticasManagement = () => {
 
   useEffect(() => {
     Promise.all([
-      EventsService.getAllEvents().then((r) => setEvents(r.data)),
+      EventsService.getAllEventsAdmin().then((r) => setEvents(r.data)),
       EventsService.getAllTransacciones(true).then((r) =>
         setTransacciones(r.data.transacciones),
       ),
@@ -320,6 +321,12 @@ const EstadisticasManagement = () => {
               const vendidas = total - disponible;
               const porcentaje =
                 total > 0 ? Math.round((vendidas / total) * 100) : 0;
+              const aforoRegalo = event.aforoRegalo ?? 0;
+              const regalosCanjeados = event.regalosCanjeados ?? 0;
+              const porcentajeRegalo =
+                aforoRegalo > 0
+                  ? Math.round((regalosCanjeados / aforoRegalo) * 100)
+                  : 0;
               const isNext = nextEvent?.id === event.id;
 
               return (
@@ -389,6 +396,28 @@ const EstadisticasManagement = () => {
                       {remaining.text}
                     </p>
                   </div>
+
+                  {aforoRegalo > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-gray-500 flex items-center gap-1">
+                          <Gift className="h-3.5 w-3.5 text-amber-500" />
+                          {regalosCanjeados} / {aforoRegalo} regalos canjeados
+                        </span>
+                        <span className="font-medium text-amber-600">
+                          {porcentajeRegalo}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full bg-amber-400 transition-all"
+                          style={{
+                            width: `${Math.min(porcentajeRegalo, 100)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               );
             })}

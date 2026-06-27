@@ -35,6 +35,7 @@ export interface Evento {
   tipo?: EventoTipo;
   permiteCodigoRegalo?: boolean;
   aforoRegalo?: number;
+  regalosCanjeados?: number;
   estado: EventoEstado;
   formatId?: number;
   format?: EventoFormat;
