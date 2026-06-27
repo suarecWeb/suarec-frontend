@@ -54,6 +54,34 @@ const EventsService = {
   setVisibility: (id: number, visible: boolean): Promise<void> =>
     api.patch(`${BASE}/${id}/visibility`, { visible }),
 
+  generarCodigosRegalo: (
+    eventoId: number,
+    cantidad: number,
+  ): Promise<{ data: { cantidad: number; codigos: string[] } }> =>
+    api.post(`${BASE}/${eventoId}/codigos-regalo`, { cantidad }),
+
+  descargarCodigosRegalo: async (
+    eventoId: number,
+    nombreEvento?: string,
+  ): Promise<void> => {
+    const res = await api.get(`${BASE}/${eventoId}/codigos-regalo/export`, {
+      responseType: "blob",
+    });
+    // Nombre del archivo con el nombre del evento (sin caracteres inválidos)
+    const limpio = (nombreEvento ?? "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const filename = limpio
+      ? `Códigos - ${limpio}.xlsx`
+      : `codigos-evento-${eventoId}.xlsx`;
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   deleteEvent: (id: string): Promise<void> => api.delete(`${BASE}/${id}`),
 
   getAllTransacciones: (
@@ -96,6 +124,14 @@ const EventsService = {
   ): Promise<{ data: { generado: boolean; boletaIds: number[] } }> =>
     api.post(`${BASE}/boletas/transacciones/${id}/forzar-generacion`, {
       wompiTransactionId,
+    }),
+
+  adminReenviarBoletasPorTransaccion: (
+    id: number,
+    email: string,
+  ): Promise<{ data: { success: boolean; enviadas: number; email: string } }> =>
+    api.post(`${BASE}/boletas/transacciones/${id}/reenviar-correo`, {
+      email,
     }),
 };
 

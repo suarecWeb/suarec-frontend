@@ -68,18 +68,38 @@ const EventsManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCreate = async (dto: CreateEventoDto, imageFile?: File) => {
+  const generarCodigos = async (eventoId: number, cantidad?: number) => {
+    if (!cantidad || cantidad <= 0) return;
+    try {
+      const res = await EventsService.generarCodigosRegalo(eventoId, cantidad);
+      toast.success(`Se generaron ${res.data.cantidad} códigos de regalo`);
+    } catch {
+      toast.error(
+        "El evento se guardó, pero falló la generación de códigos. Puedes reintentar desde Editar.",
+      );
+    }
+  };
+
+  const handleCreate = async (
+    dto: CreateEventoDto,
+    imageFile?: File,
+    codigosACrear?: number,
+  ) => {
     const res = await EventsService.createEvent(dto, imageFile);
-    setEvents((prev) => [res.data as unknown as Evento, ...prev]);
+    const creado = res.data as unknown as Evento;
+    setEvents((prev) => [creado, ...prev]);
     toast.success("Evento creado correctamente");
+    if (creado.id) await generarCodigos(creado.id, codigosACrear);
   };
 
   const handleEdit = async (
     id: number,
     dto: Partial<CreateEventoDto>,
     imageFile?: File,
+    codigosACrear?: number,
   ) => {
     await EventsService.updateEvent(String(id), dto, imageFile);
+    await generarCodigos(id, codigosACrear);
     const updated = await EventsService.getEventById(id);
     setEvents((prev) => prev.map((e) => (e.id === id ? updated.data : e)));
     toast.success("Evento actualizado");
@@ -144,12 +164,15 @@ const EventsManagement = () => {
           <div className="bg-gray-50 border border-gray-100 inline-flex rounded-full p-5 mb-4">
             <CalendarDays className="h-9 w-9 text-gray-300" />
           </div>
+
           <h3 className="text-base font-semibold text-gray-700">
             No hay eventos todavía
           </h3>
+
           <p className="mt-1.5 text-sm text-gray-400">
             Crea el primer evento para que aparezca en la app.
           </p>
+
           <button
             onClick={() => setShowCreateModal(true)}
             className="mt-4 inline-flex items-center gap-2 text-sm text-[#097EEC] hover:underline font-medium"
@@ -180,12 +203,14 @@ const EventsManagement = () => {
                 ) : (
                   <CalendarDays className="h-10 w-10 text-[#097EEC]/40" />
                 )}
+
                 <div className="absolute top-2 right-2 flex gap-1">
                   {event.visible === false && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-800/70 text-white flex items-center gap-1">
                       <EyeOff className="h-3 w-3" /> Oculto
                     </span>
                   )}
+
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_CONFIG[event.estado].color}`}
                   >
@@ -199,6 +224,7 @@ const EventsManagement = () => {
                   <h3 className="text-sm font-semibold text-gray-800 truncate flex-1">
                     {event.nombre}
                   </h3>
+
                   {event.formatId === 1 && (
                     <span title="Formato teléfono">
                       <Smartphone className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
@@ -217,12 +243,16 @@ const EventsManagement = () => {
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <CalendarDays className="h-3 w-3 text-gray-300 flex-shrink-0" />
+
                     {formatDisplayDate(event.fechaEvento)}
                   </div>
+
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <MapPin className="h-3 w-3 text-gray-300 flex-shrink-0" />
+
                     {event.ubicacion}
                   </div>
+
                   <div className="flex items-center gap-3 text-xs text-gray-500">
                     {event.aforoTotal && (
                       <span className="flex items-center gap-1">
@@ -230,9 +260,11 @@ const EventsManagement = () => {
                         {event.aforoTotal} boletas
                       </span>
                     )}
+
                     {event.precioBase !== undefined && (
                       <span className="flex items-center gap-1">
                         <DollarSign className="h-3 w-3 text-gray-300" />
+
                         {event.precioBase === 0 ? (
                           "Gratis"
                         ) : (

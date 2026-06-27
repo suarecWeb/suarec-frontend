@@ -11,12 +11,19 @@ import {
   Upload,
   Smartphone,
   Monitor,
+  Star,
+  User,
+  Gift,
+  Download,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import {
   Evento,
   CreateEventoDto,
   EventoEstado,
+  EventoTipo,
 } from "@/interfaces/event.interface";
+import EventsService from "@/services/EventsService";
 import { toDatetimeLocal } from "@/lib/TimeZone";
 
 interface EditEventModalProps {
@@ -98,6 +105,26 @@ export default function EditEventModal({
     estado: event.estado,
     formatId: event.formatId,
   });
+  // Tipo (VIP / GENERAL) y cargo por SUAREC — precargados del evento.
+  // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
+  const [tipoEvento, setTipoEvento] = useState<EventoTipo | null>(
+    event.tipo ?? null,
+  );
+  const [cargoSuarec, setCargoSuarec] = useState<number | undefined>(
+    event.cargoSuarec !== undefined
+      ? Math.round(Number(event.cargoSuarec))
+      : undefined,
+  );
+  // Códigos de regalo: acción independiente del guardado (generar + descargar sin cerrar el modal)
+  const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
+    undefined,
+  );
+  const [generandoCodigos, setGenerandoCodigos] = useState(false);
+  const [descargandoCodigos, setDescargandoCodigos] = useState(false);
+  // Arranca según el evento; se vuelve true apenas se generan códigos (para mostrar "Descargar")
+  const [codigosDisponibles, setCodigosDisponibles] = useState(
+    !!event.permiteCodigoRegalo,
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateEventoDto, string>>
@@ -181,6 +208,8 @@ export default function EditEventModal({
     if (!form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
 
+    if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -217,6 +246,44 @@ export default function EditEventModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleDescargarCodigos = async () => {
+    if (!event.id) return;
+    setDescargandoCodigos(true);
+    try {
+      await EventsService.descargarCodigosRegalo(event.id, event.nombre);
+    } catch {
+      toast.error("No se pudo descargar el Excel de códigos");
+    } finally {
+      setDescargandoCodigos(false);
+    }
+  };
+
+  // Generar códigos como acción independiente: no cierra el modal y deja descargar al instante
+  const handleGenerarCodigos = async () => {
+    if (!event.id) return;
+    if (!cantidadCodigos || cantidadCodigos < 1) {
+      setErrors(
+        (prev) =>
+          ({ ...prev, _codigos: "Indica una cantidad (mínimo 1)" }) as any,
+      );
+      return;
+    }
+    setGenerandoCodigos(true);
+    try {
+      const res = await EventsService.generarCodigosRegalo(
+        event.id,
+        cantidadCodigos,
+      );
+      toast.success(`Se generaron ${res.data.cantidad} códigos de regalo`);
+      setCantidadCodigos(undefined);
+      setCodigosDisponibles(true);
+    } catch {
+      toast.error("No se pudieron generar los códigos");
+    } finally {
+      setGenerandoCodigos(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || !event.id) return;
@@ -224,7 +291,12 @@ export default function EditEventModal({
     try {
       await onSubmit(
         event.id,
-        { ...form, removeImage: imageRemoved },
+        {
+          ...form,
+          tipo: tipoEvento ?? undefined,
+          cargoSuarec,
+          removeImage: imageRemoved,
+        },
         imageFile ?? undefined,
       );
       onClose();
@@ -471,6 +543,137 @@ export default function EditEventModal({
                 <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
               )}
             </div>
+          </div>
+
+          {/* Tipo de evento (VIP / General) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Tipo de evento <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.GENERAL);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.GENERAL
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                General
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.VIP);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.VIP
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Star className="h-4 w-4" />
+                VIP
+              </button>
+            </div>
+            {errors.tipo && (
+              <p className="mt-1 text-xs text-red-500">{errors.tipo}</p>
+            )}
+          </div>
+
+          {/* Cargo por SUAREC (comisión) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              <span>Cargo SUAREC</span>
+              <span className="text-gray-400">COP</span>
+            </label>
+            <input
+              type="text"
+              name="cargo suarec"
+              inputMode="numeric"
+              value={formatPriceDisplay(cargoSuarec)}
+              onChange={(e) => setCargoSuarec(parsePriceInput(e.target.value))}
+              placeholder="0"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
+            />
+          </div>
+
+          {/* Códigos de regalo — acción independiente del guardado */}
+          <div className="rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="h-4 w-4 text-[#097EEC]" />
+              <span className="text-sm font-medium text-gray-700">
+                Códigos de regalo
+              </span>
+            </div>
+
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Generar códigos
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={10000}
+                value={cantidadCodigos ?? ""}
+                onChange={(e) => {
+                  setCantidadCodigos(
+                    e.target.value ? Number(e.target.value) : undefined,
+                  );
+                  setErrors(
+                    (prev) => ({ ...prev, _codigos: undefined }) as any,
+                  );
+                }}
+                placeholder="Ej. 1000"
+                className={`flex-1 px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                  (errors as any)._codigos
+                    ? "border-red-400"
+                    : "border-gray-200"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleGenerarCodigos}
+                disabled={generandoCodigos}
+                className="px-4 py-2 rounded-lg bg-[#097EEC] text-white text-sm font-medium hover:bg-[#0562C7] disabled:opacity-60 transition-colors whitespace-nowrap"
+              >
+                {generandoCodigos ? "Generando..." : "Generar"}
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-gray-400">
+              Se suman al aforo del evento. No necesitas guardar para
+              generarlos.
+            </p>
+            {(errors as any)._codigos && (
+              <p className="mt-1 text-xs text-red-500">
+                {(errors as any)._codigos}
+              </p>
+            )}
+
+            {codigosDisponibles && (
+              <button
+                type="button"
+                onClick={handleDescargarCodigos}
+                disabled={descargandoCodigos}
+                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                {descargandoCodigos
+                  ? "Descargando..."
+                  : "Descargar Excel de códigos"}
+              </button>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
