@@ -11,12 +11,23 @@ import {
   Upload,
   Smartphone,
   Monitor,
+  Star,
+  User,
+  Gift,
 } from "lucide-react";
-import { CreateEventoDto, EventoEstado } from "@/interfaces/event.interface";
+import {
+  CreateEventoDto,
+  EventoEstado,
+  EventoTipo,
+} from "@/interfaces/event.interface";
 
 interface CreateEventModalProps {
   onClose: () => void;
-  onSubmit: (dto: CreateEventoDto, imageFile?: File) => Promise<void>;
+  onSubmit: (
+    dto: CreateEventoDto,
+    imageFile?: File,
+    codigosACrear?: number,
+  ) => Promise<void>;
 }
 
 const EMPTY_FORM: CreateEventoDto = {
@@ -81,6 +92,15 @@ export default function CreateEventModal({
   onSubmit,
 }: CreateEventModalProps) {
   const [form, setForm] = useState<CreateEventoDto>(EMPTY_FORM);
+  // Tipo de evento (VIP / GENERAL) y cargo por SUAREC (monto en COP).
+  // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
+  const [tipoEvento, setTipoEvento] = useState<EventoTipo | null>(null);
+  const [cargoSuarec, setCargoSuarec] = useState<number | undefined>(undefined);
+  // Códigos de regalo: si se activa, al crear el evento se generan N códigos
+  const [generarCodigos, setGenerarCodigos] = useState(false);
+  const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
+    undefined,
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateEventoDto, string>>
@@ -161,6 +181,11 @@ export default function CreateEventModal({
     if (!imageFile)
       (next as any)._image = "La imagen del evento es obligatoria";
 
+    if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
+
+    if (generarCodigos && (!cantidadCodigos || cantidadCodigos < 1))
+      (next as any)._codigos = "Indica cuántos códigos generar (mínimo 1)";
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -202,7 +227,11 @@ export default function CreateEventModal({
     if (!validate()) return;
     setLoading(true);
     try {
-      await onSubmit(form, imageFile ?? undefined);
+      await onSubmit(
+        { ...form, tipo: tipoEvento ?? undefined, cargoSuarec },
+        imageFile ?? undefined,
+        generarCodigos ? cantidadCodigos : undefined,
+      );
       onClose();
     } catch (err: any) {
       const msg = err?.response?.data?.message;
@@ -459,6 +488,136 @@ export default function CreateEventModal({
                 <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
               )}
             </div>
+          </div>
+
+          {/* Tipo de evento (VIP / General) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Tipo de evento <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.GENERAL);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.GENERAL
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                General
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.VIP);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.VIP
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Star className="h-4 w-4" />
+                VIP
+              </button>
+            </div>
+            {errors.tipo && (
+              <p className="mt-1 text-xs text-red-500">{errors.tipo}</p>
+            )}
+          </div>
+
+          {/* Cargo por SUAREC (comisión) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              <span>Cargo SUAREC</span>
+              <span className="text-gray-400">COP</span>
+            </label>
+            <input
+              type="text"
+              name="cargo suarec"
+              inputMode="numeric"
+              value={formatPriceDisplay(cargoSuarec)}
+              onChange={(e) => setCargoSuarec(parsePriceInput(e.target.value))}
+              placeholder="0"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
+            />
+          </div>
+
+          {/* Códigos de regalo */}
+          <div className="rounded-lg border border-gray-200 p-3">
+            <label className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-[#097EEC]" />
+                <span className="text-sm font-medium text-gray-700">
+                  Generar códigos de regalo
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setGenerarCodigos((v) => !v);
+                  setErrors(
+                    (prev) => ({ ...prev, _codigos: undefined }) as any,
+                  );
+                }}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  generarCodigos ? "bg-[#097EEC]" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    generarCodigos ? "translate-x-4" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </label>
+
+            {generarCodigos && (
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Cantidad de códigos
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={cantidadCodigos ?? ""}
+                  onChange={(e) => {
+                    setCantidadCodigos(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    );
+                    setErrors(
+                      (prev) => ({ ...prev, _codigos: undefined }) as any,
+                    );
+                  }}
+                  placeholder="Ej. 1000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                    (errors as any)._codigos
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  }`}
+                />
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Se sumarán al aforo del evento y podrás descargarlos en Excel.
+                </p>
+                {(errors as any)._codigos && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {(errors as any)._codigos}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
