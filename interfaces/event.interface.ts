@@ -33,6 +33,8 @@ export interface Evento {
   comision?: number;
   cargoSuarec?: number;
   tipo?: EventoTipo;
+  permiteCodigoRegalo?: boolean;
+  aforoRegalo?: number;
   estado: EventoEstado;
   formatId?: number;
   format?: EventoFormat;

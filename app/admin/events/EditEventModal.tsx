@@ -13,13 +13,17 @@ import {
   Monitor,
   Star,
   User,
+  Gift,
+  Download,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import {
   Evento,
   CreateEventoDto,
   EventoEstado,
   EventoTipo,
 } from "@/interfaces/event.interface";
+import EventsService from "@/services/EventsService";
 import { toDatetimeLocal } from "@/lib/TimeZone";
 
 interface EditEventModalProps {
@@ -29,6 +33,7 @@ interface EditEventModalProps {
     id: number,
     dto: Partial<CreateEventoDto>,
     imageFile?: File,
+    codigosACrear?: number,
   ) => Promise<void>;
 }
 
@@ -111,6 +116,12 @@ export default function EditEventModal({
       ? Math.round(Number(event.cargoSuarec))
       : undefined,
   );
+  // Códigos de regalo: generar N códigos adicionales para este evento
+  const [generarCodigos, setGenerarCodigos] = useState(false);
+  const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
+    undefined,
+  );
+  const [descargandoCodigos, setDescargandoCodigos] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateEventoDto, string>>
@@ -196,6 +207,9 @@ export default function EditEventModal({
 
     if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
 
+    if (generarCodigos && (!cantidadCodigos || cantidadCodigos < 1))
+      (next as any)._codigos = "Indica cuántos códigos generar (mínimo 1)";
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -232,6 +246,18 @@ export default function EditEventModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleDescargarCodigos = async () => {
+    if (!event.id) return;
+    setDescargandoCodigos(true);
+    try {
+      await EventsService.descargarCodigosRegalo(event.id);
+    } catch {
+      toast.error("No se pudo descargar el Excel de códigos");
+    } finally {
+      setDescargandoCodigos(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || !event.id) return;
@@ -246,6 +272,7 @@ export default function EditEventModal({
           removeImage: imageRemoved,
         },
         imageFile ?? undefined,
+        generarCodigos ? cantidadCodigos : undefined,
       );
       onClose();
     } catch (err: any) {
@@ -555,6 +582,85 @@ export default function EditEventModal({
               placeholder="0"
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
             />
+          </div>
+
+          {/* Códigos de regalo */}
+          <div className="rounded-lg border border-gray-200 p-3">
+            {event.permiteCodigoRegalo && (
+              <button
+                type="button"
+                onClick={handleDescargarCodigos}
+                disabled={descargandoCodigos}
+                className="w-full mb-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                {descargandoCodigos
+                  ? "Descargando..."
+                  : "Descargar Excel de códigos"}
+              </button>
+            )}
+            <label className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-[#097EEC]" />
+                <span className="text-sm font-medium text-gray-700">
+                  Generar códigos de regalo
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setGenerarCodigos((v) => !v);
+                  setErrors(
+                    (prev) => ({ ...prev, _codigos: undefined }) as any,
+                  );
+                }}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  generarCodigos ? "bg-[#097EEC]" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    generarCodigos ? "translate-x-4" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </label>
+
+            {generarCodigos && (
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Cantidad de códigos
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={cantidadCodigos ?? ""}
+                  onChange={(e) => {
+                    setCantidadCodigos(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    );
+                    setErrors(
+                      (prev) => ({ ...prev, _codigos: undefined }) as any,
+                    );
+                  }}
+                  placeholder="Ej. 1000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                    (errors as any)._codigos
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  }`}
+                />
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Se sumarán al aforo del evento y podrás descargarlos en Excel.
+                </p>
+                {(errors as any)._codigos && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {(errors as any)._codigos}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
