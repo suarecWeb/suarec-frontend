@@ -14,6 +14,7 @@ import {
   Star,
   User,
   Gift,
+  Armchair,
 } from "lucide-react";
 import {
   CreateEventoDto,
@@ -40,6 +41,7 @@ const EMPTY_FORM: CreateEventoDto = {
   comision: undefined,
   estado: EventoEstado.PREVENTA,
   formatId: undefined,
+  nombreOrganizador: "",
 };
 
 const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
@@ -162,6 +164,12 @@ export default function CreateEventModal({
     if (!form.ubicacion.trim()) next.ubicacion = "El lugar es obligatorio";
     else if (form.ubicacion.trim().length > 200)
       next.ubicacion = "El lugar no puede superar 200 caracteres";
+
+    if (!form.nombreOrganizador?.trim())
+      next.nombreOrganizador = "El nombre del organizador es obligatorio";
+    else if (form.nombreOrganizador.trim().length > 150)
+      next.nombreOrganizador =
+        "El nombre del organizador no puede superar 150 caracteres";
 
     if (form.aforoTotal !== undefined) {
       if (!Number.isInteger(form.aforoTotal))
@@ -444,6 +452,28 @@ export default function CreateEventModal({
             </div>
           </div>
 
+          {/* Nombre del organizador */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              <User className="h-3 w-3 inline mr-1" />
+              Nombre del organizador <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.nombreOrganizador ?? ""}
+              onChange={(e) =>
+                handleChange("nombreOrganizador", e.target.value)
+              }
+              placeholder="Ej. Feria 53 Santander de Quilichao"
+              className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.nombreOrganizador ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+            />
+            {errors.nombreOrganizador && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.nombreOrganizador}
+              </p>
+            )}
+          </div>
+
           {/* Boletas + Precio */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -529,6 +559,23 @@ export default function CreateEventModal({
               >
                 <Star className="h-4 w-4" />
                 VIP
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.PALCO);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.PALCO
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Armchair className="h-4 w-4" />
+                Palco
               </button>
             </div>
             {errors.tipo && (

@@ -9,6 +9,7 @@ export enum EventoEstado {
 export enum EventoTipo {
   GENERAL = "GENERAL",
   VIP = "VIP",
+  PALCO = "PALCO",
 }
 
 export type ImageFormat = "phone" | "web";
@@ -33,6 +34,7 @@ export interface Evento {
   comision?: number;
   cargoSuarec?: number;
   tipo?: EventoTipo;
+  nombreOrganizador?: string;
   permiteCodigoRegalo?: boolean;
   aforoRegalo?: number;
   regalosCanjeados?: number;
@@ -55,6 +57,7 @@ export interface CreateEventoDto {
   comision?: number;
   cargoSuarec?: number;
   tipo?: EventoTipo;
+  nombreOrganizador?: string;
   estado?: EventoEstado;
   formatId?: number;
   removeImage?: boolean;
