@@ -12,6 +12,12 @@ export enum EventoTipo {
   PALCO = "PALCO",
 }
 
+// Modalidad del evento — canal exclusivo: digital (online) o físico (taquilla)
+export enum EventoModalidad {
+  DIGITAL = "DIGITAL",
+  FISICO = "FISICO",
+}
+
 export type ImageFormat = "phone" | "web";
 
 export interface EventoFormat {
@@ -39,6 +45,7 @@ export interface Evento {
   aforoRegalo?: number;
   regalosCanjeados?: number;
   estado: EventoEstado;
+  modalidad?: EventoModalidad;
   formatId?: number;
   format?: EventoFormat;
   organizadorId?: number;

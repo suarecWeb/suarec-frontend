@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Evento,
   EventoEstado,
+  EventoModalidad,
   CreateEventoDto,
 } from "@/interfaces/event.interface";
 import EventsService from "@/services/EventsService";
@@ -20,10 +22,16 @@ import {
   Edit,
   Smartphone,
   Monitor,
+  ShoppingCart,
 } from "lucide-react";
 
 import toast from "react-hot-toast";
 import { formatDisplayDate } from "@/lib/TimeZone";
+
+interface EventsManagementProps {
+  modoFisico?: boolean;
+  filtroModalidad?: EventoModalidad;
+}
 
 const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
   [EventoEstado.PREVENTA]: {
@@ -44,7 +52,11 @@ const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
   },
 };
 
-const EventsManagement = () => {
+const EventsManagement = ({
+  modoFisico = false,
+  filtroModalidad,
+}: EventsManagementProps) => {
+  const router = useRouter();
   const [events, setEvents] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -123,19 +135,25 @@ const EventsManagement = () => {
     }
   };
 
+  const eventosFiltrados = filtroModalidad
+    ? events.filter((e) => e.modalidad === filtroModalidad)
+    : events;
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-sm font-semibold text-gray-700">
-          Eventos ({events.length})
+          Eventos ({eventosFiltrados.length})
         </h2>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Crear evento
-        </button>
+        {!modoFisico && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Crear evento
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -159,7 +177,7 @@ const EventsManagement = () => {
             </div>
           ))}
         </div>
-      ) : events.length === 0 ? (
+      ) : eventosFiltrados.length === 0 ? (
         <div className="py-20 text-center">
           <div className="bg-gray-50 border border-gray-100 inline-flex rounded-full p-5 mb-4">
             <CalendarDays className="h-9 w-9 text-gray-300" />
@@ -170,23 +188,32 @@ const EventsManagement = () => {
           </h3>
 
           <p className="mt-1.5 text-sm text-gray-400">
-            Crea el primer evento para que aparezca en la app.
+            {modoFisico
+              ? "No hay eventos disponibles para venta física."
+              : "Crea el primer evento para que aparezca en la app."}
           </p>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 inline-flex items-center gap-2 text-sm text-[#097EEC] hover:underline font-medium"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Crear evento
-          </button>
+          {!modoFisico && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-4 inline-flex items-center gap-2 text-sm text-[#097EEC] hover:underline font-medium"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Crear evento
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event, i) => (
+          {eventosFiltrados.map((event, i) => (
             <div
               key={event.id}
-              className={`border rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 group opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards] ${event.visible === false ? "border-gray-200 opacity-60" : "border-gray-100"}`}
+              onClick={() =>
+                modoFisico &&
+                event.id &&
+                router.push(`/admin/boleteria_fisica/${event.id}`)
+              }
+              className={`border rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 group opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards] ${event.visible === false ? "border-gray-200 opacity-60" : "border-gray-100"} ${modoFisico ? "cursor-pointer" : ""}`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="h-36 bg-gradient-to-br from-[#097EEC]/10 to-[#097EEC]/20 flex items-center justify-center relative">
@@ -279,32 +306,48 @@ const EventsManagement = () => {
                 </div>
 
                 <div className="mt-4 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setEventToEdit(event)}
-                    className="p-1.5 rounded-md text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
-                    title="Editar"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleToggleVisibility(event)}
-                    className={`p-1.5 rounded-md transition-colors ${
-                      event.visible === false
-                        ? "text-gray-400 hover:text-green-600 hover:bg-green-50"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
-                    title={
-                      event.visible === false
-                        ? "Mostrar en app"
-                        : "Ocultar de app"
-                    }
-                  >
-                    {event.visible === false ? (
-                      <Eye className="h-4 w-4" />
-                    ) : (
-                      <EyeOff className="h-4 w-4" />
-                    )}
-                  </button>
+                  {modoFisico ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (event.id)
+                          router.push(`/admin/boleteria_fisica/${event.id}`);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      Vender física
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setEventToEdit(event)}
+                        className="p-1.5 rounded-md text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleVisibility(event)}
+                        className={`p-1.5 rounded-md transition-colors ${
+                          event.visible === false
+                            ? "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                        }`}
+                        title={
+                          event.visible === false
+                            ? "Mostrar en app"
+                            : "Ocultar de app"
+                        }
+                      >
+                        {event.visible === false ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
