@@ -10,12 +10,14 @@ import VentasManagement from "@/components/admin/VentasManagement";
 import EstadisticasManagement from "@/components/admin/EstadisticasManagement";
 import ConfiguracionManagement from "@/components/admin/ConfiguracionManagement";
 import SoporteQRManagement from "@/components/admin/SoporteQRManagement";
+import Link from "next/link";
 import {
   CalendarDays,
   Ticket,
   BarChart3,
   Settings,
   QrCode,
+  Printer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -75,11 +77,23 @@ const BoleteriaPageContent = () => {
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
         <div className="bg-[#097EEC] text-white py-8 shadow-sm">
-          <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold">Boletería</h1>
-            <p className="mt-2 text-blue-100">
-              Gestión de eventos, ventas y estadísticas de boletería
-            </p>
+          <div className="container mx-auto px-4 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Boletería</h1>
+              <p className="mt-2 text-blue-100">
+                Gestión de eventos, ventas y estadísticas de boletería
+              </p>
+            </div>
+
+            <Link href="/admin/boleteria_fisica" passHref>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm bg-white text-[#097EEC] hover:bg-blue-50 shadow"
+              >
+                <Printer className="h-4 w-4" />
+                Boletería Física
+              </motion.button>
+            </Link>
           </div>
         </div>
 
