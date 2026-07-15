@@ -5,7 +5,13 @@ import {
   DetalleTransaccion,
   TransaccionBoleta,
 } from "@/interfaces/boleta.interface";
-import { VentasFisicasGlobalResponse } from "@/interfaces/ventaFisica.interface";
+import {
+  VentasFisicasGlobalResponse,
+  RecaudoGlobalFisicoResponse,
+  ResumenEventoFisico,
+  BoletasFisicasValidadasResponse,
+  MetodoPagoFisico,
+} from "@/interfaces/ventaFisica.interface";
 import {
   GenerarLoteFisicoDto,
   GenerarLoteFisicoResponse,
@@ -147,8 +153,25 @@ const EventsService = {
 
   getVentasFisicasGlobal: (
     page: number,
+    metodoPago?: MetodoPagoFisico,
   ): Promise<{ data: VentasFisicasGlobalResponse }> =>
-    api.get(`${BASE}/boletas-fisicas/ventas`, { params: { page } }),
+    api.get(`${BASE}/boletas-fisicas/ventas`, {
+      params: { page, ...(metodoPago ? { metodoPago } : {}) },
+    }),
+
+  getRecaudoGlobalFisico: (): Promise<{ data: RecaudoGlobalFisicoResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/recaudo`),
+
+  getResumenEventosFisicos: (): Promise<{ data: ResumenEventoFisico[] }> =>
+    api.get(`${BASE}/boletas-fisicas/eventos-resumen`),
+
+  getBoletasFisicasValidadas: (
+    page: number,
+    serial?: string,
+  ): Promise<{ data: BoletasFisicasValidadasResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/validadas`, {
+      params: { page, ...(serial ? { serial } : {}) },
+    }),
 
   // ── Boletería física ─────────────────────────────────────────────────────
 

@@ -6,17 +6,19 @@ import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
 import EventosFisicosManagement from "@/components/admin/boleteria-fisica/EventosFisicosManagement";
 import VentasFisicasManagement from "@/components/admin/boleteria-fisica/VentasFisicasManagement";
+import EstadisticasFisicasManagement from "@/components/admin/boleteria-fisica/EstadisticasFisicasManagement";
 import ConfiguracionFisicaManagement from "@/components/admin/boleteria-fisica/ConfiguracionFisicaManagement";
 import {
   CalendarDays,
   Ticket,
+  BarChart3,
   Settings,
   ArrowLeft,
   Printer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type BoleteriaFisicaTab = "eventos" | "ventas" | "config";
+type BoleteriaFisicaTab = "eventos" | "ventas" | "estadisticas" | "config";
 
 const TAB_CONFIG: Record<
   BoleteriaFisicaTab,
@@ -29,6 +31,10 @@ const TAB_CONFIG: Record<
   ventas: {
     label: "Ventas",
     icon: <Ticket className="h-4 w-4" />,
+  },
+  estadisticas: {
+    label: "Estadísticas",
+    icon: <BarChart3 className="h-4 w-4" />,
   },
   config: {
     label: "Configuración",
@@ -118,6 +124,10 @@ const BoleteriaFisicaPageContent = () => {
                 {activeTab === "eventos" && <EventosFisicosManagement />}
 
                 {activeTab === "ventas" && <VentasFisicasManagement />}
+
+                {activeTab === "estadisticas" && (
+                  <EstadisticasFisicasManagement />
+                )}
 
                 {activeTab === "config" && <ConfiguracionFisicaManagement />}
               </motion.div>
