@@ -5,6 +5,7 @@ import {
   DetalleTransaccion,
   TransaccionBoleta,
 } from "@/interfaces/boleta.interface";
+import { VentasFisicasGlobalResponse } from "@/interfaces/ventaFisica.interface";
 
 const BASE = "/suarec/events";
 
@@ -133,6 +134,11 @@ const EventsService = {
     api.post(`${BASE}/boletas/transacciones/${id}/reenviar-correo`, {
       email,
     }),
+
+  getVentasFisicasGlobal: (
+    page: number,
+  ): Promise<{ data: VentasFisicasGlobalResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/ventas`, { params: { page } }),
 };
 
 export default EventsService;
