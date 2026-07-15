@@ -1,10 +1,20 @@
 "use client";
 
-import { useRef, useCallback, useState, useMemo } from "react";
+import {
+  useRef,
+  useCallback,
+  useState,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import html2canvas from "html2canvas";
-import { Printer, Usb } from "lucide-react";
-import { motion } from "framer-motion";
 import { TicketVisual } from "./tickets/TicketVisual";
+
+export type BoleteriaFisicaTicketRef = {
+  handlePrint: () => void;
+  handleAgentPrint: () => void;
+};
 
 interface EventoInfo {
   nombre?: string;
@@ -15,11 +25,13 @@ interface EventoInfo {
 
 interface BoleteriaFisicaTicketProps {
   qrValue: string;
+  qrValues?: string[];
   tipoBoleta?: "GENERAL" | "VIP";
   precio: string;
   fechaCompra: string;
   evento?: EventoInfo;
   cantidad?: number;
+  esPreview?: boolean;
 }
 
 const AGENT_URL = "http://localhost:3001";
@@ -35,45 +47,119 @@ function generarQrSecuencial(baseQr: string, index: number): string {
   return `${prefix}${nextNumber}`;
 }
 
-export const BoleteriaFisicaTicket = ({
-  qrValue,
-  tipoBoleta = "GENERAL",
-  precio,
-  fechaCompra,
-  evento,
-  cantidad = 1,
-}: BoleteriaFisicaTicketProps) => {
+export const BoleteriaFisicaTicket = forwardRef<
+  BoleteriaFisicaTicketRef,
+  BoleteriaFisicaTicketProps
+>(function BoleteriaFisicaTicket(
+  {
+    qrValue,
+    qrValues: qrValuesProp,
+    tipoBoleta = "GENERAL",
+    precio,
+    fechaCompra,
+    evento,
+    cantidad = 1,
+    esPreview = false,
+  },
+  ref,
+) {
   const ticketsRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
   const [agentStatus, setAgentStatus] = useState<string>("");
 
-  const qrValues = useMemo(() => {
+  const previewQrValues = useMemo(() => {
     const count = Math.max(1, Math.min(cantidad, 50));
     return Array.from({ length: count }, (_, i) =>
       generarQrSecuencial(qrValue, i),
     );
   }, [qrValue, cantidad]);
 
-  const handlePrint = useCallback(() => {
-    window.print();
+  const realQrValues = useMemo(() => {
+    if (qrValuesProp && qrValuesProp.length > 0) {
+      return qrValuesProp.slice(0, 50);
+    }
+    return [];
+  }, [qrValuesProp]);
+
+  const hasRealQr = realQrValues.length > 0;
+  const printQrValues = hasRealQr ? realQrValues : previewQrValues;
+
+  // eslint-disable-next-line no-console
+  console.log("[BoleteriaFisicaTicket] render", {
+    hasRealQr,
+    realQrCount: realQrValues.length,
+    printQrCount: printQrValues.length,
+    firstQr: printQrValues[0]?.slice(0, 30),
+  });
+
+  const capturePrintTickets = useCallback(async () => {
+    if (!printRef.current) return null;
+
+    const canvas = await html2canvas(printRef.current, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: null,
+      logging: false,
+    });
+
+    return canvas.toDataURL("image/png");
   }, []);
 
-  const handleAgentPrint = useCallback(async () => {
-    if (!ticketsRef.current) {
-      setAgentStatus("No se encontró el ticket para capturar.");
-      return;
-    }
-
-    setAgentStatus(`Capturando ${qrValues.length} ticket(s) como imagen...`);
+  const handlePrint = useCallback(async () => {
+    setAgentStatus(
+      hasRealQr
+        ? "Generando imagen de impresión..."
+        : "Imprimiendo vista previa — el QR real se genera al confirmar la venta.",
+    );
 
     try {
-      const canvas = await html2canvas(ticketsRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-        logging: false,
-      });
+      const imageBase64 = await capturePrintTickets();
+      if (!imageBase64) {
+        setAgentStatus("No se pudo generar la imagen del ticket.");
+        return;
+      }
 
-      const imageBase64 = canvas.toDataURL("image/png");
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        setAgentStatus("El navegador bloqueó la ventana de impresión.");
+        return;
+      }
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Ticket SUAREC</title>
+            <style>
+              @page { size: 80mm auto; margin: 0; }
+              body { margin: 0; padding: 0; background: white; }
+              img { width: 80mm; height: auto; display: block; }
+            </style>
+          </head>
+          <body>
+            <img src="${imageBase64}" onload="window.print(); window.onafterprint = () => window.close();" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setAgentStatus("Ventana de impresión abierta.");
+    } catch (error: any) {
+      setAgentStatus(`Error al generar imagen: ${error.message}`);
+    }
+  }, [hasRealQr, capturePrintTickets]);
+
+  const handleAgentPrint = useCallback(async () => {
+    setAgentStatus(
+      hasRealQr
+        ? `Capturando ${printQrValues.length} ticket(s) como imagen...`
+        : "Capturando vista previa — el QR real se genera al confirmar la venta.",
+    );
+
+    try {
+      const imageBase64 = await capturePrintTickets();
+      if (!imageBase64) {
+        setAgentStatus("No se pudo generar la imagen del ticket.");
+        return;
+      }
 
       setAgentStatus("Enviando imagen al agente de impresión...");
 
@@ -90,21 +176,26 @@ export const BoleteriaFisicaTicket = ({
       }
 
       setAgentStatus(
-        `${qrValues.length} ticket(s) enviado(s) a la impresora ${data.printer}`,
+        `${printQrValues.length} ticket(s) enviado(s) a la impresora ${data.printer}`,
       );
     } catch (error: any) {
       setAgentStatus(
         `Error: ${error.message}. Verifica que el agente local esté corriendo en ${AGENT_URL}`,
       );
     }
-  }, [qrValues.length]);
+  }, [hasRealQr, printQrValues.length, capturePrintTickets]);
+
+  useImperativeHandle(ref, () => ({
+    handlePrint,
+    handleAgentPrint,
+  }));
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* Contenedor de tickets: preview muestra solo el primero */}
+    <div className="relative flex flex-col items-center gap-6">
+      {/* Vista previa en pantalla: QR real si hay venta, placeholder si no */}
       <div className="no-print p-4 bg-gray-100 rounded-xl">
         <div ref={ticketsRef} className="flex flex-col">
-          {qrValues.map((code, index) => (
+          {printQrValues.map((code, index) => (
             <TicketVisual
               key={code}
               qrValue={code}
@@ -112,31 +203,32 @@ export const BoleteriaFisicaTicket = ({
               precio={precio}
               fechaCompra={fechaCompra}
               evento={evento}
-              className={index === 0 ? "" : "hidden print:block"}
+              className={index === 0 ? "" : "hidden"}
+              esPreview={!hasRealQr}
             />
           ))}
         </div>
       </div>
 
-      {/* Botones de impresión (se ocultan al imprimir) */}
-      <div className="no-print flex flex-wrap items-center justify-center gap-3">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] transition-colors shadow"
-        >
-          <Printer className="h-4 w-4" />
-          Imprimir {qrValues.length} ticket{qrValues.length > 1 ? "s" : ""}
-        </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleAgentPrint}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition-colors shadow"
-        >
-          <Usb className="h-4 w-4" />
-          Imprimir vía agente local
-        </motion.button>
+      {/* Tickets ocultos usados para generar la imagen de impresión.
+          Con QR reales imprime boletas válidas; sin venta imprime la
+          vista previa marcada como "QR no válido". */}
+      <div
+        ref={printRef}
+        className="absolute left-0 top-0 -z-[9999] pointer-events-none flex flex-col"
+        aria-hidden="true"
+      >
+        {printQrValues.map((code) => (
+          <TicketVisual
+            key={code}
+            qrValue={code}
+            tipoBoleta={tipoBoleta}
+            precio={precio}
+            fechaCompra={fechaCompra}
+            evento={evento}
+            esPreview={!hasRealQr}
+          />
+        ))}
       </div>
 
       {agentStatus && (
@@ -196,6 +288,6 @@ export const BoleteriaFisicaTicket = ({
       `}</style>
     </div>
   );
-};
+});
 
 export default BoleteriaFisicaTicket;

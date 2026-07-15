@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
 import { VentaFisicaPanel } from "@/components/admin/boleteria-fisica/VentaFisicaPanel";
+import { EVENTOS_FISICOS_MOCK } from "@/components/admin/boleteria-fisica/mocks/eventos-fisicos.mock";
 import EventsService from "@/services/EventsService";
 import { Evento } from "@/interfaces/event.interface";
 import { ArrowLeft, Printer, CalendarDays } from "lucide-react";
@@ -33,6 +34,13 @@ const BoleteriaFisicaDetalleContent = () => {
     if (Number.isNaN(eventoId)) {
       toast.error("ID de evento inválido");
       router.replace("/admin/boleteria_fisica");
+      return;
+    }
+
+    const eventoMock = EVENTOS_FISICOS_MOCK.find((e) => e.id === eventoId);
+    if (eventoMock) {
+      setEvento(eventoMock);
+      setLoading(false);
       return;
     }
 

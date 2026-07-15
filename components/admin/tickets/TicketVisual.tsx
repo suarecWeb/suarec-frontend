@@ -1,6 +1,7 @@
 "use client";
 
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
+import { QrCode } from "lucide-react";
 
 interface EventoInfo {
   nombre?: string;
@@ -16,6 +17,7 @@ export interface TicketVisualProps {
   fechaCompra: string;
   evento?: EventoInfo;
   className?: string;
+  esPreview?: boolean;
 }
 
 const formatCOP = (value: string | number) => {
@@ -37,6 +39,7 @@ export const TicketVisual = ({
   fechaCompra,
   evento,
   className = "",
+  esPreview = false,
 }: TicketVisualProps) => {
   return (
     <div
@@ -78,20 +81,22 @@ export const TicketVisual = ({
 
       {/* QR dinámico centrado */}
       <div className="absolute left-1/2 -translate-x-1/2 top-[67%] w-[38%] aspect-square bg-white flex items-center justify-center">
-        <QRCodeSVG
-          value={qrValue || "SUAREC"}
-          size={165}
-          level="M"
-          includeMargin={false}
-        />
+        {esPreview ? (
+          <div className="flex flex-col items-center justify-center text-center p-2">
+            <QrCode className="h-12 w-12 text-gray-300 mb-1" />
+          </div>
+        ) : (
+          <QRCodeCanvas
+            value={qrValue || "SUAREC"}
+            size={165}
+            level="M"
+            includeMargin={false}
+          />
+        )}
       </div>
 
       {/* Leyenda QR */}
-      <div className="absolute left-0 right-0 top-[83.5%] text-center px-4">
-        <p className="text-[10px] text-black font-medium">
-          Presenta este código en la entrada
-        </p>
-      </div>
+      <div className="absolute left-0 right-0 top-[83.5%] text-center px-4"></div>
 
       {/* Valor pagado */}
       <div className="absolute left-[8%] bottom-[2.5%] text-center w-[38%]">

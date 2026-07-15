@@ -31,6 +31,7 @@ import { formatDisplayDate } from "@/lib/TimeZone";
 interface EventsManagementProps {
   modoFisico?: boolean;
   filtroModalidad?: EventoModalidad;
+  eventosMock?: Evento[];
 }
 
 const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
@@ -55,6 +56,7 @@ const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
 const EventsManagement = ({
   modoFisico = false,
   filtroModalidad,
+  eventosMock,
 }: EventsManagementProps) => {
   const router = useRouter();
   const [events, setEvents] = useState<Evento[]>([]);
@@ -74,11 +76,17 @@ const EventsManagement = ({
   }, [isAnyModalOpen]);
 
   useEffect(() => {
+    if (eventosMock) {
+      setEvents(eventosMock);
+      setLoading(false);
+      return;
+    }
+
     EventsService.getAllEventsAdmin()
       .then((res) => setEvents(res.data))
       .catch(() => toast.error("Error al cargar los eventos"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [eventosMock]);
 
   const generarCodigos = async (eventoId: number, cantidad?: number) => {
     if (!cantidad || cantidad <= 0) return;

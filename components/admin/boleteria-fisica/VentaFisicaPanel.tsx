@@ -1,11 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Evento } from "@/interfaces/event.interface";
-import { BoleteriaFisicaTicket } from "@/components/admin/BoleteriaFisicaTicket";
-import { Printer, ArrowLeft, ShoppingCart } from "lucide-react";
+import {
+  BoleteriaFisicaTicket,
+  type BoleteriaFisicaTicketRef,
+} from "@/components/admin/BoleteriaFisicaTicket";
+import EventsService from "@/services/EventsService";
+import { MetodoPagoFisico } from "@/interfaces/boleteria-fisica.interface";
+import {
+  Printer,
+  Usb,
+  ArrowLeft,
+  ShoppingCart,
+  Banknote,
+  ArrowRightLeft,
+  PlusCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 interface VentaFisicaPanelProps {
   evento?: Evento;
@@ -42,6 +58,13 @@ const formatEventTime = (iso?: string): string => {
   });
 };
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(value);
+
 export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   const [qrValue, setQrValue] = useState("SUAREC-EVT-001-TKT-0001");
   const [tipoBoleta, setTipoBoleta] = useState<"GENERAL" | "VIP">("GENERAL");
@@ -56,15 +79,155 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     new Date().toLocaleDateString("es-CO"),
   );
 
+  // Método de pago
+  const [metodoPago, setMetodoPago] = useState<MetodoPagoFisico>(
+    MetodoPagoFisico.EFECTIVO,
+  );
+  const [billeteRecibido, setBilleteRecibido] = useState<string>("");
+
+  // Estados de acciones
+  const [vendiendo, setVendiendo] = useState(false);
+  const [generandoLote, setGenerandoLote] = useState(false);
+  const [cantidadLote, setCantidadLote] = useState<string>("1000");
+  const [resultadoVenta, setResultadoVenta] = useState<{
+    ventaId: number;
+    cambio: number | null;
+    cantidad: number;
+    montoTotal: number;
+  } | null>(null);
+  const [qrValues, setQrValues] = useState<string[]>([]);
+  const [disponibles, setDisponibles] = useState<number | null>(null);
+  const ticketRef = useRef<BoleteriaFisicaTicketRef | null>(null);
+
+  const precioNumerico = useMemo(
+    () => Number(precio.replace(/\D/g, "")) || 0,
+    [precio],
+  );
+  const montoTotal = useMemo(
+    () => precioNumerico * cantidad,
+    [precioNumerico, cantidad],
+  );
+  const cambio = useMemo(() => {
+    if (metodoPago !== MetodoPagoFisico.EFECTIVO) return 0;
+    const recibido = Number(billeteRecibido.replace(/\D/g, "")) || 0;
+    return Math.max(0, recibido - montoTotal);
+  }, [metodoPago, billeteRecibido, montoTotal]);
+
   useEffect(() => {
-    if (!evento) return;
+    if (!evento?.id) return;
+    const eventoId = evento.id;
 
     setFechaEvento(formatEventDate(evento.fechaEvento));
     setHoraEvento(formatEventTime(evento.fechaEvento));
     setUbicacion(evento.ubicacion || "");
     setPrecio(String(evento.precioBase ?? "20000"));
     setQrValue(`SUAREC-EVT-${evento.id ?? "001"}-TKT-0001`);
+    setQrValues([]);
+    setResultadoVenta(null);
+    setDisponibles(null);
+
+    const cargarDisponibles = async () => {
+      try {
+        const res =
+          await EventsService.contarBoletasFisicasDisponibles(eventoId);
+        setDisponibles(res.data.disponibles);
+      } catch {
+        setDisponibles(null);
+      }
+    };
+
+    cargarDisponibles();
   }, [evento]);
+
+  const handleGenerarLote = async () => {
+    if (!evento?.id) {
+      toast.error("No hay un evento seleccionado");
+      return;
+    }
+
+    const cantidad = Number(cantidadLote);
+    if (!cantidad || cantidad < 1) {
+      toast.error("Ingresa una cantidad válida para el lote");
+      return;
+    }
+
+    setGenerandoLote(true);
+    try {
+      const res = await EventsService.generarLoteFisico(evento.id, {
+        cantidad,
+      });
+      toast.success(
+        `Lote generado: ${res.data.generadas} boletas (lote #${res.data.loteId})`,
+      );
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message ||
+          "Error al generar el lote de boletas físicas",
+      );
+    } finally {
+      setGenerandoLote(false);
+    }
+  };
+
+  const handleVender = async () => {
+    if (!evento?.id) {
+      toast.error("No hay un evento seleccionado");
+      return;
+    }
+
+    if (cantidad < 1) {
+      toast.error("La cantidad debe ser al menos 1");
+      return;
+    }
+
+    if (metodoPago === MetodoPagoFisico.EFECTIVO) {
+      const recibido = Number(billeteRecibido.replace(/\D/g, "")) || 0;
+      if (recibido < montoTotal) {
+        toast.error("El billete recibido no cubre el monto total");
+        return;
+      }
+    }
+
+    setVendiendo(true);
+    setResultadoVenta(null);
+
+    try {
+      const res = await EventsService.venderBoletasFisicas(evento.id, {
+        cantidad,
+        metodoPago,
+        billeteRecibido:
+          metodoPago === MetodoPagoFisico.EFECTIVO
+            ? Number(billeteRecibido.replace(/\D/g, "")) || undefined
+            : undefined,
+      });
+
+      // eslint-disable-next-line no-console
+      console.log("[VentaFisicaPanel] venta creada:", res.data);
+
+      const ventaRes = await EventsService.obtenerVentaFisica(res.data.ventaId);
+
+      // eslint-disable-next-line no-console
+      console.log("[VentaFisicaPanel] venta con boletas:", ventaRes.data);
+
+      setResultadoVenta({
+        ventaId: ventaRes.data.ventaId,
+        cambio: ventaRes.data.cambio,
+        cantidad: ventaRes.data.cantidad,
+        montoTotal: ventaRes.data.montoTotal,
+      });
+      setQrValues(ventaRes.data.boletas.map((b) => b.qrToken));
+
+      toast.success(`Venta #${res.data.ventaId} confirmada`);
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error("[VentaFisicaPanel] error venta:", error);
+      toast.error(
+        error.response?.data?.message || "Error al confirmar la venta",
+      );
+    } finally {
+      setVendiendo(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -91,6 +254,12 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
             <p className="text-sm font-semibold text-[#097EEC]">
               {evento.nombre}
             </p>
+            {disponibles !== null && (
+              <p className="mt-1.5 text-xs text-gray-600">
+                <span className="font-medium">{disponibles}</span> boletas
+                físicas disponibles
+              </p>
+            )}
           </div>
         )}
 
@@ -193,13 +362,120 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               placeholder="14/07/2026"
             />
           </div>
+
+          {/* Método de pago */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Método de pago
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMetodoPago(MetodoPagoFisico.EFECTIVO)}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  metodoPago === MetodoPagoFisico.EFECTIVO
+                    ? "bg-[#097EEC] text-white border-[#097EEC]"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <Banknote className="h-4 w-4" />
+                Efectivo
+              </button>
+              <button
+                type="button"
+                onClick={() => setMetodoPago(MetodoPagoFisico.TRANSFERENCIA)}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  metodoPago === MetodoPagoFisico.TRANSFERENCIA
+                    ? "bg-[#097EEC] text-white border-[#097EEC]"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                Transferencia
+              </button>
+            </div>
+          </div>
+
+          {metodoPago === MetodoPagoFisico.EFECTIVO && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Billete recibido (COP)
+              </label>
+              <input
+                type="text"
+                value={billeteRecibido}
+                onChange={(e) => setBilleteRecibido(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                placeholder="Ej: 100000"
+              />
+              {cambio > 0 && (
+                <p className="mt-1.5 text-sm text-green-600 font-medium">
+                  Cambio: {formatCurrency(cambio)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Total */}
+          <div className="p-4 bg-gray-50 rounded-xl">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              Total a pagar
+            </p>
+            <p className="text-2xl font-bold text-[#097EEC]">
+              {formatCurrency(montoTotal)}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {cantidad} × {formatCurrency(precioNumerico)}
+            </p>
+          </div>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl text-sm text-gray-700">
-          <p className="font-medium text-[#097EEC] mb-1">Nota</p>
-          <p>
-            Estos datos son solo para la vista previa. En el flujo real se
-            generarán automáticamente desde el backend.
+        {/* Botón confirmar venta */}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleVender}
+          disabled={vendiendo}
+          className="w-full mt-5 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] disabled:opacity-60 transition-colors shadow"
+        >
+          {vendiendo ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle className="h-4 w-4" />
+          )}
+          {vendiendo ? "Confirmando..." : "Confirmar venta"}
+        </motion.button>
+
+        {/* Generar lote */}
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            Generar / ampliar lote
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              max={50000}
+              value={cantidadLote}
+              onChange={(e) => setCantidadLote(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+              placeholder="Cantidad"
+            />
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleGenerarLote}
+              disabled={generandoLote}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60 transition-colors"
+            >
+              {generandoLote ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlusCircle className="h-4 w-4" />
+              )}
+              Generar
+            </motion.button>
+          </div>
+          <p className="mt-1.5 text-xs text-gray-400">
+            Crea boletas físicas disponibles para este evento.
           </p>
         </div>
       </motion.div>
@@ -239,12 +515,64 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           )}
         </div>
 
+        {resultadoVenta && (
+          <div className="w-full mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">
+                  Venta #{resultadoVenta.ventaId} confirmada
+                </p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  {resultadoVenta.cantidad} boleta(s) vendida(s) por{" "}
+                  {formatCurrency(resultadoVenta.montoTotal)}
+                </p>
+                {resultadoVenta.cambio !== null &&
+                  resultadoVenta.cambio > 0 && (
+                    <p className="text-xs text-green-700 mt-0.5">
+                      Cambio: {formatCurrency(resultadoVenta.cambio)}
+                    </p>
+                  )}
+                <p className="text-xs text-green-600 mt-2">
+                  QR listos para imprimir. Escanea el código en la entrada para
+                  validar el acceso.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Botones de impresión */}
+        <div className="w-full flex justify-end gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => ticketRef.current?.handlePrint()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] transition-colors shadow"
+          >
+            <Printer className="h-4 w-4" />
+            Imprimir {qrValues.length || cantidad} ticket
+            {(qrValues.length || cantidad) > 1 ? "s" : ""}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => ticketRef.current?.handleAgentPrint()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition-colors shadow"
+          >
+            <Usb className="h-4 w-4" />
+            Imprimir vía agente local
+          </button>
+        </div>
+
         <BoleteriaFisicaTicket
+          ref={ticketRef}
           qrValue={qrValue}
+          qrValues={qrValues.length > 0 ? qrValues : undefined}
           tipoBoleta={tipoBoleta}
           precio={precio}
           fechaCompra={fechaCompra}
           cantidad={cantidad}
+          esPreview
           evento={{
             nombre: evento?.nombre,
             fecha: fechaEvento,
