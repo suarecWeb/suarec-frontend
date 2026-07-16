@@ -139,7 +139,9 @@ const BoletasValidadasTable = () => {
         <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
           <QrCode className="h-8 w-8 text-gray-300 mx-auto mb-2" />
           <p className="text-sm text-gray-500">
-            Aún no se ha validado ninguna boleta física
+            {serialSearch
+              ? "Ningún serial coincide con la búsqueda"
+              : "Aún no se ha validado ninguna boleta física"}
           </p>
         </div>
       ) : (
