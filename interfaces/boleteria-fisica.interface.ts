@@ -62,3 +62,9 @@ export interface ContarBoletasFisicasDisponiblesResponse {
   vendidas: number;
   total: number;
 }
+
+export interface ObtenerUltimoLoteFisicoResponse {
+  loteId: number | null;
+  cantidadGenerada: number | null;
+  createdAt: string | null;
+}

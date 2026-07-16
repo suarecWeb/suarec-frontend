@@ -66,6 +66,7 @@ export interface CreateEventoDto {
   tipo?: EventoTipo;
   nombreOrganizador?: string;
   estado?: EventoEstado;
+  modalidad?: EventoModalidad;
   formatId?: number;
   removeImage?: boolean;
 }

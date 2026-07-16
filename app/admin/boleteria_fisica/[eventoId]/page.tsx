@@ -6,13 +6,36 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
 import { VentaFisicaPanel } from "@/components/admin/boleteria-fisica/VentaFisicaPanel";
+import { LotesFisicosPanel } from "@/components/admin/boleteria-fisica/LotesFisicosPanel";
 import { EVENTOS_FISICOS_MOCK } from "@/components/admin/boleteria-fisica/mocks/eventos-fisicos.mock";
 import EventsService from "@/services/EventsService";
 import { Evento } from "@/interfaces/event.interface";
-import { ArrowLeft, Printer, CalendarDays } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Printer,
+  CalendarDays,
+  ShoppingCart,
+  Package,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { formatDisplayDate } from "@/lib/TimeZone";
 import toast from "react-hot-toast";
+
+type BoleteriaFisicaTab = "venta" | "lotes";
+
+const TAB_CONFIG: Record<
+  BoleteriaFisicaTab,
+  { label: string; icon: React.ReactNode }
+> = {
+  venta: {
+    label: "Venta",
+    icon: <ShoppingCart className="h-4 w-4" />,
+  },
+  lotes: {
+    label: "Lotes",
+    icon: <Package className="h-4 w-4" />,
+  },
+};
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -29,6 +52,7 @@ const BoleteriaFisicaDetalleContent = () => {
   const eventoId = Number(params.eventoId);
   const [evento, setEvento] = useState<Evento | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<BoleteriaFisicaTab>("venta");
 
   useEffect(() => {
     if (Number.isNaN(eventoId)) {
@@ -98,19 +122,59 @@ const BoleteriaFisicaDetalleContent = () => {
         </div>
 
         <div className="container mx-auto px-4 -mt-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
-            {loading ? (
-              <div className="py-20 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#097EEC] border-t-transparent mx-auto mb-3" />
-                <p className="text-sm text-gray-400">Cargando evento...</p>
+          {loading ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 py-20 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#097EEC] border-t-transparent mx-auto mb-3" />
+              <p className="text-sm text-gray-400">Cargando evento...</p>
+            </div>
+          ) : (
+            <>
+              {/* Tabs */}
+              <div className="flex gap-2 mb-4">
+                {(Object.keys(TAB_CONFIG) as BoleteriaFisicaTab[]).map(
+                  (tab) => (
+                    <motion.button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      whileTap={{ scale: 0.97 }}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm ${
+                        activeTab === tab
+                          ? "bg-[#097EEC] text-white shadow-md"
+                          : "bg-white text-gray-600 hover:bg-gray-100 shadow"
+                      }`}
+                    >
+                      {TAB_CONFIG[tab].icon}
+                      {TAB_CONFIG[tab].label}
+                    </motion.button>
+                  ),
+                )}
               </div>
-            ) : (
-              <VentaFisicaPanel
-                evento={evento}
-                onBack={() => router.push("/admin/boleteria_fisica")}
-              />
-            )}
-          </div>
+
+              {/* Contenido según tab */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  {activeTab === "venta" && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
+                      <VentaFisicaPanel
+                        evento={evento}
+                        onBack={() => router.push("/admin/boleteria_fisica")}
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === "lotes" && (
+                    <LotesFisicosPanel evento={evento} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </>
+          )}
         </div>
       </div>
     </motion.div>

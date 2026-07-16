@@ -21,11 +21,13 @@ interface EventoInfo {
   fecha?: string;
   hora?: string;
   lugar?: string;
+  descripcion?: string;
 }
 
 interface BoleteriaFisicaTicketProps {
   qrValue: string;
   qrValues?: string[];
+  qrIds?: string[];
   tipoBoleta?: "GENERAL" | "VIP";
   precio: string;
   fechaCompra: string;
@@ -54,6 +56,7 @@ export const BoleteriaFisicaTicket = forwardRef<
   {
     qrValue,
     qrValues: qrValuesProp,
+    qrIds: qrIdsProp,
     tipoBoleta = "GENERAL",
     precio,
     fechaCompra,
@@ -65,6 +68,7 @@ export const BoleteriaFisicaTicket = forwardRef<
 ) {
   const ticketsRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const ticketRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [agentStatus, setAgentStatus] = useState<string>("");
 
   const previewQrValues = useMemo(() => {
@@ -103,6 +107,23 @@ export const BoleteriaFisicaTicket = forwardRef<
     });
 
     return canvas.toDataURL("image/png");
+  }, []);
+
+  const captureSingleTickets = useCallback(async () => {
+    const validRefs = ticketRefs.current.filter(Boolean) as HTMLDivElement[];
+    if (validRefs.length === 0) return [];
+
+    const images: string[] = [];
+    for (const el of validRefs) {
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+      });
+      images.push(canvas.toDataURL("image/png"));
+    }
+    return images;
   }, []);
 
   const handlePrint = useCallback(async () => {
@@ -155,8 +176,8 @@ export const BoleteriaFisicaTicket = forwardRef<
     );
 
     try {
-      const imageBase64 = await capturePrintTickets();
-      if (!imageBase64) {
+      const imagesBase64 = await captureSingleTickets();
+      if (imagesBase64.length === 0) {
         setAgentStatus("No se pudo generar la imagen del ticket.");
         return;
       }
@@ -166,7 +187,7 @@ export const BoleteriaFisicaTicket = forwardRef<
       const response = await fetch(`${AGENT_URL}/print-image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64 }),
+        body: JSON.stringify({ imageBase64: imagesBase64 }),
       });
 
       const data = await response.json();
@@ -183,29 +204,56 @@ export const BoleteriaFisicaTicket = forwardRef<
         `Error: ${error.message}. Verifica que el agente local esté corriendo en ${AGENT_URL}`,
       );
     }
-  }, [hasRealQr, printQrValues.length, capturePrintTickets]);
+  }, [hasRealQr, printQrValues.length, captureSingleTickets]);
 
   useImperativeHandle(ref, () => ({
     handlePrint,
     handleAgentPrint,
   }));
 
+  const previewScale = 0.7;
+  const previewWidth = Math.round(400 * previewScale);
+  const previewHeight = Math.round(880 * previewScale);
+
   return (
     <div className="relative flex flex-col items-center gap-6">
-      {/* Vista previa en pantalla: QR real si hay venta, placeholder si no */}
-      <div className="no-print p-4 bg-gray-100 rounded-xl">
-        <div ref={ticketsRef} className="flex flex-col">
+      {/* Vista previa en pantalla: miniaturas en grilla */}
+      <div className="no-print w-full p-4 bg-gray-100 rounded-xl">
+        <p className="text-sm font-medium text-gray-700 mb-3">
+          Vista previa de {printQrValues.length}{" "}
+          {printQrValues.length === 1 ? "boleta" : "boletas"}
+        </p>
+        <div
+          ref={ticketsRef}
+          className="grid grid-cols-2 gap-4 justify-items-center max-h-[680px] overflow-y-auto p-1"
+        >
           {printQrValues.map((code, index) => (
-            <TicketVisual
+            <div
               key={code}
-              qrValue={code}
-              tipoBoleta={tipoBoleta}
-              precio={precio}
-              fechaCompra={fechaCompra}
-              evento={evento}
-              className={index === 0 ? "" : "hidden"}
-              esPreview={!hasRealQr}
-            />
+              className="relative rounded-lg shadow-sm border border-gray-200 overflow-hidden bg-white"
+              style={{
+                width: previewWidth,
+                height: previewHeight,
+              }}
+            >
+              <div
+                className="absolute left-0 top-0"
+                style={{
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <TicketVisual
+                  qrValue={code}
+                  qrId={qrIdsProp?.[index]}
+                  tipoBoleta={tipoBoleta}
+                  precio={precio}
+                  fechaCompra={fechaCompra}
+                  evento={evento}
+                  esPreview={!hasRealQr}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -218,16 +266,23 @@ export const BoleteriaFisicaTicket = forwardRef<
         className="absolute left-0 top-0 -z-[9999] pointer-events-none flex flex-col"
         aria-hidden="true"
       >
-        {printQrValues.map((code) => (
-          <TicketVisual
+        {printQrValues.map((code, index) => (
+          <div
             key={code}
-            qrValue={code}
-            tipoBoleta={tipoBoleta}
-            precio={precio}
-            fechaCompra={fechaCompra}
-            evento={evento}
-            esPreview={!hasRealQr}
-          />
+            ref={(el) => {
+              ticketRefs.current[index] = el;
+            }}
+          >
+            <TicketVisual
+              qrValue={code}
+              qrId={qrIdsProp?.[index]}
+              tipoBoleta={tipoBoleta}
+              precio={precio}
+              fechaCompra={fechaCompra}
+              evento={evento}
+              esPreview={!hasRealQr}
+            />
+          </div>
         ))}
       </div>
 
@@ -271,7 +326,7 @@ export const BoleteriaFisicaTicket = forwardRef<
             position: relative !important;
             width: 80mm !important;
             height: auto !important;
-            aspect-ratio: 350 / 769 !important;
+            aspect-ratio: 400 / 880 !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;

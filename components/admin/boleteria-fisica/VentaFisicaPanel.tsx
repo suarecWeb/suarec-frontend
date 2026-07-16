@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { flushSync } from "react-dom";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Evento } from "@/interfaces/event.interface";
 import {
@@ -8,6 +10,7 @@ import {
   type BoleteriaFisicaTicketRef,
 } from "@/components/admin/BoleteriaFisicaTicket";
 import EventsService from "@/services/EventsService";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { MetodoPagoFisico } from "@/interfaces/boleteria-fisica.interface";
 import {
   Printer,
@@ -16,9 +19,14 @@ import {
   ShoppingCart,
   Banknote,
   ArrowRightLeft,
-  PlusCircle,
   CheckCircle,
   Loader2,
+  ChevronDown,
+  ChevronUp,
+  Ticket,
+  CalendarClock,
+  MapPin,
+  Settings2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -87,8 +95,6 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
 
   // Estados de acciones
   const [vendiendo, setVendiendo] = useState(false);
-  const [generandoLote, setGenerandoLote] = useState(false);
-  const [cantidadLote, setCantidadLote] = useState<string>("1000");
   const [resultadoVenta, setResultadoVenta] = useState<{
     ventaId: number;
     cambio: number | null;
@@ -96,8 +102,17 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     montoTotal: number;
   } | null>(null);
   const [qrValues, setQrValues] = useState<string[]>([]);
+  const [qrIds, setQrIds] = useState<string[]>([]);
   const [disponibles, setDisponibles] = useState<number | null>(null);
+  const [mostrarConfigEvento, setMostrarConfigEvento] = useState(true);
   const ticketRef = useRef<BoleteriaFisicaTicketRef | null>(null);
+
+  // Sidebar redimensionable — mismo patrón que AdminSidePanel en publicaciones,
+  // con su propia clave de storage y anchos acordes al formulario de venta
+  const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel(
+    "suarec_venta_fisica_panel_w",
+    { defaultWidth: 360, minWidth: 300, maxWidth: 520 },
+  );
 
   const precioNumerico = useMemo(
     () => Number(precio.replace(/\D/g, "")) || 0,
@@ -139,36 +154,6 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     cargarDisponibles();
   }, [evento]);
 
-  const handleGenerarLote = async () => {
-    if (!evento?.id) {
-      toast.error("No hay un evento seleccionado");
-      return;
-    }
-
-    const cantidad = Number(cantidadLote);
-    if (!cantidad || cantidad < 1) {
-      toast.error("Ingresa una cantidad válida para el lote");
-      return;
-    }
-
-    setGenerandoLote(true);
-    try {
-      const res = await EventsService.generarLoteFisico(evento.id, {
-        cantidad,
-      });
-      toast.success(
-        `Lote generado: ${res.data.generadas} boletas (lote #${res.data.loteId})`,
-      );
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          "Error al generar el lote de boletas físicas",
-      );
-    } finally {
-      setGenerandoLote(false);
-    }
-  };
-
   const handleVender = async () => {
     if (!evento?.id) {
       toast.error("No hay un evento seleccionado");
@@ -180,12 +165,29 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
       return;
     }
 
+    if (cantidad > 4) {
+      toast.error("No puedes vender más de 4 boletas físicas a la vez");
+      return;
+    }
+
     if (metodoPago === MetodoPagoFisico.EFECTIVO) {
       const recibido = Number(billeteRecibido.replace(/\D/g, "")) || 0;
       if (recibido < montoTotal) {
         toast.error("El billete recibido no cubre el monto total");
         return;
       }
+    }
+
+    if (disponibles === null) {
+      toast.error("No se pudo consultar la disponibilidad de boletas físicas");
+      return;
+    }
+
+    if (disponibles < cantidad) {
+      toast.error(
+        `Solo hay ${disponibles} boleta(s) física(s) disponible(s). Genera un lote primero.`,
+      );
+      return;
     }
 
     setVendiendo(true);
@@ -209,13 +211,24 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
       // eslint-disable-next-line no-console
       console.log("[VentaFisicaPanel] venta con boletas:", ventaRes.data);
 
+      const nuevosQrValues = ventaRes.data.boletas.map((b) => b.qrToken);
+      const nuevosQrIds = ventaRes.data.boletas.map((b) => b.id);
+
       setResultadoVenta({
         ventaId: ventaRes.data.ventaId,
         cambio: ventaRes.data.cambio,
         cantidad: ventaRes.data.cantidad,
         montoTotal: ventaRes.data.montoTotal,
       });
-      setQrValues(ventaRes.data.boletas.map((b) => b.qrToken));
+
+      // Aplicamos los QR reales de forma sincrónica para que el DOM se actualice
+      // antes de capturar los tickets e imprimirlos automáticamente.
+      flushSync(() => {
+        setQrValues(nuevosQrValues);
+        setQrIds(nuevosQrIds);
+      });
+
+      ticketRef.current?.handleAgentPrint();
 
       toast.success(`Venta #${res.data.ventaId} confirmada`);
     } catch (error: any) {
@@ -230,41 +243,136 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      {/* Panel de configuración de la venta */}
-      <motion.div
+    <div
+      className="flex flex-col md:flex-row items-start"
+      style={{ "--panel-w": `${panelWidth}px` } as CSSProperties}
+    >
+      {/* Sidebar de datos de la venta — mismo lenguaje visual que AdminSidePanel */}
+      <motion.aside
         variants={contentVariants}
         initial="initial"
         animate="animate"
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-fit"
+        className="w-full md:w-[var(--panel-w)] md:flex-shrink-0 flex flex-col bg-white rounded-2xl shadow-xl pt-6 pb-4 px-4 h-fit"
       >
-        <div className="flex items-center gap-2 mb-5">
-          <ShoppingCart className="h-5 w-5 text-[#097EEC]" />
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="mb-6">
+          <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide">
+            Boletería física
+          </p>
+          <h2 className="mt-1 flex items-center gap-2 text-sm font-eras-bold text-gray-800">
+            <ShoppingCart className="h-4 w-4 text-[#097EEC]" />
             Datos de la venta
           </h2>
         </div>
 
+        {/* Card: Evento seleccionado */}
         {evento && (
-          <div className="mb-5 p-4 bg-blue-50 rounded-xl">
+          <div className="mb-4 p-4 bg-blue-50 rounded-xl">
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
               Evento seleccionado
             </p>
             <p className="text-sm font-semibold text-[#097EEC]">
               {evento.nombre}
             </p>
+            {evento.descripcion && (
+              <div className="mt-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                  Descripción (quienes se presentarán)
+                </p>
+                <p className="text-xs text-gray-700 line-clamp-3">
+                  {evento.descripcion}
+                </p>
+              </div>
+            )}
             {disponibles !== null && (
               <p className="mt-1.5 text-xs text-gray-600">
                 <span className="font-medium">{disponibles}</span> boletas
                 físicas disponibles
               </p>
             )}
+            <button
+              type="button"
+              onClick={() => setMostrarConfigEvento((v) => !v)}
+              className="mt-3 flex items-center gap-1 text-xs font-medium text-[#097EEC] hover:text-[#0766c2] transition-colors"
+            >
+              {mostrarConfigEvento ? (
+                <>
+                  <ChevronUp className="h-3.5 w-3.5" /> Ocultar configuración
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3.5 w-3.5" /> Ver configuración
+                </>
+              )}
+            </button>
           </div>
         )}
 
-        <div className="space-y-4">
-          <div>
+        {/* Configuración del evento — colapsable porque es fija */}
+        {mostrarConfigEvento && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              <Settings2 className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
+              Configuración del evento
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Fecha
+                </label>
+                <input
+                  type="text"
+                  value={fechaEvento}
+                  onChange={(e) => setFechaEvento(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Hora
+                </label>
+                <input
+                  type="text"
+                  value={horaEvento}
+                  onChange={(e) => setHoraEvento(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                <MapPin className="h-3 w-3 inline-block mr-1" />
+                Ubicación
+              </label>
+              <input
+                type="text"
+                value={ubicacion}
+                onChange={(e) => setUbicacion(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+              />
+            </div>
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Precio base (COP)
+              </label>
+              <input
+                type="text"
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Card: Boleta a comprar */}
+        <div className="mb-4 p-4 border border-gray-100 rounded-xl">
+          <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            <Ticket className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
+            Boleta a comprar
+          </p>
+
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tipo de boleta
             </label>
@@ -280,78 +388,9 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha del evento
-              </label>
-              <input
-                type="text"
-                value={fechaEvento}
-                onChange={(e) => setFechaEvento(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-                placeholder="Domingo, 19 de julio de 2026"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Hora del evento
-              </label>
-              <input
-                type="text"
-                value={horaEvento}
-                onChange={(e) => setHoraEvento(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-                placeholder="6:00 p.m."
-              />
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ubicación
-            </label>
-            <input
-              type="text"
-              value={ubicacion}
-              onChange={(e) => setUbicacion(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-              placeholder="La Herradura, Cauca"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Precio (COP)
-              </label>
-              <input
-                type="text"
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-                placeholder="20000"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cantidad
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={cantidad}
-                onChange={(e) => setCantidad(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <CalendarClock className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
               Fecha de compra
             </label>
             <input
@@ -362,9 +401,15 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               placeholder="14/07/2026"
             />
           </div>
+        </div>
 
-          {/* Método de pago */}
-          <div>
+        {/* Card: Pago */}
+        <div className="mb-4 p-4 border border-gray-100 rounded-xl bg-gray-50/60">
+          <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            Pago
+          </p>
+
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Método de pago
             </label>
@@ -397,27 +442,60 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           </div>
 
           {metodoPago === MetodoPagoFisico.EFECTIVO && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Billete recibido (COP)
-              </label>
-              <input
-                type="text"
-                value={billeteRecibido}
-                onChange={(e) => setBilleteRecibido(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-                placeholder="Ej: 100000"
-              />
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cantidad
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={cantidad}
+                  onChange={(e) => setCantidad(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Billete recibido (COP)
+                </label>
+                <input
+                  type="text"
+                  value={billeteRecibido}
+                  onChange={(e) => setBilleteRecibido(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                  placeholder="Ej: 100000"
+                />
+              </div>
               {cambio > 0 && (
-                <p className="mt-1.5 text-sm text-green-600 font-medium">
-                  Cambio: {formatCurrency(cambio)}
-                </p>
+                <div className="col-span-2">
+                  <p className="text-sm text-green-600 font-medium">
+                    Cambio: {formatCurrency(cambio)}
+                  </p>
+                </div>
               )}
             </div>
           )}
 
+          {metodoPago !== MetodoPagoFisico.EFECTIVO && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cantidad
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={cantidad}
+                onChange={(e) => setCantidad(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+              />
+            </div>
+          )}
+
           {/* Total */}
-          <div className="p-4 bg-gray-50 rounded-xl">
+          <div className="p-4 bg-white rounded-xl border border-gray-100">
             <p className="text-xs text-gray-500 uppercase tracking-wide">
               Total a pagar
             </p>
@@ -435,7 +513,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           whileTap={{ scale: 0.97 }}
           onClick={handleVender}
           disabled={vendiendo}
-          className="w-full mt-5 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] disabled:opacity-60 transition-colors shadow"
+          className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] disabled:opacity-60 transition-colors shadow"
         >
           {vendiendo ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -444,41 +522,15 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           )}
           {vendiendo ? "Confirmando..." : "Confirmar venta"}
         </motion.button>
+      </motion.aside>
 
-        {/* Generar lote */}
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Generar / ampliar lote
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={1}
-              max={50000}
-              value={cantidadLote}
-              onChange={(e) => setCantidadLote(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-              placeholder="Cantidad"
-            />
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleGenerarLote}
-              disabled={generandoLote}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60 transition-colors"
-            >
-              {generandoLote ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <PlusCircle className="h-4 w-4" />
-              )}
-              Generar
-            </motion.button>
-          </div>
-          <p className="mt-1.5 text-xs text-gray-400">
-            Crea boletas físicas disponibles para este evento.
-          </p>
-        </div>
-      </motion.div>
+      {/* Handle de redimensionamiento — mismo patrón que admin */}
+      <div
+        className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none self-stretch"
+        onMouseDown={onPanelDrag}
+      >
+        <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
+      </div>
 
       {/* Vista previa del ticket */}
       <motion.div
@@ -486,7 +538,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
         initial="initial"
         animate="animate"
         transition={{ duration: 0.3, delay: 0.1, ease: "easeInOut" }}
-        className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center"
+        className="flex-1 min-w-0 w-full mt-6 md:mt-0 md:ml-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 flex flex-col items-center min-h-[860px]"
       >
         <div className="w-full flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -542,7 +594,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           </div>
         )}
 
-        {/* Botones de impresión */}
+        {/* Botón de impresión manual (navegador). El agente local se dispara automáticamente al confirmar venta. */}
         <div className="w-full flex justify-end gap-3 mb-4">
           <button
             type="button"
@@ -553,21 +605,13 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
             Imprimir {qrValues.length || cantidad} ticket
             {(qrValues.length || cantidad) > 1 ? "s" : ""}
           </button>
-
-          <button
-            type="button"
-            onClick={() => ticketRef.current?.handleAgentPrint()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition-colors shadow"
-          >
-            <Usb className="h-4 w-4" />
-            Imprimir vía agente local
-          </button>
         </div>
 
         <BoleteriaFisicaTicket
           ref={ticketRef}
           qrValue={qrValue}
           qrValues={qrValues.length > 0 ? qrValues : undefined}
+          qrIds={qrIds.length > 0 ? qrIds : undefined}
           tipoBoleta={tipoBoleta}
           precio={precio}
           fechaCompra={fechaCompra}
@@ -578,9 +622,21 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
             fecha: fechaEvento,
             hora: horaEvento,
             lugar: ubicacion,
+            descripcion: evento?.descripcion,
           }}
         />
       </motion.div>
+
+      {/* Overlay de carga fullscreen al confirmar venta */}
+      {vendiendo && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+          <Loader2 className="h-12 w-12 text-white animate-spin mb-4" />
+          <p className="text-white text-lg font-medium">Confirmando venta</p>
+          <p className="text-white/70 text-sm mt-1">
+            Generando boletas e impresión...
+          </p>
+        </div>
+      )}
     </div>
   );
 };

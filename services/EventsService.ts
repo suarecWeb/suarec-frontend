@@ -21,6 +21,7 @@ import {
   ValidarBoletaFisicaResponse,
   VentaFisicaConBoletasResponse,
   ContarBoletasFisicasDisponiblesResponse,
+  ObtenerUltimoLoteFisicoResponse,
 } from "@/interfaces/boleteria-fisica.interface";
 
 const BASE = "/suarec/events";
@@ -180,6 +181,11 @@ const EventsService = {
     dto: GenerarLoteFisicoDto,
   ): Promise<{ data: GenerarLoteFisicoResponse }> =>
     api.post(`${BASE}/${eventoId}/boletas-fisicas/lote`, dto),
+
+  obtenerUltimoLoteFisico: (
+    eventoId: number,
+  ): Promise<{ data: ObtenerUltimoLoteFisicoResponse }> =>
+    api.get(`${BASE}/${eventoId}/boletas-fisicas/ultimo-lote`),
 
   venderBoletasFisicas: (
     eventoId: number,

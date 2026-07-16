@@ -105,7 +105,10 @@ const EventsManagement = ({
     imageFile?: File,
     codigosACrear?: number,
   ) => {
-    const res = await EventsService.createEvent(dto, imageFile);
+    const res = await EventsService.createEvent(
+      modoFisico ? { ...dto, modalidad: EventoModalidad.FISICO } : dto,
+      imageFile,
+    );
     const creado = res.data as unknown as Evento;
     setEvents((prev) => [creado, ...prev]);
     toast.success("Evento creado correctamente");
@@ -153,15 +156,13 @@ const EventsManagement = ({
         <h2 className="text-sm font-semibold text-gray-700">
           Eventos ({eventosFiltrados.length})
         </h2>
-        {!modoFisico && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Crear evento
-          </button>
-        )}
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
+        >
+          <PlusCircle className="h-4 w-4" />
+          {modoFisico ? "Crear evento físico" : "Crear evento"}
+        </button>
       </div>
 
       {loading ? (
@@ -201,15 +202,13 @@ const EventsManagement = ({
               : "Crea el primer evento para que aparezca en la app."}
           </p>
 
-          {!modoFisico && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-4 inline-flex items-center gap-2 text-sm text-[#097EEC] hover:underline font-medium"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Crear evento
-            </button>
-          )}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-4 inline-flex items-center gap-2 text-sm text-[#097EEC] hover:underline font-medium"
+          >
+            <PlusCircle className="h-4 w-4" />
+            {modoFisico ? "Crear evento físico" : "Crear evento"}
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -315,17 +314,30 @@ const EventsManagement = ({
 
                 <div className="mt-4 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {modoFisico ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (event.id)
-                          router.push(`/admin/boleteria_fisica/${event.id}`);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      Vender física
-                    </button>
+                    <div className="w-full flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEventToEdit(event);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
+                        title="Editar evento"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (event.id)
+                            router.push(`/admin/boleteria_fisica/${event.id}`);
+                        }}
+                        className="flex-[1.5] flex items-center justify-center gap-2 bg-[#097EEC] text-white text-sm px-3 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        Vender física
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <button
@@ -365,6 +377,7 @@ const EventsManagement = ({
 
       {showCreateModal && (
         <CreateEventModal
+          modoFisico={modoFisico}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreate}
         />
@@ -373,6 +386,7 @@ const EventsManagement = ({
       {eventToEdit && (
         <EditEventModal
           event={eventToEdit}
+          modoFisico={modoFisico}
           onClose={() => setEventToEdit(null)}
           onSubmit={handleEdit}
         />

@@ -5,8 +5,22 @@ const DEFAULT_WIDTH = 256; // w-64
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 440;
 
-export function useResizablePanel(storageKey = "suarec_admin_panel_w") {
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
+interface ResizablePanelOptions {
+  defaultWidth?: number;
+  minWidth?: number;
+  maxWidth?: number;
+}
+
+export function useResizablePanel(
+  storageKey = "suarec_admin_panel_w",
+  options: ResizablePanelOptions = {},
+) {
+  const {
+    defaultWidth = DEFAULT_WIDTH,
+    minWidth = MIN_WIDTH,
+    maxWidth = MAX_WIDTH,
+  } = options;
+  const [width, setWidth] = useState(defaultWidth);
   const dragging = useRef(false);
   const startX = useRef(0);
   const startW = useRef(0);
@@ -37,8 +51,8 @@ export function useResizablePanel(storageKey = "suarec_admin_panel_w") {
       if (!dragging.current) return;
       const delta = e.clientX - startX.current;
       const next = Math.min(
-        MAX_WIDTH,
-        Math.max(MIN_WIDTH, startW.current + delta),
+        maxWidth,
+        Math.max(minWidth, startW.current + delta),
       );
       setWidth(next);
     };
@@ -60,7 +74,7 @@ export function useResizablePanel(storageKey = "suarec_admin_panel_w") {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, [storageKey]);
+  }, [storageKey, minWidth, maxWidth]);
 
   return { width, onMouseDown };
 }
