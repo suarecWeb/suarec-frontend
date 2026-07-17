@@ -8,6 +8,7 @@ import {
 import {
   VentasFisicasGlobalResponse,
   RecaudoGlobalFisicoResponse,
+  RecaudoEventoFisicoResponse,
   ResumenEventoFisico,
   BoletasFisicasValidadasResponse,
   MetodoPagoFisico,
@@ -162,6 +163,11 @@ const EventsService = {
 
   getRecaudoGlobalFisico: (): Promise<{ data: RecaudoGlobalFisicoResponse }> =>
     api.get(`${BASE}/boletas-fisicas/recaudo`),
+
+  getRecaudoEventoFisico: (
+    eventoId: number,
+  ): Promise<{ data: RecaudoEventoFisicoResponse }> =>
+    api.get(`${BASE}/${eventoId}/boletas-fisicas/recaudo`),
 
   getResumenEventosFisicos: (): Promise<{ data: ResumenEventoFisico[] }> =>
     api.get(`${BASE}/boletas-fisicas/eventos-resumen`),

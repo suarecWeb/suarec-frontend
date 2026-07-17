@@ -6,6 +6,7 @@ import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import EventsManagement from "@/components/admin/EventsManagement";
+import { EventoModalidad } from "@/interfaces/event.interface";
 import VentasManagement from "@/components/admin/VentasManagement";
 import EstadisticasManagement from "@/components/admin/EstadisticasManagement";
 import ConfiguracionManagement from "@/components/admin/ConfiguracionManagement";
@@ -143,7 +144,11 @@ const BoleteriaPageContent = () => {
                   exit="exit"
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                  {activeTab === "eventos" && <EventsManagement />}
+                  {activeTab === "eventos" && (
+                    <EventsManagement
+                      filtroModalidad={EventoModalidad.DIGITAL}
+                    />
+                  )}
 
                   {activeTab === "ventas" && <VentasManagement />}
 

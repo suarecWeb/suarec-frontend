@@ -287,29 +287,32 @@ const EventsManagement = ({
                     {event.ubicacion}
                   </div>
 
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    {event.aforoTotal && (
-                      <span className="flex items-center gap-1">
-                        <Ticket className="h-3 w-3 text-gray-300" />
-                        {event.aforoTotal} boletas
-                      </span>
-                    )}
+                  {/* Aforo y precio no aplican en físico: viven en los lotes */}
+                  {!modoFisico && (
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      {event.aforoTotal && (
+                        <span className="flex items-center gap-1">
+                          <Ticket className="h-3 w-3 text-gray-300" />
+                          {event.aforoTotal} boletas
+                        </span>
+                      )}
 
-                    {event.precioBase !== undefined && (
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3 text-gray-300" />
+                      {event.precioBase !== undefined && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3 text-gray-300" />
 
-                        {event.precioBase === 0 ? (
-                          "Gratis"
-                        ) : (
-                          <>
-                            {Number(event.precioBase).toLocaleString("es-CO")}{" "}
-                            <span className="text-gray-400">COP</span>
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </div>
+                          {event.precioBase === 0 ? (
+                            "Gratis"
+                          ) : (
+                            <>
+                              {Number(event.precioBase).toLocaleString("es-CO")}{" "}
+                              <span className="text-gray-400">COP</span>
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

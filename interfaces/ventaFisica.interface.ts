@@ -29,6 +29,24 @@ export interface RecaudoGlobalFisicoResponse {
   totalVentas: number;
 }
 
+export interface RecaudoMetodoPago {
+  monto: number;
+  ventas: number;
+}
+
+export interface RecaudoEventoFisicoResponse {
+  eventoId: number;
+  eventoNombre: string;
+  precioBase: number;
+  recaudado: number;
+  comisionTotal: number;
+  neto: number;
+  boletasVendidas: number;
+  totalVentas: number;
+  efectivo: RecaudoMetodoPago;
+  transferencia: RecaudoMetodoPago;
+}
+
 export interface ResumenEventoFisico {
   eventoId: number;
   eventoNombre: string;

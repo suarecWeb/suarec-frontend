@@ -46,6 +46,14 @@ export interface BoletaFisicaConQR {
 export interface VentaFisicaConBoletasResponse {
   ventaId: number;
   eventoId: number;
+  // Datos del evento para armar/reimprimir el ticket (agregados 16/07/2026;
+  // opcionales por compatibilidad con backend sin actualizar)
+  eventoNombre?: string | null;
+  eventoFecha?: string | null;
+  eventoUbicacion?: string | null;
+  eventoDescripcion?: string | null;
+  eventoTipo?: "GENERAL" | "VIP" | "PALCO" | null;
+  precioBase?: number | null;
   adminId: number;
   cantidad: number;
   metodoPago: MetodoPagoFisico;

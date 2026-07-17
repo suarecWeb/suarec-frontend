@@ -10,10 +10,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  RefreshCw,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import EventsService from "@/services/EventsService";
+import RecaudoEventoModal from "./RecaudoEventoModal";
 import {
   RecaudoGlobalFisicoResponse,
   ResumenEventoFisico,
@@ -118,15 +120,26 @@ const BoletasValidadasTable = () => {
           <QrCode className="h-4 w-4 text-[#097EEC]" />
           Boletas validadas ({total})
         </h3>
-        <div className="relative sm:max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Buscar por número de serial..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
-            value={serialSearch}
-            onChange={(e) => buscarPorSerial(e.target.value)}
-          />
+        <div className="flex items-center gap-2 sm:max-w-md w-full">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por número de serial..."
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-all"
+              value={serialSearch}
+              onChange={(e) => buscarPorSerial(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => cargar(page, serialSearch)}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors flex-shrink-0"
+            title="Recargar boletas validadas"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Actualizar
+          </button>
         </div>
       </div>
 
@@ -236,6 +249,8 @@ const EstadisticasFisicasManagement = () => {
   );
   const [eventos, setEventos] = useState<ResumenEventoFisico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [eventoRecaudo, setEventoRecaudo] =
+    useState<ResumenEventoFisico | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -332,7 +347,9 @@ const EstadisticasFisicasManagement = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + i * 0.05 }}
-                  className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"
+                  onClick={() => setEventoRecaudo(ev)}
+                  title="Ver ganancias del evento"
+                  className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm cursor-pointer hover:border-[#097EEC]/40 hover:shadow-md transition-all"
                 >
                   <h4 className="text-sm font-semibold text-gray-800 truncate mb-3">
                     {ev.eventoNombre}
@@ -368,6 +385,19 @@ const EstadisticasFisicasManagement = () => {
       )}
 
       <BoletasValidadasTable />
+
+      <AnimatePresence>
+        {eventoRecaudo && (
+          <RecaudoEventoModal
+            eventoId={eventoRecaudo.eventoId}
+            eventoNombre={eventoRecaudo.eventoNombre}
+            disponibles={eventoRecaudo.disponibles}
+            vendidas={eventoRecaudo.vendidas}
+            total={eventoRecaudo.total}
+            onClose={() => setEventoRecaudo(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

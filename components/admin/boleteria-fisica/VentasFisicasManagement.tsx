@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import {
   Printer,
   Inbox,
@@ -19,7 +20,14 @@ import {
   MetodoPagoFisico,
   VentaFisicaGlobal,
 } from "@/interfaces/ventaFisica.interface";
-import { BoletaFisicaConQR } from "@/interfaces/boleteria-fisica.interface";
+import {
+  BoletaFisicaConQR,
+  VentaFisicaConBoletasResponse,
+} from "@/interfaces/boleteria-fisica.interface";
+import {
+  BoleteriaFisicaTicket,
+  type BoleteriaFisicaTicketRef,
+} from "@/components/admin/BoleteriaFisicaTicket";
 import { formatDisplayDate } from "@/lib/TimeZone";
 
 const ESTADO_BOLETA_COLOR: Record<string, string> = {
@@ -34,6 +42,33 @@ const formatCOP = (value: number) =>
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(value);
+
+// Fecha/hora del evento en el formato que espera el ticket impreso — mismos
+// helpers que usa VentaFisicaPanel para que el ticket reimpreso sea identico
+const formatEventDate = (iso?: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("es-CO", {
+    timeZone: "America/Bogota",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const formatEventTime = (iso?: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString("es-CO", {
+    timeZone: "America/Bogota",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 const METODO_PAGO_CONFIG: Record<
   MetodoPagoFisico,
@@ -63,8 +98,18 @@ const VentaFisicaDetalleModal = ({
   venta,
   onClose,
 }: VentaFisicaDetalleModalProps) => {
-  const [boletas, setBoletas] = useState<BoletaFisicaConQR[] | null>(null);
+  const [detalle, setDetalle] = useState<VentaFisicaConBoletasResponse | null>(
+    null,
+  );
   const [loadingBoletas, setLoadingBoletas] = useState(true);
+  // QRs montados en el ticket oculto al momento de reimprimir (1 boleta o todas)
+  const [qrsAImprimir, setQrsAImprimir] = useState<{
+    values: string[];
+    ids: string[];
+  }>({ values: [], ids: [] });
+  const ticketRef = useRef<BoleteriaFisicaTicketRef | null>(null);
+
+  const boletas = detalle?.boletas ?? null;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -77,10 +122,26 @@ const VentaFisicaDetalleModal = ({
 
   useEffect(() => {
     EventsService.obtenerVentaFisica(venta.id)
-      .then((res) => setBoletas(res.data.boletas))
+      .then((res) => setDetalle(res.data))
       .catch(() => toast.error("No se pudo cargar el detalle de la venta"))
       .finally(() => setLoadingBoletas(false));
   }, [venta.id]);
+
+  // Reimpresion: monta los QR elegidos en el ticket oculto de forma sincrona
+  // (flushSync, mismo patron que VentaFisicaPanel) y dispara el agente termico
+  const imprimirBoletas = (seleccion: BoletaFisicaConQR[]) => {
+    if (seleccion.length === 0) return;
+    flushSync(() => {
+      setQrsAImprimir({
+        values: seleccion.map((b) => b.qrToken),
+        ids: seleccion.map((b) => b.id),
+      });
+    });
+    ticketRef.current?.handleAgentPrint();
+    toast.success(
+      `${seleccion.length} ticket${seleccion.length > 1 ? "s" : ""} enviado${seleccion.length > 1 ? "s" : ""} a la impresora`,
+    );
+  };
 
   const mc = METODO_PAGO_CONFIG[venta.metodoPago];
 
@@ -190,19 +251,63 @@ const VentaFisicaDetalleModal = ({
                         </p>
                       </div>
                     </div>
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 ${
-                        ESTADO_BOLETA_COLOR[b.estado] ??
-                        "bg-gray-100 text-gray-600 border-gray-200"
-                      }`}
-                    >
-                      {b.estado}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                          ESTADO_BOLETA_COLOR[b.estado] ??
+                          "bg-gray-100 text-gray-600 border-gray-200"
+                        }`}
+                      >
+                        {b.estado}
+                      </span>
+                      <button
+                        onClick={() => imprimirBoletas([b])}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-[#097EEC] hover:bg-blue-50 transition-colors"
+                        title="Reimprimir esta boleta"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
+
+            {boletas && boletas.length > 0 && (
+              <button
+                onClick={() => imprimirBoletas(boletas)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mt-3 text-sm font-medium text-white bg-[#097EEC] rounded-xl hover:bg-[#0866c4] transition-colors"
+              >
+                <Printer className="h-4 w-4" />
+                Reimprimir toda la venta
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Ticket oculto para reimpresion: montado fuera de pantalla (no
+            display:none — html2canvas necesita el DOM renderizado para
+            capturar la imagen que se manda al agente termico) */}
+        <div className="fixed -left-[10000px] top-0" aria-hidden="true">
+          <BoleteriaFisicaTicket
+            ref={ticketRef}
+            qrValue={qrsAImprimir.values[0] ?? ""}
+            qrValues={
+              qrsAImprimir.values.length > 0 ? qrsAImprimir.values : undefined
+            }
+            qrIds={qrsAImprimir.ids.length > 0 ? qrsAImprimir.ids : undefined}
+            tipoBoleta={detalle?.eventoTipo === "VIP" ? "VIP" : "GENERAL"}
+            precio={String(detalle?.precioBase ?? "")}
+            fechaCompra={new Date(venta.createdAt).toLocaleDateString("es-CO")}
+            cantidad={qrsAImprimir.values.length || venta.cantidad}
+            evento={{
+              nombre: detalle?.eventoNombre ?? venta.eventoNombre,
+              fecha: formatEventDate(detalle?.eventoFecha),
+              hora: formatEventTime(detalle?.eventoFecha),
+              lugar: detalle?.eventoUbicacion ?? undefined,
+              descripcion: detalle?.eventoDescripcion ?? undefined,
+            }}
+          />
         </div>
       </motion.div>
     </div>
