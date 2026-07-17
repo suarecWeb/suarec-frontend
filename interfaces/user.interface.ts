@@ -53,6 +53,8 @@ export enum UserPlan {
   CREATOR = "creator",
 }
 
+export type IdentityDocumentType = "CC" | "NIT" | "CE" | "TI" | "PAS";
+
 export interface User {
   id?: string;
   email: string;
@@ -68,6 +70,9 @@ export interface User {
   profession?: string;
   skills?: string[];
   isVerify?: boolean;
+  documentType?: IdentityDocumentType;
+  documentNumber?: string;
+  /** @deprecated Compatibilidad temporal con respuestas antiguas del backend. */
   cedula?: string;
   plan?: UserPlan;
 
@@ -126,4 +131,6 @@ interface CreateUserDto {
   companyId?: string;
   profession?: string;
   skills?: string[];
+  documentType?: IdentityDocumentType;
+  documentNumber?: string;
 }

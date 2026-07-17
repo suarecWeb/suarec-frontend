@@ -706,7 +706,7 @@ const UsersPageContent = () => {
                             scope="col"
                             className="px-5 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell"
                           >
-                            # ID
+                            Documento
                           </th>
                           <th
                             scope="col"
@@ -771,12 +771,23 @@ const UsersPageContent = () => {
                                   </span>
                                 </div>
                               </td>
-                              {/* Cédula */}
+                              {/* Documento de identidad */}
                               <td className="px-5 py-3.5 whitespace-nowrap hidden md:table-cell">
                                 <div className="flex items-center gap-1.5">
                                   <IconId className="h-3 w-3 text-gray-300 flex-shrink-0" />
                                   <span className="text-sm text-gray-500">
-                                    {user.cedula || "—"}
+                                    {user.documentNumber || user.cedula ? (
+                                      <>
+                                        {user.documentType && (
+                                          <span className="mr-1 text-[11px] font-semibold text-gray-400">
+                                            {user.documentType}
+                                          </span>
+                                        )}
+                                        {user.documentNumber || user.cedula}
+                                      </>
+                                    ) : (
+                                      "—"
+                                    )}
                                   </span>
                                 </div>
                               </td>

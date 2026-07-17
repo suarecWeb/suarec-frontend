@@ -42,7 +42,8 @@ interface CreateUserDto {
   companyId?: string;
   profession: string;
   skills: string[];
-  cedula: string;
+  documentType: "CC" | "NIT";
+  documentNumber: string;
 }
 
 interface CreateCompanyDto {
@@ -183,11 +184,13 @@ const FormRegister = () => {
       // Validación género
       if (!formData.get("genre")) errors.genre = "El sexo es obligatorio";
 
-      // Validación cédula
-      const cedula = formData.get("cedula") as string;
-      if (!cedula) errors.cedula = "La cédula es obligatoria";
-      else if (!/^[0-9]{6,15}$/.test(cedula))
-        errors.cedula = "La cédula debe ser solo números (6-15 dígitos)";
+      // El registro de personas de esta pantalla usa Cédula de Ciudadanía (CC).
+      const documentNumber = formData.get("documentNumber") as string;
+      if (!documentNumber)
+        errors.documentNumber = "El número de documento es obligatorio";
+      else if (!/^[0-9]{6,15}$/.test(documentNumber))
+        errors.documentNumber =
+          "El número de documento debe tener entre 6 y 15 dígitos";
     } else if (userType === "BUSINESS") {
       // Validaciones para empresas
 
@@ -281,7 +284,8 @@ const FormRegister = () => {
             roles: ["PERSON"],
             profession: "Profesional independiente",
             skills: ["Ninguna"],
-            cedula: formData.get("cedula") as string,
+            documentType: "CC",
+            documentNumber: formData.get("documentNumber") as string,
             profile_image: uploadedImageUrl, // Agregar la URL de la imagen subida
           };
 
@@ -345,7 +349,8 @@ const FormRegister = () => {
             roles: ["BUSINESS"],
             profession: "Profesional independiente",
             skills: ["Ninguna"],
-            cedula: "", // Cedula vacía para empresas
+            documentType: "NIT",
+            documentNumber: companyNit,
             profile_image: uploadedImageUrl, // Agregar la URL de la imagen subida
           };
 
@@ -730,18 +735,19 @@ const FormRegister = () => {
 
                   <div className="space-y-2">
                     <label
-                      htmlFor="cedula"
+                      htmlFor="documentNumber"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Cédula <span className="text-red-500">*</span>
+                      Número de documento (CC){" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FileText className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        id="cedula"
-                        name="cedula"
+                        id="documentNumber"
+                        name="documentNumber"
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
@@ -751,9 +757,9 @@ const FormRegister = () => {
                         required
                       />
                     </div>
-                    {formErrors.cedula && (
+                    {formErrors.documentNumber && (
                       <p className="text-red-600 text-sm">
-                        {formErrors.cedula}
+                        {formErrors.documentNumber}
                       </p>
                     )}
                   </div>
