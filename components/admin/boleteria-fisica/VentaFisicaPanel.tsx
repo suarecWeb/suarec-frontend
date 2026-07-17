@@ -574,7 +574,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Billete recibido (COP)
+                  Billete recibido
                 </label>
                 <input
                   ref={billeteInputRef}
