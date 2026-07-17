@@ -25,8 +25,9 @@ export interface Application {
 }
 
 export interface CreateApplicationDto {
-  userId: number;
-  publicationId: string;
+  userId?: number;
+  publicationId?: string;
+  companyId?: string;
   message?: string;
   price?: number;
   priceUnit?: string;

@@ -60,8 +60,7 @@ const Navbar = ({
   const isAdminPanel =
     isUsersPage ||
     pathname?.startsWith("/admin") ||
-    pathname?.startsWith("/payments") ||
-    pathname?.startsWith("/wallet");
+    pathname?.startsWith("/payments");
 
   const updateUserRoles = () => {
     const token = Cookies.get("token");

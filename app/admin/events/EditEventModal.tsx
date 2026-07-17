@@ -15,6 +15,7 @@ import {
   User,
   Gift,
   Download,
+  Armchair,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -28,6 +29,7 @@ import { toDatetimeLocal } from "@/lib/TimeZone";
 
 interface EditEventModalProps {
   event: Evento;
+  modoFisico?: boolean;
   onClose: () => void;
   onSubmit: (
     id: number,
@@ -81,8 +83,18 @@ const FORMAT_OPTIONS: {
   },
 ];
 
+const BOLETA_FISICA_FORMAT = {
+  id: 5,
+  label: "Boleta física",
+  resolution: "403 × 886 px",
+  ratio: "aspect-[403/886]",
+  width: "w-56 mx-auto",
+  icon: <Ticket className="h-5 w-5" />,
+};
+
 export default function EditEventModal({
   event,
+  modoFisico = false,
   onClose,
   onSubmit,
 }: EditEventModalProps) {
@@ -104,6 +116,7 @@ export default function EditEventModal({
         : undefined,
     estado: event.estado,
     formatId: event.formatId,
+    nombreOrganizador: event.nombreOrganizador ?? "",
   });
   // Tipo (VIP / GENERAL) y cargo por SUAREC — precargados del evento.
   // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
@@ -159,8 +172,9 @@ export default function EditEventModal({
     };
   }, [serverError]);
 
-  const selectedFormat =
-    FORMAT_OPTIONS.find((f) => f.id === form.formatId) ?? null;
+  const selectedFormat = modoFisico
+    ? BOLETA_FISICA_FORMAT
+    : (FORMAT_OPTIONS.find((f) => f.id === form.formatId) ?? null);
 
   const validate = (): boolean => {
     const next: typeof errors = {};
@@ -193,19 +207,27 @@ export default function EditEventModal({
     else if (form.ubicacion.trim().length > 200)
       next.ubicacion = "El lugar no puede superar 200 caracteres";
 
-    if (form.aforoTotal !== undefined) {
-      if (!Number.isInteger(form.aforoTotal))
-        next.aforoTotal = "El aforo debe ser un número entero";
-      else if (form.aforoTotal < 1)
-        next.aforoTotal = "El aforo debe ser mayor a 0";
-      else if (form.aforoTotal > 4000)
-        next.aforoTotal = "El aforo no puede superar 4000";
+    if (!modoFisico) {
+      if (!form.nombreOrganizador?.trim())
+        next.nombreOrganizador = "El nombre del organizador es obligatorio";
+      else if (form.nombreOrganizador.trim().length > 150)
+        next.nombreOrganizador =
+          "El nombre del organizador no puede superar 150 caracteres";
+
+      if (form.aforoTotal !== undefined) {
+        if (!Number.isInteger(form.aforoTotal))
+          next.aforoTotal = "El aforo debe ser un número entero";
+        else if (form.aforoTotal < 1)
+          next.aforoTotal = "El aforo debe ser mayor a 0";
+        else if (form.aforoTotal > 4000)
+          next.aforoTotal = "El aforo no puede superar 4000";
+      }
+
+      if (form.precioBase !== undefined && form.precioBase < 2000)
+        next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
     }
 
-    if (form.precioBase !== undefined && form.precioBase < 2000)
-      next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
-
-    if (!form.formatId)
+    if (!modoFisico && !form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
 
     if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
@@ -237,6 +259,9 @@ export default function EditEventModal({
     if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    // Al subir una imagen nueva, la nueva imagen manda: se anula el "quitar imagen"
+    // previo para que el backend no descarte la URL recién subida (removeImage ganaba).
+    setImageRemoved(false);
   };
 
   const handleRemoveImage = () => {
@@ -289,15 +314,25 @@ export default function EditEventModal({
     if (!validate() || !event.id) return;
     setLoading(true);
     try {
+      const dto = modoFisico
+        ? {
+            ...form,
+            tipo: tipoEvento ?? undefined,
+            cargoSuarec: 0,
+            aforoTotal: undefined,
+            precioBase: undefined,
+            nombreOrganizador: "SUAREC",
+          }
+        : {
+            ...form,
+            tipo: tipoEvento ?? undefined,
+            cargoSuarec,
+            removeImage: imageRemoved,
+          };
       await onSubmit(
         event.id,
-        {
-          ...form,
-          tipo: tipoEvento ?? undefined,
-          cargoSuarec,
-          removeImage: imageRemoved,
-        },
-        imageFile ?? undefined,
+        dto,
+        modoFisico ? undefined : (imageFile ?? undefined),
       );
       onClose();
     } catch (err: any) {
@@ -333,23 +368,34 @@ export default function EditEventModal({
         {/* Imagen al tope */}
         <div className="px-6 pt-5">
           <div className={`flex gap-2 ${errors.formatId ? "mb-1" : "mb-3"}`}>
-            {FORMAT_OPTIONS.map((fmt) => (
+            {modoFisico ? (
               <button
-                key={fmt.id}
                 type="button"
-                onClick={() => handleChange("formatId", fmt.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
-                  form.formatId === fmt.id
-                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
-                    : errors.formatId
-                      ? "border-red-300 text-red-400"
-                      : "border-gray-200 text-gray-400 hover:border-gray-300"
-                }`}
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
               >
-                {fmt.icon}
-                {fmt.label}
+                {BOLETA_FISICA_FORMAT.icon}
+                {BOLETA_FISICA_FORMAT.label}
               </button>
-            ))}
+            ) : (
+              FORMAT_OPTIONS.map((fmt) => (
+                <button
+                  key={fmt.id}
+                  type="button"
+                  onClick={() => handleChange("formatId", fmt.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                    form.formatId === fmt.id
+                      ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                      : errors.formatId
+                        ? "border-red-300 text-red-400"
+                        : "border-gray-200 text-gray-400 hover:border-gray-300"
+                  }`}
+                >
+                  {fmt.icon}
+                  {fmt.label}
+                </button>
+              ))
+            )}
           </div>
           {errors.formatId && (
             <p className="mb-2 text-xs text-red-500">{errors.formatId}</p>
@@ -364,45 +410,51 @@ export default function EditEventModal({
             </p>
           )}
 
-          {imagePreview ? (
-            <div
-              className={`relative rounded-xl overflow-hidden border border-gray-200 ${selectedFormat?.ratio ?? "aspect-video"} ${selectedFormat?.width ?? "w-full"}`}
-            >
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <label
-              htmlFor="edit-event-image-input"
-              className={`cursor-pointer border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors ${selectedFormat?.ratio ?? "h-40"} ${selectedFormat?.width ?? "w-full"}`}
-            >
-              <Upload className="h-6 w-6" />
-              <span className="text-xs">Haz clic para subir una imagen</span>
-              {!selectedFormat && (
-                <span className="text-[10px] text-gray-300">
-                  Selecciona un formato primero
-                </span>
+          {!modoFisico && (
+            <>
+              {imagePreview ? (
+                <div
+                  className={`relative rounded-xl overflow-hidden border border-gray-200 ${selectedFormat?.ratio ?? "aspect-video"} ${selectedFormat?.width ?? "w-full"}`}
+                >
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="edit-event-image-input"
+                  className={`cursor-pointer border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors ${selectedFormat?.ratio ?? "h-40"} ${selectedFormat?.width ?? "w-full"}`}
+                >
+                  <Upload className="h-6 w-6" />
+                  <span className="text-xs">
+                    Haz clic para subir una imagen
+                  </span>
+                  {!selectedFormat && (
+                    <span className="text-[10px] text-gray-300">
+                      Selecciona un formato primero
+                    </span>
+                  )}
+                </label>
               )}
-            </label>
+              <input
+                id="edit-event-image-input"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFile}
+              />
+            </>
           )}
-          <input
-            id="edit-event-image-input"
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageFile}
-          />
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
@@ -451,7 +503,7 @@ export default function EditEventModal({
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
               <FileText className="h-3 w-3 inline mr-1" />
-              Descripción
+              Descripción (quienes se presentarán)
             </label>
             <textarea
               value={form.descripcion ?? ""}
@@ -499,51 +551,84 @@ export default function EditEventModal({
             </div>
           </div>
 
-          {/* Boletas + Precio */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                <Ticket className="h-3 w-3 inline mr-1" />
-                Boletas
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={form.aforoTotal ?? ""}
-                onChange={(e) =>
-                  handleChange(
-                    "aforoTotal",
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-                placeholder="Sin límite"
-                className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.aforoTotal ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-              />
-              {errors.aforoTotal && (
-                <p className="mt-1 text-xs text-red-500">{errors.aforoTotal}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                <span>Precio base</span>
-                <span className="text-gray-400">COP</span>
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={formatPriceDisplay(form.precioBase)}
-                onChange={(e) =>
-                  handleChange("precioBase", parsePriceInput(e.target.value))
-                }
-                placeholder="Gratis"
-                className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-              />
-              {errors.precioBase && (
-                <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
-              )}
-            </div>
-          </div>
+          {!modoFisico && (
+            <>
+              {/* Nombre del organizador */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <User className="h-3 w-3 inline mr-1" />
+                  Nombre del organizador <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.nombreOrganizador ?? ""}
+                  onChange={(e) =>
+                    handleChange("nombreOrganizador", e.target.value)
+                  }
+                  placeholder="Ej. Feria 53 Santander de Quilichao"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.nombreOrganizador ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+                />
+                {errors.nombreOrganizador && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.nombreOrganizador}
+                  </p>
+                )}
+              </div>
+
+              {/* Boletas + Precio */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <Ticket className="h-3 w-3 inline mr-1" />
+                    Boletas
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.aforoTotal ?? ""}
+                    onChange={(e) =>
+                      handleChange(
+                        "aforoTotal",
+                        e.target.value ? Number(e.target.value) : undefined,
+                      )
+                    }
+                    placeholder="Sin límite"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.aforoTotal ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                  />
+                  {errors.aforoTotal && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.aforoTotal}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    <span>Precio base</span>
+                    <span className="text-gray-400">COP</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatPriceDisplay(form.precioBase)}
+                    onChange={(e) =>
+                      handleChange(
+                        "precioBase",
+                        parsePriceInput(e.target.value),
+                      )
+                    }
+                    placeholder="Gratis"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                  />
+                  {errors.precioBase && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.precioBase}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Tipo de evento (VIP / General) */}
           <div>
@@ -585,96 +670,119 @@ export default function EditEventModal({
                 <Star className="h-4 w-4" />
                 VIP
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.PALCO);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.PALCO
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Armchair className="h-4 w-4" />
+                Palco
+              </button>
             </div>
             {errors.tipo && (
               <p className="mt-1 text-xs text-red-500">{errors.tipo}</p>
             )}
           </div>
 
-          {/* Cargo por SUAREC (comisión) */}
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              <span>Cargo SUAREC</span>
-              <span className="text-gray-400">COP</span>
-            </label>
-            <input
-              type="text"
-              name="cargo suarec"
-              inputMode="numeric"
-              value={formatPriceDisplay(cargoSuarec)}
-              onChange={(e) => setCargoSuarec(parsePriceInput(e.target.value))}
-              placeholder="0"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
-            />
-          </div>
+          {!modoFisico && (
+            <>
+              {/* Cargo por SUAREC (comisión) */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>Cargo SUAREC</span>
+                  <span className="text-gray-400">COP</span>
+                </label>
+                <input
+                  type="text"
+                  name="cargo suarec"
+                  inputMode="numeric"
+                  value={formatPriceDisplay(cargoSuarec)}
+                  onChange={(e) =>
+                    setCargoSuarec(parsePriceInput(e.target.value))
+                  }
+                  placeholder="0"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
+                />
+              </div>
 
-          {/* Códigos de regalo — acción independiente del guardado */}
-          <div className="rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center gap-2 mb-3">
-              <Gift className="h-4 w-4 text-[#097EEC]" />
-              <span className="text-sm font-medium text-gray-700">
-                Códigos de regalo
-              </span>
-            </div>
+              {/* Códigos de regalo — acción independiente del guardado */}
+              <div className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <Gift className="h-4 w-4 text-[#097EEC]" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Códigos de regalo
+                  </span>
+                </div>
 
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Generar códigos
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min={1}
-                max={10000}
-                value={cantidadCodigos ?? ""}
-                onChange={(e) => {
-                  setCantidadCodigos(
-                    e.target.value ? Number(e.target.value) : undefined,
-                  );
-                  setErrors(
-                    (prev) => ({ ...prev, _codigos: undefined }) as any,
-                  );
-                }}
-                placeholder="Ej. 1000"
-                className={`flex-1 px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
-                  (errors as any)._codigos
-                    ? "border-red-400"
-                    : "border-gray-200"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={handleGenerarCodigos}
-                disabled={generandoCodigos}
-                className="px-4 py-2 rounded-lg bg-[#097EEC] text-white text-sm font-medium hover:bg-[#0562C7] disabled:opacity-60 transition-colors whitespace-nowrap"
-              >
-                {generandoCodigos ? "Generando..." : "Generar"}
-              </button>
-            </div>
-            <p className="mt-1 text-[11px] text-gray-400">
-              Se suman al aforo del evento. No necesitas guardar para
-              generarlos.
-            </p>
-            {(errors as any)._codigos && (
-              <p className="mt-1 text-xs text-red-500">
-                {(errors as any)._codigos}
-              </p>
-            )}
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Generar códigos
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={cantidadCodigos ?? ""}
+                    onChange={(e) => {
+                      setCantidadCodigos(
+                        e.target.value ? Number(e.target.value) : undefined,
+                      );
+                      setErrors(
+                        (prev) => ({ ...prev, _codigos: undefined }) as any,
+                      );
+                    }}
+                    placeholder="Ej. 1000"
+                    className={`flex-1 px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                      (errors as any)._codigos
+                        ? "border-red-400"
+                        : "border-gray-200"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGenerarCodigos}
+                    disabled={generandoCodigos}
+                    className="px-4 py-2 rounded-lg bg-[#097EEC] text-white text-sm font-medium hover:bg-[#0562C7] disabled:opacity-60 transition-colors whitespace-nowrap"
+                  >
+                    {generandoCodigos ? "Generando..." : "Generar"}
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Se suman al aforo del evento. No necesitas guardar para
+                  generarlos.
+                </p>
+                {(errors as any)._codigos && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {(errors as any)._codigos}
+                  </p>
+                )}
 
-            {codigosDisponibles && (
-              <button
-                type="button"
-                onClick={handleDescargarCodigos}
-                disabled={descargandoCodigos}
-                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                {descargandoCodigos
-                  ? "Descargando..."
-                  : "Descargar Excel de códigos"}
-              </button>
-            )}
-          </div>
+                {codigosDisponibles && (
+                  <button
+                    type="button"
+                    onClick={handleDescargarCodigos}
+                    disabled={descargandoCodigos}
+                    className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-lg border border-[#097EEC] text-[#097EEC] text-sm font-medium hover:bg-[#097EEC]/5 disabled:opacity-60 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    {descargandoCodigos
+                      ? "Descargando..."
+                      : "Descargar Excel de códigos"}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
