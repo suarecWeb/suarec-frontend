@@ -29,6 +29,7 @@ interface CreateEventModalProps {
     dto: CreateEventoDto,
     imageFile?: File,
     codigosACrear?: number,
+    cantidadLote?: number,
   ) => Promise<void>;
 }
 
@@ -112,6 +113,11 @@ export default function CreateEventModal({
   // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
   const [tipoEvento, setTipoEvento] = useState<EventoTipo | null>(null);
   const [cargoSuarec, setCargoSuarec] = useState<number | undefined>(undefined);
+  // Boletería física: cantidad de boletas del lote inicial.
+  // Se envía como aforoTotal del evento y luego genera el lote en el backend.
+  const [cantidadLote, setCantidadLote] = useState<number | undefined>(
+    undefined,
+  );
   // Códigos de regalo: si se activa, al crear el evento se generan N códigos
   const [generarCodigos, setGenerarCodigos] = useState(false);
   const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
@@ -199,6 +205,22 @@ export default function CreateEventModal({
         next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
     }
 
+    if (modoFisico) {
+      if (form.precioBase !== undefined && form.precioBase < 2000)
+        next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
+    }
+
+    if (modoFisico) {
+      if (cantidadLote === undefined)
+        (next as any)._lote = "Indica cuántas boletas tendrá el lote";
+      else if (!Number.isInteger(cantidadLote))
+        (next as any)._lote = "La cantidad debe ser un número entero";
+      else if (cantidadLote < 1)
+        (next as any)._lote = "El lote debe tener al menos 1 boleta";
+      else if (cantidadLote > 4000)
+        (next as any)._lote = "El lote no puede superar 4000 boletas";
+    }
+
     if (!modoFisico && !form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
 
@@ -262,8 +284,7 @@ export default function CreateEventModal({
             ...form,
             tipo: tipoEvento ?? undefined,
             cargoSuarec: 0,
-            aforoTotal: undefined,
-            precioBase: undefined,
+            aforoTotal: cantidadLote,
             nombreOrganizador: "SUAREC",
           }
         : { ...form, tipo: tipoEvento ?? undefined, cargoSuarec };
@@ -271,6 +292,7 @@ export default function CreateEventModal({
         dto,
         imageFile ?? undefined,
         modoFisico ? undefined : generarCodigos ? cantidadCodigos : undefined,
+        modoFisico ? cantidadLote : undefined,
       );
       onClose();
     } catch (err: any) {
@@ -499,6 +521,63 @@ export default function CreateEventModal({
               )}
             </div>
           </div>
+
+          {modoFisico && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <Ticket className="h-3 w-3 inline mr-1" />
+                  Boletas del lote <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={4000}
+                  value={cantidadLote ?? ""}
+                  onChange={(e) => {
+                    setCantidadLote(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    );
+                    setErrors((prev) => ({ ...prev, _lote: undefined }) as any);
+                  }}
+                  placeholder="Ej. 1000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${(errors as any)._lote ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                />
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Cantidad de boletas físicas que se generarán al crear el
+                  evento.
+                </p>
+                {(errors as any)._lote && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {(errors as any)._lote}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>Precio base</span>
+                  <span className="text-gray-400">COP</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatPriceDisplay(form.precioBase)}
+                  onChange={(e) =>
+                    handleChange("precioBase", parsePriceInput(e.target.value))
+                  }
+                  placeholder="Ej. 20000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                />
+                {errors.precioBase && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.precioBase}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
 
           {!modoFisico && (
             <>

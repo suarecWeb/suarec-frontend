@@ -100,10 +100,25 @@ const EventsManagement = ({
     }
   };
 
+  const generarLote = async (eventoId: number, cantidad?: number) => {
+    if (!cantidad || cantidad <= 0) return;
+    try {
+      const res = await EventsService.generarLoteFisico(eventoId, {
+        cantidad,
+      });
+      toast.success(`Lote generado: ${res.data.generadas} boletas físicas`);
+    } catch {
+      toast.error(
+        "El evento se creó, pero falló la generación del lote. Puedes generarlo desde el panel de boletería física.",
+      );
+    }
+  };
+
   const handleCreate = async (
     dto: CreateEventoDto,
     imageFile?: File,
     codigosACrear?: number,
+    cantidadLote?: number,
   ) => {
     const res = await EventsService.createEvent(
       modoFisico ? { ...dto, modalidad: EventoModalidad.FISICO } : dto,
@@ -112,7 +127,10 @@ const EventsManagement = ({
     const creado = res.data as unknown as Evento;
     setEvents((prev) => [creado, ...prev]);
     toast.success("Evento creado correctamente");
-    if (creado.id) await generarCodigos(creado.id, codigosACrear);
+    if (creado.id) {
+      await generarCodigos(creado.id, codigosACrear);
+      if (modoFisico) await generarLote(creado.id, cantidadLote);
+    }
   };
 
   const handleEdit = async (
@@ -287,32 +305,30 @@ const EventsManagement = ({
                     {event.ubicacion}
                   </div>
 
-                  {/* Aforo y precio no aplican en físico: viven en los lotes */}
-                  {!modoFisico && (
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      {event.aforoTotal && (
-                        <span className="flex items-center gap-1">
-                          <Ticket className="h-3 w-3 text-gray-300" />
-                          {event.aforoTotal} boletas
-                        </span>
-                      )}
+                  {/* Aforo y precio */}
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {!modoFisico && event.aforoTotal && (
+                      <span className="flex items-center gap-1">
+                        <Ticket className="h-3 w-3 text-gray-300" />
+                        {event.aforoTotal} boletas
+                      </span>
+                    )}
 
-                      {event.precioBase !== undefined && (
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3 text-gray-300" />
+                    {event.precioBase !== undefined && (
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3 text-gray-300" />
 
-                          {event.precioBase === 0 ? (
-                            "Gratis"
-                          ) : (
-                            <>
-                              {Number(event.precioBase).toLocaleString("es-CO")}{" "}
-                              <span className="text-gray-400">COP</span>
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                        {event.precioBase === 0 ? (
+                          "Gratis"
+                        ) : (
+                          <>
+                            {Number(event.precioBase).toLocaleString("es-CO")}{" "}
+                            <span className="text-gray-400">COP</span>
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

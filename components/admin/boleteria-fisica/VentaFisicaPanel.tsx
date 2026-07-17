@@ -73,6 +73,20 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const formatPriceInput = (value: number | undefined): string => {
+  if (value === undefined || value === null || isNaN(value)) return "";
+  return new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+const parsePriceInput = (raw: string): number | undefined => {
+  const cleaned = raw.replace(/\./g, "").replace(/,/g, "");
+  const num = Number(cleaned);
+  return cleaned === "" ? undefined : isNaN(num) ? undefined : num;
+};
+
 export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   const [qrValue, setQrValue] = useState("SUAREC-EVT-001-TKT-0001");
   const [tipoBoleta, setTipoBoleta] = useState<"GENERAL" | "VIP">("GENERAL");
@@ -81,17 +95,21 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   );
   const [horaEvento, setHoraEvento] = useState("6:00 p.m.");
   const [ubicacion, setUbicacion] = useState("La Herradura, Cauca");
-  const [precio, setPrecio] = useState("20000");
+  const [precio, setPrecio] = useState<number>(20000);
+  const [precioStr, setPrecioStr] = useState("20.000");
   const [cantidad, setCantidad] = useState(1);
+  const [cantidadStr, setCantidadStr] = useState("1");
   const [fechaCompra, setFechaCompra] = useState(
     new Date().toLocaleDateString("es-CO"),
   );
+  const [guardandoEvento, setGuardandoEvento] = useState(false);
 
   // Método de pago
   const [metodoPago, setMetodoPago] = useState<MetodoPagoFisico>(
     MetodoPagoFisico.EFECTIVO,
   );
   const [billeteRecibido, setBilleteRecibido] = useState<string>("");
+  const [billeteRecibidoNum, setBilleteRecibidoNum] = useState<number>(0);
 
   // Estados de acciones
   const [vendiendo, setVendiendo] = useState(false);
@@ -104,8 +122,10 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   const [qrValues, setQrValues] = useState<string[]>([]);
   const [qrIds, setQrIds] = useState<string[]>([]);
   const [disponibles, setDisponibles] = useState<number | null>(null);
-  const [mostrarConfigEvento, setMostrarConfigEvento] = useState(true);
+  const [mostrarConfigEvento, setMostrarConfigEvento] = useState(false);
   const ticketRef = useRef<BoleteriaFisicaTicketRef | null>(null);
+  const cantidadInputRef = useRef<HTMLInputElement>(null);
+  const billeteInputRef = useRef<HTMLInputElement>(null);
 
   // Sidebar redimensionable — mismo patrón que AdminSidePanel en publicaciones,
   // con su propia clave de storage y anchos acordes al formulario de venta
@@ -114,19 +134,41 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     { defaultWidth: 360, minWidth: 300, maxWidth: 520 },
   );
 
-  const precioNumerico = useMemo(
-    () => Number(precio.replace(/\D/g, "")) || 0,
-    [precio],
-  );
+  const precioNumerico = useMemo(() => precio || 0, [precio]);
+
   const montoTotal = useMemo(
     () => precioNumerico * cantidad,
     [precioNumerico, cantidad],
   );
+
   const cambio = useMemo(() => {
     if (metodoPago !== MetodoPagoFisico.EFECTIVO) return 0;
-    const recibido = Number(billeteRecibido.replace(/\D/g, "")) || 0;
-    return Math.max(0, recibido - montoTotal);
-  }, [metodoPago, billeteRecibido, montoTotal]);
+    return Math.max(0, billeteRecibidoNum - montoTotal);
+  }, [metodoPago, billeteRecibidoNum, montoTotal]);
+
+  const handleGuardarConfigEvento = async () => {
+    if (!evento?.id) return;
+
+    setGuardandoEvento(true);
+    try {
+      await EventsService.updateEvent(String(evento.id), {
+        precioBase: precio || undefined,
+        ubicacion: ubicacion || undefined,
+      });
+      toast.success("Configuración del evento actualizada");
+    } catch (error: any) {
+      toast.error("Error al actualizar la configuración del evento");
+    } finally {
+      setGuardandoEvento(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleGuardarConfigEvento();
+    }
+  };
 
   useEffect(() => {
     if (!evento?.id) return;
@@ -135,12 +177,15 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     setFechaEvento(formatEventDate(evento.fechaEvento));
     setHoraEvento(formatEventTime(evento.fechaEvento));
     setUbicacion(evento.ubicacion || "");
-    setPrecio(String(evento.precioBase ?? "20000"));
+    const precioNum = evento.precioBase ?? 20000;
+    setPrecio(precioNum);
+    setPrecioStr(formatPriceInput(precioNum));
     setQrValue(`SUAREC-EVT-${evento.id ?? "001"}-TKT-0001`);
     setQrValues([]);
     setResultadoVenta(null);
     setDisponibles(null);
 
+    // Cargar disponibles
     const cargarDisponibles = async () => {
       try {
         const res =
@@ -153,6 +198,13 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
 
     cargarDisponibles();
   }, [evento]);
+
+  // Focus en el input de cantidad cuando se monta el componente
+  useEffect(() => {
+    if (cantidadInputRef.current) {
+      cantidadInputRef.current.focus();
+    }
+  }, []);
 
   const handleVender = async () => {
     if (!evento?.id) {
@@ -171,8 +223,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
     }
 
     if (metodoPago === MetodoPagoFisico.EFECTIVO) {
-      const recibido = Number(billeteRecibido.replace(/\D/g, "")) || 0;
-      if (recibido < montoTotal) {
+      if (billeteRecibidoNum < montoTotal) {
         toast.error("El billete recibido no cubre el monto total");
         return;
       }
@@ -199,7 +250,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
         metodoPago,
         billeteRecibido:
           metodoPago === MetodoPagoFisico.EFECTIVO
-            ? Number(billeteRecibido.replace(/\D/g, "")) || undefined
+            ? billeteRecibidoNum || undefined
             : undefined,
       });
 
@@ -231,6 +282,32 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
       ticketRef.current?.handleAgentPrint();
 
       toast.success(`Venta #${res.data.ventaId} confirmada`);
+
+      // Resetear solo los inputs para el siguiente ciclo
+      setCantidad(1);
+      setCantidadStr("1");
+      setBilleteRecibido("");
+      setBilleteRecibidoNum(0);
+
+      // Volver a cargar disponibles
+      if (evento.id) {
+        const cargarDisponibles = async () => {
+          try {
+            const res = await EventsService.contarBoletasFisicasDisponibles(
+              evento.id!,
+            );
+            setDisponibles(res.data.disponibles);
+          } catch {
+            setDisponibles(null);
+          }
+        };
+        cargarDisponibles();
+      }
+
+      // Focus en el input de cantidad
+      setTimeout(() => {
+        cantidadInputRef.current?.focus();
+      }, 100);
     } catch (error: any) {
       // eslint-disable-next-line no-console
       console.error("[VentaFisicaPanel] error venta:", error);
@@ -324,6 +401,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                   type="text"
                   value={fechaEvento}
                   onChange={(e) => setFechaEvento(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
                 />
               </div>
@@ -335,6 +413,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                   type="text"
                   value={horaEvento}
                   onChange={(e) => setHoraEvento(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
                 />
               </div>
@@ -348,6 +427,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                 type="text"
                 value={ubicacion}
                 onChange={(e) => setUbicacion(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
               />
             </div>
@@ -357,51 +437,69 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               </label>
               <input
                 type="text"
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                inputMode="numeric"
+                value={precioStr}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, "");
+                  if (rawValue === "") {
+                    setPrecioStr("");
+                    setPrecio(0);
+                  } else {
+                    const numValue = Number(rawValue);
+                    setPrecio(numValue);
+                    setPrecioStr(formatPriceInput(numValue));
+                  }
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={guardandoEvento}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
+            <p className="mt-2 text-[10px] text-gray-400 italic">
+              Presiona Enter para guardar los cambios
+            </p>
           </div>
         )}
 
         {/* Card: Boleta a comprar */}
-        <div className="mb-4 p-4 border border-gray-100 rounded-xl">
-          <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide mb-3">
-            <Ticket className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
-            Boleta a comprar
-          </p>
+        {mostrarConfigEvento && (
+          <div className="mb-4 p-4 border border-gray-100 rounded-xl">
+            <p className="text-xs font-jakarta font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              <Ticket className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
+              Boleta a comprar
+            </p>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo de boleta
-            </label>
-            <select
-              value={tipoBoleta}
-              onChange={(e) =>
-                setTipoBoleta(e.target.value as "GENERAL" | "VIP")
-              }
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm bg-white"
-            >
-              <option value="GENERAL">GENERAL</option>
-              <option value="VIP">VIP</option>
-            </select>
-          </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de boleta
+              </label>
+              <select
+                value={tipoBoleta}
+                onChange={(e) =>
+                  setTipoBoleta(e.target.value as "GENERAL" | "VIP")
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm bg-white"
+              >
+                <option value="GENERAL">GENERAL</option>
+                <option value="VIP">VIP</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <CalendarClock className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
-              Fecha de compra
-            </label>
-            <input
-              type="text"
-              value={fechaCompra}
-              onChange={(e) => setFechaCompra(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-              placeholder="14/07/2026"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <CalendarClock className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
+                Fecha de compra
+              </label>
+              <input
+                type="text"
+                value={fechaCompra}
+                onChange={(e) => setFechaCompra(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
+                placeholder="14/07/2026"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Card: Pago */}
         <div className="mb-4 p-4 border border-gray-100 rounded-xl bg-gray-50/60">
@@ -448,11 +546,29 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                   Cantidad
                 </label>
                 <input
+                  ref={cantidadInputRef}
                   type="number"
                   min={1}
                   max={50}
-                  value={cantidad}
-                  onChange={(e) => setCantidad(Number(e.target.value))}
+                  value={cantidadStr}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCantidadStr(value);
+                    setCantidad(value ? Number(value) : 1);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (
+                        metodoPago === MetodoPagoFisico.EFECTIVO &&
+                        billeteInputRef.current
+                      ) {
+                        billeteInputRef.current.focus();
+                      } else {
+                        handleVender();
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
                 />
               </div>
@@ -461,11 +577,29 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                   Billete recibido (COP)
                 </label>
                 <input
+                  ref={billeteInputRef}
                   type="text"
+                  inputMode="numeric"
                   value={billeteRecibido}
-                  onChange={(e) => setBilleteRecibido(e.target.value)}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, "");
+                    if (rawValue === "") {
+                      setBilleteRecibido("");
+                      setBilleteRecibidoNum(0);
+                    } else {
+                      const numValue = Number(rawValue);
+                      setBilleteRecibidoNum(numValue);
+                      setBilleteRecibido(formatPriceInput(numValue));
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleVender();
+                    }
+                  }}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
-                  placeholder="Ej: 100000"
+                  placeholder="Ej: 100.000"
                 />
               </div>
               {cambio > 0 && (
@@ -487,8 +621,12 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                 type="number"
                 min={1}
                 max={50}
-                value={cantidad}
-                onChange={(e) => setCantidad(Number(e.target.value))}
+                value={cantidadStr}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setCantidadStr(value);
+                  setCantidad(value ? Number(value) : 1);
+                }}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#097EEC] text-sm"
               />
             </div>
@@ -613,7 +751,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           qrValues={qrValues.length > 0 ? qrValues : undefined}
           qrIds={qrIds.length > 0 ? qrIds : undefined}
           tipoBoleta={tipoBoleta}
-          precio={precio}
+          precio={String(precio)}
           fechaCompra={fechaCompra}
           cantidad={cantidad}
           esPreview
