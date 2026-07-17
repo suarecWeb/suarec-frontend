@@ -5,6 +5,25 @@ import {
   DetalleTransaccion,
   TransaccionBoleta,
 } from "@/interfaces/boleta.interface";
+import {
+  VentasFisicasGlobalResponse,
+  RecaudoGlobalFisicoResponse,
+  RecaudoEventoFisicoResponse,
+  ResumenEventoFisico,
+  BoletasFisicasValidadasResponse,
+  MetodoPagoFisico,
+} from "@/interfaces/ventaFisica.interface";
+import {
+  GenerarLoteFisicoDto,
+  GenerarLoteFisicoResponse,
+  VenderBoletasFisicasDto,
+  VenderBoletasFisicasResponse,
+  ValidarBoletaFisicaDto,
+  ValidarBoletaFisicaResponse,
+  VentaFisicaConBoletasResponse,
+  ContarBoletasFisicasDisponiblesResponse,
+  ObtenerUltimoLoteFisicoResponse,
+} from "@/interfaces/boleteria-fisica.interface";
 
 const BASE = "/suarec/events";
 
@@ -133,6 +152,67 @@ const EventsService = {
     api.post(`${BASE}/boletas/transacciones/${id}/reenviar-correo`, {
       email,
     }),
+
+  getVentasFisicasGlobal: (
+    page: number,
+    metodoPago?: MetodoPagoFisico,
+  ): Promise<{ data: VentasFisicasGlobalResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/ventas`, {
+      params: { page, ...(metodoPago ? { metodoPago } : {}) },
+    }),
+
+  getRecaudoGlobalFisico: (): Promise<{ data: RecaudoGlobalFisicoResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/recaudo`),
+
+  getRecaudoEventoFisico: (
+    eventoId: number,
+  ): Promise<{ data: RecaudoEventoFisicoResponse }> =>
+    api.get(`${BASE}/${eventoId}/boletas-fisicas/recaudo`),
+
+  getResumenEventosFisicos: (): Promise<{ data: ResumenEventoFisico[] }> =>
+    api.get(`${BASE}/boletas-fisicas/eventos-resumen`),
+
+  getBoletasFisicasValidadas: (
+    page: number,
+    serial?: string,
+  ): Promise<{ data: BoletasFisicasValidadasResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/validadas`, {
+      params: { page, ...(serial ? { serial } : {}) },
+    }),
+
+  // ── Boletería física ─────────────────────────────────────────────────────
+
+  generarLoteFisico: (
+    eventoId: number,
+    dto: GenerarLoteFisicoDto,
+  ): Promise<{ data: GenerarLoteFisicoResponse }> =>
+    api.post(`${BASE}/${eventoId}/boletas-fisicas/lote`, dto),
+
+  obtenerUltimoLoteFisico: (
+    eventoId: number,
+  ): Promise<{ data: ObtenerUltimoLoteFisicoResponse }> =>
+    api.get(`${BASE}/${eventoId}/boletas-fisicas/ultimo-lote`),
+
+  venderBoletasFisicas: (
+    eventoId: number,
+    dto: VenderBoletasFisicasDto,
+  ): Promise<{ data: VenderBoletasFisicasResponse }> =>
+    api.post(`${BASE}/${eventoId}/boletas-fisicas/vender`, dto),
+
+  validarBoletaFisica: (
+    dto: ValidarBoletaFisicaDto,
+  ): Promise<{ data: ValidarBoletaFisicaResponse }> =>
+    api.post(`${BASE}/boletas-fisicas/validate`, dto),
+
+  obtenerVentaFisica: (
+    ventaId: number,
+  ): Promise<{ data: VentaFisicaConBoletasResponse }> =>
+    api.get(`${BASE}/boletas-fisicas/ventas/${ventaId}`),
+
+  contarBoletasFisicasDisponibles: (
+    eventoId: number,
+  ): Promise<{ data: ContarBoletasFisicasDisponiblesResponse }> =>
+    api.get(`${BASE}/${eventoId}/boletas-fisicas/disponibles`),
 };
 
 export default EventsService;

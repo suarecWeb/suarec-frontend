@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import MessageService from "@/services/MessageService";
+import ApplicationService from "@/services/ApplicationService";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
@@ -37,9 +37,7 @@ const ApplyCompanyButton = ({
       }
 
       const decoded = jwtDecode<TokenPayload>(token);
-      const currentUserId = decoded.id;
 
-      // Verificar que el usuario tenga rol de PERSON
       const hasPersonRole = decoded.roles.some(
         (role) => role.name === "PERSON",
       );
@@ -50,34 +48,22 @@ const ApplyCompanyButton = ({
         return;
       }
 
-      if (currentUserId === companyUserId) {
+      if (decoded.id === companyUserId) {
         toast.error("No puedes postularte a tu propia empresa");
         return;
       }
 
-      // Enviar mensaje de postulación
-      const applicationMessage = `¡Hola! Me interesa formar parte del equipo de ${companyName}. 
-
-Me gustaría conocer más sobre las oportunidades laborales disponibles y cómo puedo contribuir al crecimiento de la empresa.
-
-¡Espero poder conversar pronto!
-
-Saludos cordiales.`;
-
-      await MessageService.createMessage({
-        content: applicationMessage,
-        senderId: currentUserId,
-        recipientId: companyUserId,
-      });
+      await ApplicationService.createApplication({ companyId });
 
       setApplied(true);
-
-      // Mostrar mensaje de éxito por 2 segundos
-      setTimeout(() => {
-        setApplied(false);
-      }, 2000);
-    } catch (error) {
-      toast.error("Error al enviar la postulación");
+      toast.success(`¡Postulación enviada a ${companyName}!`);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "";
+      if (msg.includes("activa") || error?.response?.status === 400) {
+        toast.error("Ya tienes una postulación pendiente con esta empresa.");
+      } else {
+        toast.error("Error al enviar la postulación. Intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }

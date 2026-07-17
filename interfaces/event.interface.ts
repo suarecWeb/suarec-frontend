@@ -9,6 +9,13 @@ export enum EventoEstado {
 export enum EventoTipo {
   GENERAL = "GENERAL",
   VIP = "VIP",
+  PALCO = "PALCO",
+}
+
+// Modalidad del evento — canal exclusivo: digital (online) o físico (taquilla)
+export enum EventoModalidad {
+  DIGITAL = "DIGITAL",
+  FISICO = "FISICO",
 }
 
 export type ImageFormat = "phone" | "web";
@@ -33,10 +40,12 @@ export interface Evento {
   comision?: number;
   cargoSuarec?: number;
   tipo?: EventoTipo;
+  nombreOrganizador?: string;
   permiteCodigoRegalo?: boolean;
   aforoRegalo?: number;
   regalosCanjeados?: number;
   estado: EventoEstado;
+  modalidad?: EventoModalidad;
   formatId?: number;
   format?: EventoFormat;
   organizadorId?: number;
@@ -55,7 +64,9 @@ export interface CreateEventoDto {
   comision?: number;
   cargoSuarec?: number;
   tipo?: EventoTipo;
+  nombreOrganizador?: string;
   estado?: EventoEstado;
+  modalidad?: EventoModalidad;
   formatId?: number;
   removeImage?: boolean;
 }

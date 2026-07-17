@@ -5,55 +5,24 @@ import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import EventsManagement from "@/components/admin/EventsManagement";
-import { EventoModalidad } from "@/interfaces/event.interface";
-import VentasManagement from "@/components/admin/VentasManagement";
-import EstadisticasManagement from "@/components/admin/EstadisticasManagement";
-import ConfiguracionManagement from "@/components/admin/ConfiguracionManagement";
-import SoporteQRManagement from "@/components/admin/SoporteQRManagement";
-import Link from "next/link";
-import {
-  CalendarDays,
-  Ticket,
-  BarChart3,
-  Settings,
-  QrCode,
-  Printer,
-} from "lucide-react";
+import { ArrowRightLeft, Wallet as WalletIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import WalletsManagement from "@/components/admin/WalletsManagement";
+import MovimientosManagement from "@/components/admin/MovimientosManagement";
 
-type BoleteriaTab =
-  | "eventos"
-  | "ventas"
-  | "estadisticas"
-  | "config"
-  | "soporteqr";
+type WalletTab = "movimientos" | "wallets";
 
-const TAB_CONFIG: Record<
-  BoleteriaTab,
-  { label: string; icon: React.ReactNode }
-> = {
-  eventos: {
-    label: "Eventos",
-    icon: <CalendarDays className="h-4 w-4" />,
-  },
-  ventas: {
-    label: "Ventas",
-    icon: <Ticket className="h-4 w-4" />,
-  },
-  estadisticas: {
-    label: "Estadísticas",
-    icon: <BarChart3 className="h-4 w-4" />,
-  },
-  config: {
-    label: "Configuración",
-    icon: <Settings className="h-4 w-4" />,
-  },
-  soporteqr: {
-    label: "Soporte QR",
-    icon: <QrCode className="h-4 w-4" />,
-  },
-};
+const TAB_CONFIG: Record<WalletTab, { label: string; icon: React.ReactNode }> =
+  {
+    wallets: {
+      label: "Wallets",
+      icon: <WalletIcon className="h-4 w-4" />,
+    },
+    movimientos: {
+      label: "Movimientos",
+      icon: <ArrowRightLeft className="h-4 w-4" />,
+    },
+  };
 
 const tabContentVariants = {
   initial: { opacity: 0, y: 16, scale: 0.98 },
@@ -69,32 +38,20 @@ const pageVariants = {
   },
 };
 
-const BoleteriaPageContent = () => {
+const WalletPageContent = () => {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
-  const [activeTab, setActiveTab] = useState<BoleteriaTab>("eventos");
+  const [activeTab, setActiveTab] = useState<WalletTab>("wallets");
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate">
       <Navbar />
       <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
         <div className="bg-[#097EEC] text-white py-8 shadow-sm">
-          <div className="container mx-auto px-4 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">Boletería</h1>
-              <p className="mt-2 text-blue-100">
-                Gestión de eventos, ventas y estadísticas de boletería
-              </p>
-            </div>
-
-            <Link href="/admin/boleteria_fisica" passHref>
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm bg-white text-[#097EEC] hover:bg-blue-50 shadow"
-              >
-                <Printer className="h-4 w-4" />
-                Boletería Física
-              </motion.button>
-            </Link>
+          <div className="container mx-auto px-4">
+            <h1 className="text-3xl font-bold">Wallet</h1>
+            <p className="mt-2 text-blue-100">
+              Movimientos de saldo, retiros y wallets de los usuarios
+            </p>
           </div>
         </div>
 
@@ -116,7 +73,7 @@ const BoleteriaPageContent = () => {
           <div className="flex-1 min-w-0 ml-3">
             {/* Tabs al margen superior */}
             <div className="flex gap-2 mb-4">
-              {(Object.keys(TAB_CONFIG) as BoleteriaTab[]).map((tab) => (
+              {(Object.keys(TAB_CONFIG) as WalletTab[]).map((tab) => (
                 <motion.button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -144,19 +101,9 @@ const BoleteriaPageContent = () => {
                   exit="exit"
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                  {activeTab === "eventos" && (
-                    <EventsManagement
-                      filtroModalidad={EventoModalidad.DIGITAL}
-                    />
-                  )}
+                  {activeTab === "movimientos" && <MovimientosManagement />}
 
-                  {activeTab === "ventas" && <VentasManagement />}
-
-                  {activeTab === "estadisticas" && <EstadisticasManagement />}
-
-                  {activeTab === "config" && <ConfiguracionManagement />}
-
-                  {activeTab === "soporteqr" && <SoporteQRManagement />}
+                  {activeTab === "wallets" && <WalletsManagement />}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -167,10 +114,10 @@ const BoleteriaPageContent = () => {
   );
 };
 
-const BoleteriaPage = () => (
+const WalletPage = () => (
   <RoleGuard allowedRoles={["ADMIN"]}>
-    <BoleteriaPageContent />
+    <WalletPageContent />
   </RoleGuard>
 );
 
-export default BoleteriaPage;
+export default WalletPage;

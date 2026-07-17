@@ -14,6 +14,7 @@ import {
   Star,
   User,
   Gift,
+  Armchair,
 } from "lucide-react";
 import {
   CreateEventoDto,
@@ -22,11 +23,13 @@ import {
 } from "@/interfaces/event.interface";
 
 interface CreateEventModalProps {
+  modoFisico?: boolean;
   onClose: () => void;
   onSubmit: (
     dto: CreateEventoDto,
     imageFile?: File,
     codigosACrear?: number,
+    cantidadLote?: number,
   ) => Promise<void>;
 }
 
@@ -40,6 +43,7 @@ const EMPTY_FORM: CreateEventoDto = {
   comision: undefined,
   estado: EventoEstado.PREVENTA,
   formatId: undefined,
+  nombreOrganizador: "",
 };
 
 const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
@@ -87,15 +91,33 @@ const FORMAT_OPTIONS: {
   },
 ];
 
+const BOLETA_FISICA_FORMAT = {
+  id: 5,
+  label: "Boleta física",
+  resolution: "403 × 886 px",
+  ratio: "aspect-[403/886]",
+  width: "w-56 mx-auto",
+  icon: <Ticket className="h-5 w-5" />,
+};
+
 export default function CreateEventModal({
+  modoFisico = false,
   onClose,
   onSubmit,
 }: CreateEventModalProps) {
-  const [form, setForm] = useState<CreateEventoDto>(EMPTY_FORM);
+  const [form, setForm] = useState<CreateEventoDto>({
+    ...EMPTY_FORM,
+    formatId: modoFisico ? BOLETA_FISICA_FORMAT.id : EMPTY_FORM.formatId,
+  });
   // Tipo de evento (VIP / GENERAL) y cargo por SUAREC (monto en COP).
   // UI lista, pero el envío al backend está apagado: estos campos aún NO van en el submit.
   const [tipoEvento, setTipoEvento] = useState<EventoTipo | null>(null);
   const [cargoSuarec, setCargoSuarec] = useState<number | undefined>(undefined);
+  // Boletería física: cantidad de boletas del lote inicial.
+  // Se envía como aforoTotal del evento y luego genera el lote en el backend.
+  const [cantidadLote, setCantidadLote] = useState<number | undefined>(
+    undefined,
+  );
   // Códigos de regalo: si se activa, al crear el evento se generan N códigos
   const [generarCodigos, setGenerarCodigos] = useState(false);
   const [cantidadCodigos, setCantidadCodigos] = useState<number | undefined>(
@@ -163,27 +185,57 @@ export default function CreateEventModal({
     else if (form.ubicacion.trim().length > 200)
       next.ubicacion = "El lugar no puede superar 200 caracteres";
 
-    if (form.aforoTotal !== undefined) {
-      if (!Number.isInteger(form.aforoTotal))
-        next.aforoTotal = "El aforo debe ser un número entero";
-      else if (form.aforoTotal < 1)
-        next.aforoTotal = "El aforo debe ser mayor a 0";
-      else if (form.aforoTotal > 4000)
-        next.aforoTotal = "El aforo no puede superar 4000";
+    if (!modoFisico) {
+      if (!form.nombreOrganizador?.trim())
+        next.nombreOrganizador = "El nombre del organizador es obligatorio";
+      else if (form.nombreOrganizador.trim().length > 150)
+        next.nombreOrganizador =
+          "El nombre del organizador no puede superar 150 caracteres";
+
+      if (form.aforoTotal !== undefined) {
+        if (!Number.isInteger(form.aforoTotal))
+          next.aforoTotal = "El aforo debe ser un número entero";
+        else if (form.aforoTotal < 1)
+          next.aforoTotal = "El aforo debe ser mayor a 0";
+        else if (form.aforoTotal > 4000)
+          next.aforoTotal = "El aforo no puede superar 4000";
+      }
+
+      if (form.precioBase !== undefined && form.precioBase < 2000)
+        next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
     }
 
-    if (form.precioBase !== undefined && form.precioBase < 2000)
-      next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
+    if (modoFisico) {
+      if (form.precioBase !== undefined && form.precioBase < 2000)
+        next.precioBase = "El precio mínimo de la boleta es $2.000 COP";
+    }
 
-    if (!form.formatId)
+    if (modoFisico) {
+      if (cantidadLote === undefined)
+        (next as any)._lote = "Indica cuántas boletas tendrá el lote";
+      else if (!Number.isInteger(cantidadLote))
+        (next as any)._lote = "La cantidad debe ser un número entero";
+      else if (cantidadLote < 1)
+        (next as any)._lote = "El lote debe tener al menos 1 boleta";
+      else if (cantidadLote > 4000)
+        (next as any)._lote = "El lote no puede superar 4000 boletas";
+    }
+
+    if (!modoFisico && !form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
 
     if (!imageFile)
-      (next as any)._image = "La imagen del evento es obligatoria";
+      (next as any)._image = modoFisico
+        ? "La imagen de la boleta física es obligatoria"
+        : "La imagen del evento es obligatoria";
 
     if (!tipoEvento) next.tipo = "Debes seleccionar el tipo de evento";
 
-    if (generarCodigos && (!cantidadCodigos || cantidadCodigos < 1))
+    if (
+      !modoFisico &&
+      generarCodigos &&
+      (!cantidadCodigos || cantidadCodigos < 1)
+    )
       (next as any)._codigos = "Indica cuántos códigos generar (mínimo 1)";
 
     setErrors(next);
@@ -227,10 +279,20 @@ export default function CreateEventModal({
     if (!validate()) return;
     setLoading(true);
     try {
+      const dto = modoFisico
+        ? {
+            ...form,
+            tipo: tipoEvento ?? undefined,
+            cargoSuarec: 0,
+            aforoTotal: cantidadLote,
+            nombreOrganizador: "SUAREC",
+          }
+        : { ...form, tipo: tipoEvento ?? undefined, cargoSuarec };
       await onSubmit(
-        { ...form, tipo: tipoEvento ?? undefined, cargoSuarec },
+        dto,
         imageFile ?? undefined,
-        generarCodigos ? cantidadCodigos : undefined,
+        modoFisico ? undefined : generarCodigos ? cantidadCodigos : undefined,
+        modoFisico ? cantidadLote : undefined,
       );
       onClose();
     } catch (err: any) {
@@ -245,8 +307,9 @@ export default function CreateEventModal({
     }
   };
 
-  const selectedFormat =
-    FORMAT_OPTIONS.find((f) => f.id === form.formatId) ?? null;
+  const selectedFormat = modoFisico
+    ? BOLETA_FISICA_FORMAT
+    : (FORMAT_OPTIONS.find((f) => f.id === form.formatId) ?? null);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -271,23 +334,34 @@ export default function CreateEventModal({
         <div className="px-6 pt-5">
           {/* Selector de formato */}
           <div className={`flex gap-2 ${errors.formatId ? "mb-1" : "mb-3"}`}>
-            {FORMAT_OPTIONS.map((fmt) => (
+            {modoFisico ? (
               <button
-                key={fmt.id}
                 type="button"
-                onClick={() => handleChange("formatId", fmt.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
-                  form.formatId === fmt.id
-                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
-                    : errors.formatId
-                      ? "border-red-300 text-red-400"
-                      : "border-gray-200 text-gray-400 hover:border-gray-300"
-                }`}
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
               >
-                {fmt.icon}
-                {fmt.label}
+                {BOLETA_FISICA_FORMAT.icon}
+                {BOLETA_FISICA_FORMAT.label}
               </button>
-            ))}
+            ) : (
+              FORMAT_OPTIONS.map((fmt) => (
+                <button
+                  key={fmt.id}
+                  type="button"
+                  onClick={() => handleChange("formatId", fmt.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                    form.formatId === fmt.id
+                      ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                      : errors.formatId
+                        ? "border-red-300 text-red-400"
+                        : "border-gray-200 text-gray-400 hover:border-gray-300"
+                  }`}
+                >
+                  {fmt.icon}
+                  {fmt.label}
+                </button>
+              ))
+            )}
           </div>
           {errors.formatId && (
             <p className="mb-2 text-xs text-red-500">{errors.formatId}</p>
@@ -327,7 +401,11 @@ export default function CreateEventModal({
               className={`cursor-pointer border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors ${selectedFormat?.ratio ?? "h-40"} ${selectedFormat?.width ?? "w-full"}`}
             >
               <Upload className="h-6 w-6" />
-              <span className="text-xs">Haz clic para subir una imagen</span>
+              <span className="text-xs">
+                {modoFisico
+                  ? "Haz clic para subir la imagen de la boleta física"
+                  : "Haz clic para subir una imagen"}
+              </span>
               {!selectedFormat && (
                 <span className="text-[10px] text-gray-300">
                   Selecciona un formato primero
@@ -444,51 +522,141 @@ export default function CreateEventModal({
             </div>
           </div>
 
-          {/* Boletas + Precio */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                <Ticket className="h-3 w-3 inline mr-1" />
-                Boletas
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={form.aforoTotal ?? ""}
-                onChange={(e) =>
-                  handleChange(
-                    "aforoTotal",
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-                placeholder="Sin límite"
-                className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.aforoTotal ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-              />
-              {errors.aforoTotal && (
-                <p className="mt-1 text-xs text-red-500">{errors.aforoTotal}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                <span>Precio base</span>
-                <span className="text-gray-400">COP</span>
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={formatPriceDisplay(form.precioBase)}
-                onChange={(e) =>
-                  handleChange("precioBase", parsePriceInput(e.target.value))
-                }
-                placeholder="Gratis"
-                className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
-              />
-              {errors.precioBase && (
-                <p className="mt-1 text-xs text-red-500">{errors.precioBase}</p>
-              )}
-            </div>
-          </div>
+          {modoFisico && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <Ticket className="h-3 w-3 inline mr-1" />
+                  Boletas del lote <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={4000}
+                  value={cantidadLote ?? ""}
+                  onChange={(e) => {
+                    setCantidadLote(
+                      e.target.value ? Number(e.target.value) : undefined,
+                    );
+                    setErrors((prev) => ({ ...prev, _lote: undefined }) as any);
+                  }}
+                  placeholder="Ej. 1000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${(errors as any)._lote ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                />
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Cantidad de boletas físicas que se generarán al crear el
+                  evento.
+                </p>
+                {(errors as any)._lote && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {(errors as any)._lote}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>Precio base</span>
+                  <span className="text-gray-400">COP</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatPriceDisplay(form.precioBase)}
+                  onChange={(e) =>
+                    handleChange("precioBase", parsePriceInput(e.target.value))
+                  }
+                  placeholder="Ej. 20000"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                />
+                {errors.precioBase && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.precioBase}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
+          {!modoFisico && (
+            <>
+              {/* Nombre del organizador */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <User className="h-3 w-3 inline mr-1" />
+                  Nombre del organizador <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.nombreOrganizador ?? ""}
+                  onChange={(e) =>
+                    handleChange("nombreOrganizador", e.target.value)
+                  }
+                  placeholder="Ej. Feria 53 Santander de Quilichao"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.nombreOrganizador ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+                />
+                {errors.nombreOrganizador && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.nombreOrganizador}
+                  </p>
+                )}
+              </div>
+
+              {/* Boletas + Precio */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <Ticket className="h-3 w-3 inline mr-1" />
+                    Boletas
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.aforoTotal ?? ""}
+                    onChange={(e) =>
+                      handleChange(
+                        "aforoTotal",
+                        e.target.value ? Number(e.target.value) : undefined,
+                      )
+                    }
+                    placeholder="Sin límite"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.aforoTotal ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                  />
+                  {errors.aforoTotal && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.aforoTotal}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    <span>Precio base</span>
+                    <span className="text-gray-400">COP</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatPriceDisplay(form.precioBase)}
+                    onChange={(e) =>
+                      handleChange(
+                        "precioBase",
+                        parsePriceInput(e.target.value),
+                      )
+                    }
+                    placeholder="Gratis"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${errors.precioBase ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+                  />
+                  {errors.precioBase && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.precioBase}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Tipo de evento (VIP / General) */}
           <div>
@@ -530,95 +698,119 @@ export default function CreateEventModal({
                 <Star className="h-4 w-4" />
                 VIP
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTipoEvento(EventoTipo.PALCO);
+                  setErrors((prev) => ({ ...prev, tipo: undefined }));
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                  tipoEvento === EventoTipo.PALCO
+                    ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                    : errors.tipo
+                      ? "border-red-300 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+              >
+                <Armchair className="h-4 w-4" />
+                Palco
+              </button>
             </div>
             {errors.tipo && (
               <p className="mt-1 text-xs text-red-500">{errors.tipo}</p>
             )}
           </div>
 
-          {/* Cargo por SUAREC (comisión) */}
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              <span>Cargo SUAREC</span>
-              <span className="text-gray-400">COP</span>
-            </label>
-            <input
-              type="text"
-              name="cargo suarec"
-              inputMode="numeric"
-              value={formatPriceDisplay(cargoSuarec)}
-              onChange={(e) => setCargoSuarec(parsePriceInput(e.target.value))}
-              placeholder="0"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
-            />
-          </div>
-
-          {/* Códigos de regalo */}
-          <div className="rounded-lg border border-gray-200 p-3">
-            <label className="flex items-center justify-between cursor-pointer">
-              <div className="flex items-center gap-2">
-                <Gift className="h-4 w-4 text-[#097EEC]" />
-                <span className="text-sm font-medium text-gray-700">
-                  Generar códigos de regalo
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setGenerarCodigos((v) => !v);
-                  setErrors(
-                    (prev) => ({ ...prev, _codigos: undefined }) as any,
-                  );
-                }}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  generarCodigos ? "bg-[#097EEC]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    generarCodigos ? "translate-x-4" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </label>
-
-            {generarCodigos && (
-              <div className="mt-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Cantidad de códigos
+          {!modoFisico && (
+            <>
+              {/* Cargo por SUAREC (comisión) */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>Cargo SUAREC</span>
+                  <span className="text-gray-400">COP</span>
                 </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={cantidadCodigos ?? ""}
-                  onChange={(e) => {
-                    setCantidadCodigos(
-                      e.target.value ? Number(e.target.value) : undefined,
-                    );
-                    setErrors(
-                      (prev) => ({ ...prev, _codigos: undefined }) as any,
-                    );
-                  }}
-                  placeholder="Ej. 1000"
-                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
-                    (errors as any)._codigos
-                      ? "border-red-400"
-                      : "border-gray-200"
-                  }`}
+                  type="text"
+                  name="cargo suarec"
+                  inputMode="numeric"
+                  value={formatPriceDisplay(cargoSuarec)}
+                  onChange={(e) =>
+                    setCargoSuarec(parsePriceInput(e.target.value))
+                  }
+                  placeholder="0"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all"
                 />
-                <p className="mt-1 text-[11px] text-gray-400">
-                  Se sumarán al aforo del evento y podrás descargarlos en Excel.
-                </p>
-                {(errors as any)._codigos && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {(errors as any)._codigos}
-                  </p>
+              </div>
+
+              {/* Códigos de regalo */}
+              <div className="rounded-lg border border-gray-200 p-3">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-[#097EEC]" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Generar códigos de regalo
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGenerarCodigos((v) => !v);
+                      setErrors(
+                        (prev) => ({ ...prev, _codigos: undefined }) as any,
+                      );
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      generarCodigos ? "bg-[#097EEC]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        generarCodigos ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </label>
+
+                {generarCodigos && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Cantidad de códigos
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10000}
+                      value={cantidadCodigos ?? ""}
+                      onChange={(e) => {
+                        setCantidadCodigos(
+                          e.target.value ? Number(e.target.value) : undefined,
+                        );
+                        setErrors(
+                          (prev) => ({ ...prev, _codigos: undefined }) as any,
+                        );
+                      }}
+                      placeholder="Ej. 1000"
+                      className={`w-full px-3 py-2 text-sm border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white transition-all ${
+                        (errors as any)._codigos
+                          ? "border-red-400"
+                          : "border-gray-200"
+                      }`}
+                    />
+                    <p className="mt-1 text-[11px] text-gray-400">
+                      Se sumarán al aforo del evento y podrás descargarlos en
+                      Excel.
+                    </p>
+                    {(errors as any)._codigos && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {(errors as any)._codigos}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
