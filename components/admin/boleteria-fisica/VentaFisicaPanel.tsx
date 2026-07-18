@@ -217,8 +217,8 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
       return;
     }
 
-    if (cantidad > 4) {
-      toast.error("No puedes vender más de 4 boletas físicas a la vez");
+    if (cantidad > 20) {
+      toast.error("No puedes vender más de 20 boletas físicas a la vez");
       return;
     }
 
@@ -549,7 +549,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
                   ref={cantidadInputRef}
                   type="number"
                   min={1}
-                  max={50}
+                  max={20}
                   value={cantidadStr}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -574,7 +574,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Billete recibido (COP)
+                  Billete recibido
                 </label>
                 <input
                   ref={billeteInputRef}
@@ -620,7 +620,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               <input
                 type="number"
                 min={1}
-                max={50}
+                max={20}
                 value={cantidadStr}
                 onChange={(e) => {
                   const value = e.target.value;
