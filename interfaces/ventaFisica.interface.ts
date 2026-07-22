@@ -63,9 +63,19 @@ export interface BoletaFisicaValidada {
   escaneadaAt: string;
 }
 
+export interface ValidadorResumen {
+  validadorId: number | null;
+  validadorNombre: string;
+  validadorEmail: string;
+  cantidad: number;
+}
+
 export interface BoletasFisicasValidadasResponse {
   boletas: BoletaFisicaValidada[];
   total: number;
   page: number;
   totalPaginas: number;
+  // Conteo por validador sobre todo el filtro activo (opcional por
+  // compatibilidad con backend sin actualizar)
+  resumenValidadores?: ValidadorResumen[];
 }

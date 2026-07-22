@@ -76,3 +76,13 @@ export interface ObtenerUltimoLoteFisicoResponse {
   cantidadGenerada: number | null;
   createdAt: string | null;
 }
+
+export interface LoteFisicoResumen {
+  loteId: number;
+  eventoId: number;
+  eventoNombre: string;
+  cantidadGenerada: number;
+  impresas: number;
+  disponibles: number;
+  createdAt: string;
+}
