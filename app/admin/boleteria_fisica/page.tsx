@@ -7,7 +7,7 @@ import RoleGuard from "@/components/role-guard";
 import EventosFisicosManagement from "@/components/admin/boleteria-fisica/EventosFisicosManagement";
 import VentasFisicasManagement from "@/components/admin/boleteria-fisica/VentasFisicasManagement";
 import EstadisticasFisicasManagement from "@/components/admin/boleteria-fisica/EstadisticasFisicasManagement";
-import ConfiguracionFisicaManagement from "@/components/admin/boleteria-fisica/ConfiguracionFisicaManagement";
+import LotesFisicosManagement from "@/components/admin/boleteria-fisica/LotesFisicosManagement";
 import {
   CalendarDays,
   Ticket,
@@ -15,14 +15,20 @@ import {
   Settings,
   ArrowLeft,
   Printer,
+  Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type BoleteriaFisicaTab = "eventos" | "ventas" | "estadisticas" | "config";
+type BoleteriaFisicaTab =
+  | "eventos"
+  | "ventas"
+  | "lotes"
+  | "estadisticas"
+  | "config";
 
 const TAB_CONFIG: Record<
   BoleteriaFisicaTab,
-  { label: string; icon: React.ReactNode }
+  { label: string; icon: React.ReactNode; disabled?: boolean }
 > = {
   eventos: {
     label: "Eventos",
@@ -32,13 +38,19 @@ const TAB_CONFIG: Record<
     label: "Ventas",
     icon: <Ticket className="h-4 w-4" />,
   },
+  lotes: {
+    label: "Lotes",
+    icon: <Package className="h-4 w-4" />,
+  },
   estadisticas: {
     label: "Estadísticas",
     icon: <BarChart3 className="h-4 w-4" />,
   },
+  // Deshabilitada: la pantalla de configuración no tiene funcionalidad real aún
   config: {
     label: "Configuración",
     icon: <Settings className="h-4 w-4" />,
+    disabled: true,
   },
 };
 
@@ -97,11 +109,21 @@ const BoleteriaFisicaPageContent = () => {
               <motion.button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                whileTap={{ scale: 0.97 }}
+                whileTap={
+                  TAB_CONFIG[tab].disabled ? undefined : { scale: 0.97 }
+                }
+                disabled={TAB_CONFIG[tab].disabled}
+                title={
+                  TAB_CONFIG[tab].disabled
+                    ? "Deshabilitado hasta nueva venta en fisico"
+                    : undefined
+                }
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm ${
-                  activeTab === tab
-                    ? "bg-[#097EEC] text-white shadow-md"
-                    : "bg-white text-gray-600 hover:bg-gray-100 shadow"
+                  TAB_CONFIG[tab].disabled
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+                    : activeTab === tab
+                      ? "bg-[#097EEC] text-white shadow-md"
+                      : "bg-white text-gray-600 hover:bg-gray-100 shadow"
                 }`}
               >
                 {TAB_CONFIG[tab].icon}
@@ -125,11 +147,11 @@ const BoleteriaFisicaPageContent = () => {
 
                 {activeTab === "ventas" && <VentasFisicasManagement />}
 
+                {activeTab === "lotes" && <LotesFisicosManagement />}
+
                 {activeTab === "estadisticas" && (
                   <EstadisticasFisicasManagement />
                 )}
-
-                {activeTab === "config" && <ConfiguracionFisicaManagement />}
               </motion.div>
             </AnimatePresence>
           </div>

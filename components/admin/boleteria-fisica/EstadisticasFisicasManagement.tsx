@@ -20,8 +20,10 @@ import {
   RecaudoGlobalFisicoResponse,
   ResumenEventoFisico,
   BoletaFisicaValidada,
+  ValidadorResumen,
 } from "@/interfaces/ventaFisica.interface";
 import { formatDisplayDate } from "@/lib/TimeZone";
+import { DatePicker, hoyColombia } from "@/components/ui/DatePicker";
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -34,6 +36,19 @@ const formatCOP = (value: number) =>
 // Mismo estilo que la tabla "Validaciones QR" de digital, sin columna de
 // comprador (las boletas fisicas no tienen comprador con cuenta).
 
+// Muestra "lunes, 20 de julio de 2026" a partir de un YYYY-MM-DD del input
+// date — se le fija T00:00:00 local para que no se corra un dia por UTC
+const formatFechaFiltro = (fecha: string) => {
+  const d = new Date(`${fecha}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return fecha;
+  return d.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
 const BoletasValidadasTable = () => {
   const [boletas, setBoletas] = useState<BoletaFisicaValidada[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,34 +56,50 @@ const BoletasValidadasTable = () => {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [total, setTotal] = useState(0);
   const [serialSearch, setSerialSearch] = useState("");
+  // Arranca filtrando por el dia actual (hora Colombia) — la tabla abre
+  // mostrando lo escaneado hoy; con "Limpiar" se ve todo el historial
+  const [fechaFilter, setFechaFilter] = useState(hoyColombia);
+  const [resumenValidadores, setResumenValidadores] = useState<
+    ValidadorResumen[]
+  >([]);
 
-  const cargar = useCallback(async (paginaActual: number, serial: string) => {
-    setLoading(true);
-    try {
-      const res = await EventsService.getBoletasFisicasValidadas(
-        paginaActual,
-        serial || undefined,
-      );
-      setBoletas(res.data.boletas);
-      setTotalPaginas(res.data.totalPaginas);
-      setTotal(res.data.total);
-    } catch {
-      toast.error("No se pudo cargar las boletas validadas");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const cargar = useCallback(
+    async (paginaActual: number, serial: string, fecha: string) => {
+      setLoading(true);
+      try {
+        const res = await EventsService.getBoletasFisicasValidadas(
+          paginaActual,
+          serial || undefined,
+          fecha || undefined,
+        );
+        setBoletas(res.data.boletas);
+        setTotalPaginas(res.data.totalPaginas);
+        setTotal(res.data.total);
+        setResumenValidadores(res.data.resumenValidadores ?? []);
+      } catch {
+        toast.error("No se pudo cargar las boletas validadas");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Debounce: espera a que el admin deje de escribir antes de consultar
   useEffect(() => {
     const timeout = setTimeout(() => {
-      cargar(page, serialSearch);
+      cargar(page, serialSearch, fechaFilter);
     }, 400);
     return () => clearTimeout(timeout);
-  }, [page, serialSearch, cargar]);
+  }, [page, serialSearch, fechaFilter, cargar]);
 
   const buscarPorSerial = (value: string) => {
     setSerialSearch(value);
+    setPage(1);
+  };
+
+  const filtrarPorFecha = (value: string) => {
+    setFechaFilter(value);
     setPage(1);
   };
 
@@ -120,7 +151,7 @@ const BoletasValidadasTable = () => {
           <QrCode className="h-4 w-4 text-[#097EEC]" />
           Boletas validadas ({total})
         </h3>
-        <div className="flex items-center gap-2 sm:max-w-md w-full">
+        <div className="flex items-center gap-2 sm:max-w-2xl w-full">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             <input
@@ -131,8 +162,15 @@ const BoletasValidadasTable = () => {
               onChange={(e) => buscarPorSerial(e.target.value)}
             />
           </div>
+          <DatePicker
+            value={fechaFilter}
+            onChange={filtrarPorFecha}
+            allowClear
+            placeholder="Día de escaneo"
+            className="flex-shrink-0"
+          />
           <button
-            onClick={() => cargar(page, serialSearch)}
+            onClick={() => cargar(page, serialSearch, fechaFilter)}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors flex-shrink-0"
             title="Recargar boletas validadas"
@@ -142,6 +180,49 @@ const BoletasValidadasTable = () => {
           </button>
         </div>
       </div>
+
+      {/* Resumen del dia filtrado: total escaneadas + desglose por validador */}
+      {fechaFilter && !loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-4 bg-blue-50/50 border border-[#097EEC]/20 rounded-xl"
+        >
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold text-[#097EEC]">{total}</span> boleta
+            {total === 1 ? "" : "s"} escaneada{total === 1 ? "" : "s"} el{" "}
+            <span className="font-medium">
+              {formatFechaFiltro(fechaFilter)}
+            </span>
+          </p>
+
+          {resumenValidadores.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {resumenValidadores.map((v) => (
+                <div
+                  key={v.validadorId ?? "sin-validador"}
+                  className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm"
+                >
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[#097EEC] to-[#0562C7] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                    {(v.validadorNombre || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate max-w-[140px]">
+                      {v.validadorNombre}
+                    </p>
+                    <p className="text-[10px] text-gray-400 truncate max-w-[140px]">
+                      {v.validadorEmail}
+                    </p>
+                  </div>
+                  <span className="ml-1 text-xs font-semibold text-[#097EEC] bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 flex-shrink-0">
+                    {v.cantidad}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {loading ? (
         <div className="py-14 text-center">
@@ -154,7 +235,9 @@ const BoletasValidadasTable = () => {
           <p className="text-sm text-gray-500">
             {serialSearch
               ? "Ningún serial coincide con la búsqueda"
-              : "Aún no se ha validado ninguna boleta física"}
+              : fechaFilter
+                ? `No se escaneó ninguna boleta el ${formatFechaFiltro(fechaFilter)}`
+                : "Aún no se ha validado ninguna boleta física"}
           </p>
         </div>
       ) : (
