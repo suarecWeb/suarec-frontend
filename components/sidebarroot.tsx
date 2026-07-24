@@ -10,6 +10,7 @@ import {
   Users,
   CalendarDays,
   Ticket as TicketIcon,
+  Bell,
 } from "lucide-react";
 import AnimatedContent from "@/components/AnimatedContent";
 import { NotifBadge } from "@/components/ui/NotifBadge";
@@ -111,6 +112,15 @@ const SidebarRoot = () => {
           >
             <TicketIcon className="h-4 w-4" />
             <span>Boletería</span>
+          </Link>
+
+          {/* Notificaciones push */}
+          <Link
+            href="/admin/notificaciones"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
+          >
+            <Bell className="h-4 w-4" />
+            <span>Notificaciones</span>
           </Link>
         </nav>
       </aside>
