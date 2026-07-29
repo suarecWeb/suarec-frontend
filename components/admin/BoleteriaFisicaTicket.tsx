@@ -281,6 +281,7 @@ export const BoleteriaFisicaTicket = forwardRef<
               fechaCompra={fechaCompra}
               evento={evento}
               esPreview={!hasRealQr}
+              printOffset
             />
           </div>
         ))}
