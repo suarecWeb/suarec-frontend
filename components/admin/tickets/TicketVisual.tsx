@@ -65,7 +65,7 @@ export const TicketVisual = ({
         className={`absolute inset-0 ${printOffset ? "-translate-x-5" : ""}`}
       >
         {/* Bloque superior editable — ubicar en la boleta física */}
-        <div className="absolute left-[8%] top-[9%] right-[8%] text-center bg-white px-2 py-1.2 h-[8px] z-10">
+        <div className="absolute left-[8%] top-[8%] right-[8%] text-center bg-white px-2 py-1.2 h-[8px] z-10">
           <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold bg-white inline-block px-1">
             Patrocinan
           </p>
