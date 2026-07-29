@@ -213,7 +213,7 @@ export const BoleteriaFisicaTicket = forwardRef<
 
   const previewScale = 0.7;
   const previewWidth = Math.round(400 * previewScale);
-  const previewHeight = Math.round(880 * previewScale);
+  const previewHeight = Math.round(926 * previewScale);
 
   return (
     <div className="relative flex flex-col items-center gap-6">
@@ -327,7 +327,7 @@ export const BoleteriaFisicaTicket = forwardRef<
             position: relative !important;
             width: 80mm !important;
             height: auto !important;
-            aspect-ratio: 400 / 880 !important;
+            aspect-ratio: 400 / 926 !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;

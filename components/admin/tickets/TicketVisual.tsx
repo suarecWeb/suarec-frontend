@@ -48,7 +48,7 @@ export const TicketVisual = ({
 }: TicketVisualProps) => {
   return (
     <div
-      className={`ticket-print relative w-[400px] h-[880px] shrink-0 overflow-hidden bg-white ${className}`}
+      className={`ticket-print relative w-[400px] h-[926px] shrink-0 overflow-hidden bg-white ${className}`}
     >
       {/* Imagen base del ticket */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,7 +86,7 @@ export const TicketVisual = ({
                 Se presentan
               </p>
             </div>
-            <div className="absolute left-[10%] top-[39.8%] right-[10%] text-center">
+            <div className="absolute left-[10%] top-[35%] right-[10%] text-center">
               {evento.descripcion
                 .split(",")
                 .map((linea) => linea.trim())
@@ -104,19 +104,19 @@ export const TicketVisual = ({
         )}
 
         {/* Información del evento */}
-        <div className="absolute left-[16%] top-[57.8%] right-[30%]">
+        <div className="absolute left-[16%] top-[54%] right-[30%]">
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.fecha || "Domingo, 19 de julio de 2026"}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[61.2%] right-[30%]">
+        <div className="absolute left-[16%] top-[57%] right-[30%]">
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.hora || "6:00 p.m."}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[64.8%] right-[30%]">
+        <div className="absolute left-[16%] top-[59.8%] right-[30%]">
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.lugar || "La Herradura, Cauca"}
           </p>
@@ -124,7 +124,7 @@ export const TicketVisual = ({
 
         {/* UUID / Serie arriba del QR */}
         {qrId && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-[69.8%] w-[78%] text-center px-2 py-1.5">
+          <div className="absolute left-1/2 -translate-x-1/2 top-[66.8%] w-[78%] text-center px-2 py-1.5">
             <p className="text-[9px] uppercase tracking-wide text-gray-700 font-extrabold leading-tight mb-0.5"></p>
             <p className="text-[10px] font-black text-black leading-tight break-all">
               {qrId}
@@ -133,7 +133,7 @@ export const TicketVisual = ({
         )}
 
         {/* QR dinámico centrado */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[73%] w-[38%] aspect-square bg-white flex items-center justify-center">
+        <div className="absolute left-1/2 -translate-x-1/2 top-[70%] w-[38%] aspect-square bg-white flex items-center justify-center">
           {esPreview ? (
             <div className="flex flex-col items-center justify-center text-center p-2">
               <QrCode className="h-14 w-14 text-gray-300 mb-1" />
