@@ -62,10 +62,10 @@ export const TicketVisual = ({
           desplazamiento a la izquierda para compensar el desfase de la
           impresora térmica POS-80C. */}
       <div
-        className={`absolute inset-0 ${printOffset ? "-translate-x-5" : ""}`}
+        className={`absolute inset-0 ${printOffset ? "-translate-x-8" : ""}`}
       >
         {/* Bloque superior editable — ubicar en la boleta física */}
-        <div className="absolute left-[8%] top-[8%] right-[8%] text-center bg-white px-2 py-1.2 h-[8px] z-10">
+        <div className="absolute left-[12%] top-[8%] right-[8%] text-center bg-white px-2 py-1.2 h-[8px] z-10">
           <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold bg-white inline-block px-1">
             Patrocinan
           </p>
@@ -81,12 +81,12 @@ export const TicketVisual = ({
         {/* Se presentan */}
         {evento?.descripcion && (
           <>
-            <div className="absolute left-[10%] top-[30.999%] right-[10%] text-center bg-white px-1 py-1 rounded h-[20px]">
+            <div className="absolute left-[12%] top-[30.999%] right-[10%] text-center bg-white px-1 py-1 rounded h-[20px]">
               <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold">
                 Se presentan
               </p>
             </div>
-            <div className="absolute left-[10%] top-[35%] right-[10%] text-center">
+            <div className="absolute left-[12%] top-[35%] right-[10%] text-center">
               {evento.descripcion
                 .split(",")
                 .map((linea) => linea.trim())
@@ -152,7 +152,7 @@ export const TicketVisual = ({
         <div className="absolute left-0 right-0 top-[83.5%] text-center px-4"></div>
 
         {/* Valor pagado */}
-        <div className="absolute left-[6%] bottom-[1.3%] text-center w-[40%] px-1.5 py-2">
+        <div className="absolute left-[10%] bottom-[1.3%] text-center w-[40%] px-1.5 py-2">
           <p className="text-[10px] uppercase tracking-wide text-gray-800 font-extrabold leading-tight">
             Valor pagado
           </p>
