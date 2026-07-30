@@ -4,7 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import MessageService from "@/services/MessageService";
-import { Message } from "@/interfaces/message.interface";
+import {
+  Message,
+  SupportTicket,
+  TicketStatus,
+} from "@/interfaces/message.interface";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { TokenPayload } from "@/interfaces/auth.interface";
@@ -22,29 +26,10 @@ import {
   Send,
   ChevronLeft,
   Inbox,
+  RotateCcw,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useWebSocketContext } from "@/contexts/WebSocketContext";
-
-interface Ticket {
-  id: string;
-  content: string;
-  senderId: number;
-  recipientId: number;
-  sent_at: Date;
-  read: boolean;
-  status?: string;
-  sender: {
-    id: number;
-    name: string;
-    email: string;
-  };
-  recipient: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
 
 const STATUS_CONFIG = {
   resolved: {
@@ -71,6 +56,138 @@ const STATUS_CONFIG = {
 
 const getStatusConfig = (status?: string) =>
   STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.default;
+
+const isTicketOpen = (ticket: SupportTicket | null) =>
+  Boolean(ticket && (!ticket.status || ticket.status === "open"));
+
+const getTicketSubject = (ticket: SupportTicket) => {
+  const subject = ticket.metadata?.subject;
+  if (typeof subject === "string" && subject.trim()) return subject.trim();
+
+  const firstLine = ticket.content.split(/\r?\n/).find((line) => line.trim());
+  const legacySubject = firstLine?.match(/^asunto:\s*(.+)$/i)?.[1]?.trim();
+  return legacySubject || ticket.content;
+};
+
+const sortTickets = (tickets: SupportTicket[]) =>
+  [...tickets].sort(
+    (a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime(),
+  );
+
+const mergeTicket = (
+  current: SupportTicket,
+  incoming: SupportTicket,
+): SupportTicket => ({
+  ...current,
+  ...incoming,
+  sender: { ...current.sender, ...incoming.sender },
+  recipient: { ...current.recipient, ...incoming.recipient },
+});
+
+const upsertTicket = (tickets: SupportTicket[], incoming: SupportTicket) => {
+  const existing = tickets.find((ticket) => ticket.id === incoming.id);
+  const nextTicket = existing ? mergeTicket(existing, incoming) : incoming;
+  return sortTickets([
+    nextTicket,
+    ...tickets.filter((ticket) => ticket.id !== incoming.id),
+  ]);
+};
+
+const appendMessage = (messages: Message[], incoming: Message) => {
+  if (incoming.id && messages.some((message) => message.id === incoming.id)) {
+    return messages;
+  }
+
+  return [...messages, incoming].sort(
+    (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+  );
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isSupportTicket = (value: unknown): value is SupportTicket =>
+  isRecord(value) &&
+  typeof value.id === "string" &&
+  typeof value.content === "string" &&
+  isRecord(value.sender);
+
+const isMessage = (value: unknown): value is Message =>
+  isRecord(value) &&
+  typeof value.content === "string" &&
+  ("sent_at" in value || "id" in value);
+
+const getTicketFromEvent = (payload: unknown): SupportTicket | null => {
+  if (isSupportTicket(payload)) return payload;
+  if (isRecord(payload) && isSupportTicket(payload.ticket)) {
+    return payload.ticket;
+  }
+  return null;
+};
+
+const getMessageEvent = (
+  payload: unknown,
+): { message: Message; ticketId?: string; ticket?: SupportTicket } | null => {
+  if (isMessage(payload)) {
+    return {
+      message: payload,
+      ticketId:
+        payload.ticket_id ||
+        (payload.type === "support_ticket" ? payload.id : undefined),
+    };
+  }
+
+  if (!isRecord(payload) || !isMessage(payload.message)) return null;
+
+  return {
+    message: payload.message,
+    ticketId:
+      (typeof payload.ticketId === "string" ? payload.ticketId : undefined) ||
+      payload.message.ticket_id ||
+      (payload.message.type === "support_ticket"
+        ? payload.message.id
+        : undefined),
+    ticket: isSupportTicket(payload.ticket) ? payload.ticket : undefined,
+  };
+};
+
+const getStatusEvent = (
+  payload: unknown,
+): {
+  ticketId: string;
+  status: TicketStatus;
+  ticket?: SupportTicket;
+} | null => {
+  const isTicketStatus = (value: unknown): value is TicketStatus =>
+    value === "open" || value === "resolved" || value === "closed";
+
+  if (isSupportTicket(payload) && isTicketStatus(payload.status)) {
+    return { ticketId: payload.id, status: payload.status, ticket: payload };
+  }
+
+  if (
+    !isRecord(payload) ||
+    typeof payload.ticketId !== "string" ||
+    !isTicketStatus(payload.status)
+  ) {
+    return null;
+  }
+
+  return {
+    ticketId: payload.ticketId,
+    status: payload.status,
+    ticket: isSupportTicket(payload.ticket) ? payload.ticket : undefined,
+  };
+};
+
+const getRequestErrorMessage = (error: unknown, fallback: string) => {
+  if (!isRecord(error) || !isRecord(error.response)) return fallback;
+  const data = error.response.data;
+  if (!isRecord(data)) return fallback;
+  if (typeof data.message === "string") return data.message;
+  if (Array.isArray(data.message)) return data.message.join(". ");
+  return fallback;
+};
 
 const formatDate = (dateString: Date | string) => {
   const date = new Date(dateString);
@@ -99,19 +216,26 @@ const formatShortDate = (dateString: Date | string) => {
 };
 
 const AdminTicketsPage = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [ticketPage, setTicketPage] = useState(1);
+  const [hasMoreTickets, setHasMoreTickets] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(
+    null,
+  );
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const selectedTicketIdRef = useRef<string | null>(null);
   const router = useRouter();
-  const { sendMessage, socket } = useWebSocketContext();
+  const { socket } = useWebSocketContext();
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -139,18 +263,124 @@ const AdminTicketsPage = () => {
     }
   }, [ticketMessages]);
 
-  const fetchTickets = async () => {
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTicketCreated = (payload: unknown) => {
+      const ticket = getTicketFromEvent(payload);
+      if (!ticket) return;
+
+      setTickets((current) => upsertTicket(current, ticket));
+      if (selectedTicketIdRef.current === ticket.id) {
+        setSelectedTicket((current) => {
+          const next = current ? mergeTicket(current, ticket) : ticket;
+          selectedTicketIdRef.current = next.id;
+          return next;
+        });
+      }
+    };
+
+    const handleSupportMessage = (payload: unknown) => {
+      const event = getMessageEvent(payload);
+      if (!event) return;
+
+      const ticketFromPayload = event.ticket;
+      const createdTicket =
+        event.message.type === "support_ticket" &&
+        isSupportTicket(event.message)
+          ? event.message
+          : null;
+
+      if (ticketFromPayload) {
+        setTickets((current) => upsertTicket(current, ticketFromPayload));
+      } else if (createdTicket) {
+        setTickets((current) => upsertTicket(current, createdTicket));
+      } else if (event.ticketId) {
+        // Mantener el ticket con actividad reciente visible al inicio.
+        setTickets((current) => {
+          const ticket = current.find((item) => item.id === event.ticketId);
+          if (!ticket) return current;
+          return [
+            ticket,
+            ...current.filter((item) => item.id !== event.ticketId),
+          ];
+        });
+      }
+
+      if (event.ticketId && selectedTicketIdRef.current === event.ticketId) {
+        setTicketMessages((current) => appendMessage(current, event.message));
+      }
+    };
+
+    const handleStatusChanged = (payload: unknown) => {
+      const event = getStatusEvent(payload);
+      if (!event) return;
+
+      setTickets((current) =>
+        current.map((ticket) =>
+          ticket.id === event.ticketId
+            ? {
+                ...(event.ticket ? mergeTicket(ticket, event.ticket) : ticket),
+                status: event.status,
+              }
+            : ticket,
+        ),
+      );
+
+      if (selectedTicketIdRef.current === event.ticketId) {
+        setSelectedTicket((current) => {
+          if (!current) return current;
+          const next = {
+            ...(event.ticket ? mergeTicket(current, event.ticket) : current),
+            status: event.status,
+          };
+          selectedTicketIdRef.current = next.id;
+          return next;
+        });
+      }
+    };
+
+    socket.on("support:ticket_created", handleTicketCreated);
+    socket.on("support:message_created", handleSupportMessage);
+    socket.on("support:status_changed", handleStatusChanged);
+
+    return () => {
+      socket.off("support:ticket_created", handleTicketCreated);
+      socket.off("support:message_created", handleSupportMessage);
+      socket.off("support:status_changed", handleStatusChanged);
+    };
+  }, [socket]);
+
+  const fetchTickets = async (page = 1, append = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       const response = await MessageService.getSupportTickets({
-        page: 1,
+        page,
         limit: 100,
       });
-      setTickets(response.data.data as Ticket[]);
+      setTickets((current) => {
+        // Preservar tickets recibidos por WebSocket mientras la carga HTTP
+        // inicial estaba en vuelo; `upsertTicket` deduplica por ID.
+        let merged = current;
+        response.data.data.forEach((ticket) => {
+          merged = upsertTicket(merged, ticket);
+        });
+        return sortTickets(merged);
+      });
+      setTicketPage(response.data.meta.page);
+      setHasMoreTickets(response.data.meta.hasNextPage);
     } catch {
       toast.error("Error al cargar los tickets");
     } finally {
-      setLoading(false);
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -161,71 +391,141 @@ const AdminTicketsPage = () => {
       const sorted = response.data.sort(
         (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
       );
-      setTicketMessages(sorted);
+      if (selectedTicketIdRef.current === ticketId) {
+        // Conservar eventos WebSocket que pudieron llegar mientras el HTTP
+        // estaba en vuelo, deduplicando siempre por ID.
+        setTicketMessages((current) =>
+          current.reduce(
+            (merged, message) => appendMessage(merged, message),
+            sorted,
+          ),
+        );
+      }
     } catch {
-      toast.error("Error al cargar los mensajes del ticket");
+      if (selectedTicketIdRef.current === ticketId) {
+        toast.error("Error al cargar los mensajes del ticket");
+      }
     } finally {
-      setLoadingMessages(false);
+      if (selectedTicketIdRef.current === ticketId) {
+        setLoadingMessages(false);
+      }
     }
   };
 
-  const handleTicketSelect = async (ticket: Ticket) => {
+  const handleTicketSelect = async (ticket: SupportTicket) => {
+    selectedTicketIdRef.current = ticket.id;
     setSelectedTicket(ticket);
+    setTicketMessages([]);
     setReplyMessage("");
     await loadTicketMessages(ticket.id);
   };
 
+  const handleCloseTicket = () => {
+    selectedTicketIdRef.current = null;
+    setSelectedTicket(null);
+    setTicketMessages([]);
+    setReplyMessage("");
+  };
+
   const handleReply = async () => {
-    if (!selectedTicket || !replyMessage.trim()) return;
+    if (
+      !selectedTicket ||
+      !isTicketOpen(selectedTicket) ||
+      !replyMessage.trim() ||
+      sendingReply
+    ) {
+      return;
+    }
+
+    const ticketId = selectedTicket.id;
+    const content = replyMessage.trim();
+
     try {
       setSendingReply(true);
-      if (socket) {
-        socket.emit("admin_reply", {
-          ticketId: selectedTicket.id,
-          content: replyMessage,
-        });
-        socket.once("admin_reply_sent", () => {
-          toast.success("Respuesta enviada");
-          setReplyMessage("");
-          loadTicketMessages(selectedTicket.id);
-        });
-        socket.once("error", () => toast.error("Error al enviar la respuesta"));
-      } else {
-        await MessageService.sendAdminReply({
-          ticketId: selectedTicket.id,
-          content: replyMessage,
-        });
-        toast.success("Respuesta enviada");
-        setReplyMessage("");
-        await loadTicketMessages(selectedTicket.id);
+      const response = await MessageService.sendAdminReply({
+        ticketId,
+        content,
+      });
+
+      if (selectedTicketIdRef.current === ticketId) {
+        setTicketMessages((current) => appendMessage(current, response.data));
+        setReplyMessage((current) =>
+          current.trim() === content ? "" : current,
+        );
       }
-    } catch {
-      toast.error("Error al enviar la respuesta");
+
+      toast.success("Respuesta enviada");
+    } catch (error) {
+      toast.error(
+        getRequestErrorMessage(error, "Error al enviar la respuesta"),
+      );
     } finally {
       setSendingReply(false);
     }
   };
 
-  const handleUpdateStatus = async (ticketId: string, newStatus: string) => {
+  const handleUpdateStatus = async (
+    ticketId: string,
+    newStatus: TicketStatus,
+  ) => {
+    if (updatingStatusId) return;
+
     try {
-      await MessageService.updateTicketStatus(ticketId, newStatus);
-      toast.success(
-        `Ticket marcado como ${newStatus === "resolved" ? "resuelto" : "cerrado"}`,
+      setUpdatingStatusId(ticketId);
+      const response = await MessageService.updateTicketStatus(
+        ticketId,
+        newStatus,
       );
-      fetchTickets();
-      if (selectedTicket?.id === ticketId) {
-        setSelectedTicket((t) => (t ? { ...t, status: newStatus } : t));
+      const updatedTicket = response.data;
+
+      setTickets((current) =>
+        current.map((ticket) =>
+          ticket.id === ticketId
+            ? {
+                ...mergeTicket(ticket, updatedTicket),
+                status: newStatus,
+              }
+            : ticket,
+        ),
+      );
+
+      if (selectedTicketIdRef.current === ticketId) {
+        setSelectedTicket((current) => {
+          if (!current) return current;
+          const next = {
+            ...mergeTicket(current, updatedTicket),
+            status: newStatus,
+          };
+          selectedTicketIdRef.current = next.id;
+          return next;
+        });
       }
-    } catch {
-      toast.error("Error al actualizar el estado del ticket");
+
+      const statusLabels: Record<TicketStatus, string> = {
+        open: "reabierto",
+        resolved: "resuelto",
+        closed: "cerrado",
+      };
+      toast.success(`Ticket ${statusLabels[newStatus]}`);
+    } catch (error) {
+      toast.error(
+        getRequestErrorMessage(
+          error,
+          "Error al actualizar el estado del ticket",
+        ),
+      );
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
   const filteredTickets = tickets.filter((ticket) => {
+    const normalizedSearch = searchTerm.toLowerCase();
     const matchesSearch =
-      ticket.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.sender.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.sender.email.toLowerCase().includes(searchTerm.toLowerCase());
+      getTicketSubject(ticket).toLowerCase().includes(normalizedSearch) ||
+      ticket.content.toLowerCase().includes(normalizedSearch) ||
+      ticket.sender.name.toLowerCase().includes(normalizedSearch) ||
+      (ticket.sender.email || "").toLowerCase().includes(normalizedSearch);
 
     const matchesStatus =
       statusFilter === "all" ||
@@ -347,46 +647,70 @@ const AdminTicketsPage = () => {
                         ? "No hay tickets con ese filtro"
                         : "No hay tickets de soporte"}
                     </p>
+                    {hasMoreTickets && (
+                      <button
+                        onClick={() => fetchTickets(ticketPage + 1, true)}
+                        disabled={loadingMore}
+                        className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {loadingMore
+                          ? "Buscando..."
+                          : "Buscar también en tickets anteriores"}
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  filteredTickets.map((ticket) => {
-                    const sc = getStatusConfig(ticket.status);
-                    const isSelected = selectedTicket?.id === ticket.id;
-                    return (
-                      <button
-                        key={ticket.id}
-                        onClick={() => handleTicketSelect(ticket)}
-                        className={`w-full text-left px-4 py-3.5 transition-colors hover:bg-gray-50 ${
-                          isSelected
-                            ? "bg-[#097EEC]/5 border-l-2 border-[#097EEC]"
-                            : "border-l-2 border-transparent"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <span className="text-sm font-semibold text-gray-800 truncate">
-                            {ticket.sender.name}
-                          </span>
-                          <span className="text-xs text-gray-400 flex-shrink-0">
-                            {formatShortDate(ticket.sent_at)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 line-clamp-2 mb-2 leading-snug">
-                          {ticket.content}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${sc.className}`}
-                          >
-                            {sc.icon}
-                            {sc.label}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            #{ticket.id.slice(0, 8)}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })
+                  <>
+                    {filteredTickets.map((ticket) => {
+                      const sc = getStatusConfig(ticket.status);
+                      const isSelected = selectedTicket?.id === ticket.id;
+                      return (
+                        <button
+                          key={ticket.id}
+                          onClick={() => handleTicketSelect(ticket)}
+                          className={`w-full text-left px-4 py-3.5 transition-colors hover:bg-gray-50 ${
+                            isSelected
+                              ? "bg-[#097EEC]/5 border-l-2 border-[#097EEC]"
+                              : "border-l-2 border-transparent"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <span className="text-sm font-semibold text-gray-800 truncate">
+                              {ticket.sender.name}
+                            </span>
+                            <span className="text-xs text-gray-400 flex-shrink-0">
+                              {formatShortDate(ticket.sent_at)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-2 leading-snug">
+                            {getTicketSubject(ticket)}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${sc.className}`}
+                            >
+                              {sc.icon}
+                              {sc.label}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              #{ticket.id.slice(0, 8)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {hasMoreTickets && (
+                      <div className="p-3">
+                        <button
+                          onClick={() => fetchTickets(ticketPage + 1, true)}
+                          disabled={loadingMore}
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {loadingMore ? "Cargando..." : "Cargar más tickets"}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -398,7 +722,7 @@ const AdminTicketsPage = () => {
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-shrink-0">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
-                      onClick={() => setSelectedTicket(null)}
+                      onClick={handleCloseTicket}
                       className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors flex-shrink-0"
                     >
                       <ChevronLeft className="h-5 w-5" />
@@ -411,7 +735,13 @@ const AdminTicketsPage = () => {
                         {selectedTicket.sender.name}
                       </p>
                       <p className="text-xs text-gray-400 truncate">
-                        {selectedTicket.sender.email}
+                        {selectedTicket.sender.email || "Correo no disponible"}
+                      </p>
+                      <p
+                        className="text-xs text-gray-600 font-medium truncate mt-0.5"
+                        title={getTicketSubject(selectedTicket)}
+                      >
+                        {getTicketSubject(selectedTicket)}
                       </p>
                     </div>
                   </div>
@@ -436,7 +766,8 @@ const AdminTicketsPage = () => {
                             onClick={() =>
                               handleUpdateStatus(selectedTicket.id, "resolved")
                             }
-                            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors font-medium"
+                            disabled={updatingStatusId === selectedTicket.id}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Resolver
                           </button>
@@ -444,12 +775,31 @@ const AdminTicketsPage = () => {
                             onClick={() =>
                               handleUpdateStatus(selectedTicket.id, "closed")
                             }
-                            className="text-xs px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors font-medium"
+                            disabled={updatingStatusId === selectedTicket.id}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Cerrar
                           </button>
                         </>
                       )}
+
+                    {(selectedTicket.status === "resolved" ||
+                      selectedTicket.status === "closed") && (
+                      <button
+                        onClick={() =>
+                          handleUpdateStatus(selectedTicket.id, "open")
+                        }
+                        disabled={updatingStatusId === selectedTicket.id}
+                        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-[#097EEC] border border-blue-200 hover:bg-blue-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {updatingStatusId === selectedTicket.id ? (
+                          <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-[#097EEC] border-t-transparent" />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        )}
+                        Reabrir
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -502,6 +852,11 @@ const AdminTicketsPage = () => {
 
                 {/* Reply input */}
                 <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+                  {!isTicketOpen(selectedTicket) && (
+                    <p className="mb-2 text-xs text-gray-500">
+                      Este ticket es de solo lectura. Reábrelo para responder.
+                    </p>
+                  )}
                   <div className="flex gap-3 items-end">
                     <textarea
                       value={replyMessage}
@@ -512,14 +867,23 @@ const AdminTicketsPage = () => {
                           handleReply();
                         }
                       }}
-                      placeholder="Escribe tu respuesta... (Enter para enviar)"
+                      placeholder={
+                        isTicketOpen(selectedTicket)
+                          ? "Escribe tu respuesta... (Enter para enviar)"
+                          : "Reabre el ticket para responder"
+                      }
                       className="flex-1 px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] outline-none transition-colors resize-none"
                       rows={2}
-                      disabled={sendingReply}
+                      maxLength={2000}
+                      disabled={sendingReply || !isTicketOpen(selectedTicket)}
                     />
                     <button
                       onClick={handleReply}
-                      disabled={!replyMessage.trim() || sendingReply}
+                      disabled={
+                        !replyMessage.trim() ||
+                        sendingReply ||
+                        !isTicketOpen(selectedTicket)
+                      }
                       className="p-3 rounded-xl bg-gradient-to-r from-[#097EEC] to-[#082D50] text-white hover:opacity-90 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       {sendingReply ? (

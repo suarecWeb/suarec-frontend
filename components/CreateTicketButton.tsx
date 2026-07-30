@@ -10,82 +10,48 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
-import { useWebSocket } from "../hooks/useWebSocket";
-import { useAuth } from "../hooks/useAuth";
+import MessageService from "@/services/MessageService";
+import { Message } from "@/interfaces/message.interface";
+import toast from "react-hot-toast";
 
 interface CreateTicketButtonProps {
-  onTicketCreated?: (ticket: any) => void;
-}
-
-interface Ticket {
-  id: string;
-  content: string;
-  status: string;
-  ticket_id: string;
-  sender: any;
-  recipient: any;
-  sent_at: string;
+  onTicketCreated?: (ticket: Message) => void;
 }
 
 export default function CreateTicketButton({
   onTicketCreated,
 }: CreateTicketButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [content, setContent] = useState("");
+  const [subject, setSubject] = useState("");
+  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { socket } = useWebSocket();
-  const { user } = useAuth();
-
-  console.log("🎫 CreateTicketButton renderizado:", {
-    socket: !!socket,
-    user: !!user,
-    isOpen,
-    isLoading,
-  });
 
   const handleCreateTicket = async () => {
-    console.log("🎫 handleCreateTicket llamado:", {
-      content: content.trim(),
-      socket: !!socket,
-      user: !!user,
-    });
-
-    if (!content.trim() || !socket || !user) {
-      console.log("❌ Validación fallida:", {
-        hasContent: !!content.trim(),
-        hasSocket: !!socket,
-        hasUser: !!user,
-      });
-      return;
-    }
+    const normalizedSubject = subject.trim();
+    const normalizedDescription = description.trim();
+    if (!normalizedSubject || !normalizedDescription || isLoading) return;
 
     setIsLoading(true);
     try {
-      console.log("🎫 Emitiendo create_ticket:", {
-        userId: user.id,
-        content: content.trim(),
+      const response = await MessageService.createSupportTicket({
+        subject: normalizedSubject,
+        description: normalizedDescription,
       });
 
-      socket.emit("create_ticket", {
-        userId: user.id,
-        content: content.trim(),
-      });
-
-      // Escuchar la respuesta
-      socket.once("ticket_created", (ticket: Ticket) => {
-        console.log("🎫 Ticket creado:", ticket);
-        setIsOpen(false);
-        setContent("");
-        onTicketCreated?.(ticket);
-      });
-
-      socket.once("error", (error: { message: string }) => {
-        console.error("❌ Error al crear ticket:", error);
-        alert(error.message || "Error al crear el ticket");
-      });
+      setIsOpen(false);
+      setSubject("");
+      setDescription("");
+      onTicketCreated?.(response.data);
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al crear el ticket");
+      const requestError = error as {
+        response?: { data?: { message?: string | string[] } };
+      };
+      const message = requestError.response?.data?.message;
+      toast.error(
+        Array.isArray(message)
+          ? message.join(". ")
+          : message || "Error al crear el ticket",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -94,10 +60,7 @@ export default function CreateTicketButton({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          className="w-full bg-[#097EEC] hover:bg-[#0A6BC7] text-white"
-          onClick={() => console.log("🎫 Botón CreateTicketButton clickeado")}
-        >
+        <Button className="w-full bg-[#097EEC] hover:bg-[#0A6BC7] text-white">
           🎫 Crear Nuevo Ticket
         </Button>
       </DialogTrigger>
@@ -107,14 +70,28 @@ export default function CreateTicketButton({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <label htmlFor="content" className="text-sm font-medium">
+            <label htmlFor="ticket-subject" className="text-sm font-medium">
+              Asunto
+            </label>
+            <input
+              id="ticket-subject"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              placeholder="Resume brevemente tu solicitud"
+              maxLength={120}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+          <div className="grid gap-2">
+            <label htmlFor="ticket-description" className="text-sm font-medium">
               Describe tu problema
             </label>
             <Textarea
-              id="content"
+              id="ticket-description"
               placeholder="Explica detalladamente el problema que necesitas resolver..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={1000}
               rows={4}
             />
           </div>
@@ -125,7 +102,7 @@ export default function CreateTicketButton({
           </Button>
           <Button
             onClick={handleCreateTicket}
-            disabled={!content.trim() || isLoading}
+            disabled={!subject.trim() || !description.trim() || isLoading}
             className="bg-[#097EEC] hover:bg-[#0A6BC7] text-white"
           >
             {isLoading ? "Creando..." : "Crear Ticket"}

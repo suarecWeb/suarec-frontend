@@ -4,6 +4,11 @@ import {
   Message,
   CreateMessageDto,
   Conversation,
+  AddMessageToTicketDto,
+  AdminReplyDto,
+  CreateSupportTicketDto,
+  SupportTicket,
+  TicketStatus,
 } from "@/interfaces/message.interface";
 import { PaginationParams } from "@/interfaces/pagination-params.interface";
 import { PaginationResponse } from "@/interfaces/pagination-response.interface";
@@ -29,8 +34,12 @@ const getMessagesBetweenUsers = (
 const createMessage = (messageData: CreateMessageDto) =>
   api.post<Message>(baseURL, messageData);
 
+// Crear un ticket de soporte. La identidad del usuario se toma del token.
+const createSupportTicket = (ticketData: CreateSupportTicketDto) =>
+  api.post<Message>(`${baseURL}/create-ticket`, ticketData);
+
 // Enviar respuesta de admin a ticket de soporte
-const sendAdminReply = (messageData: { ticketId: string; content: string }) =>
+const sendAdminReply = (messageData: AdminReplyDto) =>
   api.post<Message>(`${baseURL}/admin-reply`, messageData);
 
 // Marcar mensaje como leído
@@ -49,7 +58,7 @@ const deleteMessage = (id: string) => api.delete(`${baseURL}/${id}`);
 
 // Obtener tickets de soporte (solo admin)
 const getSupportTickets = (params?: PaginationParams) =>
-  api.get<PaginationResponse<Message>>(`${baseURL}/support-tickets`, {
+  api.get<PaginationResponse<SupportTicket>>(`${baseURL}/support-tickets`, {
     params,
   });
 
@@ -58,8 +67,8 @@ const getActiveTicket = (userId: number) =>
   api.get<Message | null>(`${baseURL}/active-ticket/${userId}`);
 
 // Actualizar estado de un ticket (solo admin)
-const updateTicketStatus = (messageId: string, status: string) =>
-  api.patch<Message>(`${baseURL}/${messageId}/status`, { status });
+const updateTicketStatus = (messageId: string, status: TicketStatus) =>
+  api.patch<SupportTicket>(`${baseURL}/${messageId}/status`, { status });
 
 // Obtener todos los mensajes de un ticket específico
 const getTicketMessages = (ticketId: string) =>
@@ -70,17 +79,16 @@ const sendModerationNotice = (data: { recipientId: number; content: string }) =>
   api.post<Message>(`${baseURL}/moderation-notify`, data);
 
 // Agregar mensaje a un ticket existente
-const addMessageToTicket = (
-  ticketId: string,
-  userId: number,
-  content: string,
-) =>
-  api.post<Message>(`${baseURL}/add-to-ticket`, { ticketId, userId, content });
+const addMessageToTicket = (ticketId: string, content: string) => {
+  const data: AddMessageToTicketDto = { ticketId, content };
+  return api.post<Message>(`${baseURL}/add-to-ticket`, data);
+};
 
 const MessageService = {
   getConversations,
   getMessagesBetweenUsers,
   createMessage,
+  createSupportTicket,
   sendModerationNotice,
   sendAdminReply,
   markAsRead,

@@ -188,9 +188,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       button: {
         title: "Ver",
         onClick: () => {
-          window.location.href = senderId
-            ? `/chat?sender=${senderId}`
-            : "/chat";
+          window.location.href =
+            senderId !== null && senderId !== undefined
+              ? `/chat?sender=${senderId}`
+              : "/chat";
         },
       },
     });
