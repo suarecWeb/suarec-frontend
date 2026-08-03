@@ -32,6 +32,69 @@ import {
 import Image from "next/image";
 import toast from "react-hot-toast";
 
+const SUPPORT_PARTICIPANT_ID = 0;
+const SUPPORT_PARTICIPANT_NAME = "Soporte SUAREC";
+const SUPPORT_PARTICIPANT_EMAIL = "soportesuarec@gmail.com";
+
+const isMessageInConversation = (
+  message: Message,
+  currentUserId: number,
+  participantId: number,
+) => {
+  const senderId = message.senderId ?? message.sender?.id;
+  const recipientId = message.recipientId ?? message.recipient?.id;
+  return (
+    (senderId === currentUserId && recipientId === participantId) ||
+    (senderId === participantId && recipientId === currentUserId)
+  );
+};
+
+const mergeMessagesById = (persisted: Message[], live: Message[]) => {
+  const merged: Message[] = [];
+  const positionById = new Map<string, number>();
+  const participantId = (message: Message, relation: "sender" | "recipient") =>
+    relation === "sender"
+      ? (message.senderId ?? message.sender?.id)
+      : (message.recipientId ?? message.recipient?.id);
+
+  const isConfirmedVersionOfTemp = (message: Message) => {
+    if (!message.id?.startsWith("temp_")) return false;
+    const timestamp = new Date(message.sent_at).getTime();
+    return persisted.some((candidate) => {
+      if (!candidate.id || candidate.id.startsWith("temp_")) return false;
+      return (
+        candidate.content === message.content &&
+        participantId(candidate, "sender") ===
+          participantId(message, "sender") &&
+        participantId(candidate, "recipient") ===
+          participantId(message, "recipient") &&
+        Math.abs(new Date(candidate.sent_at).getTime() - timestamp) <= 30_000
+      );
+    });
+  };
+
+  [...persisted, ...live].forEach((message) => {
+    if (isConfirmedVersionOfTemp(message)) return;
+
+    if (message.id) {
+      const existingPosition = positionById.get(message.id);
+      if (existingPosition !== undefined) {
+        merged[existingPosition] = {
+          ...merged[existingPosition],
+          ...message,
+        };
+        return;
+      }
+      positionById.set(message.id, merged.length);
+    }
+    merged.push(message);
+  });
+
+  return merged.sort(
+    (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+  );
+};
+
 const ChatPageContent = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
@@ -48,12 +111,14 @@ const ChatPageContent = () => {
   const [showMobileConversations, setShowMobileConversations] = useState(true);
 
   const [showUserSearch, setShowUserSearch] = useState(false);
-  const [activeTicket, setActiveTicket] = useState<any>(null);
+  const [activeTicket, setActiveTicket] = useState<Message | null>(null);
   const [loadingTicket, setLoadingTicket] = useState(false);
   const [isTypingRecipient, setIsTypingRecipient] = useState(false);
   const typingCleanupRef = useRef<(() => void) | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const loadMessagesRequestRef = useRef(0);
+  const selectedConversationIdRef = useRef<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -75,6 +140,8 @@ const ChatPageContent = () => {
     sendTypingStatus,
     onUserTyping,
   } = useWebSocketContext();
+  const hasConnectedOnceRef = useRef(false);
+  const previousIsConnectedRef = useRef(isConnected);
 
   // Cleanup typing timeout al desmontar
   useEffect(() => {
@@ -129,7 +196,14 @@ const ChatPageContent = () => {
     const handleTicketStatusChanged = (data: {
       ticketId: string;
       status: string;
+      ticket?: Message;
     }) => {
+      if (data.status === "open" && data.ticket) {
+        setActiveTicket(data.ticket);
+        toast.success("Tu ticket ha sido reabierto");
+        return;
+      }
+
       if (activeTicket && activeTicket.id === data.ticketId) {
         if (data.status === "closed" || data.status === "resolved") {
           setActiveTicket(null);
@@ -239,27 +313,25 @@ const ChatPageContent = () => {
       const { message } = data;
 
       // Extraer senderId y recipientId del mensaje o de las relaciones
-      const messageSenderId = message.senderId || message.sender?.id;
-      const messageRecipientId = message.recipientId || message.recipient?.id;
+      const messageSenderId = message.senderId ?? message.sender?.id;
+      const messageRecipientId = message.recipientId ?? message.recipient?.id;
+      const selectedParticipantId = selectedConversationIdRef.current;
 
       console.log("📨 Nuevo mensaje recibido:", message);
       console.log("📨 Mensaje completo:", JSON.stringify(message, null, 2));
       console.log("👤 Usuario actual:", currentUserId);
-      console.log(
-        "💬 Conversación seleccionada:",
-        selectedConversation?.user.id,
-      );
+      console.log("💬 Conversación seleccionada:", selectedParticipantId);
       console.log("🔍 Verificando relevancia:", {
         messageSenderId,
         messageRecipientId,
-        selectedUserId: selectedConversation?.user.id,
+        selectedUserId: selectedParticipantId,
         isRelevantForUser:
           messageRecipientId === currentUserId ||
           messageSenderId === currentUserId,
         isRelevantForConversation:
-          selectedConversation &&
-          (messageSenderId === selectedConversation.user.id ||
-            messageRecipientId === selectedConversation.user.id),
+          selectedParticipantId !== null &&
+          (messageSenderId === selectedParticipantId ||
+            messageRecipientId === selectedParticipantId),
       });
 
       // Solo procesar el mensaje si es relevante para el usuario actual
@@ -269,9 +341,9 @@ const ChatPageContent = () => {
       ) {
         // Actualizar mensajes si estamos en la conversación correcta
         if (
-          selectedConversation &&
-          (messageSenderId === selectedConversation.user.id ||
-            messageRecipientId === selectedConversation.user.id)
+          selectedParticipantId !== null &&
+          (messageSenderId === selectedParticipantId ||
+            messageRecipientId === selectedParticipantId)
         ) {
           console.log("✅ Mensaje aplicado a conversación actual");
           setMessages((prev) => {
@@ -295,7 +367,7 @@ const ChatPageContent = () => {
               (msg) =>
                 msg.id?.startsWith("temp_") &&
                 msg.content === message.content &&
-                msg.senderId === message.senderId,
+                (msg.senderId ?? msg.sender?.id) === messageSenderId,
             );
 
             let filteredMessages = prev;
@@ -339,7 +411,7 @@ const ChatPageContent = () => {
               : messageSenderId;
 
           // Si no podemos determinar el otherUserId, no actualizar
-          if (!otherUserId) {
+          if (otherUserId === null || otherUserId === undefined) {
             return prev;
           }
           const existingConvIndex = prev.findIndex(
@@ -353,7 +425,7 @@ const ChatPageContent = () => {
               ...updatedConversations[existingConvIndex],
               lastMessage: message,
               unreadCount:
-                message.recipientId === currentUserId
+                messageRecipientId === currentUserId
                   ? (updatedConversations[existingConvIndex].unreadCount || 0) +
                     1
                   : updatedConversations[existingConvIndex].unreadCount || 0,
@@ -370,15 +442,24 @@ const ChatPageContent = () => {
             // Crear objeto de usuario básico para la nueva conversación
             const newConversationUser = {
               id: otherUserId,
-              name: message.sender?.name || `Usuario ${otherUserId}`,
-              email: "", // Email no disponible en message.sender, se actualizará cuando se recargue la lista
-              profile_image: message.sender?.profile_image,
+              name:
+                otherUserId === SUPPORT_PARTICIPANT_ID
+                  ? SUPPORT_PARTICIPANT_NAME
+                  : message.sender?.name || `Usuario ${otherUserId}`,
+              email:
+                otherUserId === SUPPORT_PARTICIPANT_ID
+                  ? SUPPORT_PARTICIPANT_EMAIL
+                  : "", // Se completa al recargar conversaciones.
+              profile_image:
+                otherUserId === SUPPORT_PARTICIPANT_ID
+                  ? undefined
+                  : message.sender?.profile_image,
             };
 
             const newConversation: Conversation = {
               user: newConversationUser,
               lastMessage: message,
-              unreadCount: message.recipientId === currentUserId ? 1 : 0,
+              unreadCount: messageRecipientId === currentUserId ? 1 : 0,
             };
 
             // Agregar la nueva conversación al inicio de la lista
@@ -431,7 +512,6 @@ const ChatPageContent = () => {
     };
   }, [
     currentUserId,
-    selectedConversation,
     // markAsReadWebSocket, // Comentado
     onNewMessage,
     // onMessageRead, // Comentado
@@ -458,7 +538,33 @@ const ChatPageContent = () => {
       console.log("🔍 Conversaciones recibidas:", response.data);
       const sortedConversations = sortConversationsByLastMessage(response.data);
       console.log("🔍 Conversaciones ordenadas:", sortedConversations);
-      setConversations(sortedConversations);
+      setConversations((current) => {
+        const currentByParticipant = new Map(
+          current.map((conversation) => [conversation.user.id, conversation]),
+        );
+        const merged = sortedConversations.map((serverConversation) => {
+          const liveConversation = currentByParticipant.get(
+            serverConversation.user.id,
+          );
+          currentByParticipant.delete(serverConversation.user.id);
+          if (!liveConversation) return serverConversation;
+
+          const serverTimestamp = new Date(
+            serverConversation.lastMessage.sent_at,
+          ).getTime();
+          const liveTimestamp = new Date(
+            liveConversation.lastMessage.sent_at,
+          ).getTime();
+          return liveTimestamp > serverTimestamp
+            ? liveConversation
+            : serverConversation;
+        });
+
+        return sortConversationsByLastMessage([
+          ...merged,
+          ...Array.from(currentByParticipant.values()),
+        ]);
+      });
     } catch (err) {
       console.error("❌ Error al cargar conversaciones:", err);
       toast.error("Error al cargar las conversaciones");
@@ -475,6 +581,7 @@ const ChatPageContent = () => {
 
   const loadMessages = useCallback(
     async (conversation: Conversation) => {
+      const requestId = ++loadMessagesRequestRef.current;
       console.log(
         "📥 loadMessages llamado para conversación:",
         conversation.user.id,
@@ -483,46 +590,72 @@ const ChatPageContent = () => {
 
       try {
         setLoadingMessages(true);
+        selectedConversationIdRef.current = conversation.user.id;
+        setSelectedConversation(conversation);
+        setMessages([]);
 
-        // Si es conversación con Suarec, verificar ticket activo y cargar todos los mensajes del ticket
+        if (isMobileView) {
+          setShowMobileConversations(false);
+        }
+
+        // Soporte es una única conversación: el ticket activo solo controla
+        // si se puede responder, mientras /between conserva todo el historial.
         if (conversation.user.id === 0) {
           console.log("🎫 Cargando conversación con Suarec...");
 
-          // Obtener ticket activo
-          const ticketResponse =
-            await MessageService.getActiveTicket(currentUserId);
+          const [ticketResponse, messagesResponse] = await Promise.all([
+            MessageService.getActiveTicket(currentUserId),
+            MessageService.getMessagesBetweenUsers(
+              currentUserId,
+              conversation.user.id,
+              { page: 1, limit: 100 },
+            ),
+          ]);
+          if (requestId !== loadMessagesRequestRef.current) return;
+
           const activeTicket = ticketResponse.data;
           setActiveTicket(activeTicket);
           console.log("🎫 Ticket activo al cargar conversación:", activeTicket);
 
-          if (activeTicket) {
-            // Cargar todos los mensajes del ticket
-            console.log("🎫 Cargando mensajes del ticket:", activeTicket.id);
-            const ticketMessagesResponse =
-              await MessageService.getTicketMessages(activeTicket.id!);
-            const ticketMessages = ticketMessagesResponse.data.sort(
-              (a, b) =>
-                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
-            );
-            console.log(
-              "🎫 Mensajes del ticket cargados:",
-              ticketMessages.length,
-            );
-            setMessages(ticketMessages);
-          } else {
-            // No hay ticket activo, cargar mensajes normales
-            console.log("🎫 No hay ticket activo, cargando mensajes normales");
-            const response = await MessageService.getMessagesBetweenUsers(
-              currentUserId,
-              conversation.user.id,
-              { page: 1, limit: 50 },
-            );
-            const sortedMessages = response.data.data.sort(
-              (a, b) =>
-                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
-            );
-            setMessages(sortedMessages);
-          }
+          const remainingPages =
+            messagesResponse.data.meta.totalPages > 1
+              ? await Promise.all(
+                  Array.from(
+                    { length: messagesResponse.data.meta.totalPages - 1 },
+                    (_, index) =>
+                      MessageService.getMessagesBetweenUsers(
+                        currentUserId,
+                        conversation.user.id,
+                        { page: index + 2, limit: 100 },
+                      ),
+                  ),
+                )
+              : [];
+          if (requestId !== loadMessagesRequestRef.current) return;
+
+          const supportMessages = [
+            ...messagesResponse.data.data,
+            ...remainingPages.flatMap((response) => response.data.data),
+          ].sort(
+            (a, b) =>
+              new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+          );
+          console.log(
+            "🎫 Historial completo de soporte cargado:",
+            supportMessages.length,
+          );
+          setMessages((current) =>
+            mergeMessagesById(
+              supportMessages,
+              current.filter((message) =>
+                isMessageInConversation(
+                  message,
+                  currentUserId,
+                  conversation.user.id,
+                ),
+              ),
+            ),
+          );
         } else {
           // Conversación normal con otro usuario
           console.log(
@@ -545,15 +678,22 @@ const ChatPageContent = () => {
             sortedMessages.length,
           );
           console.log("📥 Mensajes ordenados:", sortedMessages);
-          setMessages(sortedMessages);
+          if (requestId !== loadMessagesRequestRef.current) return;
+          setMessages((current) =>
+            mergeMessagesById(
+              sortedMessages,
+              current.filter((message) =>
+                isMessageInConversation(
+                  message,
+                  currentUserId,
+                  conversation.user.id,
+                ),
+              ),
+            ),
+          );
         }
 
-        setSelectedConversation(conversation);
-
-        // En móvil, ocultar la lista de conversaciones cuando se selecciona una
-        if (isMobileView) {
-          setShowMobileConversations(false);
-        }
+        if (requestId !== loadMessagesRequestRef.current) return;
 
         // Unirse a la conversación en WebSocket
         const conversationId = `${Math.min(currentUserId, conversation.user.id)}_${Math.max(currentUserId, conversation.user.id)}`;
@@ -573,14 +713,43 @@ const ChatPageContent = () => {
           ),
         );
       } catch (err) {
-        console.error("❌ Error al cargar mensajes:", err);
-        toast.error("Error al cargar los mensajes");
+        if (requestId === loadMessagesRequestRef.current) {
+          console.error("❌ Error al cargar mensajes:", err);
+          toast.error("Error al cargar los mensajes");
+        }
       } finally {
-        setLoadingMessages(false);
+        if (requestId === loadMessagesRequestRef.current) {
+          setLoadingMessages(false);
+        }
       }
     },
     [currentUserId, isMobileView], // markAsReadWebSocket removido
   );
+
+  const refreshChatFromDatabase = useCallback(() => {
+    if (!currentUserId) return;
+    void fetchConversations();
+    if (selectedConversation) {
+      void loadMessages(selectedConversation);
+    }
+  }, [currentUserId, fetchConversations, loadMessages, selectedConversation]);
+
+  useEffect(() => {
+    const handleWindowFocus = () => refreshChatFromDatabase();
+    window.addEventListener("focus", handleWindowFocus);
+    return () => window.removeEventListener("focus", handleWindowFocus);
+  }, [refreshChatFromDatabase]);
+
+  useEffect(() => {
+    const wasConnected = previousIsConnectedRef.current;
+    if (isConnected) {
+      if (hasConnectedOnceRef.current && !wasConnected) {
+        refreshChatFromDatabase();
+      }
+      hasConnectedOnceRef.current = true;
+    }
+    previousIsConnectedRef.current = isConnected;
+  }, [isConnected, refreshChatFromDatabase]);
 
   // Abrir conversación específica si se recibe parámetro sender
   useEffect(() => {
@@ -617,8 +786,9 @@ const ChatPageContent = () => {
       console.log("🔄 No se cumplen las condiciones para cargar mensajes");
     }
   }, [
-    // conversations, // DESHABILITADO TEMPORALMENTE
+    conversations,
     currentUserId,
+    loadMessages,
     searchParams,
     selectedConversation,
   ]);
@@ -632,6 +802,22 @@ const ChatPageContent = () => {
     )
       return;
 
+    const activeTicketId = activeTicket?.id;
+
+    if (selectedConversation.user.id === 0 && !activeTicketId) {
+      toast.error("Crea un ticket de soporte antes de enviar un mensaje");
+      return;
+    }
+
+    if (
+      selectedConversation.user.id === 0 &&
+      activeTicket?.status &&
+      activeTicket.status !== "open"
+    ) {
+      toast.error("Este ticket ya no admite respuestas");
+      return;
+    }
+
     // Detener indicador de typing al enviar
     if (selectedConversation?.user?.id) {
       sendTypingStatus(selectedConversation.user.id, false);
@@ -640,6 +826,8 @@ const ChatPageContent = () => {
         typingTimeoutRef.current = null;
       }
     }
+
+    let confirmedSupportMessage: Message | null = null;
 
     try {
       setSendingMessage(true);
@@ -657,69 +845,23 @@ const ChatPageContent = () => {
         );
 
         // Verificar si ya existe un ticket activo
-        if (activeTicket) {
-          console.log("🎫 Ticket activo encontrado:", activeTicket.id);
+        if (activeTicketId) {
+          console.log("🎫 Ticket activo encontrado:", activeTicketId);
           console.log("🎫 Agregando mensaje al ticket existente");
 
-          // Crear mensaje temporal solo para mensajes a tickets existentes
-          const tempMessage: Message = {
-            id: `temp_${Date.now()}`,
-            content: newMessage,
-            senderId: currentUserId,
-            recipientId: selectedConversation.user.id,
-            sent_at: new Date(),
-            read: false,
-            sender: {
-              id: currentUserId,
-              name: "Tú",
-              profile_image: undefined,
-            },
-          };
-
-          setMessages((prev) => [...prev, tempMessage]);
+          const response = await MessageService.addMessageToTicket(
+            activeTicketId,
+            newMessage.trim(),
+          );
+          confirmedSupportMessage = response.data;
+          setMessages((current) =>
+            current.some((message) => message.id === response.data.id)
+              ? current
+              : [...current, response.data],
+          );
           setNewMessage("");
-
-          // Usar el endpoint específico para agregar mensaje a ticket existente
-          if (socket) {
-            console.log(
-              "🔌 Enviando evento add_message_to_ticket al WebSocket",
-            );
-            socket.emit("add_message_to_ticket", {
-              ticketId: activeTicket.id,
-              content: newMessage,
-            });
-            console.log("✅ Evento enviado al WebSocket");
-          } else {
-            console.log("🔌 WebSocket no disponible, usando método HTTP");
-            // Fallback al método HTTP
-            await MessageService.addMessageToTicket(
-              activeTicket.id,
-              currentUserId,
-              newMessage,
-            );
-          }
         } else {
-          console.log("🎫 No hay ticket activo, enviando mensaje normal");
-          // Crear mensaje temporal para nuevos tickets
-          const tempMessage: Message = {
-            id: `temp_${Date.now()}`,
-            content: newMessage,
-            senderId: currentUserId,
-            recipientId: selectedConversation.user.id,
-            sent_at: new Date(),
-            read: false,
-            sender: {
-              id: currentUserId,
-              name: "Tú",
-              profile_image: undefined,
-            },
-          };
-
-          setMessages((prev) => [...prev, tempMessage]);
-          setNewMessage("");
-
-          // Enviar mensaje normal (creará nuevo ticket)
-          sendWebSocketMessage(messageData);
+          return;
         }
       } else {
         // Mensaje normal a otro usuario
@@ -754,19 +896,22 @@ const ChatPageContent = () => {
 
       // Actualizar la conversación con el nuevo mensaje
       setConversations((prev) => {
+        const lastMessage =
+          confirmedSupportMessage ??
+          ({
+            id: `temp_${Date.now()}`,
+            content: newMessage,
+            senderId: currentUserId,
+            recipientId: selectedConversation.user.id,
+            read: false,
+            sent_at: new Date(),
+            status: "message",
+          } as Message);
         const updatedConversations = prev.map((conv) =>
           conv.user.id === selectedConversation.user.id
             ? {
                 ...conv,
-                lastMessage: {
-                  id: `temp_${Date.now()}`,
-                  content: newMessage,
-                  senderId: currentUserId,
-                  recipientId: selectedConversation.user.id,
-                  read: false,
-                  sent_at: new Date(),
-                  status: "message",
-                } as Message,
+                lastMessage,
               }
             : conv,
         );
@@ -900,9 +1045,9 @@ const ChatPageContent = () => {
 
       // Crear conversación con Suarec
       const suarecUser = {
-        id: 0,
-        name: "Suarec - Soporte",
-        email: "soporte@suarec.com",
+        id: SUPPORT_PARTICIPANT_ID,
+        name: SUPPORT_PARTICIPANT_NAME,
+        email: SUPPORT_PARTICIPANT_EMAIL,
         profile_image: undefined,
       };
 
@@ -941,16 +1086,32 @@ const ChatPageContent = () => {
     }
   };
 
-  const handleTicketCreated = (ticket: any) => {
+  const handleTicketCreated = (ticket: Message) => {
     setActiveTicket(ticket);
     toast.success("Ticket creado exitosamente");
+    if (selectedConversation?.user.id === 0) {
+      void loadMessages(selectedConversation);
+    }
   };
 
   const filteredConversations = conversations.filter(
     (conv) =>
       conv.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      (conv.user.email || "").toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const isSupportConversation = selectedConversation?.user.id === 0;
+  const isSupportInputDisabled = Boolean(
+    isSupportConversation &&
+      (!activeTicket ||
+        (activeTicket.status && activeTicket.status !== "open")),
+  );
+  const messagePlaceholder =
+    isSupportConversation && !activeTicket
+      ? "Crea un ticket para escribir a soporte"
+      : isSupportInputDisabled
+        ? "Este ticket ya no admite respuestas"
+        : "Escribe un mensaje...";
 
   return (
     <>
@@ -1284,14 +1445,19 @@ const ChatPageContent = () => {
                           value={newMessage}
                           onChange={handleTypingChange}
                           onKeyPress={handleKeyPress}
-                          placeholder="Escribe un mensaje..."
+                          placeholder={messagePlaceholder}
                           className="auto-resize-textarea flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] transition-all outline-none resize-none min-h-[44px] max-h-32 bg-white shadow-sm"
                           rows={1}
-                          disabled={sendingMessage}
+                          maxLength={isSupportConversation ? 2000 : undefined}
+                          disabled={sendingMessage || isSupportInputDisabled}
                         />
                         <button
                           onClick={sendMessage}
-                          disabled={!newMessage.trim() || sendingMessage}
+                          disabled={
+                            !newMessage.trim() ||
+                            sendingMessage ||
+                            isSupportInputDisabled
+                          }
                           className="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[48px] shadow-sm hover:scale-105"
                         >
                           {sendingMessage ? (

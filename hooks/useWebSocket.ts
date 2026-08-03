@@ -38,7 +38,8 @@ export const useWebSocket = (props: UseWebSocketProps = {}) => {
         `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.suarec.com"}/messages`,
         {
           auth: { token },
-          transports: ["websocket", "polling"],
+          // Solo WebSocket: polling no sobrevive detrás del ALB con varias tasks.
+          transports: ["websocket"],
           autoConnect: true,
           forceNew: false,
           reconnection: true,

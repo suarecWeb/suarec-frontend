@@ -149,7 +149,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
       const socket = io(`${backendUrl}/messages`, {
         auth: { token },
-        transports: ["polling", "websocket"], // Polling primero como fallback
+        // Solo WebSocket: polling no sobrevive detrás del ALB con varias
+        // tasks sin sticky sessions (cada request puede caer en otra task).
+        transports: ["websocket"],
         autoConnect: true,
         forceNew: true, // Forzar nueva conexión para evitar problemas de caché
         reconnection: true,
@@ -229,9 +231,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         // Solo mostrar notificación si NO soy yo quien envió el mensaje
         if (data.message?.sender) {
           const userId = getCurrentUserId();
+          const senderId =
+            data.senderId ?? data.message.senderId ?? data.message.sender?.id;
 
           // Solo mostrar notificación si el mensaje no es mío
-          if (userId && data.message.senderId !== userId) {
+          if (userId && senderId !== userId) {
             console.log(
               "🔔 Mostrando notificación global para:",
               data.message.sender.name,

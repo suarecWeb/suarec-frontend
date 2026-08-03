@@ -140,7 +140,8 @@ export const PanelNotiProvider = ({ children }: { children: ReactNode }) => {
 
     const socket = io(`${backendUrl}/messages`, {
       auth: { token },
-      transports: ["polling", "websocket"],
+      // Solo WebSocket: polling no sobrevive detrás del ALB con varias tasks.
+      transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 3000,
