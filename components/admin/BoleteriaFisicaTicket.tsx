@@ -116,7 +116,7 @@ export const BoleteriaFisicaTicket = forwardRef<
     const images: string[] = [];
     for (const el of validRefs) {
       const canvas = await html2canvas(el, {
-        scale: 3,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: null,
         logging: false,
@@ -181,6 +181,13 @@ export const BoleteriaFisicaTicket = forwardRef<
         setAgentStatus("No se pudo generar la imagen del ticket.");
         return;
       }
+
+      // DEBUG TEMPORAL: abre en una pestaña nueva la imagen exacta que se
+      // envía al agente, para comparar contra la boleta física impresa.
+      const debugWindow = window.open();
+      debugWindow?.document.write(
+        `<img src="${imagesBase64[0]}" style="max-width:100%" />`,
+      );
 
       setAgentStatus("Enviando imagen al agente de impresión...");
 
