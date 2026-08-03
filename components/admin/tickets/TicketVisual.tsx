@@ -96,20 +96,30 @@ export const TicketVisual = ({
           </>
         )}
 
-        {/* Información del evento */}
-        <div className="absolute left-[16%] top-[52%] right-[30%]">
+        {/* Información del evento. Los íconos (calendario/reloj/ubicación)
+            están fijos en la imagen base y no se mueven con el
+            -translate-x-8 de printOffset -- por eso este bloque lleva un
+            translate-x-8 propio cuando se imprime, para cancelar ese
+            corrimiento y no quedar montado sobre los íconos. */}
+        <div
+          className={`absolute left-[16%] top-[52%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.fecha || "Domingo, 19 de julio de 2026"}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[54.5%] right-[30%]">
+        <div
+          className={`absolute left-[16%] top-[54.5%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.hora || "6:00 p.m."}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[57%] right-[30%]">
+        <div
+          className={`absolute left-[16%] top-[57%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.lugar || "La Herradura, Cauca"}
           </p>
