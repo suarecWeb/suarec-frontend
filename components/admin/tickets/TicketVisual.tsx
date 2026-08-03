@@ -20,6 +20,7 @@ export interface TicketVisualProps {
   evento?: EventoInfo;
   className?: string;
   esPreview?: boolean;
+  printOffset?: boolean;
 }
 
 const formatCOP = (value: string | number) => {
@@ -43,6 +44,7 @@ export const TicketVisual = ({
   evento,
   className = "",
   esPreview = false,
+  printOffset = false,
 }: TicketVisualProps) => {
   return (
     <div
@@ -88,7 +90,12 @@ export const TicketVisual = ({
         </>
       )}
 
-      {/* Información del evento */}
+        {/* Tipo de boleta */}
+        <div className="absolute top-[23px] right-[8%] bg-white px-2 py-1">
+          <span className="text-[18px] font-black text-black tracking-tight">
+            {tipoBoleta}
+          </span>
+        </div>
 
       <div className="absolute left-[16%] top-[52%] right-[30%]">
         <p className="text-[13px] font-semibold text-black leading-snug">
@@ -116,7 +123,6 @@ export const TicketVisual = ({
             {qrId}
           </p>
         </div>
-      )}
 
       {/* QR dinámico centrado */}
       <div className="absolute left-1/2 -translate-x-1/2 top-[67%] w-[38%] aspect-square bg-white flex items-center justify-center">
@@ -124,15 +130,7 @@ export const TicketVisual = ({
           <div className="flex flex-col items-center justify-center text-center p-2">
             <QrCode className="h-14 w-14 text-gray-300 mb-1" />
           </div>
-        ) : (
-          <QRCodeCanvas
-            value={qrValue || "SUAREC"}
-            size={160}
-            level="M"
-            includeMargin={false}
-          />
         )}
-      </div>
 
       {/* Leyenda QR */}
       <div className="absolute left-0 right-0 top-[83.5%] text-center px-4"></div>
