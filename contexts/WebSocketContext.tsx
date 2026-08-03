@@ -229,9 +229,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         // Solo mostrar notificación si NO soy yo quien envió el mensaje
         if (data.message?.sender) {
           const userId = getCurrentUserId();
+          const senderId =
+            data.senderId ?? data.message.senderId ?? data.message.sender?.id;
 
           // Solo mostrar notificación si el mensaje no es mío
-          if (userId && data.message.senderId !== userId) {
+          if (userId && senderId !== userId) {
             console.log(
               "🔔 Mostrando notificación global para:",
               data.message.sender.name,
