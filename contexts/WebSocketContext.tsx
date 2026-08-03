@@ -149,7 +149,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
       const socket = io(`${backendUrl}/messages`, {
         auth: { token },
-        transports: ["polling", "websocket"], // Polling primero como fallback
+        // Solo WebSocket: polling no sobrevive detrás del ALB con varias
+        // tasks sin sticky sessions (cada request puede caer en otra task).
+        transports: ["websocket"],
         autoConnect: true,
         forceNew: true, // Forzar nueva conexión para evitar problemas de caché
         reconnection: true,
