@@ -21,9 +21,14 @@ import {
   Inbox,
   AlertCircle,
   Gift,
+  ChevronLeft,
+  ChevronRight,
+  BadgePercent,
+  Banknote,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import EstadisticasEventoModal from "./EstadisticasEventoModal";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -31,6 +36,9 @@ const formatCurrency = (value: number) =>
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(value);
+
+// Máximo de eventos por página en la grilla "Eventos y disponibilidad"
+const EVENTOS_POR_PAGINA = 10;
 
 const formatDateTime = (dateInput: string | Date | null | undefined) => {
   if (!dateInput) return { date: "—", time: "—", full: "—" };
@@ -115,14 +123,20 @@ interface BoletaValidada {
 
 const EstadisticasManagement = () => {
   const [events, setEvents] = useState<Evento[]>([]);
+  const [pageEventos, setPageEventos] = useState(1);
+  const [totalPaginasEventos, setTotalPaginasEventos] = useState(1);
+  const [loadingEventos, setLoadingEventos] = useState(true);
   const [transacciones, setTransacciones] = useState<TransaccionBoleta[]>([]);
   const [validadas, setValidadas] = useState<BoletaValidada[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValidadas, setSearchValidadas] = useState("");
+  const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(
+    null,
+  );
 
+  // Transacciones y validaciones se cargan una sola vez (alimentan los KPIs)
   useEffect(() => {
     Promise.all([
-      EventsService.getAllEventsAdmin().then((r) => setEvents(r.data)),
       EventsService.getAllTransacciones(true).then((r) =>
         setTransacciones(r.data.transacciones),
       ),
@@ -133,6 +147,19 @@ const EstadisticasManagement = () => {
       .catch(() => toast.error("Error al cargar estadísticas"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Eventos paginados desde el backend: máximo 10 por página,
+  // no se traen todos de una vez
+  useEffect(() => {
+    setLoadingEventos(true);
+    EventsService.getEventosAdminPaginados(pageEventos, EVENTOS_POR_PAGINA)
+      .then((r) => {
+        setEvents(r.data.eventos);
+        setTotalPaginasEventos(r.data.totalPaginas);
+      })
+      .catch(() => toast.error("Error al cargar los eventos"))
+      .finally(() => setLoadingEventos(false));
+  }, [pageEventos]);
 
   // KPIs
   const totalTx = transacciones.length;
@@ -154,15 +181,44 @@ const EstadisticasManagement = () => {
   const totalBoletasVendidas = transacciones
     .filter((t) => t.estadoPago === TransaccionEstado.APROBADO)
     .reduce((sum, t) => sum + (t.cantidad || 0), 0);
+  // Total reunido por costo por servicio (cargo de cada boleta aprobada)
+  const totalCargoSuarec = transacciones
+    .filter((t) => t.estadoPago === TransaccionEstado.APROBADO)
+    .reduce((sum, t) => sum + (t.cargoPorBoleta || 0) * (t.cantidad || 0), 0);
+  // Recaudo sin el costo por servicio: solo el valor de las boletas
+  const totalReunidoBoletas = transacciones
+    .filter((t) => t.estadoPago === TransaccionEstado.APROBADO)
+    .reduce((sum, t) => sum + (t.precioPorBoleta || 0) * (t.cantidad || 0), 0);
 
-  // Próximo evento
-  const upcomingEvents = [...events]
-    .filter((e) => new Date(e.fechaEvento) > new Date())
-    .sort(
-      (a, b) =>
-        new Date(a.fechaEvento).getTime() - new Date(b.fechaEvento).getTime(),
-    );
-  const nextEvent = upcomingEvents[0];
+  // Próximo evento: el backend ordena los próximos primero (el más cercano
+  // al inicio), así que el primer evento futuro de la página 1 es el global
+  const nextEvent =
+    pageEventos === 1
+      ? events.find((e) => new Date(e.fechaEvento) > new Date())
+      : undefined;
+
+  // Botones de paginación de la grilla de eventos (con elipsis)
+  const getBotonesPaginaEventos = () => {
+    const items: { type: "page" | "ellipsis"; value: number | string }[] = [];
+    for (let p = 1; p <= totalPaginasEventos; p++) {
+      if (
+        totalPaginasEventos <= 5 ||
+        p === 1 ||
+        p === totalPaginasEventos ||
+        Math.abs(p - pageEventos) <= 1
+      ) {
+        if (
+          items.length > 0 &&
+          items[items.length - 1].type === "page" &&
+          p > (items[items.length - 1].value as number) + 1
+        ) {
+          items.push({ type: "ellipsis", value: "..." });
+        }
+        items.push({ type: "page", value: p });
+      }
+    }
+    return items;
+  };
 
   // Filtrar validaciones
   const filteredValidadas = validadas.filter((v) => {
@@ -190,7 +246,7 @@ const EstadisticasManagement = () => {
   return (
     <div className="space-y-6">
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -225,7 +281,7 @@ const EstadisticasManagement = () => {
           <div className="flex items-center gap-2 text-gray-400 mb-1">
             <TrendingUp className="h-4 w-4" />
             <span className="text-xs font-medium uppercase tracking-wide">
-              Recaudado
+              Recaudo total
             </span>
           </div>
           <p className="text-2xl font-bold text-gray-800">
@@ -240,6 +296,44 @@ const EstadisticasManagement = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
+        >
+          <div className="flex items-center gap-2 text-gray-400 mb-1">
+            <Banknote className="h-4 w-4" />
+            <span className="text-xs font-medium uppercase tracking-wide">
+              Recaudo en boletas
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-800">
+            {formatCurrency(totalReunidoBoletas)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Sin costo por servicio</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
+        >
+          <div className="flex items-center gap-2 text-gray-400 mb-1">
+            <BadgePercent className="h-4 w-4" />
+            <span className="text-xs font-medium uppercase tracking-wide">
+              Recaudo costo por servicio
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-800">
+            {formatCurrency(totalCargoSuarec)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Costo de servicio reunido
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"
         >
           <div className="flex items-center gap-2 text-gray-400 mb-1">
@@ -306,122 +400,175 @@ const EstadisticasManagement = () => {
           <CalendarDays className="h-4 w-4 text-[#097EEC]" />
           Eventos y disponibilidad
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {events
-            .sort(
-              (a, b) =>
-                new Date(a.fechaEvento).getTime() -
-                new Date(b.fechaEvento).getTime(),
-            )
-            .map((event, i) => {
-              const dt = formatDateTime(event.fechaEvento);
-              const remaining = getTimeRemaining(event.fechaEvento);
-              const disponible = event.aforoDisponible ?? 0;
-              const total = event.aforoTotal ?? 0;
-              const vendidas = total - disponible;
-              const porcentaje =
-                total > 0 ? Math.round((vendidas / total) * 100) : 0;
-              const aforoRegalo = event.aforoRegalo ?? 0;
-              const regalosCanjeados = event.regalosCanjeados ?? 0;
-              const porcentajeRegalo =
-                aforoRegalo > 0
-                  ? Math.round((regalosCanjeados / aforoRegalo) * 100)
-                  : 0;
-              const isNext = nextEvent?.id === event.id;
+        {loadingEventos ? (
+          <div className="py-14 text-center">
+            <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#097EEC] border-t-transparent mx-auto mb-3" />
+            <p className="text-sm text-gray-400">Cargando eventos...</p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
+            <CalendarDays className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No hay eventos registrados</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {events.map((event, i) => {
+                const dt = formatDateTime(event.fechaEvento);
+                const remaining = getTimeRemaining(event.fechaEvento);
+                const disponible = event.aforoDisponible ?? 0;
+                const total = event.aforoTotal ?? 0;
+                const vendidas = total - disponible;
+                const porcentaje =
+                  total > 0 ? Math.round((vendidas / total) * 100) : 0;
+                const aforoRegalo = event.aforoRegalo ?? 0;
+                const regalosCanjeados = event.regalosCanjeados ?? 0;
+                const porcentajeRegalo =
+                  aforoRegalo > 0
+                    ? Math.round((regalosCanjeados / aforoRegalo) * 100)
+                    : 0;
+                const isNext = nextEvent?.id === event.id;
 
-              return (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + i * 0.05 }}
-                  className={`bg-white rounded-xl border p-4 shadow-sm transition-all ${
-                    isNext
-                      ? "border-[#097EEC] ring-1 ring-[#097EEC]/20"
-                      : "border-gray-100"
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-800 truncate pr-2">
-                      {event.nombre}
-                    </h4>
-                    {isNext && (
-                      <span className="text-[10px] font-bold bg-[#097EEC] text-white px-2 py-0.5 rounded-full shrink-0">
-                        SIGUIENTE
-                      </span>
-                    )}
-                  </div>
+                return (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 + i * 0.05 }}
+                    onClick={() => setEventoSeleccionado(event)}
+                    title="Ver estadísticas del evento"
+                    className={`bg-white rounded-xl border p-4 shadow-sm transition-all cursor-pointer hover:border-[#097EEC]/40 hover:shadow-md ${
+                      isNext
+                        ? "border-[#097EEC] ring-1 ring-[#097EEC]/20"
+                        : "border-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-800 truncate pr-2">
+                        {event.nombre}
+                      </h4>
+                      {isNext && (
+                        <span className="text-[10px] font-bold bg-[#097EEC] text-white px-2 py-0.5 rounded-full shrink-0">
+                          SIGUIENTE
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="space-y-1.5 text-xs text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-gray-300" />
-                      <span className="font-medium text-gray-700">
-                        {dt.time}
-                      </span>
-                      <span className="text-gray-300">|</span>
-                      <span>{dt.date}</span>
+                    <div className="space-y-1.5 text-xs text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-gray-300" />
+                        <span className="font-medium text-gray-700">
+                          {dt.time}
+                        </span>
+                        <span className="text-gray-300">|</span>
+                        <span>{dt.date}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-gray-300" />
+                        <span className="truncate">{event.ubicacion}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-gray-300" />
-                      <span className="truncate">{event.ubicacion}</span>
-                    </div>
-                  </div>
 
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-gray-500">
-                        {vendidas} / {total} vendidas
-                      </span>
-                      <span
-                        className={`font-medium ${disponible === 0 ? "text-red-500" : "text-emerald-600"}`}
-                      >
-                        {disponible} disp.
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${
-                          porcentaje >= 100
-                            ? "bg-red-400"
-                            : porcentaje >= 75
-                              ? "bg-amber-400"
-                              : "bg-emerald-400"
-                        }`}
-                        style={{ width: `${Math.min(porcentaje, 100)}%` }}
-                      />
-                    </div>
-                    <p
-                      className={`text-[11px] mt-1 ${remaining.expired ? "text-red-500" : "text-gray-400"}`}
-                    >
-                      {remaining.text}
-                    </p>
-                  </div>
-
-                  {aforoRegalo > 0 && (
                     <div className="mt-3">
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-gray-500 flex items-center gap-1">
-                          <Gift className="h-3.5 w-3.5 text-amber-500" />
-                          {regalosCanjeados} / {aforoRegalo} regalos canjeados
+                        <span className="text-gray-500">
+                          {vendidas} / {total} vendidas
                         </span>
-                        <span className="font-medium text-amber-600">
-                          {porcentajeRegalo}%
+                        <span
+                          className={`font-medium ${disponible === 0 ? "text-red-500" : "text-emerald-600"}`}
+                        >
+                          {disponible} disp.
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
                         <div
-                          className="h-2 rounded-full bg-amber-400 transition-all"
-                          style={{
-                            width: `${Math.min(porcentajeRegalo, 100)}%`,
-                          }}
+                          className={`h-2 rounded-full transition-all ${
+                            porcentaje >= 100
+                              ? "bg-red-400"
+                              : porcentaje >= 75
+                                ? "bg-amber-400"
+                                : "bg-emerald-400"
+                          }`}
+                          style={{ width: `${Math.min(porcentaje, 100)}%` }}
                         />
                       </div>
+                      <p
+                        className={`text-[11px] mt-1 ${remaining.expired ? "text-red-500" : "text-gray-400"}`}
+                      >
+                        {remaining.text}
+                      </p>
                     </div>
-                  )}
-                </motion.div>
-              );
-            })}
-        </div>
+
+                    {aforoRegalo > 0 && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-gray-500 flex items-center gap-1">
+                            <Gift className="h-3.5 w-3.5 text-amber-500" />
+                            {regalosCanjeados} / {aforoRegalo} regalos canjeados
+                          </span>
+                          <span className="font-medium text-amber-600">
+                            {porcentajeRegalo}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full bg-amber-400 transition-all"
+                            style={{
+                              width: `${Math.min(porcentajeRegalo, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {totalPaginasEventos > 1 && (
+              <div className="flex items-center justify-center gap-1 mt-4">
+                <button
+                  onClick={() => setPageEventos((p) => Math.max(1, p - 1))}
+                  disabled={pageEventos <= 1}
+                  className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {getBotonesPaginaEventos().map((item, i) =>
+                  item.type === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      className="px-2 text-xs text-gray-400"
+                    >
+                      {item.value}
+                    </span>
+                  ) : (
+                    <button
+                      key={item.value}
+                      onClick={() => setPageEventos(item.value as number)}
+                      className={`min-w-[2rem] h-8 px-2 rounded-lg text-xs font-medium transition-colors ${
+                        pageEventos === (item.value as number)
+                          ? "bg-[#097EEC] text-white"
+                          : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {item.value}
+                    </button>
+                  ),
+                )}
+                <button
+                  onClick={() =>
+                    setPageEventos((p) => Math.min(totalPaginasEventos, p + 1))
+                  }
+                  disabled={pageEventos >= totalPaginasEventos}
+                  className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Tabla de validaciones QR */}
@@ -568,6 +715,16 @@ const EstadisticasManagement = () => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {eventoSeleccionado && (
+          <EstadisticasEventoModal
+            evento={eventoSeleccionado}
+            transacciones={transacciones}
+            onClose={() => setEventoSeleccionado(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

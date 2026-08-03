@@ -34,6 +34,20 @@ const EventsService = {
   getAllEventsAdmin: (): Promise<{ data: Evento[] }> =>
     api.get(`${BASE}/admin/all`),
 
+  // Versión paginada del listado admin — para pantallas que no deben traer
+  // todos los eventos de una vez (ej. Estadísticas de boletería)
+  getEventosAdminPaginados: (
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: {
+      eventos: Evento[];
+      total: number;
+      page: number;
+      totalPaginas: number;
+    };
+  }> => api.get(`${BASE}/admin/all`, { params: { page, limit } }),
+
   getEventById: (id: number): Promise<{ data: Evento }> =>
     api.get(`${BASE}/${id}`),
 
