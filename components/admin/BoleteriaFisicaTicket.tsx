@@ -116,7 +116,7 @@ export const BoleteriaFisicaTicket = forwardRef<
     const images: string[] = [];
     for (const el of validRefs) {
       const canvas = await html2canvas(el, {
-        scale: 3,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: null,
         logging: false,
