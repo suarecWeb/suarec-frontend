@@ -148,18 +148,27 @@ const EstadisticasManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Eventos paginados desde el backend: máximo 10 por página,
-  // no se traen todos de una vez
+  // El backend de /admin/all no pagina (ignora page/limit y siempre
+  // devuelve la lista completa) -- se trae una sola vez y se pagina acá
+  // en el cliente, en vez de re-pedir lo mismo cada vez que cambia de
+  // página.
   useEffect(() => {
     setLoadingEventos(true);
-    EventsService.getEventosAdminPaginados(pageEventos, EVENTOS_POR_PAGINA)
+    EventsService.getAllEventsAdmin()
       .then((r) => {
-        setEvents(r.data.eventos);
-        setTotalPaginasEventos(r.data.totalPaginas);
+        setEvents(r.data);
+        setTotalPaginasEventos(
+          Math.max(1, Math.ceil(r.data.length / EVENTOS_POR_PAGINA)),
+        );
       })
       .catch(() => toast.error("Error al cargar los eventos"))
       .finally(() => setLoadingEventos(false));
-  }, [pageEventos]);
+  }, []);
+
+  const pagedEvents = events.slice(
+    (pageEventos - 1) * EVENTOS_POR_PAGINA,
+    pageEventos * EVENTOS_POR_PAGINA,
+  );
 
   // KPIs
   const totalTx = transacciones.length;
@@ -191,11 +200,9 @@ const EstadisticasManagement = () => {
     .reduce((sum, t) => sum + (t.precioPorBoleta || 0) * (t.cantidad || 0), 0);
 
   // Próximo evento: el backend ordena los próximos primero (el más cercano
-  // al inicio), así que el primer evento futuro de la página 1 es el global
-  const nextEvent =
-    pageEventos === 1
-      ? events.find((e) => new Date(e.fechaEvento) > new Date())
-      : undefined;
+  // al inicio), así que el primer evento futuro de la lista completa es el
+  // global
+  const nextEvent = events.find((e) => new Date(e.fechaEvento) > new Date());
 
   // Botones de paginación de la grilla de eventos (con elipsis)
   const getBotonesPaginaEventos = () => {
@@ -413,7 +420,7 @@ const EstadisticasManagement = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {events.map((event, i) => {
+              {pagedEvents.map((event, i) => {
                 const dt = formatDateTime(event.fechaEvento);
                 const remaining = getTimeRemaining(event.fechaEvento);
                 const disponible = event.aforoDisponible ?? 0;
