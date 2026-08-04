@@ -179,7 +179,7 @@ export const TicketVisual = ({
 
         {/* Valor pagado */}
         <div
-          className={`absolute left-[6%] bottom-[calc(7%-3px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
+          className={`absolute left-[6%] bottom-[calc(7%-6px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
         >
           <p className="text-[10px] uppercase tracking-wide text-gray-800 font-extrabold leading-tight">
             Valor pagado
@@ -191,7 +191,7 @@ export const TicketVisual = ({
 
         {/* Fecha de compra */}
         <div
-          className={`absolute right-[6%] bottom-[calc(7%-3px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
+          className={`absolute right-[6%] bottom-[calc(7%-6px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
         >
           <p className="text-[10px] uppercase tracking-wide text-gray-800 font-extrabold leading-tight">
             Fecha de compra
