@@ -73,6 +73,15 @@ export const TicketVisual = ({
           </span>
         </div>
 
+        {/* Texto */}
+        <div
+          className={`absolute left-[30%] top-[11%] right-[30%] text-center bg-white px-1 py-1 rounded h-[18px] ${printOffset ? "translate-x-8 -translate-y-[15px]" : ""}`}
+        >
+          <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold">
+            Patrocinan
+          </p>
+        </div>
+
         {/* Se presentan */}
         {evento?.descripcion && (
           <>

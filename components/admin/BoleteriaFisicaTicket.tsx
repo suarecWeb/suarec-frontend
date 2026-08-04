@@ -186,7 +186,7 @@ export const BoleteriaFisicaTicket = forwardRef<
       // envía al agente, para comparar contra la boleta física impresa.
       //const debugWindow = window.open();
       //debugWindow?.document.write(
-      //  `<img src="${imagesBase64[0]}" style="max-width:100%" />`,
+      //`<img src="${imagesBase64[0]}" style="max-width:100%" />`,
       //);
 
       setAgentStatus("Enviando imagen al agente de impresión...");
