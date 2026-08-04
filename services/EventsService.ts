@@ -127,8 +127,33 @@ const EventsService = {
       params: onlyProduction ? { environment: "production" } : {},
     }),
 
-  getBoletasValidadas: (): Promise<{ data: { validadas: any[] } }> =>
-    api.get(`${BASE}/boletas/validadas`),
+  getBoletasValidadas: (
+    page = 1,
+    limit = 10,
+    search = "",
+    fecha = "",
+  ): Promise<{
+    data: {
+      validadas: any[];
+      total: number;
+      page: number;
+      totalPages: number;
+      resumenValidadores: {
+        validadorId: number | null;
+        validadorNombre: string;
+        validadorEmail: string;
+        cantidad: number;
+      }[];
+    };
+  }> =>
+    api.get(`${BASE}/boletas/validadas`, {
+      params: {
+        page,
+        limit,
+        ...(search ? { search } : {}),
+        ...(fecha ? { fecha } : {}),
+      },
+    }),
 
   adminGetBoletasSoporte: (
     email?: string,
