@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import EventsService from "@/services/EventsService";
 import { Evento } from "@/interfaces/event.interface";
 import {
@@ -480,25 +480,48 @@ const VentasManagement = () => {
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   const [selectedTxId, setSelectedTxId] = useState<number | null>(null);
 
-  const cargarDatos = () => {
+  // Lista de eventos para el filtro (se carga una sola vez)
+  useEffect(() => {
+    EventsService.getAllEventsAdmin()
+      .then((res) => setEventos(res.data))
+      .catch(() => {});
+  }, []);
+
+  // Transacciones paginadas desde el backend: la búsqueda y los filtros de
+  // estado, evento y ambiente se aplican en la consulta, no en memoria
+  const cargarTransacciones = useCallback(() => {
     setLoading(true);
-    Promise.all([
-      EventsService.getAllTransacciones(),
-      EventsService.getAllEventsAdmin(),
-    ])
-      .then(([txRes, evRes]) => {
-        setTransacciones(txRes.data.transacciones);
-        setEventos(evRes.data);
+    EventsService.getTransaccionesPaginadas(currentPage, itemsPerPage, {
+      search: searchTerm || undefined,
+      estado: statusFilter === "all" ? undefined : statusFilter,
+      eventoId: eventoFilter === "all" ? undefined : eventoFilter,
+      environment: ambienteFilter === "all" ? undefined : ambienteFilter,
+    })
+      .then((res) => {
+        setTransacciones(res.data.transacciones);
+        setTotal(res.data.total);
+        setTotalPaginas(res.data.totalPaginas);
       })
       .catch(() => toast.error("Error al cargar las transacciones"))
       .finally(() => setLoading(false));
-  };
+  }, [
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    statusFilter,
+    eventoFilter,
+    ambienteFilter,
+  ]);
 
+  // Debounce: espera a que el admin deje de escribir antes de consultar
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    const timeout = setTimeout(cargarTransacciones, 400);
+    return () => clearTimeout(timeout);
+  }, [cargarTransacciones]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -514,41 +537,16 @@ const VentasManagement = () => {
     );
   };
 
-  const filtered = transacciones.filter((tx) => {
-    const matchesSearch =
-      !searchTerm ||
-      tx.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.comprador?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.comprador?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.evento?.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || tx.estadoPago === statusFilter;
-
-    const matchesEvento =
-      eventoFilter === "all" || tx.evento?.id === eventoFilter;
-
-    const matchesAmbiente =
-      ambienteFilter === "all" || tx.wompiEnvironment === ambienteFilter;
-
-    return matchesSearch && matchesStatus && matchesEvento && matchesAmbiente;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  const safePage = Math.min(currentPage, totalPages);
-  const paginated = filtered.slice(
-    (safePage - 1) * itemsPerPage,
-    safePage * itemsPerPage,
-  );
+  const safePage = Math.min(currentPage, totalPaginas);
 
   const getPageButtons = () => {
     const pageItems: { type: "page" | "ellipsis"; value: number | string }[] =
       [];
-    for (let p = 1; p <= totalPages; p++) {
+    for (let p = 1; p <= totalPaginas; p++) {
       if (
-        totalPages <= 5 ||
+        totalPaginas <= 5 ||
         p === 1 ||
-        p === totalPages ||
+        p === totalPaginas ||
         Math.abs(p - safePage) <= 1
       ) {
         if (
@@ -609,7 +607,7 @@ const VentasManagement = () => {
             />
           </div>
           <button
-            onClick={cargarDatos}
+            onClick={cargarTransacciones}
             disabled={loading}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors"
             title="Recargar transacciones"
@@ -704,7 +702,7 @@ const VentasManagement = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#097EEC] border-t-transparent mx-auto mb-3" />
           <p className="text-sm text-gray-400">Cargando transacciones...</p>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : transacciones.length === 0 ? (
         <div className="py-20 text-center">
           <div className="bg-gray-50 border border-gray-100 inline-flex rounded-full p-5 mb-4">
             <Inbox className="h-9 w-9 text-gray-300" />
@@ -754,7 +752,7 @@ const VentasManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-50">
-                {paginated.map((tx, i) => {
+                {transacciones.map((tx, i) => {
                   const sc = ESTADO_CONFIG[tx.estadoPago] ?? {
                     label: tx.estadoPago || "Desconocido",
                     color: "bg-gray-100 text-gray-700 border-gray-200",
@@ -847,16 +845,13 @@ const VentasManagement = () => {
               <span>
                 Mostrando{" "}
                 <span className="font-medium text-gray-700">
-                  {filtered.length > 0 ? (safePage - 1) * itemsPerPage + 1 : 0}
+                  {total > 0 ? (safePage - 1) * itemsPerPage + 1 : 0}
                 </span>{" "}
                 -{" "}
                 <span className="font-medium text-gray-700">
-                  {Math.min(safePage * itemsPerPage, filtered.length)}
+                  {Math.min(safePage * itemsPerPage, total)}
                 </span>{" "}
-                de{" "}
-                <span className="font-medium text-gray-700">
-                  {filtered.length}
-                </span>{" "}
+                de <span className="font-medium text-gray-700">{total}</span>{" "}
                 resultados
               </span>
               <select
@@ -888,9 +883,9 @@ const VentasManagement = () => {
 
               <button
                 onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  setCurrentPage((p) => Math.min(totalPaginas, p + 1))
                 }
-                disabled={safePage >= totalPages}
+                disabled={safePage >= totalPaginas}
                 className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
