@@ -65,21 +65,36 @@ export const TicketVisual = ({
         className={`absolute inset-0 ${printOffset ? "-translate-x-8" : ""}`}
       >
         {/* Tipo de boleta */}
-        <div className="absolute top-[45px] right-[8%] bg-white px-2 py-1">
+        <div
+          className={`absolute top-[35px] right-[8%] bg-white px-2 py-1 ${printOffset ? "translate-x-8" : ""}`}
+        >
           <span className="text-[18px] font-black text-black tracking-tight">
             {tipoBoleta}
           </span>
         </div>
 
+        {/* Texto */}
+        <div
+          className={`absolute left-[30%] top-[11%] right-[30%] text-center bg-white px-1 py-1 rounded h-[18px] ${printOffset ? "translate-x-8 -translate-y-[15px]" : ""}`}
+        >
+          <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold">
+            Patrocinan
+          </p>
+        </div>
+
         {/* Se presentan */}
         {evento?.descripcion && (
           <>
-            <div className="absolute left-[10%] top-[30.999%] right-[10%] text-center bg-white px-1 py-1 rounded h-[20px]">
+            <div
+              className={`absolute left-[10%] top-[30.999%] right-[10%] text-center bg-white px-1 py-1 rounded h-[20px] ${printOffset ? "translate-x-8" : ""}`}
+            >
               <p className="text-[13px] uppercase tracking-wide text-gray-600 font-extrabold">
                 Se presentan
               </p>
             </div>
-            <div className="absolute left-[10%] top-[35%] right-[10%] text-center">
+            <div
+              className={`absolute left-[10%] top-[35%] right-[10%] text-center ${printOffset ? "translate-x-8" : ""}`}
+            >
               {evento.descripcion
                 .split(",")
                 .map((linea) => linea.trim())
@@ -96,28 +111,44 @@ export const TicketVisual = ({
           </>
         )}
 
-        {/* Información del evento */}
-        <div className="absolute left-[16%] top-[52%] right-[30%]">
+        {/* Información del evento. Los íconos (calendario/reloj/ubicación)
+            están fijos en la imagen base y no se mueven con el
+            -translate-x-8 de printOffset -- por eso este bloque lleva un
+            translate-x-8 propio cuando se imprime, para cancelar ese
+            corrimiento y no quedar montado sobre los íconos. */}
+        <div
+          className={`absolute left-[16%] top-[52%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.fecha || "Domingo, 19 de julio de 2026"}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[54.5%] right-[30%]">
+        <div
+          className={`absolute left-[16%] top-[54.5%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.hora || "6:00 p.m."}
           </p>
         </div>
 
-        <div className="absolute left-[16%] top-[57%] right-[30%]">
+        <div
+          className={`absolute left-[16%] top-[57%] right-[30%] ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[13px] font-semibold text-black leading-snug">
             {evento?.lugar || "La Herradura, Cauca"}
           </p>
         </div>
 
-        {/* UUID / Serie arriba del QR */}
+        {/* UUID / Serie arriba del QR. Centrado con left-1/2 + translate-x;
+            cuando se imprime, se suma el corrimiento de 2rem (misma
+            magnitud que -translate-x-8) al translate en vez de agregar
+            otra clase translate-x, porque Tailwind no combina dos
+            utilidades de transform-translate-x por separado. */}
         {qrId && (
-          <div className="absolute left-1/2 -translate-x-1/2 top-[65.8%] w-[78%] text-center px-2 py-1.5">
+          <div
+            className={`absolute left-1/2 top-[64%] w-[78%] text-center px-2 py-1.5 ${printOffset ? "translate-x-[calc(-50%+2rem)]" : "-translate-x-1/2"}`}
+          >
             <p className="text-[9px] uppercase tracking-wide text-gray-700 font-extrabold leading-tight mb-0.5"></p>
             <p className="text-[10px] font-black text-black leading-tight break-all">
               {qrId}
@@ -126,7 +157,9 @@ export const TicketVisual = ({
         )}
 
         {/* QR dinámico centrado */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-[67%] w-[38%] aspect-square bg-white flex items-center justify-center">
+        <div
+          className={`absolute left-1/2 top-[67%] w-[38%] aspect-square bg-white flex items-center justify-center ${printOffset ? "translate-x-[calc(-50%+2rem)]" : "-translate-x-1/2"}`}
+        >
           {esPreview ? (
             <div className="flex flex-col items-center justify-center text-center p-2">
               <QrCode className="h-14 w-14 text-gray-300 mb-1" />
@@ -145,7 +178,9 @@ export const TicketVisual = ({
         <div className="absolute left-0 right-0 top-[83.5%] text-center px-4"></div>
 
         {/* Valor pagado */}
-        <div className="absolute left-[6%] bottom-[7%] text-center w-[40%] px-1.5 py-2">
+        <div
+          className={`absolute left-[6%] bottom-[calc(7%-6px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[10px] uppercase tracking-wide text-gray-800 font-extrabold leading-tight">
             Valor pagado
           </p>
@@ -155,7 +190,9 @@ export const TicketVisual = ({
         </div>
 
         {/* Fecha de compra */}
-        <div className="absolute right-[6%] bottom-[7%] text-center w-[40%] px-1.5 py-2">
+        <div
+          className={`absolute right-[6%] bottom-[calc(7%-6px)] text-center w-[40%] px-1.5 py-2 ${printOffset ? "translate-x-8" : ""}`}
+        >
           <p className="text-[10px] uppercase tracking-wide text-gray-800 font-extrabold leading-tight">
             Fecha de compra
           </p>

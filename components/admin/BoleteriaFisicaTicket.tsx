@@ -184,10 +184,10 @@ export const BoleteriaFisicaTicket = forwardRef<
 
       // DEBUG TEMPORAL: abre en una pestaña nueva la imagen exacta que se
       // envía al agente, para comparar contra la boleta física impresa.
-      const debugWindow = window.open();
-      debugWindow?.document.write(
-        `<img src="${imagesBase64[0]}" style="max-width:100%" />`,
-      );
+      //const debugWindow = window.open();
+      //debugWindow?.document.write(
+      // `<img src="${imagesBase64[0]}" style="max-width:100%" />`,
+      // );
 
       setAgentStatus("Enviando imagen al agente de impresión...");
 
