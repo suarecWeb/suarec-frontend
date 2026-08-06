@@ -24,6 +24,7 @@ import {
   ChevronRight,
   BadgePercent,
   Banknote,
+  Inbox,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,11 +42,11 @@ const formatCurrency = (value: number) =>
 // Máximo de eventos por página en la grilla "Eventos y disponibilidad"
 const EVENTOS_POR_PAGINA = 10;
 
-// Máximo de validaciones QR por página en la tabla "Validaciones QR"
+// Máximo de registros por página en la tabla "Validaciones QR"
 const VALIDADAS_POR_PAGINA = 10;
 
-// Muestra "lunes, 20 de julio de 2026" a partir de un YYYY-MM-DD del
-// DatePicker — se le fija T00:00:00 local para que no se corra un dia por UTC
+// Muestra "lunes, 20 de julio de 2026" a partir de un YYYY-MM-DD del filtro
+// de fecha — se le fija T00:00:00 local para que no se corra un día por UTC
 const formatFechaFiltro = (fecha: string) => {
   const d = new Date(`${fecha}T00:00:00`);
   if (Number.isNaN(d.getTime())) return fecha;
@@ -149,15 +150,14 @@ const EstadisticasManagement = () => {
   const [totalPaginasValidadas, setTotalPaginasValidadas] = useState(1);
   const [totalValidadas, setTotalValidadas] = useState(0);
   const [loadingValidadas, setLoadingValidadas] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [searchValidadas, setSearchValidadas] = useState("");
-  const [searchValidadasQuery, setSearchValidadasQuery] = useState("");
-  // Arranca filtrando por el dia actual (hora Colombia) igual que la tabla
-  // de boletas fisicas; con "Limpiar" del DatePicker se ve todo el historial
+  // Arranca filtrando por el día actual (hora Colombia) — la tabla abre
+  // mostrando lo escaneado hoy; con "Limpiar" se ve todo el historial
   const [fechaValidadas, setFechaValidadas] = useState(hoyColombia);
   const [resumenValidadores, setResumenValidadores] = useState<
     ValidadorResumen[]
   >([]);
+  const [loading, setLoading] = useState(true);
+  const [searchValidadas, setSearchValidadas] = useState("");
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(
     null,
   );
@@ -170,43 +170,33 @@ const EstadisticasManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Debounce del buscador de validaciones: espera 400ms y vuelve a página 1
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPageValidadas(1);
-      setSearchValidadasQuery(searchValidadas.trim());
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchValidadas]);
-
-  // Validaciones QR: paginadas y filtradas en el backend (search + fecha)
+  // Validaciones QR paginadas desde el backend: máximo 10 por página,
+  // no se traen todas de una vez. `fechaValidadas` filtra por día de escaneo
+  // en hora Colombia (igual que boletería física)
   useEffect(() => {
     setLoadingValidadas(true);
     EventsService.getBoletasValidadas(
       pageValidadas,
       VALIDADAS_POR_PAGINA,
-      searchValidadasQuery,
-      fechaValidadas,
+      fechaValidadas || undefined,
     )
       .then((r) => {
-        setValidadas(r.data.validadas || []);
-        setTotalValidadas(r.data.total || 0);
-        setTotalPaginasValidadas(r.data.totalPages || 1);
-        setResumenValidadores(r.data.resumenValidadores || []);
+        setValidadas(r.data.validadas);
+        setTotalPaginasValidadas(r.data.totalPaginas);
+        setTotalValidadas(r.data.total);
+        setResumenValidadores(r.data.resumenValidadores ?? []);
       })
-      .catch(() => toast.error("Error al cargar las validaciones"))
+      .catch(() => toast.error("Error al cargar las validaciones QR"))
       .finally(() => setLoadingValidadas(false));
-  }, [pageValidadas, searchValidadasQuery, fechaValidadas]);
+  }, [pageValidadas, fechaValidadas]);
 
   const filtrarValidadasPorFecha = (value: string) => {
     setFechaValidadas(value);
     setPageValidadas(1);
   };
 
-  // El backend de /admin/all no pagina (ignora page/limit y siempre
-  // devuelve la lista completa) -- se trae una sola vez y se pagina acá
-  // en el cliente, en vez de re-pedir lo mismo cada vez que cambia de
-  // página.
+  // Eventos paginados desde el backend: máximo 10 por página,
+  // no se traen todos de una vez
   useEffect(() => {
     setLoadingEventos(true);
     EventsService.getAllEventsAdmin()
@@ -259,16 +249,16 @@ const EstadisticasManagement = () => {
   // global
   const nextEvent = events.find((e) => new Date(e.fechaEvento) > new Date());
 
-  // Botones de paginación (con elipsis). Sirve para la grilla de eventos
-  // y para la tabla de validaciones QR.
-  const getBotonesPagina = (totalPaginas: number, paginaActual: number) => {
+  // Botones de paginación (con elipsis), reutilizado por la grilla de
+  // eventos y por la tabla de validaciones QR
+  const getBotonesPagina = (page: number, totalPaginas: number) => {
     const items: { type: "page" | "ellipsis"; value: number | string }[] = [];
     for (let p = 1; p <= totalPaginas; p++) {
       if (
         totalPaginas <= 5 ||
         p === 1 ||
         p === totalPaginas ||
-        Math.abs(p - paginaActual) <= 1
+        Math.abs(p - page) <= 1
       ) {
         if (
           items.length > 0 &&
@@ -283,8 +273,19 @@ const EstadisticasManagement = () => {
     return items;
   };
 
-  // Las validaciones ya vienen filtradas y paginadas desde el backend
-  // (searchValidadasQuery se envía como parámetro search).
+  // Filtrar validaciones
+  const filteredValidadas = validadas.filter((v) => {
+    if (!searchValidadas) return true;
+    const q = searchValidadas.toLowerCase();
+    return (
+      v.compradorNombre?.toLowerCase().includes(q) ||
+      v.compradorEmail?.toLowerCase().includes(q) ||
+      v.validadorNombre?.toLowerCase().includes(q) ||
+      v.validadorEmail?.toLowerCase().includes(q) ||
+      v.boleta.evento?.nombre?.toLowerCase().includes(q) ||
+      String(v.boleta.id).includes(q)
+    );
+  });
 
   if (loading) {
     return (
@@ -586,7 +587,7 @@ const EstadisticasManagement = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                {getBotonesPagina(totalPaginasEventos, pageEventos).map(
+                {getBotonesPagina(pageEventos, totalPaginasEventos).map(
                   (item, i) =>
                     item.type === "ellipsis" ? (
                       <span
@@ -652,8 +653,7 @@ const EstadisticasManagement = () => {
           </div>
         </div>
 
-        {/* Resumen del dia filtrado: total escaneadas + desglose por validador,
-            igual que en boletería física */}
+        {/* Resumen del día filtrado: total escaneadas + desglose por validador */}
         {fechaValidadas && !loadingValidadas && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -700,19 +700,24 @@ const EstadisticasManagement = () => {
         )}
 
         {loadingValidadas ? (
-          <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#097EEC] border-t-transparent mx-auto mb-2" />
+          <div className="py-14 text-center">
+            <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#097EEC] border-t-transparent mx-auto mb-3" />
             <p className="text-sm text-gray-400">Cargando validaciones...</p>
           </div>
-        ) : validadas.length === 0 ? (
+        ) : totalValidadas === 0 ? (
           <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
             <QrCode className="h-8 w-8 text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-gray-500">
-              {searchValidadasQuery
-                ? "Ninguna validación coincide con la búsqueda"
-                : fechaValidadas
-                  ? `No se escaneó ninguna boleta el ${formatFechaFiltro(fechaValidadas)}`
-                  : "Aún no se ha validado ninguna boleta"}
+              {fechaValidadas
+                ? `No se escaneó ninguna boleta el ${formatFechaFiltro(fechaValidadas)}`
+                : "Aún no se ha validado ninguna boleta"}
+            </p>
+          </div>
+        ) : filteredValidadas.length === 0 ? (
+          <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
+            <Inbox className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">
+              Ninguna validación coincide con la búsqueda
             </p>
           </div>
         ) : (
@@ -738,7 +743,7 @@ const EstadisticasManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-50">
-                {validadas.map((v, i) => {
+                {filteredValidadas.map((v, i) => {
                   const escaneoDate = formatDateTime(v.boleta.escaneadaAt);
                   const escaneoRaw = v.boleta.escaneadaAt;
                   const hasValidador =
@@ -826,49 +831,54 @@ const EstadisticasManagement = () => {
           </div>
         )}
 
-        {totalPaginasValidadas > 1 && !loadingValidadas && (
-          <div className="flex items-center justify-center gap-1 mt-4">
-            <button
-              onClick={() => setPageValidadas((p) => Math.max(1, p - 1))}
-              disabled={pageValidadas <= 1}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {getBotonesPagina(totalPaginasValidadas, pageValidadas).map(
-              (item, i) =>
-                item.type === "ellipsis" ? (
-                  <span
-                    key={`ellipsis-${i}`}
-                    className="px-2 text-xs text-gray-400"
-                  >
-                    {item.value}
-                  </span>
-                ) : (
-                  <button
-                    key={item.value}
-                    onClick={() => setPageValidadas(item.value as number)}
-                    className={`min-w-[2rem] h-8 px-2 rounded-lg text-xs font-medium transition-colors ${
-                      pageValidadas === (item.value as number)
-                        ? "bg-[#097EEC] text-white"
-                        : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {item.value}
-                  </button>
-                ),
-            )}
-            <button
-              onClick={() =>
-                setPageValidadas((p) => Math.min(totalPaginasValidadas, p + 1))
-              }
-              disabled={pageValidadas >= totalPaginasValidadas}
-              className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+        {!loadingValidadas &&
+          totalValidadas > 0 &&
+          filteredValidadas.length > 0 &&
+          totalPaginasValidadas > 1 && (
+            <div className="flex items-center justify-center gap-1 mt-4">
+              <button
+                onClick={() => setPageValidadas((p) => Math.max(1, p - 1))}
+                disabled={pageValidadas <= 1}
+                className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {getBotonesPagina(pageValidadas, totalPaginasValidadas).map(
+                (item, i) =>
+                  item.type === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${i}`}
+                      className="px-2 text-xs text-gray-400"
+                    >
+                      {item.value}
+                    </span>
+                  ) : (
+                    <button
+                      key={item.value}
+                      onClick={() => setPageValidadas(item.value as number)}
+                      className={`min-w-[2rem] h-8 px-2 rounded-lg text-xs font-medium transition-colors ${
+                        pageValidadas === (item.value as number)
+                          ? "bg-[#097EEC] text-white"
+                          : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {item.value}
+                    </button>
+                  ),
+              )}
+              <button
+                onClick={() =>
+                  setPageValidadas((p) =>
+                    Math.min(totalPaginasValidadas, p + 1),
+                  )
+                }
+                disabled={pageValidadas >= totalPaginasValidadas}
+                className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
       </div>
 
       <AnimatePresence>

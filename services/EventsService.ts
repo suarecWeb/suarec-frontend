@@ -11,6 +11,7 @@ import {
   RecaudoEventoFisicoResponse,
   ResumenEventoFisico,
   BoletasFisicasValidadasResponse,
+  ValidadorResumen,
   MetodoPagoFisico,
 } from "@/interfaces/ventaFisica.interface";
 import {
@@ -127,32 +128,46 @@ const EventsService = {
       params: onlyProduction ? { environment: "production" } : {},
     }),
 
+  // Versión paginada para la tab Ventas: la búsqueda y los filtros de estado,
+  // evento y ambiente se aplican en el backend (no en memoria)
+  getTransaccionesPaginadas: (
+    page: number,
+    limit: number,
+    filtros: {
+      search?: string;
+      estado?: string;
+      eventoId?: number;
+      environment?: string;
+    } = {},
+  ): Promise<{
+    data: {
+      transacciones: TransaccionBoleta[];
+      total: number;
+      page: number;
+      totalPaginas: number;
+    };
+  }> =>
+    api.get(`${BASE}/boletas/transacciones`, {
+      params: { page, limit, ...filtros },
+    }),
+
+  // Listado paginado de boletas validadas por QR (Estadísticas de boletería).
+  // `fecha` (YYYY-MM-DD) filtra por día de escaneo en hora Colombia
   getBoletasValidadas: (
-    page = 1,
-    limit = 10,
-    search = "",
-    fecha = "",
+    page: number,
+    limit: number,
+    fecha?: string,
   ): Promise<{
     data: {
       validadas: any[];
       total: number;
       page: number;
-      totalPages: number;
-      resumenValidadores: {
-        validadorId: number | null;
-        validadorNombre: string;
-        validadorEmail: string;
-        cantidad: number;
-      }[];
+      totalPaginas: number;
+      resumenValidadores: ValidadorResumen[];
     };
   }> =>
     api.get(`${BASE}/boletas/validadas`, {
-      params: {
-        page,
-        limit,
-        ...(search ? { search } : {}),
-        ...(fecha ? { fecha } : {}),
-      },
+      params: { page, limit, ...(fecha ? { fecha } : {}) },
     }),
 
   adminGetBoletasSoporte: (
