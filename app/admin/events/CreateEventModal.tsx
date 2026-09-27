@@ -21,6 +21,8 @@ import {
   EventoEstado,
   EventoTipo,
 } from "@/interfaces/event.interface";
+import { Feria } from "@/interfaces/feria.interface";
+import FeriasService from "@/services/FeriasService";
 
 interface CreateEventModalProps {
   modoFisico?: boolean;
@@ -130,9 +132,16 @@ export default function CreateEventModal({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [ferias, setFerias] = useState<Feria[]>([]);
 
   const serverError = (errors as any)._server as string | undefined;
   const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    FeriasService.getAllFeriasAdmin()
+      .then((res) => setFerias(res.data))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -223,6 +232,8 @@ export default function CreateEventModal({
 
     if (!modoFisico && !form.formatId)
       next.formatId = "Debes seleccionar un formato de imagen";
+
+    if (!form.feriaId) (next as any).feriaId = "Debes seleccionar una feria";
 
     if (!imageFile)
       (next as any)._image = modoFisico
@@ -520,6 +531,41 @@ export default function CreateEventModal({
                 <p className="mt-1 text-xs text-red-500">{errors.ubicacion}</p>
               )}
             </div>
+          </div>
+
+          {/* Feria */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Feria <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={form.feriaId ?? ""}
+              onChange={(e) =>
+                handleChange(
+                  "feriaId",
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+              className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${(errors as any).feriaId ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+            >
+              <option value="">Selecciona una feria</option>
+              {ferias.map((feria) => (
+                <option key={feria.id} value={feria.id}>
+                  {feria.nombre}
+                </option>
+              ))}
+            </select>
+            {(errors as any).feriaId && (
+              <p className="mt-1 text-xs text-red-500">
+                {(errors as any).feriaId}
+              </p>
+            )}
+            {ferias.length === 0 && (
+              <p className="mt-1 text-[11px] text-gray-400">
+                No hay ferias creadas todavía. Crea una feria primero en la
+                pestaña Ferias.
+              </p>
+            )}
           </div>
 
           {modoFisico && (

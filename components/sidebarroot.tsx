@@ -1,24 +1,27 @@
 "use client";
 
-import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
   Ticket,
-  UserRound,
   Wallet,
   FileText,
   Users,
-  CalendarDays,
   Ticket as TicketIcon,
   Bell,
+  Megaphone,
 } from "lucide-react";
 import AnimatedContent from "@/components/AnimatedContent";
+import BranchedMenu, { BranchedMenuItem } from "@/components/BranchedMenu";
 import { NotifBadge } from "@/components/ui/NotifBadge";
 import { usePanelNoti } from "@/contexts/PanelNotiContext";
 import { useAuth } from "@/hooks/useAuth";
 
 const SidebarRoot = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { pendingPhotos, pendingReports, pendingPaymentsCount } =
     usePanelNoti();
 
@@ -32,6 +35,78 @@ const SidebarRoot = () => {
   const validationCount = photosCount;
   // Tickets = reportes pendientes de moderación
   const ticketsCount = reportsCount;
+
+  const items: BranchedMenuItem[] = [
+    {
+      value: "/admin/wallet",
+      label: "Wallet",
+      icon: <Wallet className="h-4 w-4" />,
+    },
+    {
+      value: "/payments",
+      label: "Transacciones",
+      icon: <ArrowRightLeft className="h-4 w-4" />,
+      badge: <NotifBadge count={pendingPaymentsCount} variant="amber" />,
+    },
+    {
+      value: "/admin/tickets",
+      label: "tickets de soporte",
+      icon: <Ticket className="h-4 w-4" />,
+    },
+    {
+      value: "/admin/publicaciones",
+      label: "Publicaciones",
+      icon: <FileText className="h-4 w-4" />,
+    },
+    {
+      value: "/users",
+      label: "Accounts",
+      icon: <Users className="h-4 w-4" />,
+      badge: <NotifBadge count={validationCount} />,
+    },
+    {
+      value: "/admin/boleteria",
+      label: "Boletería",
+      icon: <TicketIcon className="h-4 w-4" />,
+    },
+    {
+      label: "Ads",
+      icon: (
+        <img
+          src="/images/ads-icon.png"
+          alt="Ads"
+          className="h-4 w-4 object-contain"
+        />
+      ),
+      children: [
+        {
+          value: "/admin/notificaciones",
+          label: "Notificaciones",
+          icon: <Bell className="h-4 w-4" />,
+        },
+        {
+          // El gestor de banners (BannerSlidesManagement) vive en la
+          // pestaña "Banners" de Notificaciones, bajo el grupo Ads.
+          value: "/admin/notificaciones?tab=banners",
+          label: "Banners",
+          icon: <Megaphone className="h-4 w-4" />,
+        },
+      ],
+    },
+  ];
+
+  const currentValue =
+    pathname === "/admin/notificaciones" &&
+    searchParams.get("tab") === "banners"
+      ? "/admin/notificaciones?tab=banners"
+      : pathname;
+  const activeSectionIndex = items.findIndex((item) =>
+    item.children?.some((kid) => kid.value === currentValue),
+  );
+  const isTopLevelActive = items.some((item) => item.value === currentValue);
+  const defaultActive =
+    activeSectionIndex >= 0 || isTopLevelActive ? currentValue : "";
+  const defaultOpen = activeSectionIndex >= 0 ? [activeSectionIndex] : [];
 
   return (
     <AnimatedContent
@@ -57,72 +132,14 @@ const SidebarRoot = () => {
           </p>
         </div>
 
-        <nav className="flex-1 space-y-1 text-sm font-jakarta">
-          {/* Wallet */}
-          <Link
-            href="/admin/wallet"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <Wallet className="h-4 w-4" />
-            <span>Wallet</span>
-          </Link>
-
-          {/* Transacciones — badge de pagos pendientes (desembolso) */}
-          <Link
-            href="/payments"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-            <span>Transacciones</span>
-            <NotifBadge count={pendingPaymentsCount} variant="amber" />
-          </Link>
-
-          {/* Tickets de soporte */}
-          <Link
-            href="/admin/tickets"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <Ticket className="h-4 w-4" />
-            <span>tickets de soporte</span>
-          </Link>
-
-          {/* Publicaciones */}
-          <Link
-            href="/admin/publicaciones"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Publicaciones</span>
-          </Link>
-
-          {/* Accounts — badge de fotos de ID pendientes (verificación) */}
-          <Link
-            href="/users"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <Users className="h-4 w-4" />
-            <span>Accounts</span>
-            <NotifBadge count={validationCount} />
-          </Link>
-
-          {/* Boletería */}
-          <Link
-            href="/admin/boleteria"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <TicketIcon className="h-4 w-4" />
-            <span>Boletería</span>
-          </Link>
-
-          {/* Notificaciones push */}
-          <Link
-            href="/admin/notificaciones"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#097EEC] transition-colors"
-          >
-            <Bell className="h-4 w-4" />
-            <span>Notificaciones</span>
-          </Link>
-        </nav>
+        <div className="flex-1 font-jakarta">
+          <BranchedMenu
+            items={items}
+            defaultOpen={defaultOpen}
+            defaultActive={defaultActive}
+            onSelect={(value) => router.push(value)}
+          />
+        </div>
       </aside>
     </AnimatedContent>
   );
