@@ -24,7 +24,7 @@ import { usePanelNoti } from "@/contexts/PanelNotiContext";
 import PublicationService from "@/services/PublicationsService";
 import MessageService from "@/services/MessageService";
 import { Publication } from "@/interfaces/publication.interface";
-import { PublicationDetailModal } from "@/app/admin/publicaciones/PublicationDetailModal";
+import { PublicationDetailModal } from "@/components/admin/publicaciones/PublicationDetailModal";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const REASON_LABELS: Record<string, string> = {

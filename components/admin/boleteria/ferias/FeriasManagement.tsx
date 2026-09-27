@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Feria, CreateFeriaDto } from "@/interfaces/feria.interface";
 import {
   CreateEventoDto,
@@ -9,9 +10,8 @@ import {
 } from "@/interfaces/event.interface";
 import FeriasService from "@/services/FeriasService";
 import EventsService from "@/services/EventsService";
-import CreateFeriaModal from "@/app/admin/Ferias/CreateFeriaModal";
-import EditFeriaModal from "@/app/admin/Ferias/EditFeriaModal";
-import CreateEventModal from "@/app/admin/events/CreateEventModal";
+import CreateFeriaModal from "@/components/admin/boleteria/ferias/CreateFeriaModal";
+import CreateEventModal from "@/components/admin/boleteria/ferias/eventos/CreateEventModal";
 import {
   CalendarDays,
   PlusCircle,
@@ -41,23 +41,19 @@ const agruparPorModalidad = (eventos: Evento[] = []) => {
   return Object.entries(counts) as [EventoModalidad, number][];
 };
 
-interface FeriasManagementProps {
-  onEditingChange?: (editing: boolean) => void;
-}
-
-const FeriasManagement = ({ onEditingChange }: FeriasManagementProps = {}) => {
+const FeriasManagement = () => {
+  const router = useRouter();
   const [ferias, setFerias] = useState<Feria[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
-  const [feriaToEdit, setFeriaToEdit] = useState<Feria | null>(null);
   // Por defecto solo se ven las ferias activas (visible=true) -- las
   // auto-generadas 1:1 por la migración 060 heredaron visible=false del
   // evento y quedan afuera hasta que el admin las organice y las active.
   const [showHidden, setShowHidden] = useState(false);
 
-  // Editar feria ya no es un modal flotante -- solo Crear feria/evento
-  // bloquean el scroll de fondo.
+  // Editar feria es su propia página (/admin/boleteria/ferias/[feriaId])
+  // -- solo Crear feria/evento bloquean el scroll de fondo.
   const isAnyCreateModalOpen = showCreateModal || showCreateEventModal;
   useEffect(() => {
     document.body.style.overflow = isAnyCreateModalOpen ? "hidden" : "";
@@ -71,10 +67,6 @@ const FeriasManagement = ({ onEditingChange }: FeriasManagementProps = {}) => {
   }, [isAnyCreateModalOpen]);
 
   useEffect(() => {
-    onEditingChange?.(!!feriaToEdit);
-  }, [feriaToEdit, onEditingChange]);
-
-  useEffect(() => {
     FeriasService.getAllFeriasAdmin()
       .then((res) => setFerias(res.data))
       .catch(() => toast.error("Error al cargar las ferias"))
@@ -85,17 +77,6 @@ const FeriasManagement = ({ onEditingChange }: FeriasManagementProps = {}) => {
     const res = await FeriasService.createFeria(dto, imageFile);
     setFerias((prev) => [{ ...res.data, eventos: [] }, ...prev]);
     toast.success("Feria creada correctamente");
-  };
-
-  const handleEdit = async (
-    id: number,
-    dto: Partial<CreateFeriaDto>,
-    imageFile?: File,
-  ) => {
-    await FeriasService.updateFeria(id, dto, imageFile);
-    const updated = await FeriasService.getFeriaById(id);
-    setFerias((prev) => prev.map((f) => (f.id === id ? updated.data : f)));
-    toast.success("Feria actualizada");
   };
 
   const handleCreateEvento = async (
@@ -142,16 +123,6 @@ const FeriasManagement = ({ onEditingChange }: FeriasManagementProps = {}) => {
   const feriasOcultas = ferias.filter((f) => f.visible === false);
   const feriasVisibles = ferias.filter((f) => f.visible !== false);
   const feriasMostradas = showHidden ? ferias : feriasVisibles;
-
-  if (feriaToEdit) {
-    return (
-      <EditFeriaModal
-        feria={feriaToEdit}
-        onClose={() => setFeriaToEdit(null)}
-        onSubmit={handleEdit}
-      />
-    );
-  }
 
   return (
     <>
@@ -380,7 +351,7 @@ const FeriasManagement = ({ onEditingChange }: FeriasManagementProps = {}) => {
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setFeriaToEdit(feria);
+                        router.push(`/admin/boleteria/ferias/${feria.id}`);
                       }}
                       className="mt-3 w-full py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
                     >

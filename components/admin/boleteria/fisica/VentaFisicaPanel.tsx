@@ -699,7 +699,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
               Volver
             </motion.button>
           ) : (
-            <Link href="/admin/boleteria_fisica" passHref>
+            <Link href="/admin/boleteria/fisica" passHref>
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"

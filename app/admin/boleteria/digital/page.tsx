@@ -5,8 +5,7 @@ import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import EventsManagement from "@/components/admin/boleteria/shared/EventsManagement";
-import FeriasManagement from "@/components/admin/boleteria/shared/FeriasManagement";
+import EventsManagement from "@/components/admin/boleteria/ferias/eventos/EventsManagement";
 import { EventoModalidad } from "@/interfaces/event.interface";
 import VentasManagement from "@/components/admin/boleteria/digital/ventas/VentasManagement";
 import EstadisticasManagement from "@/components/admin/boleteria/digital/estadisticas/EstadisticasManagement";
@@ -73,12 +72,7 @@ const pageVariants = {
 const BoleteriaPageContent = () => {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
   const [activeTab, setActiveTab] = useState<BoleteriaTab>("eventos");
-  const [feriaFormActive, setFeriaFormActive] = useState(false);
   const [eventsSectionVisible, setEventsSectionVisible] = useState(true);
-  // Editar feria es vista completa (no modal) -- mientras está activa
-  // ocultamos el sidebar de navegación y pendientes para darle todo el
-  // ancho. Crear/editar evento siguen siendo modales, no afectan esto.
-  const hideSidebar = feriaFormActive;
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate">
@@ -93,7 +87,7 @@ const BoleteriaPageContent = () => {
               </p>
             </div>
 
-            <Link href="/admin/boleteria_fisica" passHref>
+            <Link href="/admin/boleteria/fisica" passHref>
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm bg-white text-[#097EEC] hover:bg-blue-50 shadow"
@@ -106,25 +100,21 @@ const BoleteriaPageContent = () => {
         </div>
 
         <div className="container mx-auto px-4 -mt-4 flex">
-          {!hideSidebar && (
-            <>
-              <div
-                className="hidden md:flex flex-col gap-[24px] flex-shrink-0"
-                style={{ width: panelWidth }}
-              >
-                <AdminSidePanel />
-              </div>
+          <div
+            className="hidden md:flex flex-col gap-[24px] flex-shrink-0"
+            style={{ width: panelWidth }}
+          >
+            <AdminSidePanel />
+          </div>
 
-              <div
-                className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none"
-                onMouseDown={onPanelDrag}
-              >
-                <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
-              </div>
-            </>
-          )}
+          <div
+            className="hidden md:flex items-center justify-center w-3 flex-shrink-0 cursor-col-resize group select-none"
+            onMouseDown={onPanelDrag}
+          >
+            <div className="w-0.5 h-12 rounded-full bg-gray-200 group-hover:bg-[#097EEC] transition-colors duration-150" />
+          </div>
 
-          <div className={`flex-1 min-w-0 ${hideSidebar ? "" : "ml-3"}`}>
+          <div className="flex-1 min-w-0 ml-3">
             {/* Tabs al margen superior */}
             <div className="flex gap-2 mb-4">
               {(Object.keys(TAB_CONFIG) as BoleteriaTab[]).map((tab) => (
@@ -157,24 +147,25 @@ const BoleteriaPageContent = () => {
                 >
                   {activeTab === "eventos" && (
                     <>
-                      {/* Ferias: hermano ARRIBA de la lista, no anidado
-                          dentro de EventsManagement (ese componente lo
-                          comparten boletería digital y física). Banners se
-                          movió a /admin/notificaciones (grupo "Ads" del nav). */}
-                      <FeriasManagement onEditingChange={setFeriaFormActive} />
-                      <div
-                        className={
-                          eventsSectionVisible
-                            ? "mt-10 pt-8 border-t border-gray-100"
-                            : ""
-                        }
-                      >
-                        <EventsManagement
-                          filtroModalidad={EventoModalidad.DIGITAL}
-                          hideAssignedToFeria
-                          onVisibleChange={setEventsSectionVisible}
-                        />
-                      </div>
+                      {/* Las ferias tienen su propia sección
+                          (/admin/boleteria/ferias); aquí solo quedan los
+                          eventos digitales sueltos, sin feria visible */}
+                      <EventsManagement
+                        filtroModalidad={EventoModalidad.DIGITAL}
+                        hideAssignedToFeria
+                        onVisibleChange={setEventsSectionVisible}
+                      />
+                      {!eventsSectionVisible && (
+                        <p className="py-10 text-center text-sm text-gray-400">
+                          Los eventos se gestionan dentro de su feria.{" "}
+                          <Link
+                            href="/admin/boleteria/ferias"
+                            className="text-[#097EEC] font-medium hover:underline"
+                          >
+                            Ir a Ferias
+                          </Link>
+                        </p>
+                      )}
                     </>
                   )}
 

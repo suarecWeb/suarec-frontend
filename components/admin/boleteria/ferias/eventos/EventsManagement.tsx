@@ -8,8 +8,8 @@ import {
   CreateEventoDto,
 } from "@/interfaces/event.interface";
 import EventsService from "@/services/EventsService";
-import CreateEventModal from "@/app/admin/events/CreateEventModal";
-import EditEventModal from "@/app/admin/events/EditEventModal";
+import CreateEventModal from "./CreateEventModal";
+import EditEventModal from "./EditEventModal";
 import EventFlipCard from "./EventFlipCard";
 import {
   CalendarDays,
@@ -259,7 +259,7 @@ const EventsManagement = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           if (event.id)
-                            router.push(`/admin/boleteria_fisica/${event.id}`);
+                            router.push(`/admin/boleteria/fisica/${event.id}`);
                         }}
                         className="flex-[1.5] flex items-center justify-center gap-2 bg-[#097EEC] text-white text-sm px-3 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
                       >

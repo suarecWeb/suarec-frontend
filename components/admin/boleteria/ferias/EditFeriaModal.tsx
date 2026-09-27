@@ -1,21 +1,19 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   X,
   CalendarDays,
   MapPin,
   FileText,
   Upload,
-  Edit,
   Smartphone,
   Monitor,
+  Ticket,
+  ChevronRight,
 } from "lucide-react";
 import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
-import { Evento, CreateEventoDto } from "@/interfaces/event.interface";
-import EventFlipCard from "@/components/admin/boleteria/shared/EventFlipCard";
-import EditEventModal from "@/app/admin/events/EditEventModal";
-import EventsService from "@/services/EventsService";
 
 interface EditFeriaModalProps {
   feria: Feria;
@@ -83,22 +81,7 @@ export default function EditFeriaModal({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [eventosAsignados, setEventosAsignados] = useState<Evento[]>(
-    feria.eventos ?? [],
-  );
-  const [eventoToEdit, setEventoToEdit] = useState<Evento | null>(null);
-
-  const handleEditEvento = async (
-    id: number,
-    dto: Partial<CreateEventoDto>,
-    imageFile?: File,
-  ) => {
-    await EventsService.updateEvent(String(id), dto, imageFile);
-    const updated = await EventsService.getEventById(id);
-    setEventosAsignados((prev) =>
-      prev.map((e) => (e.id === id ? updated.data : e)),
-    );
-  };
+  const totalEventos = feria.eventos?.length ?? 0;
 
   const serverError = (errors as any)._server as string | undefined;
 
@@ -376,39 +359,17 @@ export default function EditFeriaModal({
         </div>
         {/* Fin grid de 2 columnas */}
 
-        {eventosAsignados.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Eventos asignados ({eventosAsignados.length})
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {eventosAsignados.map((evento) => (
-                <div
-                  key={evento.id}
-                  className="opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards]"
-                >
-                  <EventFlipCard
-                    event={evento}
-                    actions={
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEventoToEdit(evento);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
-                        title="Editar evento"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Editar
-                      </button>
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Los eventos de la feria tienen su propia pagina */}
+        <Link
+          href={`/admin/boleteria/ferias/${feria.id}/eventos`}
+          className="mt-6 flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:border-[#097EEC] hover:bg-[#097EEC]/5 transition-colors"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Ticket className="h-4 w-4 text-[#097EEC]" />
+            Eventos de esta feria ({totalEventos})
+          </span>
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        </Link>
 
         <div className="flex gap-3 pt-4">
           <button
@@ -427,14 +388,6 @@ export default function EditFeriaModal({
           </button>
         </div>
       </form>
-
-      {eventoToEdit && (
-        <EditEventModal
-          event={eventoToEdit}
-          onClose={() => setEventoToEdit(null)}
-          onSubmit={handleEditEvento}
-        />
-      )}
     </div>
   );
 }

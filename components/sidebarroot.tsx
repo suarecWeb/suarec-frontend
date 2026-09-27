@@ -10,6 +10,10 @@ import {
   Ticket as TicketIcon,
   Bell,
   Megaphone,
+  CalendarDays,
+  Smartphone,
+  Printer,
+  Shapes,
 } from "lucide-react";
 import AnimatedContent from "@/components/AnimatedContent";
 import BranchedMenu, { BranchedMenuItem } from "@/components/BranchedMenu";
@@ -65,9 +69,30 @@ const SidebarRoot = () => {
       badge: <NotifBadge count={validationCount} />,
     },
     {
-      value: "/admin/boleteria",
       label: "Boletería",
       icon: <TicketIcon className="h-4 w-4" />,
+      children: [
+        {
+          value: "/admin/boleteria/ferias",
+          label: "Ferias",
+          icon: <CalendarDays className="h-4 w-4" />,
+        },
+        {
+          value: "/admin/boleteria/digital",
+          label: "Digital",
+          icon: <Smartphone className="h-4 w-4" />,
+        },
+        {
+          value: "/admin/boleteria/fisica",
+          label: "Física",
+          icon: <Printer className="h-4 w-4" />,
+        },
+        {
+          value: "/admin/boleteria/recintos",
+          label: "Recintos",
+          icon: <Shapes className="h-4 w-4" />,
+        },
+      ],
     },
     {
       label: "Ads",

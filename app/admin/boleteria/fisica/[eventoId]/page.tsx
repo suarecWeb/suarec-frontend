@@ -57,7 +57,7 @@ const BoleteriaFisicaDetalleContent = () => {
   useEffect(() => {
     if (Number.isNaN(eventoId)) {
       toast.error("ID de evento inválido");
-      router.replace("/admin/boleteria_fisica");
+      router.replace("/admin/boleteria/fisica");
       return;
     }
 
@@ -72,7 +72,7 @@ const BoleteriaFisicaDetalleContent = () => {
       .then((res) => setEvento(res.data))
       .catch(() => {
         toast.error("No se pudo cargar el evento");
-        router.replace("/admin/boleteria_fisica");
+        router.replace("/admin/boleteria/fisica");
       })
       .finally(() => setLoading(false));
   }, [eventoId, router]);
@@ -84,7 +84,7 @@ const BoleteriaFisicaDetalleContent = () => {
         <div className="bg-[#097EEC] text-white py-8 shadow-sm">
           <div className="container mx-auto px-4 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link href="/admin/boleteria_fisica" passHref>
+              <Link href="/admin/boleteria/fisica" passHref>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center justify-center p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -163,7 +163,7 @@ const BoleteriaFisicaDetalleContent = () => {
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
                       <VentaFisicaPanel
                         evento={evento}
-                        onBack={() => router.push("/admin/boleteria_fisica")}
+                        onBack={() => router.push("/admin/boleteria/fisica")}
                       />
                     </div>
                   )}
