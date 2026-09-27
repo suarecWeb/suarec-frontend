@@ -161,7 +161,10 @@ const BoleteriaPageContent = () => {
                           dentro de EventsManagement (ese componente lo
                           comparten boletería digital y física). Banners se
                           movió a /admin/notificaciones (grupo "Ads" del nav). */}
-                      <FeriasManagement onEditingChange={setFeriaFormActive} />
+                      <FeriasManagement
+                        filtroModalidad={EventoModalidad.DIGITAL}
+                        onEditingChange={setFeriaFormActive}
+                      />
                       <div
                         className={
                           eventsSectionVisible

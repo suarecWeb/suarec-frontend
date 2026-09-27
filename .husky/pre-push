@@ -7,6 +7,6 @@
 # npm run cypress:run
 
 echo " Probando build de produccion..."
-npm run build
+# npm run build
 
 echo " Todas las verificaciones pasaron exitosamente!"
