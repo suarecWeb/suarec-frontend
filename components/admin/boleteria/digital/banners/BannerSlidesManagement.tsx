@@ -14,12 +14,21 @@ import BannerSlidesService from "@/services/BannerSlidesService";
 import BannerSlideCard from "./BannerSlideCard";
 import BannerSlidesPreview from "./BannerSlidesPreview";
 import BannerSlideFormModal from "./BannerSlideFormModal";
+import ConfirmationModal from "@/components/confirmation-modal";
 
 /** Extrae el mensaje que devuelve el backend (ej. "Máximo 5 slides activos").
  *  Sin esto el admin vería un genérico "algo salió mal" y no sabría por qué. */
 const mensajeDeError = (error: unknown, fallback: string): string => {
   const apiError = error as { response?: { data?: { message?: string } } };
   return apiError?.response?.data?.message || fallback;
+};
+
+// Nombra el slide en el modal de eliminación para que el admin sepa cuál borra
+const nombreSlide = (slide: BannerSlide): string => {
+  const titulo = slide.title?.trim();
+  if (titulo) return `"${titulo}"`;
+  if (slide.evento) return `el slide del evento "${slide.evento.nombre}"`;
+  return "este slide";
 };
 
 const BannerSlidesManagement = () => {
@@ -31,6 +40,10 @@ const BannerSlidesManagement = () => {
     null,
   );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [slideAEliminar, setSlideAEliminar] = useState<BannerSlide | null>(
+    null,
+  );
+  const [eliminando, setEliminando] = useState(false);
 
   const activos = slides.filter((s) => s.isActive).length;
 
@@ -91,14 +104,19 @@ const BannerSlidesManagement = () => {
     }
   };
 
-  const handleDelete = async (slide: BannerSlide) => {
-    if (!confirm(`¿Eliminar este slide? También se borrará su imagen.`)) return;
+  // La papelera solo abre el modal; el borrado ocurre al confirmar
+  const handleDelete = async () => {
+    if (!slideAEliminar) return;
+    setEliminando(true);
     try {
-      await BannerSlidesService.remove(slide.id);
+      await BannerSlidesService.remove(slideAEliminar.id);
       toast.success("Slide eliminado");
       await cargarSlides();
     } catch (error) {
       toast.error(mensajeDeError(error, "No se pudo eliminar el slide"));
+    } finally {
+      setEliminando(false);
+      setSlideAEliminar(null);
     }
   };
 
@@ -235,7 +253,7 @@ const BannerSlidesManagement = () => {
                 slide={slide}
                 isDragging={dragIndex === index}
                 onEdit={abrirEdicion}
-                onDelete={handleDelete}
+                onDelete={(s) => setSlideAEliminar(s)}
                 onToggleActive={handleToggleActive}
               />
             </div>
@@ -251,6 +269,27 @@ const BannerSlidesManagement = () => {
           onSubmit={handleSubmit}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={!!slideAEliminar}
+        onClose={() => {
+          if (!eliminando) setSlideAEliminar(null);
+        }}
+        onConfirm={handleDelete}
+        title="Eliminar slide"
+        message={
+          slideAEliminar
+            ? `Se eliminará ${nombreSlide(slideAEliminar)} junto con su imagen.${
+                slideAEliminar.isActive
+                  ? " Está activo, así que dejará de mostrarse en la app."
+                  : ""
+              } Esta acción no se puede deshacer.`
+            : ""
+        }
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={eliminando}
+      />
     </div>
   );
 };
