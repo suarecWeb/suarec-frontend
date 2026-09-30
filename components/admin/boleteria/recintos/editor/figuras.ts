@@ -27,6 +27,10 @@ export interface FiguraEditor {
 }
 
 export const TAMANO_MINIMO = 10;
+// Esquinas redondeadas del lienzo: solo estilo, no se guarda. Son 5 px EN
+// PANTALLA con cualquier zoom, en el editor y en la vista previa (la app
+// debe hacer lo mismo). Una sola constante para que no se desalineen
+export const RADIO_ESQUINAS_PX = 5;
 export const NOMBRE_MAXIMO = 100; // MaxLength del DTO del backend
 export const COLOR_PALCO = "#097EEC";
 
@@ -59,7 +63,7 @@ export const figurasDelRecinto = (recinto: Recinto): FiguraEditor[] =>
 
 // Lo que se envia al backend: sin la clave local (el DTO rechaza campos
 // de mas) y con el nombre sin espacios sobrantes
-export const aEnvio = (f: FiguraEditor): FiguraAGuardar => ({
+export const aEnvio = (f: FiguraEditor, zIndex: number): FiguraAGuardar => ({
   ...(f.id !== undefined ? { id: f.id } : {}),
   tipo: f.tipo,
   forma: f.forma,
@@ -73,9 +77,22 @@ export const aEnvio = (f: FiguraEditor): FiguraAGuardar => ({
   etiquetaRotada: f.etiquetaRotada,
   // Siempre se manda: el backend lo guarda tal cual
   bloqueada: f.bloqueada,
+  zIndex,
 });
 
-export interface Lienzo {
+// El dibujo listo para guardar. El orden del arreglo ES el orden de dibujo;
+// se guarda como la posicion de cada figura DENTRO de su grupo (0 = abajo),
+// asi agregar o borrar referencias no corre a los palcos y viceversa
+export const dibujoAEnvio = (figuras: FiguraEditor[]): FiguraAGuardar[] => {
+  const siguiente: Record<string, number> = {};
+  return figuras.map((f) => {
+    const zIndex = siguiente[f.tipo] ?? 0;
+    siguiente[f.tipo] = zIndex + 1;
+    return aEnvio(f, zIndex);
+  });
+};
+
+export interface TamanoLienzo {
   ancho: number;
   alto: number;
 }
@@ -84,7 +101,7 @@ export interface Lienzo {
 // solo el lienzo, y un palco afuera quedaria invisible o cortado
 export const limitarAlLienzo = (
   punto: { x: number; y: number },
-  lienzo: Lienzo,
+  lienzo: TamanoLienzo,
 ) => ({
   x: Math.min(Math.max(Math.round(punto.x), 0), lienzo.ancho),
   y: Math.min(Math.max(Math.round(punto.y), 0), lienzo.alto),
@@ -138,7 +155,7 @@ export const nombreDeCopia = (nombre: string, figuras: FiguraEditor[]) => {
 export const copiaDeFigura = (
   original: FiguraEditor,
   figuras: FiguraEditor[],
-  lienzo: Lienzo,
+  lienzo: TamanoLienzo,
   veces: number,
 ): FiguraEditor => {
   const corrimiento =
@@ -162,7 +179,7 @@ export const copiaDeFigura = (
 export const copiasDeFiguras = (
   originales: FiguraEditor[],
   figuras: FiguraEditor[],
-  lienzo: Lienzo,
+  lienzo: TamanoLienzo,
   veces: number,
 ): FiguraEditor[] => {
   const existentes = [...figuras];
@@ -179,7 +196,7 @@ export const copiasDeFiguras = (
 // el centro dentro del lienzo (figuras viejas o creadas por API)
 export const validarFiguras = (
   figuras: FiguraEditor[],
-  lienzo: Lienzo,
+  lienzo: TamanoLienzo,
 ): Record<string, string> => {
   const conteo = new Map<string, number>();
   figuras.forEach((f) => {

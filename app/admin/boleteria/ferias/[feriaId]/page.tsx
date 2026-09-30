@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
 import EditFeriaModal from "@/components/admin/boleteria/ferias/EditFeriaModal";
 import FeriasService from "@/services/FeriasService";
-import { CreateFeriaDto } from "@/interfaces/feria.interface";
+import { UpdateFeriaDto } from "@/interfaces/feria.interface";
 import { useFeriaAdmin } from "@/hooks/useFeriaAdmin";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -29,7 +29,7 @@ const FeriaPageContent = () => {
 
   const handleSubmit = async (
     id: number,
-    dto: Partial<CreateFeriaDto>,
+    dto: UpdateFeriaDto,
     imageFile?: File,
   ) => {
     await FeriasService.updateFeria(id, dto, imageFile);

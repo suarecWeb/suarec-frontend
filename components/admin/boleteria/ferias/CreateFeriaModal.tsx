@@ -11,6 +11,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { CreateFeriaDto } from "@/interfaces/feria.interface";
+import SelectorRecinto from "./SelectorRecinto";
 
 interface CreateFeriaModalProps {
   onClose: () => void;
@@ -23,6 +24,7 @@ const EMPTY_FORM: CreateFeriaDto = {
   fechaInicio: "",
   fechaFin: "",
   ubicacion: "",
+  recintoId: null,
 };
 
 // Mismo catálogo de formatos que usan los eventos (tabla `format`) --
@@ -328,19 +330,16 @@ export default function CreateFeriaModal({
             </div>
             {/* Fin columna izquierda */}
 
-            {/* Columna derecha: editor de la forma del escenario/tarima de
-              esta feria -- panel propio (blanco, con su propio borde),
-              más grande que el formulario porque acá va a vivir el
-              componente de diseño (por ahora placeholder). */}
-            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white shadow-sm min-h-[520px] flex items-center justify-center text-center px-6">
-              <div className="text-gray-300">
-                <CalendarDays className="h-10 w-10 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-400">
-                  Forma del escenario
-                </p>
-                <p className="text-xs text-gray-300 mt-1">Próximamente</p>
-              </div>
-            </div>
+            {/* Columna derecha: el recinto de la feria y, mas adelante, la
+              vista previa de su forma. Una feria nueva no tiene eventos:
+              no aplica el aviso de RN-24 */}
+            <SelectorRecinto
+              valor={form.recintoId ?? null}
+              asignadoId={null}
+              onCambiar={(recintoId) =>
+                setForm((prev) => ({ ...prev, recintoId }))
+              }
+            />
           </div>
           {/* Fin grid de 2 columnas */}
 

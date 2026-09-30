@@ -1,15 +1,12 @@
 "use client";
 
-import {
-  Trash2,
-  MousePointerClick,
-  Copy,
-  CopyPlus,
-  Lock,
-  Unlock,
-} from "lucide-react";
+import { Trash2, MousePointerClick, Copy, CopyPlus } from "lucide-react";
 import { FiguraEditor, NOMBRE_MAXIMO, normalizarRotacion } from "../figuras";
 import CamposTamano from "./CamposTamano";
+import PanelGrupo from "./PanelGrupo";
+import { Alineacion, Orden } from "../acomodar";
+import BotonesOrden from "./BotonesOrden";
+import BotonesAlinear from "./BotonesAlinear";
 
 interface PanelPropiedadesProps {
   // La figura si hay UNA sola seleccionada
@@ -28,6 +25,13 @@ interface PanelPropiedadesProps {
   // Cuantas de las seleccionadas estan bloqueadas (como Canva)
   bloqueadasEnSeleccion: number;
   onBloquear: (bloquear: boolean) => void;
+  // Con varias: entre ellas. Con una: contra el lienzo
+  onAlinear: (modo: Alineacion) => void;
+  // Capas: una figura o un grupo, siempre dentro de su tipo
+  onOrdenar: (modo: Orden) => void;
+  // Donde esta la figura dentro de su grupo (para apagar los botones)
+  esLaDeArriba: boolean;
+  esLaDeAbajo: boolean;
 }
 
 const etiquetaClase = "block text-xs font-medium text-gray-600 mb-1";
@@ -49,6 +53,10 @@ export default function PanelPropiedades({
   onBorrar,
   bloqueadasEnSeleccion,
   onBloquear,
+  onAlinear,
+  onOrdenar,
+  esLaDeArriba,
+  esLaDeAbajo,
 }: PanelPropiedadesProps) {
   const resumen = (
     <div className="text-xs text-gray-500 space-y-1">
@@ -88,80 +96,19 @@ export default function PanelPropiedades({
     </div>
   );
 
-  // El UNICO candado del panel, arriba: bloquea la figura entera (posicion,
-  // tamano, rotacion y borrar), como "Bloquear" en Canva
-  const candado = (
-    bloqueada: boolean,
-    textoBloqueada: string,
-    textoLibre: string,
-  ) => (
-    <div>
-      <button
-        type="button"
-        onClick={() => onBloquear(!bloqueada)}
-        aria-pressed={bloqueada}
-        title={bloqueada ? "Clic para desbloquear" : "Clic para bloquear"}
-        className={`w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-medium transition-colors ${
-          bloqueada
-            ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-            : "border-gray-200 text-gray-600 hover:bg-gray-50"
-        }`}
-      >
-        {bloqueada ? (
-          <Lock className="h-3.5 w-3.5" />
-        ) : (
-          <Unlock className="h-3.5 w-3.5" />
-        )}
-        {bloqueada ? textoBloqueada : textoLibre}
-      </button>
-      {bloqueada && (
-        <p className="mt-1 text-[11px] text-amber-700">
-          No se mueve, estira, rota ni borra. Clic en el candado para
-          desbloquear.
-        </p>
-      )}
-    </div>
-  );
-
-  // Varias seleccionadas: solo acciones de grupo (el grupo se mueve
-  // arrastrando cualquiera; por ahora no se estira ni se rota)
+  // Varias seleccionadas: panel de grupo (reusa el resumen y los botones)
   if (totalSeleccionadas > 1) {
     return (
-      <aside className="w-64 flex-shrink-0 rounded-xl border border-gray-200 p-4 flex flex-col gap-4">
-        {resumen}
-        {candado(
-          bloqueadasEnSeleccion === totalSeleccionadas,
-          `${totalSeleccionadas} bloqueadas`,
-          `Bloquear ${totalSeleccionadas} figuras`,
-        )}
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
-          <p className="text-sm font-semibold text-gray-700">
-            {totalSeleccionadas} figuras seleccionadas
-          </p>
-          <p className="text-xs text-gray-400">
-            Arrastra cualquiera para moverlas juntas. Shift + clic agrega o
-            quita una.
-          </p>
-          {bloqueadasEnSeleccion > 0 && (
-            <p className="flex items-center gap-1 text-xs text-amber-700">
-              <Lock className="h-3 w-3" />
-              {bloqueadasEnSeleccion} bloqueada
-              {bloqueadasEnSeleccion === 1 ? "" : "s"}: no se mueve
-              {bloqueadasEnSeleccion === 1 ? "" : "n"} ni se borra
-              {bloqueadasEnSeleccion === 1 ? "" : "n"}
-            </p>
-          )}
-        </div>
-        {botonesGrupo}
-        <button
-          type="button"
-          onClick={onBorrar}
-          className="inline-flex items-center justify-center gap-2 py-2 rounded-lg border border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Borrar {totalSeleccionadas} figuras
-        </button>
-      </aside>
+      <PanelGrupo
+        resumen={resumen}
+        botonesCopiar={botonesGrupo}
+        totalSeleccionadas={totalSeleccionadas}
+        bloqueadasEnSeleccion={bloqueadasEnSeleccion}
+        onBloquear={onBloquear}
+        onAlinear={onAlinear}
+        onOrdenar={onOrdenar}
+        onBorrar={onBorrar}
+      />
     );
   }
 
@@ -295,6 +242,25 @@ export default function PanelPropiedades({
           </span>
         </label>
       </fieldset>
+
+      <BotonesAlinear
+        respecto="lienzo"
+        deshabilitado={figura.bloqueada}
+        motivoDeshabilitado="Está bloqueada"
+        onAlinear={onAlinear}
+      />
+
+      <BotonesOrden
+        puedeSubir={!esLaDeArriba}
+        puedeBajar={!esLaDeAbajo}
+        deshabilitado={figura.bloqueada}
+        nota={
+          figura.tipo === "PALCO"
+            ? "Entre los palcos (siempre encima de las referencias)."
+            : "Entre las referencias (siempre debajo de los palcos)."
+        }
+        onOrdenar={onOrdenar}
+      />
 
       <p className="text-[11px] text-gray-400">
         {figura.forma === "CIRCULO" ? "Círculo" : "Rectángulo"} · centro (

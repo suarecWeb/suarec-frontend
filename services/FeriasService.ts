@@ -1,5 +1,9 @@
 import api from "./axios_config";
-import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
+import {
+  CreateFeriaDto,
+  Feria,
+  UpdateFeriaDto,
+} from "@/interfaces/feria.interface";
 
 const BASE = "/suarec/ferias";
 
@@ -30,7 +34,7 @@ const FeriasService = {
 
   updateFeria: (
     id: number,
-    dto: Partial<CreateFeriaDto>,
+    dto: UpdateFeriaDto,
     imageFile?: File,
   ): Promise<{ data: Feria }> => {
     const form = new FormData();
@@ -39,6 +43,9 @@ const FeriasService = {
         form.append(key, String(value));
       }
     });
+    // Quitar el recinto: multipart no manda null; el backend lee "" como
+    // "sin recinto" (RN-24)
+    if (dto.recintoId === null) form.append("recintoId", "");
     if (imageFile) form.append("image", imageFile);
     return api.patch(`${BASE}/${id}`, form, {
       headers: { "Content-Type": "multipart/form-data" },

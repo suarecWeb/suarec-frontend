@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import { FiguraEditor, Lienzo, copiasDeFiguras } from "../figuras";
+import { FiguraEditor, TamanoLienzo, copiasDeFiguras } from "../figuras";
 
 // Copiar y pegar figuras como en Canva, solo dentro de ESTE recinto y
 // mientras el editor este abierto (no usa el portapapeles del sistema).
 // Trabaja con grupos: una figura sola es un grupo de una
 export const usePortapapeles = (
   figuras: FiguraEditor[],
-  lienzo: Lienzo,
+  lienzo: TamanoLienzo,
   agregarVarias: (nuevas: FiguraEditor[]) => void,
 ) => {
   const [copiadas, setCopiadas] = useState<FiguraEditor[]>([]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, MutableRefObject } from "react";
 import { Rect, Circle, Text } from "react-konva";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
@@ -13,12 +13,24 @@ import {
   rellenoDe,
   colorDeTexto,
 } from "../figuras";
+import { ajustarACuadricula } from "../acomodar";
+
+// Al empezar un arrastre: la figura agarrada y el puntero en pantalla
+export interface GuiaArrastre {
+  figura: FiguraEditor;
+  puntero: Vector2d;
+}
 
 interface FiguraNodoProps {
   figura: FiguraEditor;
   lienzoAncho: number;
   lienzoAlto: number;
   conError: boolean;
+  // Tamano de celda si la cuadrícula esta prendida (imán al mover)
+  cuadricula: number | null;
+  // La figura que se agarro para arrastrar y donde estaba el puntero
+  // (guia del imán en un grupo)
+  guia: MutableRefObject<GuiaArrastre | null>;
   // Al presionar (puede empezar un arrastre del grupo) y al hacer clic
   // sin arrastrar. conShift: agregar/quitar de la seleccion
   onPresionar: (clave: string, conShift: boolean) => void;
@@ -36,6 +48,8 @@ const FiguraNodo = memo(function FiguraNodo({
   lienzoAncho,
   lienzoAlto,
   conError,
+  cuadricula,
+  guia,
   onPresionar,
   onClic,
   onCambiar,
@@ -43,15 +57,49 @@ const FiguraNodo = memo(function FiguraNodo({
   const esPalco = figura.tipo === "PALCO";
   const lienzo = { ancho: lienzoAncho, alto: lienzoAlto };
 
-  // Mientras se arrastra, el centro se frena en el borde del lienzo. Konva
-  // entrega la posicion en pixeles de pantalla: se pasa a unidades del
-  // lienzo con la vista actual del Stage, se limita y se devuelve
+  // Imán en un grupo: solo la figura que se agarro (la guia) se pega a la
+  // cuadrícula y las demas se mueven exactamente lo mismo, asi el grupo no
+  // se deforma. Todo sale del puntero y de donde empezo cada figura
+  // (durante el arrastre, figura.x/y sigue siendo el punto de partida):
+  // Konva mueve a las demas por su cuenta y no se puede confiar en "pos"
+  const conImanDeLaGuia = (
+    propuesto: Vector2d,
+    paso: number,
+    stage: Konva.Stage,
+  ) => {
+    const inicio = guia.current;
+    const puntero = stage.getPointerPosition();
+    if (!inicio || !puntero) return ajustarACuadricula(propuesto, figura, paso);
+    const lider = inicio.figura;
+    const escala = stage.scaleX();
+    const destino = ajustarACuadricula(
+      {
+        x: lider.x + (puntero.x - inicio.puntero.x) / escala,
+        y: lider.y + (puntero.y - inicio.puntero.y) / escala,
+      },
+      lider,
+      paso,
+    );
+    return {
+      x: figura.x + destino.x - lider.x,
+      y: figura.y + destino.y - lider.y,
+    };
+  };
+
+  // Mientras se arrastra, el centro se frena en el borde del lienzo (y con
+  // la cuadrícula prendida, la figura se pega a sus lineas). Konva entrega
+  // la posicion en pixeles de pantalla: se pasa a unidades del lienzo con
+  // la vista actual del Stage, se ajusta y se devuelve
   function limitarArrastre(this: Konva.Node, pos: Vector2d): Vector2d {
     const stage = this.getStage();
     if (!stage) return pos;
     const escala = stage.scaleX();
+    const centro = {
+      x: (pos.x - stage.x()) / escala,
+      y: (pos.y - stage.y()) / escala,
+    };
     const limitado = limitarAlLienzo(
-      { x: (pos.x - stage.x()) / escala, y: (pos.y - stage.y()) / escala },
+      cuadricula ? conImanDeLaGuia(centro, cuadricula, stage) : centro,
       lienzo,
     );
     return {
@@ -59,6 +107,11 @@ const FiguraNodo = memo(function FiguraNodo({
       y: limitado.y * escala + stage.y(),
     };
   }
+  const marcarGuia = (stage: Konva.Stage | null) => {
+    const puntero = stage?.getPointerPosition();
+    guia.current = puntero ? { figura, puntero } : null;
+  };
+
   const claveEtiqueta = `${figura.clave}-etiqueta`;
   const tamanoFuente = Math.min(
     Math.max(Math.min(figura.ancho, figura.alto) * 0.28, 8),
@@ -117,8 +170,12 @@ const FiguraNodo = memo(function FiguraNodo({
     // Bloqueada: no se arrastra (y el editor tampoco mueve la vista)
     draggable: !figura.bloqueada,
     dragBoundFunc: limitarArrastre,
-    onMouseDown: (e: KonvaEventObject<MouseEvent>) =>
-      onPresionar(figura.clave, e.evt.shiftKey),
+    onMouseDown: (e: KonvaEventObject<MouseEvent>) => {
+      marcarGuia(e.target.getStage());
+      onPresionar(figura.clave, e.evt.shiftKey);
+    },
+    onTouchStart: (e: KonvaEventObject<TouchEvent>) =>
+      marcarGuia(e.target.getStage()),
     onClick: (e: KonvaEventObject<MouseEvent>) =>
       onClic(figura.clave, e.evt.shiftKey),
     onTap: () => {

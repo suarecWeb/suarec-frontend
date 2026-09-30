@@ -62,6 +62,8 @@ export interface FiguraAGuardar {
   color: string;
   etiquetaRotada: boolean;
   bloqueada: boolean;
+  // Orden dentro de su grupo (referencias entre si, palcos entre si)
+  zIndex: number;
 }
 
 // El dibujo COMPLETO: lo que no venga se borra. versionBase = updatedAt del

@@ -12,15 +12,22 @@ import {
   Monitor,
   Ticket,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
-import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
+import {
+  AvisoCambioRecinto,
+  CreateFeriaDto,
+  Feria,
+  UpdateFeriaDto,
+} from "@/interfaces/feria.interface";
+import SelectorRecinto from "./SelectorRecinto";
 
 interface EditFeriaModalProps {
   feria: Feria;
   onClose: () => void;
   onSubmit: (
     id: number,
-    dto: Partial<CreateFeriaDto>,
+    dto: UpdateFeriaDto,
     imageFile?: File,
   ) => Promise<void>;
 }
@@ -70,6 +77,7 @@ export default function EditFeriaModal({
     fechaFin: toDatetimeLocal(feria.fechaFin),
     ubicacion: feria.ubicacion,
     formatId: feria.formatId ?? undefined,
+    recintoId: feria.recintoId ?? null,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<
@@ -80,6 +88,8 @@ export default function EditFeriaModal({
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
+  // RN-24: el backend avisa si el cambio de recinto afecta palcos vendidos
+  const [aviso, setAviso] = useState<AvisoCambioRecinto | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const totalEventos = feria.eventos?.length ?? 0;
 
@@ -145,19 +155,37 @@ export default function EditFeriaModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const recintoAsignado = feria.recintoId ?? null;
+
+  const cambiarRecinto = (recintoId: number | null) => {
+    setForm((prev) => ({ ...prev, recintoId }));
+    setAviso(null); // otro recinto: el aviso anterior ya no aplica
+  };
+
+  const enviar = async (confirmarCambioRecinto: boolean) => {
     setLoading(true);
     try {
+      const { recintoId, ...datos } = form;
       await onSubmit(
         feria.id,
-        { ...form, removeImage },
+        {
+          ...datos,
+          removeImage,
+          // El recinto viaja solo si cambio: asi reenviar la feria nunca
+          // toca su recinto por accidente
+          ...(recintoId !== recintoAsignado && { recintoId }),
+          ...(confirmarCambioRecinto && { confirmarCambioRecinto }),
+        },
         imageFile ?? undefined,
       );
       onClose();
     } catch (err: any) {
-      const msg = err?.response?.data?.message;
+      const data = err?.response?.data;
+      if (err?.response?.status === 409 && data?.requiereConfirmacion) {
+        setAviso(data);
+        return;
+      }
+      const msg = data?.message;
       if (Array.isArray(msg)) {
         setErrors((prev) => ({ ...prev, _server: msg.join(", ") }) as any);
       } else if (typeof msg === "string") {
@@ -166,6 +194,13 @@ export default function EditFeriaModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setAviso(null);
+    await enviar(false);
   };
 
   return (
@@ -343,19 +378,13 @@ export default function EditFeriaModal({
           </div>
           {/* Fin columna izquierda */}
 
-          {/* Columna derecha: editor de la forma del escenario/tarima de
-              esta feria -- panel propio (blanco, con su propio borde),
-              más grande que el formulario porque acá va a vivir el
-              componente de diseño (por ahora placeholder). */}
-          <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white shadow-sm min-h-[520px] flex items-center justify-center text-center px-6">
-            <div className="text-gray-300">
-              <CalendarDays className="h-10 w-10 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-400">
-                Forma del escenario
-              </p>
-              <p className="text-xs text-gray-300 mt-1">Próximamente</p>
-            </div>
-          </div>
+          {/* Columna derecha: el recinto de la feria y, mas adelante, la
+              vista previa de su forma */}
+          <SelectorRecinto
+            valor={form.recintoId ?? null}
+            asignadoId={recintoAsignado}
+            onCambiar={cambiarRecinto}
+          />
         </div>
         {/* Fin grid de 2 columnas */}
 
@@ -371,6 +400,52 @@ export default function EditFeriaModal({
           <ChevronRight className="h-4 w-4 text-gray-400" />
         </Link>
 
+        {aviso && (
+          <div
+            role="alertdialog"
+            aria-labelledby="aviso-recinto-titulo"
+            className="mt-4 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50"
+          >
+            <p
+              id="aviso-recinto-titulo"
+              className="flex items-center gap-2 text-sm font-semibold text-amber-800"
+            >
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              {aviso.palcosAfectados === 1
+                ? "1 palco ya está reservado o vendido"
+                : `${aviso.palcosAfectados} palcos ya están reservados o vendidos`}
+            </p>
+            <p className="mt-1 text-xs text-amber-700">
+              {form.recintoId === null
+                ? "Si quitas el recinto"
+                : "Si cambias el recinto"}
+              , esos palcos dejan de verse en el mapa de esta feria.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAviso(null)}
+                disabled={loading}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60 transition-colors"
+              >
+                No, revisar
+              </button>
+              <button
+                type="button"
+                onClick={() => enviar(true)}
+                disabled={loading}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-60 transition-colors"
+              >
+                {loading
+                  ? "Guardando..."
+                  : form.recintoId === null
+                    ? "Sí, quitar el recinto"
+                    : "Sí, cambiar el recinto"}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3 pt-4">
           <button
             type="button"
@@ -381,7 +456,7 @@ export default function EditFeriaModal({
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || aviso !== null}
             className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[#097EEC] rounded-lg hover:bg-[#0562C7] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Guardando..." : "Guardar cambios"}
