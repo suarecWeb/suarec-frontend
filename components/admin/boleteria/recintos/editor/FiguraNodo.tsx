@@ -19,7 +19,10 @@ interface FiguraNodoProps {
   lienzoAncho: number;
   lienzoAlto: number;
   conError: boolean;
-  onSeleccionar: (clave: string) => void;
+  // Al presionar (puede empezar un arrastre del grupo) y al hacer clic
+  // sin arrastrar. conShift: agregar/quitar de la seleccion
+  onPresionar: (clave: string, conShift: boolean) => void;
+  onClic: (clave: string, conShift: boolean) => void;
   onCambiar: (clave: string, cambios: Partial<FiguraEditor>) => void;
 }
 
@@ -33,7 +36,8 @@ const FiguraNodo = memo(function FiguraNodo({
   lienzoAncho,
   lienzoAlto,
   conError,
-  onSeleccionar,
+  onPresionar,
+  onClic,
   onCambiar,
 }: FiguraNodoProps) {
   const esPalco = figura.tipo === "PALCO";
@@ -99,6 +103,8 @@ const FiguraNodo = memo(function FiguraNodo({
 
   const propiedadesComunes = {
     id: figura.clave,
+    // "bloqueada": el editor la trata como fondo para empezar un recuadro
+    name: figura.bloqueada ? "figura bloqueada" : "figura",
     x: figura.x,
     y: figura.y,
     rotation: figura.rotacion,
@@ -108,10 +114,17 @@ const FiguraNodo = memo(function FiguraNodo({
     strokeScaleEnabled: false,
     // Palco solido; referencia con borde punteado (RN-04)
     dash: esPalco ? undefined : [6, 4],
-    draggable: true,
+    // Bloqueada: no se arrastra (y el editor tampoco mueve la vista)
+    draggable: !figura.bloqueada,
     dragBoundFunc: limitarArrastre,
-    onMouseDown: () => onSeleccionar(figura.clave),
-    onTap: () => onSeleccionar(figura.clave),
+    onMouseDown: (e: KonvaEventObject<MouseEvent>) =>
+      onPresionar(figura.clave, e.evt.shiftKey),
+    onClick: (e: KonvaEventObject<MouseEvent>) =>
+      onClic(figura.clave, e.evt.shiftKey),
+    onTap: () => {
+      onPresionar(figura.clave, false);
+      onClic(figura.clave, false);
+    },
     onDragMove: (e: KonvaEventObject<DragEvent>) => moverEtiqueta(e.target),
     onDragEnd: handleDragEnd,
     onTransform: (e: KonvaEventObject<Event>) => moverEtiqueta(e.target),
@@ -140,7 +153,7 @@ const FiguraNodo = memo(function FiguraNodo({
         offsetX={figura.ancho / 2}
         offsetY={figura.alto / 2}
         rotation={figura.etiquetaRotada ? figura.rotacion : 0}
-        text={figura.nombre}
+        text={figura.bloqueada ? `🔒 ${figura.nombre}` : figura.nombre}
         fontSize={tamanoFuente}
         fontStyle={esPalco ? "bold" : "normal"}
         fill={colorDeTexto(figura)}

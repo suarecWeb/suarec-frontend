@@ -41,9 +41,43 @@ export interface RecintoFigura {
   color: string;
   // false: el nombre siempre horizontal; true: gira con la figura (PEN-7)
   etiquetaRotada: boolean;
+  // Bloqueada en el editor, como "Bloquear" en Canva (migracion 064)
+  bloqueada: boolean;
   // 10 en los palcos (RN-01), la asigna el backend; null en referencias
   capacidad: number | null;
   zIndex: number;
+}
+
+// Una figura al guardar el dibujo: con id si ya existe, sin id si es nueva
+export interface FiguraAGuardar {
+  id?: number;
+  tipo: RecintoFiguraTipo;
+  forma: RecintoFiguraForma;
+  nombre: string;
+  x: number;
+  y: number;
+  ancho: number;
+  alto: number;
+  rotacion: number;
+  color: string;
+  etiquetaRotada: boolean;
+  bloqueada: boolean;
+}
+
+// El dibujo COMPLETO: lo que no venga se borra. versionBase = updatedAt del
+// recinto al abrirlo (si otro guardo entre medio, el backend responde 409)
+export interface GuardarFigurasDto {
+  versionBase: string;
+  figuras: FiguraAGuardar[];
+}
+
+// Un problema devuelto por el backend al guardar. indice = posicion en
+// figuras enviadas (null si es una figura que se intento borrar)
+export interface ErrorDeFigura {
+  indice: number | null;
+  id: number | null;
+  nombre: string;
+  mensaje: string;
 }
 
 export interface CreateRecintoDto {

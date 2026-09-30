@@ -1,7 +1,9 @@
 import {
+  Recinto,
   RecintoFigura,
   RecintoFiguraTipo,
   RecintoFiguraForma,
+  FiguraAGuardar,
 } from "@/interfaces/recinto.interface";
 
 // Figura tal como la maneja el editor mientras se dibuja. Misma
@@ -20,6 +22,8 @@ export interface FiguraEditor {
   rotacion: number;
   color: string;
   etiquetaRotada: boolean;
+  // No se mueve, estira, rota ni borra por accidente (como Canva)
+  bloqueada: boolean;
 }
 
 export const TAMANO_MINIMO = 10;
@@ -44,6 +48,31 @@ export const desdeBackend = (f: RecintoFigura): FiguraEditor => ({
   rotacion: f.rotacion,
   color: f.color,
   etiquetaRotada: f.etiquetaRotada,
+  bloqueada: f.bloqueada ?? false,
+});
+
+// Las figuras guardadas de un recinto, en el orden en que se crearon
+export const figurasDelRecinto = (recinto: Recinto): FiguraEditor[] =>
+  [...(recinto.figuras ?? [])]
+    .sort((a, b) => a.zIndex - b.zIndex || a.id - b.id)
+    .map(desdeBackend);
+
+// Lo que se envia al backend: sin la clave local (el DTO rechaza campos
+// de mas) y con el nombre sin espacios sobrantes
+export const aEnvio = (f: FiguraEditor): FiguraAGuardar => ({
+  ...(f.id !== undefined ? { id: f.id } : {}),
+  tipo: f.tipo,
+  forma: f.forma,
+  nombre: f.nombre.trim(),
+  x: f.x,
+  y: f.y,
+  ancho: f.ancho,
+  alto: f.alto,
+  rotacion: f.rotacion,
+  color: f.color,
+  etiquetaRotada: f.etiquetaRotada,
+  // Siempre se manda: el backend lo guarda tal cual
+  bloqueada: f.bloqueada,
 });
 
 export interface Lienzo {
@@ -80,6 +109,68 @@ export const siguienteNombrePalco = (figuras: FiguraEditor[]) => {
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => Number(m[1]));
   return `Palco ${numeros.length ? Math.max(...numeros) + 1 : 1}`;
+};
+
+// Nombre de una copia, sin repetir ninguno del recinto (el backend no
+// deja nombres repetidos). Si termina en numero sigue la serie desde el
+// mas alto ("Palco 12" -> "Palco 41" si ya hay hasta el 40); si no,
+// agrega un numero ("Tarima" -> "Tarima 2")
+export const nombreDeCopia = (nombre: string, figuras: FiguraEditor[]) => {
+  const limpio = nombre.trim();
+  const conNumero = /^(.*?)(\d+)$/.exec(limpio);
+  const prefijo = conNumero ? conNumero[1] : `${limpio} `;
+  const usados = new Set(figuras.map((f) => f.nombre.trim().toLowerCase()));
+  const numerosDeLaSerie = figuras
+    .map((f) => f.nombre.trim())
+    .filter((n) => n.toLowerCase().startsWith(prefijo.toLowerCase()))
+    .map((n) => Number(n.slice(prefijo.length)))
+    .filter((n) => Number.isInteger(n) && n > 0);
+
+  let numero =
+    Math.max(conNumero ? Number(conNumero[2]) : 1, ...numerosDeLaSerie) + 1;
+  while (usados.has(`${prefijo}${numero}`.toLowerCase())) numero++;
+  return `${prefijo}${numero}`.slice(0, NOMBRE_MAXIMO);
+};
+
+// Una copia de la figura: identica pero nueva (sin id, clave propia),
+// corrida en diagonal para que se vea que es otra y siempre dentro del
+// lienzo. "veces" = cuantas copias seguidas van, para que no se apilen
+export const copiaDeFigura = (
+  original: FiguraEditor,
+  figuras: FiguraEditor[],
+  lienzo: Lienzo,
+  veces: number,
+): FiguraEditor => {
+  const corrimiento =
+    Math.round(Math.min(lienzo.ancho, lienzo.alto) * 0.02) * veces;
+  return {
+    ...original,
+    id: undefined,
+    clave: claveNueva(),
+    // La copia sale desbloqueada, para poder acomodarla
+    bloqueada: false,
+    nombre: nombreDeCopia(original.nombre, figuras),
+    ...limitarAlLienzo(
+      { x: original.x + corrimiento, y: original.y + corrimiento },
+      lienzo,
+    ),
+  };
+};
+
+// Copias de un grupo: todas corridas igual (el grupo conserva su forma) y
+// con nombres que no chocan ni con el recinto ni entre ellas
+export const copiasDeFiguras = (
+  originales: FiguraEditor[],
+  figuras: FiguraEditor[],
+  lienzo: Lienzo,
+  veces: number,
+): FiguraEditor[] => {
+  const existentes = [...figuras];
+  return originales.map((original) => {
+    const copia = copiaDeFigura(original, existentes, lienzo, veces);
+    existentes.push(copia);
+    return copia;
+  });
 };
 
 // RN-05 tal como lo valida HOY el backend: nombre obligatorio y unico
