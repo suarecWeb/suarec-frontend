@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Lock, Unlock } from "lucide-react";
-import { FiguraEditor, TAMANO_MINIMO } from "./figuras";
+import { FiguraEditor, TAMANO_MINIMO } from "../figuras";
 
 const limitar = (valor: number, maximo: number) =>
   Math.min(Math.max(Math.round(valor), TAMANO_MINIMO), maximo);

@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, History, XCircle } from "lucide-react";
-import { horaCorta } from "./useBorradorRecinto";
+import { horaCorta } from "../hooks/useBorradorRecinto";
 
 interface AvisosEditorProps {
   // Borrador de la pestana distinto de lo guardado, esperando decision

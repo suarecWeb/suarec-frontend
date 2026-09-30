@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiguraEditor } from "./figuras";
+import { FiguraEditor } from "../figuras";
 
 // Se escribe medio segundo despues del ultimo cambio, no en cada pixel
 // de un arrastre

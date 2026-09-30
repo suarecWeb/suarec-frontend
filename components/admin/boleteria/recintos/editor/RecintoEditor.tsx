@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Recinto, RecintoFiguraForma } from "@/interfaces/recinto.interface";
-import { useVistaLienzo } from "./useVistaLienzo";
-import { useFiguras } from "./useFiguras";
+import { useVistaLienzo } from "./hooks/useVistaLienzo";
+import { useFiguras } from "./hooks/useFiguras";
 import {
   FiguraEditor,
   COLOR_PALCO,
@@ -36,17 +36,17 @@ import {
   siguienteNombrePalco,
   validarFiguras,
 } from "./figuras";
-import { useBorradorRecinto } from "./useBorradorRecinto";
-import { useGuardarDibujo } from "./useGuardarDibujo";
-import { usePortapapeles } from "./usePortapapeles";
-import { useSeleccion } from "./useSeleccion";
-import { useRecuadroSeleccion } from "./useRecuadroSeleccion";
-import AvisosEditor from "./AvisosEditor";
-import FiguraNodo from "./FiguraNodo";
-import PanelPropiedades from "./PanelPropiedades";
+import { useBorradorRecinto } from "./hooks/useBorradorRecinto";
+import { useGuardarDibujo } from "./hooks/useGuardarDibujo";
+import { usePortapapeles } from "./hooks/usePortapapeles";
+import { useSeleccion } from "./hooks/useSeleccion";
+import { useRecuadroSeleccion } from "./hooks/useRecuadroSeleccion";
+import AvisosEditor from "./barra/AvisosEditor";
+import FiguraNodo from "./lienzo/FiguraNodo";
+import PanelPropiedades from "./panel/PanelPropiedades";
 import CoordenadasCursor, {
   CoordenadasCursorHandle,
-} from "./CoordenadasCursor";
+} from "./lienzo/CoordenadasCursor";
 
 // Zoom de los botones, centrado en la pantalla
 const FACTOR_BOTON = 1.25;

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import RecintosService from "@/services/RecintosService";
 import { ErrorDeFigura, Recinto } from "@/interfaces/recinto.interface";
-import { FiguraEditor, aEnvio } from "./figuras";
+import { FiguraEditor, aEnvio } from "../figuras";
 
 // Guardar el dibujo en el sistema: un solo envio, todo o nada (el backend
 // valida todo antes de escribir). Si falla, el dibujo sigue en pantalla

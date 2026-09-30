@@ -4,7 +4,7 @@ import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import RecintosManagement from "@/components/admin/boleteria/recintos/RecintosManagement";
+import RecintosManagement from "@/components/admin/boleteria/recintos/lista/RecintosManagement";
 import { motion } from "framer-motion";
 
 const pageVariants = {

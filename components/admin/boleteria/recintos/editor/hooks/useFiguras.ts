@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { FiguraEditor } from "./figuras";
+import { FiguraEditor } from "../figuras";
 
 // Las figuras del dibujo en memoria. Todas las modificaciones pasan por
 // aqui: guardar (item 6) y deshacer/rehacer (item 5) se apoyan en esto

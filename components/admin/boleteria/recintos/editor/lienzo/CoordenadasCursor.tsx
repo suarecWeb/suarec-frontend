@@ -2,7 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Crosshair } from "lucide-react";
-import { Punto } from "./useVistaLienzo";
+import { Punto } from "../hooks/useVistaLienzo";
 
 export interface CoordenadasCursorHandle {
   mostrar: (punto: Punto | null) => void;

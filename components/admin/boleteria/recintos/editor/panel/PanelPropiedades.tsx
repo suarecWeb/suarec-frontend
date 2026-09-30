@@ -8,7 +8,7 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { FiguraEditor, NOMBRE_MAXIMO, normalizarRotacion } from "./figuras";
+import { FiguraEditor, NOMBRE_MAXIMO, normalizarRotacion } from "../figuras";
 import CamposTamano from "./CamposTamano";
 
 interface PanelPropiedadesProps {

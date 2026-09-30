@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { FiguraEditor, Lienzo, copiasDeFiguras } from "./figuras";
+import { FiguraEditor, Lienzo, copiasDeFiguras } from "../figuras";
 
 // Copiar y pegar figuras como en Canva, solo dentro de ESTE recinto y
 // mientras el editor este abierto (no usa el portapapeles del sistema).

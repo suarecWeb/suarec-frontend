@@ -12,7 +12,7 @@ import {
   normalizarRotacion,
   rellenoDe,
   colorDeTexto,
-} from "./figuras";
+} from "../figuras";
 
 interface FiguraNodoProps {
   figura: FiguraEditor;
