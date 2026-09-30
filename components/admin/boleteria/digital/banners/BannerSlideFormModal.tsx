@@ -200,13 +200,14 @@ const BannerSlideFormModal = ({
               Imagen {!esEdicion && <span className="text-red-500">*</span>}
             </label>
 
-            {/* El marco tiene la proporción del teléfono (9:16, igual que los
-                eventos): vacío o con imagen ocupa el MISMO espacio, y la imagen
-                lo llena por completo en vez de flotar dentro de un recuadro ancho */}
+            {/* El marco tiene la proporción de un teléfono moderno (9:19.5, la medida
+                recomendada 1080 × 2340) y muestra la imagen completa, igual que la
+                pantalla ampliada de la app: si el flyer no calza, se ven las mismas
+                franjas que en el teléfono. Vacío o con imagen ocupa el MISMO espacio */}
             {imagenMostrada ? (
               // Va FUERA de un <label>: dentro, cualquier clic —incluido el de
               // borrar— abriría el selector de archivos
-              <div className="relative mx-auto aspect-[9/16] w-64 overflow-hidden rounded-xl bg-gray-900 shadow-sm ring-1 ring-gray-200">
+              <div className="relative mx-auto aspect-[9/19.5] w-56 overflow-hidden rounded-xl bg-gray-900 shadow-sm ring-1 ring-gray-200">
                 {/* Al editar, la imagen viene de Supabase y tarda: el pulso
                     ocupa el marco hasta que termina de cargar */}
                 {!previewCargado && (
@@ -216,10 +217,10 @@ const BannerSlideFormModal = ({
                   src={imagenMostrada}
                   alt="Vista previa"
                   fill
-                  sizes="256px"
+                  sizes="224px"
                   onLoad={() => setPreviewCargado(true)}
                   onError={() => setPreviewCargado(true)}
-                  className={`object-cover transition-opacity duration-500 ${
+                  className={`object-contain transition-opacity duration-500 ${
                     previewCargado ? "opacity-100" : "opacity-0"
                   }`}
                   unoptimized={Boolean(previewUrl)}
@@ -237,7 +238,7 @@ const BannerSlideFormModal = ({
                 </button>
               </div>
             ) : (
-              <label className="mx-auto flex aspect-[9/16] w-64 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-[#097EEC] hover:bg-blue-50/40 hover:text-[#097EEC]">
+              <label className="mx-auto flex aspect-[9/19.5] w-56 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition hover:border-[#097EEC] hover:bg-blue-50/40 hover:text-[#097EEC]">
                 {comprimiendo ? (
                   <>
                     <Loader2 className="h-9 w-9 animate-spin text-[#097EEC]" />
@@ -250,7 +251,7 @@ const BannerSlideFormModal = ({
                       Seleccionar imagen
                     </span>
                     <span className="text-xs text-gray-400">
-                      JPG o PNG · Vertical 9:16
+                      JPG o PNG · 1080 × 2340 px
                     </span>
                   </>
                 )}
@@ -269,8 +270,28 @@ const BannerSlideFormModal = ({
             )}
 
             <p className="mt-2 text-center text-xs text-gray-400">
-              JPG o PNG · máx 5MB
+              Recomendado: 1080 × 2340 px (vertical) · JPG o PNG · máx 5MB
             </p>
+
+            {/* Guía de diseño desactivada. Si se reactiva, los píxeles 260–1400 salen de
+                CARD_IMAGE_POSITION (22%) en la app móvil (banner/styles.ts)
+            <details className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+              <summary className="cursor-pointer select-none font-medium text-gray-600">
+                Guía de diseño
+              </summary>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Deja logos y textos importantes a ~10% de los bordes.</li>
+                <li>
+                  En la tarjeta del inicio solo se ve la franja central:
+                  aprox. del píxel 260 al 1400 de alto.
+                </li>
+                <li>
+                  Si el slide tiene un evento vinculado, el 40% inferior queda
+                  cubierto por la información del evento.
+                </li>
+                <li>La esquina superior derecha queda bajo el botón de cerrar.</li>
+              </ul>
+            </details> */}
           </div>
 
           {/* Título */}
