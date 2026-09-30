@@ -94,10 +94,23 @@ const FeriasManagement = ({
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCreate = async (dto: CreateFeriaDto, imageFile?: File) => {
+  const handleCreate = async (
+    dto: CreateFeriaDto,
+    imageFile?: File,
+  ): Promise<Feria> => {
     const res = await FeriasService.createFeria(dto, imageFile);
     setFerias((prev) => [{ ...res.data, eventos: [] }, ...prev]);
     toast.success("Feria creada correctamente");
+    return res.data;
+  };
+
+  // Tras crear la feria, CreateFeriaModal ya asignó los eventos elegidos
+  // (drag-and-drop) directo con la API -- solo hace falta refrescar esa
+  // feria en la lista para que se vea con sus eventos ya adentro.
+  const handleEventosAsignados = (feriaActualizada: Feria) => {
+    setFerias((prev) =>
+      prev.map((f) => (f.id === feriaActualizada.id ? feriaActualizada : f)),
+    );
   };
 
   const handleEdit = async (
@@ -422,6 +435,7 @@ const FeriasManagement = ({
         <CreateFeriaModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreate}
+          onEventosAsignados={handleEventosAsignados}
         />
       )}
 

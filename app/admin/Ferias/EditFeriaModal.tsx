@@ -10,12 +10,15 @@ import {
   Edit,
   Smartphone,
   Monitor,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
 import { Evento, CreateEventoDto } from "@/interfaces/event.interface";
 import EventFlipCard from "@/components/admin/boleteria/shared/EventFlipCard";
 import EditEventModal from "@/app/admin/events/EditEventModal";
 import EventsService from "@/services/EventsService";
+import toast from "react-hot-toast";
 
 interface EditFeriaModalProps {
   feria: Feria;
@@ -98,6 +101,24 @@ export default function EditFeriaModal({
     setEventosAsignados((prev) =>
       prev.map((e) => (e.id === id ? updated.data : e)),
     );
+  };
+
+  const handleToggleVisibilidadEvento = async (evento: Evento) => {
+    if (!evento.id) return;
+    const newVisible = evento.visible === false ? true : false;
+    try {
+      await EventsService.setVisibility(evento.id, newVisible);
+      setEventosAsignados((prev) =>
+        prev.map((e) =>
+          e.id === evento.id ? { ...e, visible: newVisible } : e,
+        ),
+      );
+      toast.success(
+        newVisible ? "Evento visible en la app" : "Evento oculto de la app",
+      );
+    } catch {
+      toast.error("Error al cambiar visibilidad del evento");
+    }
   };
 
   const serverError = (errors as any)._server as string | undefined;
@@ -390,18 +411,43 @@ export default function EditFeriaModal({
                   <EventFlipCard
                     event={evento}
                     actions={
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEventoToEdit(evento);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
-                        title="Editar evento"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Editar
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEventoToEdit(evento);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
+                          title="Editar evento"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleVisibilidadEvento(evento);
+                          }}
+                          className={`p-2 rounded-lg border transition-colors ${
+                            evento.visible === false
+                              ? "border-gray-200 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                              : "border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                          }`}
+                          title={
+                            evento.visible === false
+                              ? "Mostrar en app"
+                              : "Ocultar de app"
+                          }
+                        >
+                          {evento.visible === false ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
+                        </button>
+                      </>
                     }
                   />
                 </div>
