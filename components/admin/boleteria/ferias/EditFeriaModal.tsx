@@ -13,6 +13,9 @@ import {
   Ticket,
   ChevronRight,
   AlertTriangle,
+  Edit,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   AvisoCambioRecinto,
@@ -20,6 +23,11 @@ import {
   Feria,
   UpdateFeriaDto,
 } from "@/interfaces/feria.interface";
+import { Evento, CreateEventoDto } from "@/interfaces/event.interface";
+import EventFlipCard from "@/components/admin/boleteria/ferias/eventos/EventFlipCard";
+import EditEventModal from "@/components/admin/boleteria/ferias/eventos/EditEventModal";
+import EventsService from "@/services/EventsService";
+import toast from "react-hot-toast";
 import SelectorRecinto from "./SelectorRecinto";
 
 interface EditFeriaModalProps {
@@ -92,6 +100,43 @@ export default function EditFeriaModal({
   const [aviso, setAviso] = useState<AvisoCambioRecinto | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const totalEventos = feria.eventos?.length ?? 0;
+
+  // Eventos asignados a la feria: se pueden editar y ocultar/mostrar desde
+  // aqui mismo (ademas de su pagina "Eventos de esta feria")
+  const [eventosAsignados, setEventosAsignados] = useState<Evento[]>(
+    feria.eventos ?? [],
+  );
+  const [eventoToEdit, setEventoToEdit] = useState<Evento | null>(null);
+
+  const handleEditEvento = async (
+    id: number,
+    dto: Partial<CreateEventoDto>,
+    imageFile?: File,
+  ) => {
+    await EventsService.updateEvent(String(id), dto, imageFile);
+    const updated = await EventsService.getEventById(id);
+    setEventosAsignados((prev) =>
+      prev.map((e) => (e.id === id ? updated.data : e)),
+    );
+  };
+
+  const handleToggleVisibilidadEvento = async (evento: Evento) => {
+    if (!evento.id) return;
+    const newVisible = evento.visible === false ? true : false;
+    try {
+      await EventsService.setVisibility(evento.id, newVisible);
+      setEventosAsignados((prev) =>
+        prev.map((e) =>
+          e.id === evento.id ? { ...e, visible: newVisible } : e,
+        ),
+      );
+      toast.success(
+        newVisible ? "Evento visible en la app" : "Evento oculto de la app",
+      );
+    } catch {
+      toast.error("Error al cambiar visibilidad del evento");
+    }
+  };
 
   const serverError = (errors as any)._server as string | undefined;
 
@@ -400,6 +445,65 @@ export default function EditFeriaModal({
           <ChevronRight className="h-4 w-4 text-gray-400" />
         </Link>
 
+        {eventosAsignados.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Eventos asignados ({eventosAsignados.length})
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {eventosAsignados.map((evento) => (
+                <div
+                  key={evento.id}
+                  className="opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards]"
+                >
+                  <EventFlipCard
+                    event={evento}
+                    actions={
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEventoToEdit(evento);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
+                          title="Editar evento"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleVisibilidadEvento(evento);
+                          }}
+                          className={`p-2 rounded-lg border transition-colors ${
+                            evento.visible === false
+                              ? "border-gray-200 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                              : "border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                          }`}
+                          title={
+                            evento.visible === false
+                              ? "Mostrar en app"
+                              : "Ocultar de app"
+                          }
+                        >
+                          {evento.visible === false ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
+                        </button>
+                      </>
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {aviso && (
           <div
             role="alertdialog"
@@ -463,6 +567,14 @@ export default function EditFeriaModal({
           </button>
         </div>
       </form>
+
+      {eventoToEdit && (
+        <EditEventModal
+          event={eventoToEdit}
+          onClose={() => setEventoToEdit(null)}
+          onSubmit={handleEditEvento}
+        />
+      )}
     </div>
   );
 }

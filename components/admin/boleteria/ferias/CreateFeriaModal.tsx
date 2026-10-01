@@ -9,14 +9,90 @@ import {
   Upload,
   Smartphone,
   Monitor,
+  Ticket,
+  GripVertical,
 } from "lucide-react";
-import { CreateFeriaDto } from "@/interfaces/feria.interface";
+import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
+import { Evento, EventoModalidad } from "@/interfaces/event.interface";
+import EventsService from "@/services/EventsService";
+import FeriasService from "@/services/FeriasService";
+import { formatCurrency } from "@/lib/formatCurrency";
+import toast from "react-hot-toast";
 import SelectorRecinto from "./SelectorRecinto";
 
 interface CreateFeriaModalProps {
   onClose: () => void;
-  onSubmit: (dto: CreateFeriaDto, imageFile?: File) => Promise<void>;
+  onSubmit: (dto: CreateFeriaDto, imageFile?: File) => Promise<Feria>;
+  // Se llama despues de asignar por drag-and-drop los eventos elegidos a la
+  // feria recien creada, con la feria ya actualizada (trae sus eventos).
+  onEventosAsignados?: (feria: Feria) => void;
 }
+
+// Motivo por el que un evento no se puede arrastrar cuando se esta viendo
+// el catalogo completo (toggle "ver todos") -- null si es elegible.
+const motivoNoElegible = (evento: Evento): string | null => {
+  if (evento.feriaId) return `Ya en: ${evento.feria?.nombre ?? "otra feria"}`;
+  if (evento.visible === false) return "Oculto";
+  if (evento.modalidad !== EventoModalidad.DIGITAL) return "Física";
+  return null;
+};
+
+// Card chica para el pool de "eventos disponibles" -- no se reusa
+// EventFlipCard (esa es para grids grandes con flip), aqui necesitamos algo
+// compacto que quepa varias veces en una columna angosta. Solo es arrastrable
+// si es elegible; si no, se muestra atenuada con el motivo (toggle "ver todos").
+const DraggableEventCard = ({ evento }: { evento: Evento }) => {
+  const motivo = motivoNoElegible(evento);
+  const elegible = motivo === null;
+
+  return (
+    <div
+      draggable={elegible}
+      onDragStart={
+        elegible
+          ? (e) => {
+              e.dataTransfer.setData("text/plain", String(evento.id));
+              e.dataTransfer.effectAllowed = "move";
+            }
+          : undefined
+      }
+      className={`flex items-center gap-2.5 p-3 rounded-lg border transition-all ${
+        elegible
+          ? "border-gray-200 bg-white hover:border-[#097EEC] hover:shadow-sm cursor-grab active:cursor-grabbing"
+          : "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+      }`}
+    >
+      <GripVertical
+        className={`h-4 w-4 flex-shrink-0 ${elegible ? "text-gray-300" : "text-gray-200"}`}
+      />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-medium text-gray-800 truncate">
+            {evento.nombre}
+          </p>
+          <span className="text-[11px] font-semibold text-emerald-600 flex-shrink-0">
+            {formatCurrency(evento.precioBase)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="text-[11px] text-gray-400 truncate">
+            {evento.ubicacion}
+          </p>
+          {motivo && (
+            <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded flex-shrink-0">
+              {motivo}
+            </span>
+          )}
+        </div>
+        {evento.descripcion && (
+          <p className="text-[11px] text-gray-400 line-clamp-2 pt-1.5 border-t border-gray-100">
+            {evento.descripcion}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const EMPTY_FORM: CreateFeriaDto = {
   nombre: "",
@@ -55,6 +131,7 @@ const FORMAT_OPTIONS: {
 export default function CreateFeriaModal({
   onClose,
   onSubmit,
+  onEventosAsignados,
 }: CreateFeriaModalProps) {
   const [form, setForm] = useState<CreateFeriaDto>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
@@ -65,6 +142,21 @@ export default function CreateFeriaModal({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Pool de eventos que se pueden arrastrar hacia "Eventos asignados" --
+  // solo eventos sueltos (sin feria), visibles y digitales, igual criterio
+  // que ya usa GET /events publico (ver roadmap testt-a-prod.txt).
+  const [eventosDisponibles, setEventosDisponibles] = useState<Evento[]>([]);
+  const [eventosAsignados, setEventosAsignados] = useState<Evento[]>([]);
+  const [loadingEventos, setLoadingEventos] = useState(true);
+  // Catalogo completo (sin filtrar) -- solo para el toggle "ver todos", por
+  // si alguien necesita revisar datos de eventos que ya tienen feria, estan
+  // ocultos, o son fisicos. Esos no se pueden arrastrar (ver esElegible).
+  const [todosLosEventos, setTodosLosEventos] = useState<Evento[]>([]);
+  const [verTodos, setVerTodos] = useState(false);
+
+  const esElegible = (e: Evento) =>
+    !e.feriaId && e.visible === true && e.modalidad === EventoModalidad.DIGITAL;
+
   const serverError = (errors as any)._server as string | undefined;
 
   useEffect(() => {
@@ -72,6 +164,42 @@ export default function CreateFeriaModal({
       if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
     };
   }, [imagePreview]);
+
+  useEffect(() => {
+    EventsService.getAllEventsAdmin()
+      .then((res) => {
+        setTodosLosEventos(res.data);
+        setEventosDisponibles(res.data.filter(esElegible));
+      })
+      .catch(() => toast.error("Error al cargar los eventos disponibles"))
+      .finally(() => setLoadingEventos(false));
+  }, []);
+
+  // Los updaters de setState deben ser puros (sin side effects como llamar
+  // otro setState adentro) -- en StrictMode (dev) React los invoca 2 veces
+  // para detectar justamente eso, y un setState anidado ahi se duplicaba.
+  const moverAAsignados = (eventoId: number) => {
+    // Busca en el catalogo completo (no solo en "disponibles") porque con
+    // el toggle "ver todos" el drag puede iniciar desde esa vista.
+    const evento = todosLosEventos.find((e) => e.id === eventoId);
+    if (!evento || !esElegible(evento)) return;
+    setEventosDisponibles((prev) => prev.filter((e) => e.id !== eventoId));
+    setEventosAsignados((prev) => [...prev, evento]);
+  };
+
+  const moverADisponibles = (eventoId: number) => {
+    const evento = eventosAsignados.find((e) => e.id === eventoId);
+    if (!evento) return;
+    setEventosAsignados((prev) => prev.filter((e) => e.id !== eventoId));
+    setEventosDisponibles((prev) => [...prev, evento]);
+  };
+
+  // Que se muestra en el panel derecho segun el toggle "ver todos" -- en
+  // ambos casos se ocultan los que ya estan en "Eventos asignados" (ya
+  // estan arrastrados, no tiene sentido mostrarlos duplicados).
+  const eventosAMostrar = (
+    verTodos ? todosLosEventos : eventosDisponibles
+  ).filter((e) => !eventosAsignados.some((a) => a.id === e.id));
 
   const validate = (): boolean => {
     const next: typeof errors = {};
@@ -130,7 +258,24 @@ export default function CreateFeriaModal({
     if (!validate()) return;
     setLoading(true);
     try {
-      await onSubmit(form, imageFile ?? undefined);
+      const feriaCreada = await onSubmit(form, imageFile ?? undefined);
+
+      // La asignacion de eventos es un paso aparte de crear la feria -- si
+      // falla, la feria ya quedo creada, no se pierde el trabajo del admin.
+      if (eventosAsignados.length > 0 && feriaCreada?.id) {
+        try {
+          const res = await FeriasService.asignarEventos(
+            feriaCreada.id,
+            eventosAsignados.map((ev) => ev.id!),
+          );
+          onEventosAsignados?.(res.data);
+        } catch {
+          toast.error(
+            "La feria se creó, pero falló asignar los eventos arrastrados. Puedes asignarlos desde Editar.",
+          );
+        }
+      }
+
       onClose();
     } catch (err: any) {
       const msg = err?.response?.data?.message;
@@ -327,19 +472,120 @@ export default function CreateFeriaModal({
                   </p>
                 )}
               </div>
+
+              {/* Drop zone: arrastras una card desde el pool de la derecha
+                y se suelta aca -- se asigna al hacer submit, no antes. */}
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const id = Number(e.dataTransfer.getData("text/plain"));
+                  if (id) moverAAsignados(id);
+                }}
+                className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-3 min-h-[110px]"
+              >
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 mb-2">
+                  <Ticket className="h-3.5 w-3.5" />
+                  Eventos asignados ({eventosAsignados.length})
+                </p>
+                {eventosAsignados.length === 0 ? (
+                  <p className="text-[11px] text-emerald-600/60 text-center py-4">
+                    Arrastra eventos aquí desde la derecha
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {eventosAsignados.map((evento) => (
+                      <div
+                        key={evento.id}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-emerald-100"
+                      >
+                        <p className="text-xs text-gray-700 truncate flex-1">
+                          {evento.nombre}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => moverADisponibles(evento.id!)}
+                          className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
+                          title="Quitar de esta feria"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             {/* Fin columna izquierda */}
 
-            {/* Columna derecha: el recinto de la feria y, mas adelante, la
-              vista previa de su forma. Una feria nueva no tiene eventos:
-              no aplica el aviso de RN-24 */}
-            <SelectorRecinto
-              valor={form.recintoId ?? null}
-              asignadoId={null}
-              onCambiar={(recintoId) =>
-                setForm((prev) => ({ ...prev, recintoId }))
-              }
-            />
+            {/* Columna derecha: arriba el recinto de la feria (selector de
+              mapa; una feria nueva no tiene eventos, no aplica el aviso de
+              RN-24) y justo debajo los eventos para arrastrar */}
+            <div className="flex flex-col gap-4 min-w-0">
+              <SelectorRecinto
+                compacto
+                valor={form.recintoId ?? null}
+                asignadoId={null}
+                onCambiar={(recintoId) =>
+                  setForm((prev) => ({ ...prev, recintoId }))
+                }
+              />
+
+              {/* Columna derecha: pool de eventos que se pueden arrastrar hacia
+              "Eventos asignados". Con el toggle se ve el catalogo completo
+              (por si alguien necesita revisar datos de un evento que ya
+              tiene feria, esta oculto, o es fisico) -- esos no se pueden
+              arrastrar, quedan atenuados con el motivo. */}
+              <div className="rounded-xl border-2 border-dashed border-gray-200 bg-white shadow-sm min-h-[320px] p-4">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                    <Ticket className="h-3.5 w-3.5" />
+                    {verTodos ? "Todos los eventos" : "Eventos disponibles"} (
+                    {eventosAMostrar.length})
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setVerTodos((prev) => !prev)}
+                    className="text-[11px] font-medium text-[#097EEC] hover:underline"
+                  >
+                    {verTodos
+                      ? "Ver solo disponibles"
+                      : "Ver todos los eventos"}
+                  </button>
+                </div>
+
+                {loadingEventos ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-12 rounded-lg bg-gray-100 animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : eventosAMostrar.length === 0 ? (
+                  <div className="text-center py-16 text-gray-300">
+                    <CalendarDays className="h-10 w-10 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-400">
+                      {verTodos
+                        ? "No hay eventos creados todavía"
+                        : "No hay eventos sueltos por asignar"}
+                    </p>
+                    {!verTodos && (
+                      <p className="text-xs text-gray-300 mt-1">
+                        Todos los eventos visibles ya tienen feria
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                    {eventosAMostrar.map((evento) => (
+                      <DraggableEventCard key={evento.id} evento={evento} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           {/* Fin grid de 2 columnas */}
 

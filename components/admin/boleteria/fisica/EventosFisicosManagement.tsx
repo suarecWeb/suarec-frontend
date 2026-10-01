@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import EventsManagement from "@/components/admin/boleteria/ferias/eventos/EventsManagement";
+import FeriasManagement from "@/components/admin/boleteria/ferias/FeriasManagement";
 import { EventoModalidad } from "@/interfaces/event.interface";
 import { EVENTOS_FISICOS_MOCK } from "./mocks/eventos-fisicos.mock";
 import { Beaker, Database } from "lucide-react";
 
 const EventosFisicosManagement = () => {
   const [usarMock, setUsarMock] = useState(false);
+  const [eventosSectionVisible, setEventosSectionVisible] = useState(true);
 
   return (
     <div>
@@ -29,11 +31,23 @@ const EventosFisicosManagement = () => {
         </button>
       </div>
 
-      <EventsManagement
-        modoFisico
-        filtroModalidad={EventoModalidad.FISICO}
-        eventosMock={usarMock ? EVENTOS_FISICOS_MOCK : undefined}
-      />
+      {/* Ferias: mismo patrón que boletería digital -- solo se listan las
+          que tienen al menos un evento físico, mostrando solo esa parte. */}
+      <FeriasManagement modoFisico filtroModalidad={EventoModalidad.FISICO} />
+
+      <div
+        className={
+          eventosSectionVisible ? "mt-10 pt-8 border-t border-gray-100" : ""
+        }
+      >
+        <EventsManagement
+          modoFisico
+          filtroModalidad={EventoModalidad.FISICO}
+          hideAssignedToFeria
+          onVisibleChange={setEventosSectionVisible}
+          eventosMock={usarMock ? EVENTOS_FISICOS_MOCK : undefined}
+        />
+      </div>
     </div>
   );
 };

@@ -19,6 +19,9 @@ interface SelectorRecintoProps {
   // Lo que la feria tiene guardado hoy (al crear, null)
   asignadoId: number | null;
   onCambiar: (recintoId: number | null) => void;
+  // Mas bajo, para cuando comparte la columna con otra seccion (crear
+  // feria: debajo van los eventos para arrastrar)
+  compacto?: boolean;
 }
 
 // Con mas recintos que esto, los puntos no caben: queda solo "2 / 30"
@@ -39,6 +42,7 @@ export default function SelectorRecinto({
   valor,
   asignadoId,
   onCambiar,
+  compacto = false,
 }: SelectorRecintoProps) {
   const { opciones, error, detalles, precargar } =
     useRecintosCarrusel(asignadoId);
@@ -77,7 +81,11 @@ export default function SelectorRecinto({
   const cambia = asignadoId !== null && valor !== asignadoId;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 min-h-[520px]">
+    <div
+      className={`bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 ${
+        compacto ? "" : "min-h-[520px]"
+      }`}
+    >
       <div>
         <p className="text-xs font-medium text-gray-600">
           <LayoutGrid className="h-3 w-3 inline mr-1" />
@@ -108,7 +116,9 @@ export default function SelectorRecinto({
           tabIndex={0}
           aria-roledescription="carrusel"
           aria-label="Recinto de la feria"
-          className="relative flex-1 min-h-[340px] rounded-xl border border-gray-200 bg-gray-100 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#097EEC]/40"
+          className={`relative flex-1 ${
+            compacto ? "min-h-[260px]" : "min-h-[340px]"
+          } rounded-xl border border-gray-200 bg-gray-100 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#097EEC]/40`}
         >
           {cargando ? (
             <Centro>

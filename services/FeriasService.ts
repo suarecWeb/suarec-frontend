@@ -55,6 +55,9 @@ const FeriasService = {
   setVisibility: (id: number, visible: boolean): Promise<void> =>
     api.patch(`${BASE}/${id}/visibility`, { visible }),
 
+  asignarEventos: (id: number, eventoIds: number[]): Promise<{ data: Feria }> =>
+    api.patch(`${BASE}/${id}/eventos`, { eventoIds }),
+
   deleteFeria: (id: number): Promise<void> => api.delete(`${BASE}/${id}`),
 };
 

@@ -6,6 +6,7 @@ import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import EventsManagement from "@/components/admin/boleteria/ferias/eventos/EventsManagement";
+import FeriasManagement from "@/components/admin/boleteria/ferias/FeriasManagement";
 import { EventoModalidad } from "@/interfaces/event.interface";
 import VentasManagement from "@/components/admin/boleteria/digital/ventas/VentasManagement";
 import EstadisticasManagement from "@/components/admin/boleteria/digital/estadisticas/EstadisticasManagement";
@@ -147,14 +148,26 @@ const BoleteriaPageContent = () => {
                 >
                   {activeTab === "eventos" && (
                     <>
-                      {/* Las ferias tienen su propia sección
-                          (/admin/boleteria/ferias); aquí solo quedan los
-                          eventos digitales sueltos, sin feria visible */}
-                      <EventsManagement
+                      {/* Ferias arriba, solo las que tienen eventos
+                          digitales y mostrando solo esa parte (igual que en
+                          boletería física). Las ferias tambien tienen su
+                          propia sección: /admin/boleteria/ferias */}
+                      <FeriasManagement
                         filtroModalidad={EventoModalidad.DIGITAL}
-                        hideAssignedToFeria
-                        onVisibleChange={setEventsSectionVisible}
                       />
+                      <div
+                        className={
+                          eventsSectionVisible
+                            ? "mt-10 pt-8 border-t border-gray-100"
+                            : ""
+                        }
+                      >
+                        <EventsManagement
+                          filtroModalidad={EventoModalidad.DIGITAL}
+                          hideAssignedToFeria
+                          onVisibleChange={setEventsSectionVisible}
+                        />
+                      </div>
                       {!eventsSectionVisible && (
                         <p className="py-10 text-center text-sm text-gray-400">
                           Los eventos se gestionan dentro de su feria.{" "}

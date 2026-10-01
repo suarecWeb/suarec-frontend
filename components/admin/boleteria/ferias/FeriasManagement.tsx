@@ -41,7 +41,22 @@ const agruparPorModalidad = (eventos: Evento[] = []) => {
   return Object.entries(counts) as [EventoModalidad, number][];
 };
 
-const FeriasManagement = () => {
+interface FeriasManagementProps {
+  // Mismo patrón que EventsManagement: si se define, solo se listan ferias
+  // que tengan al menos un evento de esa modalidad, y el conteo/resumen de
+  // la card (frente y reverso) se calcula solo sobre esos eventos -- una
+  // feria puede tener eventos mixtos (ej. GENERAL digital + VIP física),
+  // pero cada módulo solo debe ver "su" parte.
+  filtroModalidad?: EventoModalidad;
+  // Pasa a CreateEventModal para que "Crear evento" desde Ferias cree el
+  // tipo de evento correcto según el módulo (digital vs física).
+  modoFisico?: boolean;
+}
+
+const FeriasManagement = ({
+  filtroModalidad,
+  modoFisico = false,
+}: FeriasManagementProps = {}) => {
   const router = useRouter();
   const [ferias, setFerias] = useState<Feria[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,10 +88,23 @@ const FeriasManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCreate = async (dto: CreateFeriaDto, imageFile?: File) => {
+  const handleCreate = async (
+    dto: CreateFeriaDto,
+    imageFile?: File,
+  ): Promise<Feria> => {
     const res = await FeriasService.createFeria(dto, imageFile);
     setFerias((prev) => [{ ...res.data, eventos: [] }, ...prev]);
     toast.success("Feria creada correctamente");
+    return res.data;
+  };
+
+  // Tras crear la feria, CreateFeriaModal ya asignó los eventos elegidos
+  // (drag-and-drop) directo con la API -- solo hace falta refrescar esa
+  // feria en la lista para que se vea con sus eventos ya adentro.
+  const handleEventosAsignados = (feriaActualizada: Feria) => {
+    setFerias((prev) =>
+      prev.map((f) => (f.id === feriaActualizada.id ? feriaActualizada : f)),
+    );
   };
 
   const handleCreateEvento = async (
@@ -120,9 +148,20 @@ const FeriasManagement = () => {
     }
   };
 
-  const feriasOcultas = ferias.filter((f) => f.visible === false);
-  const feriasVisibles = ferias.filter((f) => f.visible !== false);
-  const feriasMostradas = showHidden ? ferias : feriasVisibles;
+  // Eventos de una feria que le corresponden a este módulo (todos si no hay
+  // filtro de modalidad).
+  const eventosDelModulo = (feria: Feria): Evento[] =>
+    filtroModalidad
+      ? (feria.eventos ?? []).filter((e) => e.modalidad === filtroModalidad)
+      : (feria.eventos ?? []);
+
+  const feriasDelModulo = filtroModalidad
+    ? ferias.filter((f) => eventosDelModulo(f).length > 0)
+    : ferias;
+
+  const feriasOcultas = feriasDelModulo.filter((f) => f.visible === false);
+  const feriasVisibles = feriasDelModulo.filter((f) => f.visible !== false);
+  const feriasMostradas = showHidden ? feriasDelModulo : feriasVisibles;
 
   return (
     <>
@@ -188,13 +227,13 @@ const FeriasManagement = () => {
           </div>
 
           <h3 className="text-base font-semibold text-gray-700">
-            {ferias.length === 0
+            {feriasDelModulo.length === 0
               ? "No hay ferias todavía"
               : "No hay ferias organizadas todavía"}
           </h3>
 
           <p className="mt-1.5 text-sm text-gray-400">
-            {ferias.length === 0
+            {feriasDelModulo.length === 0
               ? "Crea la primera feria para agrupar eventos bajo ella."
               : `Hay ${feriasOcultas.length} sin organizar -- usa "Mostrar no organizadas" arriba para verlas y activarlas.`}
           </p>
@@ -256,8 +295,8 @@ const FeriasManagement = () => {
                       )}
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-emerald-700 flex items-center gap-1">
                         <Ticket className="h-3 w-3" />
-                        {feria.eventos?.length ?? 0} evento
-                        {feria.eventos?.length === 1 ? "" : "s"}
+                        {eventosDelModulo(feria).length} evento
+                        {eventosDelModulo(feria).length === 1 ? "" : "s"}
                       </span>
                     </div>
 
@@ -314,8 +353,8 @@ const FeriasManagement = () => {
                     </div>
 
                     <div className="flex-1 space-y-1.5 overflow-hidden">
-                      {feria.eventos && feria.eventos.length > 0 ? (
-                        agruparPorModalidad(feria.eventos).map(
+                      {eventosDelModulo(feria).length > 0 ? (
+                        agruparPorModalidad(eventosDelModulo(feria)).map(
                           ([modalidad, count]) => (
                             <div
                               key={modalidad}
@@ -369,11 +408,13 @@ const FeriasManagement = () => {
         <CreateFeriaModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreate}
+          onEventosAsignados={handleEventosAsignados}
         />
       )}
 
       {showCreateEventModal && (
         <CreateEventModal
+          modoFisico={modoFisico}
           onClose={() => setShowCreateEventModal(false)}
           onSubmit={handleCreateEvento}
         />
