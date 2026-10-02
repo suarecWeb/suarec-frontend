@@ -1,5 +1,9 @@
 import api from "./axios_config";
-import { CreateEventoDto, Evento } from "@/interfaces/event.interface";
+import {
+  CreateEventoDto,
+  Evento,
+  EventoModalidad,
+} from "@/interfaces/event.interface";
 import {
   BoletaSoporte,
   DetalleTransaccion,
@@ -29,6 +33,14 @@ import {
 
 const BASE = "/suarec/events";
 
+// Filtros del listado admin paginado. El backend solo los aplica junto a
+// page/limit (sin paginacion ignora los filtros y responde la lista completa).
+export interface FiltrosEventosAdmin {
+  sinFeria?: boolean;
+  visible?: boolean;
+  modalidad?: EventoModalidad;
+}
+
 const EventsService = {
   getAllEvents: (): Promise<{ data: Evento[] }> => api.get(BASE),
 
@@ -36,10 +48,12 @@ const EventsService = {
     api.get(`${BASE}/admin/all`),
 
   // Versión paginada del listado admin — para pantallas que no deben traer
-  // todos los eventos de una vez (ej. Estadísticas de boletería)
+  // todos los eventos de una vez (ej. Estadísticas de boletería, eventos
+  // para asignar a una feria)
   getEventosAdminPaginados: (
     page: number,
     limit: number,
+    filtros?: FiltrosEventosAdmin,
   ): Promise<{
     data: {
       eventos: Evento[];
@@ -47,7 +61,18 @@ const EventsService = {
       page: number;
       totalPaginas: number;
     };
-  }> => api.get(`${BASE}/admin/all`, { params: { page, limit } }),
+  }> =>
+    api.get(`${BASE}/admin/all`, {
+      params: {
+        page,
+        limit,
+        ...(filtros?.sinFeria !== undefined
+          ? { sinFeria: filtros.sinFeria }
+          : {}),
+        ...(filtros?.visible !== undefined ? { visible: filtros.visible } : {}),
+        ...(filtros?.modalidad ? { modalidad: filtros.modalidad } : {}),
+      },
+    }),
 
   getEventById: (id: number): Promise<{ data: Evento }> =>
     api.get(`${BASE}/${id}`),

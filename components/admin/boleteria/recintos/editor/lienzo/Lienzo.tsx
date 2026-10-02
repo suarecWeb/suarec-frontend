@@ -10,6 +10,7 @@ import { Punto } from "../hooks/useVistaLienzo";
 import { useRecuadroSeleccion } from "../hooks/useRecuadroSeleccion";
 import FiguraNodo, { GuiaArrastre } from "./FiguraNodo";
 import Cuadricula from "./Cuadricula";
+import FiguraFantasma from "./FiguraFantasma";
 import CoordenadasCursor, {
   CoordenadasCursorHandle,
 } from "./CoordenadasCursor";
@@ -52,6 +53,8 @@ interface LienzoProps {
   errores: Record<string, string>;
   // Tamano de celda si la cuadrícula esta prendida; null si no
   cuadricula: number | null;
+  // Vista previa de "Repetir": copias que aun no existen
+  fantasmas: FiguraEditor[] | null;
   seleccionadas: FiguraEditor[];
   // Las que el recuadro de Shift puede elegir (sin las bloqueadas)
   clavesLibres: string[];
@@ -76,6 +79,7 @@ export default function Lienzo({
   figuras,
   errores,
   cuadricula,
+  fantasmas,
   seleccionadas,
   clavesLibres,
   onPresionar,
@@ -106,8 +110,17 @@ export default function Lienzo({
   // Una sola figura: el Transformer completo. Varias: solo moverlas
   const figuraSeleccionada =
     seleccionadas.length === 1 ? seleccionadas[0] : null;
-  // El circulo siempre crece parejo
-  const proporcionFija = figuraSeleccionada?.forma === "CIRCULO";
+  // Grupo (como Canva): las esquinas del recuadro estiran TODA la zona y
+  // las figuras de adentro crecen o se achican en proporcion (tamanos y
+  // separaciones). Las bloqueadas no estan en el recuadro: no cambian
+  const libresEnGrupo =
+    seleccionadas.length > 1
+      ? seleccionadas.filter((f) => !f.bloqueada).length
+      : 0;
+  const esGrupo = libresEnGrupo > 1;
+  // El circulo siempre crece parejo, y el grupo tambien: asi nada se
+  // deforma (un palco girado se mantiene recto respecto a su giro)
+  const proporcionFija = figuraSeleccionada?.forma === "CIRCULO" || esGrupo;
   // Imán al estirar: solo rectangulos derechos (0°, 90°...), donde las
   // manijas quedan sobre los bordes; el circulo y los girados, libres
   const imanAlEstirar =
@@ -275,6 +288,9 @@ export default function Lienzo({
                 onCambiar={onCambiar}
               />
             ))}
+            {fantasmas?.map((f) => (
+              <FiguraFantasma key={f.clave} figura={f} />
+            ))}
             {/* Recuadro de Shift + arrastrar (lo dibuja el hook) */}
             <Rect
               ref={recuadroRef}
@@ -288,9 +304,11 @@ export default function Lienzo({
             />
             <Transformer
               ref={transformerRef}
-              // Un grupo por ahora solo se mueve: sin estirar ni rotar
+              // Una figura: estirar y rotar. Un grupo: estirar desde las
+              // esquinas (en proporcion), sin rotar
               resizeEnabled={
-                figuraSeleccionada !== null && !figuraSeleccionada.bloqueada
+                esGrupo ||
+                (figuraSeleccionada !== null && !figuraSeleccionada.bloqueada)
               }
               rotateEnabled={
                 figuraSeleccionada !== null && !figuraSeleccionada.bloqueada

@@ -16,6 +16,7 @@ import {
   COLOR_PALCO,
   claveNueva,
   figurasDelRecinto,
+  nombreParaMostrar,
   limitarAlLienzo,
   ordenDeDibujo,
   siguienteNombrePalco,
@@ -23,8 +24,10 @@ import {
 } from "./figuras";
 import {
   Alineacion,
+  Distribucion,
   Orden,
   alinearFiguras,
+  distribuirFiguras,
   ajustarACuadricula,
 } from "./acomodar";
 import { useCuadricula } from "./hooks/useCuadricula";
@@ -53,6 +56,8 @@ interface RecintoEditorProps {
 export default function RecintoEditor({ recinto }: RecintoEditorProps) {
   const ajustadoInicial = useRef(false);
   const [pantalla, setPantalla] = useState({ ancho: 0, alto: 0 });
+  // Vista previa de "Repetir" (fila o abanico): copias fantasma
+  const [vistaPrevia, setVistaPrevia] = useState<FiguraEditor[] | null>(null);
   const { seleccion, setSeleccion, alPresionar, alHacerClic, limpiar } =
     useSeleccion();
 
@@ -173,7 +178,7 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     if (bloqueadas.length > 0) {
       toast(
         bloqueadas.length === 1
-          ? `${bloqueadas[0].nombre} está bloqueada: desbloquéala para borrarla`
+          ? `${nombreParaMostrar(bloqueadas[0])} está bloqueada: desbloquéala para borrarla`
           : `${bloqueadas.length} figuras bloqueadas no se borraron`,
         { icon: "🔒" },
       );
@@ -199,6 +204,31 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     [seleccionadas, lienzo, actualizarVarias],
   );
 
+  // Repetir en fila o abanico: todas las copias en un solo paso y quedan
+  // elegidas junto con la original (para moverlas, alinearlas, etc.)
+  const repetirFigura = useCallback(
+    (copias: FiguraEditor[]) => {
+      if (!figuraSeleccionada || copias.length === 0) return;
+      agregarVarias(copias);
+      setSeleccion([figuraSeleccionada.clave, ...copias.map((c) => c.clave)]);
+      setVistaPrevia(null);
+      toast.success(
+        copias.length === 1
+          ? "1 copia creada"
+          : `${copias.length} copias creadas`,
+        { duration: 1500 },
+      );
+    },
+    [figuraSeleccionada, agregarVarias, setSeleccion],
+  );
+
+  // Distribuir: mismo espacio entre las elegidas, en un solo paso
+  const distribuirSeleccion = useCallback(
+    (eje: Distribucion) =>
+      actualizarVarias(distribuirFiguras(seleccionadas, eje, lienzo)),
+    [seleccionadas, lienzo, actualizarVarias],
+  );
+
   // Capas: las bloqueadas no cambian de lugar (las demas si pasan por
   // encima o por debajo de ellas)
   const ordenarSeleccion = useCallback(
@@ -220,7 +250,7 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     copiar(seleccionadas);
     toast.success(
       seleccionadas.length === 1
-        ? `Copiada: ${seleccionadas[0].nombre}`
+        ? `Copiada: ${nombreParaMostrar(seleccionadas[0])}`
         : `Copiadas: ${seleccionadas.length} figuras`,
       { duration: 1500 },
     );
@@ -355,6 +385,7 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
           figuras={figurasEnOrden}
           errores={errores}
           cuadricula={cuadricula.paso}
+          fantasmas={vistaPrevia}
           seleccionadas={seleccionadas}
           clavesLibres={clavesLibres}
           onPresionar={alPresionar}
@@ -397,6 +428,10 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
             }
             onBloquear={bloquearSeleccion}
             onAlinear={alinearSeleccion}
+            onDistribuir={distribuirSeleccion}
+            figuras={figuras}
+            onVistaPrevia={setVistaPrevia}
+            onRepetir={repetirFigura}
             onOrdenar={ordenarSeleccion}
             esLaDeArriba={
               grupoDeLaElegida[grupoDeLaElegida.length - 1] ===
@@ -421,11 +456,12 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
 
       <p className="text-[11px] text-gray-400">
         Rueda: zoom · Arrastrar el fondo: mover la vista · Shift + arrastrar:
-        seleccionar varias · Shift + clic: agregar o quitar · Supr: borrar ·
-        Esc: quitar selección · Ctrl/Cmd + A, C, V, D: todo, copiar, pegar,
-        duplicar · Ctrl/Cmd + Z: deshacer · Ctrl/Cmd + Shift + Z: rehacer ·
-        Ctrl/Cmd + ↑/↓: subir o bajar una capa (con Shift: al frente o al fondo)
-        · Cuadrícula: las figuras se pegan a sus líneas al mover y estirar
+        seleccionar varias (sus esquinas agrandan o achican el grupo) · Shift +
+        clic: agregar o quitar · Supr: borrar · Esc: quitar selección · Ctrl/Cmd
+        + A, C, V, D: todo, copiar, pegar, duplicar · Ctrl/Cmd + Z: deshacer ·
+        Ctrl/Cmd + Shift + Z: rehacer · Ctrl/Cmd + ↑/↓: subir o bajar una capa
+        (con Shift: al frente o al fondo) · Cuadrícula: las figuras se pegan a
+        sus líneas al mover y estirar
       </p>
     </div>
   );

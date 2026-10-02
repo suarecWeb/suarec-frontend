@@ -1,12 +1,18 @@
 "use client";
 
 import { Trash2, MousePointerClick, Copy, CopyPlus } from "lucide-react";
-import { FiguraEditor, NOMBRE_MAXIMO, normalizarRotacion } from "../figuras";
+import {
+  FiguraEditor,
+  NOMBRE_MAXIMO,
+  normalizarRotacion,
+  siguienteNombrePalco,
+} from "../figuras";
 import CamposTamano from "./CamposTamano";
 import PanelGrupo from "./PanelGrupo";
-import { Alineacion, Orden } from "../acomodar";
+import { Alineacion, Distribucion, Orden } from "../acomodar";
 import BotonesOrden from "./BotonesOrden";
 import BotonesAlinear from "./BotonesAlinear";
+import Repetir from "./Repetir";
 
 interface PanelPropiedadesProps {
   // La figura si hay UNA sola seleccionada
@@ -27,11 +33,18 @@ interface PanelPropiedadesProps {
   onBloquear: (bloquear: boolean) => void;
   // Con varias: entre ellas. Con una: contra el lienzo
   onAlinear: (modo: Alineacion) => void;
+  // Solo con 3 o mas seleccionadas (panel de grupo)
+  onDistribuir: (eje: Distribucion) => void;
   // Capas: una figura o un grupo, siempre dentro de su tipo
   onOrdenar: (modo: Orden) => void;
   // Donde esta la figura dentro de su grupo (para apagar los botones)
   esLaDeArriba: boolean;
   esLaDeAbajo: boolean;
+  // Repetir en fila o abanico: todo el dibujo (nombres y centro), la vista
+  // previa en el lienzo y crear las copias
+  figuras: FiguraEditor[];
+  onVistaPrevia: (copias: FiguraEditor[] | null) => void;
+  onRepetir: (copias: FiguraEditor[]) => void;
 }
 
 const etiquetaClase = "block text-xs font-medium text-gray-600 mb-1";
@@ -54,9 +67,13 @@ export default function PanelPropiedades({
   bloqueadasEnSeleccion,
   onBloquear,
   onAlinear,
+  onDistribuir,
   onOrdenar,
   esLaDeArriba,
   esLaDeAbajo,
+  figuras,
+  onVistaPrevia,
+  onRepetir,
 }: PanelPropiedadesProps) {
   const resumen = (
     <div className="text-xs text-gray-500 space-y-1">
@@ -106,6 +123,7 @@ export default function PanelPropiedades({
         bloqueadasEnSeleccion={bloqueadasEnSeleccion}
         onBloquear={onBloquear}
         onAlinear={onAlinear}
+        onDistribuir={onDistribuir}
         onOrdenar={onOrdenar}
         onBorrar={onBorrar}
       />
@@ -140,19 +158,27 @@ export default function PanelPropiedades({
         className={`flex flex-col gap-4 min-w-0 ${figura.bloqueada ? "opacity-50" : ""}`}
       >
         <div>
+          {/* Obligatorio solo en el palco: una referencia decorativa puede
+              quedar sin nombre (migracion 065) */}
           <label className={etiquetaClase}>
-            Nombre <span className="text-red-400">*</span>
+            Nombre {esPalco && <span className="text-red-400">*</span>}
           </label>
           <input
             type="text"
             value={figura.nombre}
             maxLength={NOMBRE_MAXIMO}
+            placeholder={esPalco ? undefined : "Sin nombre (decorativa)"}
             onChange={(e) => onCambiar({ nombre: e.target.value })}
             className={`w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${
               error ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50"
             }`}
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+          {!error && !esPalco && (
+            <p className="mt-1 text-[11px] text-gray-400">
+              Opcional: déjalo vacío si es solo decorativa.
+            </p>
+          )}
         </div>
 
         <div>
@@ -162,7 +188,15 @@ export default function PanelPropiedades({
               <button
                 key={tipo}
                 type="button"
-                onClick={() => onCambiar({ tipo })}
+                onClick={() =>
+                  onCambiar(
+                    // Un palco siempre tiene nombre: a una referencia sin
+                    // nombre se le pone el siguiente "Palco N"
+                    tipo === "PALCO" && !figura.nombre.trim()
+                      ? { tipo, nombre: siguienteNombrePalco(figuras) }
+                      : { tipo },
+                  )
+                }
                 className={`py-1.5 rounded-lg border text-xs font-medium transition-colors ${
                   figura.tipo === tipo
                     ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
@@ -260,6 +294,16 @@ export default function PanelPropiedades({
             : "Entre las referencias (siempre debajo de los palcos)."
         }
         onOrdenar={onOrdenar}
+      />
+
+      {/* key: el formulario empieza de cero con cada figura */}
+      <Repetir
+        key={figura.clave}
+        figura={figura}
+        figuras={figuras}
+        lienzo={{ ancho: lienzoAncho, alto: lienzoAlto }}
+        onVistaPrevia={onVistaPrevia}
+        onCrear={onRepetir}
       />
 
       <p className="text-[11px] text-gray-400">

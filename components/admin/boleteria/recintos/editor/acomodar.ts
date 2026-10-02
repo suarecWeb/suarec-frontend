@@ -1,9 +1,8 @@
 import { FiguraEditor, TamanoLienzo } from "./figuras";
 
-// Acomodar figuras (PEN-24): alinear, imán de la cuadrícula y orden de
-// dibujo (capas). Funciones
-// puras: el editor aplica el resultado en un solo paso (se deshace de una
-// vez)
+// Acomodar figuras (PEN-24): alinear, distribuir, imán de la cuadrícula y
+// orden de dibujo (capas). Funciones puras: el editor aplica el resultado
+// en un solo paso (se deshace de una vez)
 
 export type Alineacion =
   | "izquierda"
@@ -148,4 +147,54 @@ export const reordenar = (
     usados[f.tipo] = i + 1;
     return (nuevos.get(f.tipo) as FiguraEditor[])[i];
   });
+};
+
+export type Distribucion = "horizontal" | "vertical";
+
+// Distribuir (PEN-24): el MISMO espacio entre los bordes de las figuras, en
+// un eje. Las dos de los extremos no se mueven y las del medio se reparten
+// entre ellas en su orden actual (por su centro). Bordes de la figura ya
+// girada. Las bloqueadas no se mueven ni cuentan; hacen falta 3 libres. Si
+// no caben, quedan con el mismo traslape (como Canva). Solo cambia ese eje
+export const distribuirFiguras = (
+  figuras: FiguraEditor[],
+  eje: Distribucion,
+  lienzo: TamanoLienzo,
+): Record<string, Partial<FiguraEditor>> => {
+  const libres = figuras.filter((f) => !f.bloqueada);
+  if (libres.length < 3) return {};
+  const horizontal = eje === "horizontal";
+
+  const datos = libres
+    .map((f) => {
+      const { mx, my } = mitadesDe(f);
+      return {
+        f,
+        centro: horizontal ? f.x : f.y,
+        mitad: horizontal ? mx : my,
+      };
+    })
+    .sort((a, b) => a.centro - b.centro);
+
+  const primero = datos[0];
+  const ultimo = datos[datos.length - 1];
+  const medio = datos.slice(1, -1);
+  const desde = primero.centro + primero.mitad;
+  const hasta = ultimo.centro - ultimo.mitad;
+  const ocupado = medio.reduce((total, d) => total + d.mitad * 2, 0);
+  const espacio = (hasta - desde - ocupado) / (datos.length - 1);
+
+  const cambios: Record<string, Partial<FiguraEditor>> = {};
+  let borde = desde + espacio;
+  medio.forEach((d) => {
+    const centro = entre(
+      borde + d.mitad,
+      horizontal ? lienzo.ancho : lienzo.alto,
+    );
+    if (centro !== (horizontal ? d.f.x : d.f.y)) {
+      cambios[d.f.clave] = horizontal ? { x: centro } : { y: centro };
+    }
+    borde += d.mitad * 2 + espacio;
+  });
+  return cambios;
 };

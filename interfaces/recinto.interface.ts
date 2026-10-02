@@ -31,7 +31,9 @@ export interface RecintoFigura {
   id: number;
   recintoId: number;
   tipo: RecintoFiguraTipo;
-  nombre: string;
+  // Obligatorio en PALCO (RN-05). null = referencia decorativa sin nombre
+  // (migracion 065)
+  nombre: string | null;
   forma: RecintoFiguraForma;
   x: number;
   y: number;
@@ -53,7 +55,7 @@ export interface FiguraAGuardar {
   id?: number;
   tipo: RecintoFiguraTipo;
   forma: RecintoFiguraForma;
-  nombre: string;
+  nombre: string | null; // null solo en referencias
   x: number;
   y: number;
   ancho: number;
@@ -78,7 +80,7 @@ export interface GuardarFigurasDto {
 export interface ErrorDeFigura {
   indice: number | null;
   id: number | null;
-  nombre: string;
+  nombre: string | null;
   mensaje: string;
 }
 

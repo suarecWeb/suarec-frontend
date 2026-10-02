@@ -14,6 +14,7 @@ export interface FiguraEditor {
   id?: number;
   tipo: RecintoFiguraTipo;
   forma: RecintoFiguraForma;
+  // "" = sin nombre (solo referencias; se envia como null)
   nombre: string;
   x: number;
   y: number;
@@ -32,6 +33,8 @@ export const TAMANO_MINIMO = 10;
 // debe hacer lo mismo). Una sola constante para que no se desalineen
 export const RADIO_ESQUINAS_PX = 5;
 export const NOMBRE_MAXIMO = 100; // MaxLength del DTO del backend
+// Tope de figuras por recinto (MAXIMO_FIGURAS_POR_RECINTO del backend)
+export const MAXIMO_FIGURAS = 500;
 export const COLOR_PALCO = "#097EEC";
 
 // Unica aunque se recargue la pagina: las figuras recuperadas de un
@@ -44,7 +47,7 @@ export const desdeBackend = (f: RecintoFigura): FiguraEditor => ({
   id: f.id,
   tipo: f.tipo,
   forma: f.forma,
-  nombre: f.nombre,
+  nombre: f.nombre ?? "",
   x: f.x,
   y: f.y,
   ancho: f.ancho,
@@ -62,12 +65,12 @@ export const figurasDelRecinto = (recinto: Recinto): FiguraEditor[] =>
     .map(desdeBackend);
 
 // Lo que se envia al backend: sin la clave local (el DTO rechaza campos
-// de mas) y con el nombre sin espacios sobrantes
+// de mas) y con el nombre sin espacios sobrantes (vacio = null)
 export const aEnvio = (f: FiguraEditor, zIndex: number): FiguraAGuardar => ({
   ...(f.id !== undefined ? { id: f.id } : {}),
   tipo: f.tipo,
   forma: f.forma,
-  nombre: f.nombre.trim(),
+  nombre: f.nombre.trim() || null,
   x: f.x,
   y: f.y,
   ancho: f.ancho,
@@ -119,6 +122,11 @@ export const ordenDeDibujo = (figuras: FiguraEditor[]) => [
 export const normalizarRotacion = (grados: number) =>
   ((Math.round(grados) % 360) + 360) % 360;
 
+// Para mensajes y listas: una referencia decorativa puede no tener nombre
+export const nombreParaMostrar = (f: FiguraEditor) =>
+  f.nombre.trim() ||
+  (f.tipo === "PALCO" ? "Palco sin nombre" : "Referencia sin nombre");
+
 // "Palco N" con el siguiente numero libre, para no escribir a mano
 export const siguienteNombrePalco = (figuras: FiguraEditor[]) => {
   const numeros = figuras
@@ -131,9 +139,11 @@ export const siguienteNombrePalco = (figuras: FiguraEditor[]) => {
 // Nombre de una copia, sin repetir ninguno del recinto (el backend no
 // deja nombres repetidos). Si termina en numero sigue la serie desde el
 // mas alto ("Palco 12" -> "Palco 41" si ya hay hasta el 40); si no,
-// agrega un numero ("Tarima" -> "Tarima 2")
+// agrega un numero ("Tarima" -> "Tarima 2"). Sin nombre (decorativa) ->
+// la copia tambien sin nombre
 export const nombreDeCopia = (nombre: string, figuras: FiguraEditor[]) => {
   const limpio = nombre.trim();
+  if (!limpio) return "";
   const conNumero = /^(.*?)(\d+)$/.exec(limpio);
   const prefijo = conNumero ? conNumero[1] : `${limpio} `;
   const usados = new Set(figuras.map((f) => f.nombre.trim().toLowerCase()));
@@ -190,10 +200,11 @@ export const copiasDeFiguras = (
   });
 };
 
-// RN-05 tal como lo valida HOY el backend: nombre obligatorio y unico
-// entre TODAS las figuras del recinto, no solo palcos. Aqui sin distinguir
-// mayusculas (un poco mas estricto), para que guardar no falle. Ademas,
-// el centro dentro del lienzo (figuras viejas o creadas por API)
+// RN-05 tal como lo valida el backend: el palco siempre con nombre; la
+// referencia puede no tenerlo (decorativa, migracion 065). Los nombres que
+// haya, unicos entre TODAS las figuras del recinto, sin distinguir
+// mayusculas. Ademas, el centro dentro del lienzo (figuras viejas o
+// creadas por API)
 export const validarFiguras = (
   figuras: FiguraEditor[],
   lienzo: TamanoLienzo,
@@ -207,10 +218,11 @@ export const validarFiguras = (
   const errores: Record<string, string> = {};
   figuras.forEach((f) => {
     const nombre = f.nombre.trim();
-    if (!nombre) errores[f.clave] = "El nombre es obligatorio";
+    if (!nombre && f.tipo === "PALCO")
+      errores[f.clave] = "Un palco debe tener nombre";
     else if (nombre.length > NOMBRE_MAXIMO)
       errores[f.clave] = `Máximo ${NOMBRE_MAXIMO} caracteres`;
-    else if ((conteo.get(nombre.toLowerCase()) ?? 0) > 1)
+    else if (nombre && (conteo.get(nombre.toLowerCase()) ?? 0) > 1)
       errores[f.clave] = "Otra figura ya tiene este nombre";
     else if (f.x < 0 || f.y < 0 || f.x > lienzo.ancho || f.y > lienzo.alto)
       errores[f.clave] = "Está fuera del lienzo: arrástrala adentro";

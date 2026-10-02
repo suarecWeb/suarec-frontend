@@ -2,9 +2,10 @@
 
 import { ReactNode } from "react";
 import { Trash2, Lock, Unlock } from "lucide-react";
-import { Alineacion, Orden } from "../acomodar";
+import { Alineacion, Distribucion, Orden } from "../acomodar";
 import BotonesOrden from "./BotonesOrden";
 import BotonesAlinear from "./BotonesAlinear";
+import BotonesDistribuir from "./BotonesDistribuir";
 
 interface PanelGrupoProps {
   // Piezas que comparte con el panel de una figura
@@ -15,6 +16,7 @@ interface PanelGrupoProps {
   bloqueadasEnSeleccion: number;
   onBloquear: (bloquear: boolean) => void;
   onAlinear: (modo: Alineacion) => void;
+  onDistribuir: (eje: Distribucion) => void;
   onOrdenar: (modo: Orden) => void;
   onBorrar: () => void;
 }
@@ -29,6 +31,7 @@ export default function PanelGrupo({
   bloqueadasEnSeleccion,
   onBloquear,
   onAlinear,
+  onDistribuir,
   onOrdenar,
   onBorrar,
 }: PanelGrupoProps) {
@@ -79,6 +82,11 @@ export default function PanelGrupo({
         onAlinear={onAlinear}
       />
 
+      <BotonesDistribuir
+        deshabilitado={totalSeleccionadas - bloqueadasEnSeleccion < 3}
+        onDistribuir={onDistribuir}
+      />
+
       <BotonesOrden
         puedeSubir
         puedeBajar
@@ -92,8 +100,8 @@ export default function PanelGrupo({
           {totalSeleccionadas} figuras seleccionadas
         </p>
         <p className="text-xs text-gray-400">
-          Arrastra cualquiera para moverlas juntas. Shift + clic agrega o quita
-          una.
+          Arrastra cualquiera para moverlas juntas; las esquinas del recuadro
+          las agrandan o achican juntas. Shift + clic agrega o quita una.
         </p>
         {bloqueadasEnSeleccion > 0 && (
           <p className="flex items-center gap-1 text-xs text-amber-700">

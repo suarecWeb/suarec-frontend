@@ -19,8 +19,9 @@ interface SelectorRecintoProps {
   // Lo que la feria tiene guardado hoy (al crear, null)
   asignadoId: number | null;
   onCambiar: (recintoId: number | null) => void;
-  // Mas bajo, para cuando comparte la columna con otra seccion (crear
-  // feria: debajo van los eventos para arrastrar)
+  // Ya no cambia nada (el mapa tiene alto fijo y la tarjeta mide su
+  // contenido). Se mantiene porque CreateFeriaModal lo pasa; quitarlo de
+  // ahi y de aqui cuando se toque ese archivo
   compacto?: boolean;
 }
 
@@ -42,7 +43,6 @@ export default function SelectorRecinto({
   valor,
   asignadoId,
   onCambiar,
-  compacto = false,
 }: SelectorRecintoProps) {
   const { opciones, error, detalles, precargar } =
     useRecintosCarrusel(asignadoId);
@@ -81,11 +81,10 @@ export default function SelectorRecinto({
   const cambia = asignadoId !== null && valor !== asignadoId;
 
   return (
-    <div
-      className={`bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 ${
-        compacto ? "" : "min-h-[520px]"
-      }`}
-    >
+    // h-fit: la tarjeta mide solo su contenido. En Editar feria esta en una
+    // grilla que estira las columnas a la misma altura: sin esto, al elegir
+    // imagen "Móvil" (vertical) la columna izquierda crece y el mapa con ella
+    <div className="h-fit bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
       <div>
         <p className="text-xs font-medium text-gray-600">
           <LayoutGrid className="h-3 w-3 inline mr-1" />
@@ -116,9 +115,9 @@ export default function SelectorRecinto({
           tabIndex={0}
           aria-roledescription="carrusel"
           aria-label="Recinto de la feria"
-          className={`relative flex-1 ${
-            compacto ? "min-h-[260px]" : "min-h-[340px]"
-          } rounded-xl border border-gray-200 bg-gray-100 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#097EEC]/40`}
+          // flex-1 = todo el ANCHO entre las flechas. Alto FIJO, igual en
+          // Crear y Editar feria: no crece ni se achica con lo que haya al lado
+          className="relative flex-1 min-w-0 h-[460px] rounded-xl border border-gray-200 bg-gray-100 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#097EEC]/40"
         >
           {cargando ? (
             <Centro>
@@ -272,7 +271,7 @@ function Tarjeta({
       ) : (
         <VistaPreviaRecinto
           recinto={detalle}
-          className="absolute inset-0 w-full h-full p-4"
+          className="absolute inset-0 w-full h-full p-2"
         />
       )}
 

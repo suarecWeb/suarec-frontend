@@ -45,7 +45,10 @@ export const useGuardarDibujo = (recintoId: number) => {
           (data.errores as ErrorDeFigura[]).forEach((e) => {
             const figura = e.indice !== null ? figuras[e.indice] : undefined;
             if (figura) porFigura[figura.clave] = e.mensaje;
-            else generales.push(`${e.nombre} (borrado): ${e.mensaje}`);
+            else
+              generales.push(
+                `${e.nombre ?? "Figura sin nombre"} (borrado): ${e.mensaje}`,
+              );
           });
         } else if (Array.isArray(data?.message)) {
           generales.push(...data.message);
