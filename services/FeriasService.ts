@@ -46,6 +46,9 @@ const FeriasService = {
     // Quitar el recinto: multipart no manda null; el backend lee "" como
     // "sin recinto" (RN-24)
     if (dto.recintoId === null) form.append("recintoId", "");
+    // Mismo truco para limpiar el pin del mapa (ver create-feria.dto.ts)
+    if (dto.latitud === null) form.append("latitud", "");
+    if (dto.longitud === null) form.append("longitud", "");
     if (imageFile) form.append("image", imageFile);
     return api.patch(`${BASE}/${id}`, form, {
       headers: { "Content-Type": "multipart/form-data" },

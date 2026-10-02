@@ -8,6 +8,11 @@ export interface Feria {
   fechaInicio: string;
   fechaFin: string;
   ubicacion: string;
+  // Coordenadas de la feria (ver roadmap google-maps-evento-ubicacion.txt) --
+  // null = todavía sin geolocalizar. Los eventos de esta feria heredan esta
+  // ubicación para el preview de mapa, no tienen la suya propia.
+  latitud?: number | null;
+  longitud?: number | null;
   organizadorId?: number;
   visible?: boolean;
   eventos?: Evento[];
@@ -25,6 +30,8 @@ export interface CreateFeriaDto {
   fechaInicio: string;
   fechaFin: string;
   ubicacion: string;
+  latitud?: number | null;
+  longitud?: number | null;
   removeImage?: boolean;
   formatId?: number;
   recintoId?: number | null;

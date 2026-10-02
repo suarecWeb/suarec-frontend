@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Feria, CreateFeriaDto } from "@/interfaces/feria.interface";
 import {
   CreateEventoDto,
@@ -12,34 +11,9 @@ import FeriasService from "@/services/FeriasService";
 import EventsService from "@/services/EventsService";
 import CreateFeriaModal from "@/components/admin/boleteria/ferias/CreateFeriaModal";
 import CreateEventModal from "@/components/admin/boleteria/ferias/eventos/CreateEventModal";
-import {
-  CalendarDays,
-  PlusCircle,
-  EyeOff,
-  Eye,
-  Ticket,
-  Smartphone,
-  RotateCcw,
-} from "lucide-react";
+import FeriaKanbanColumn from "@/components/admin/boleteria/ferias/FeriaKanbanColumn";
+import { CalendarDays, PlusCircle, EyeOff, Eye } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatDisplayDate } from "@/lib/TimeZone";
-import FlipCard from "@/components/FlipCard";
-
-const MODALIDAD_LABEL: Record<EventoModalidad, string> = {
-  [EventoModalidad.DIGITAL]: "Boletas digitales",
-  [EventoModalidad.FISICO]: "Boletas físicas",
-};
-
-// Agrupa los eventos asignados a una feria por modalidad (digital/física) --
-// en el reverso de la card se muestra el tipo de boleta, no cada evento.
-const agruparPorModalidad = (eventos: Evento[] = []) => {
-  const counts = eventos.reduce<Record<string, number>>((acc, evento) => {
-    const key = evento.modalidad ?? EventoModalidad.DIGITAL;
-    acc[key] = (acc[key] ?? 0) + 1;
-    return acc;
-  }, {});
-  return Object.entries(counts) as [EventoModalidad, number][];
-};
 
 interface FeriasManagementProps {
   // Mismo patrón que EventsManagement: si se define, solo se listan ferias
@@ -57,7 +31,6 @@ const FeriasManagement = ({
   filtroModalidad,
   modoFisico = false,
 }: FeriasManagementProps = {}) => {
-  const router = useRouter();
   const [ferias, setFerias] = useState<Feria[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -155,6 +128,67 @@ const FeriasManagement = ({
       ? (feria.eventos ?? []).filter((e) => e.modalidad === filtroModalidad)
       : (feria.eventos ?? []);
 
+  // Soltar un evento arrastrado sobre una columna: reasigna su feria.
+  // Reusa el mismo endpoint de asignación en bloque que ya usa
+  // CreateFeriaModal (PATCH /ferias/:id/eventos), con un solo id -- el
+  // backend solo hace un UPDATE de feriaId, ya es "mover" de por sí (un
+  // evento no puede tener dos ferias a la vez).
+  const handleDropEvento = async (eventoId: number, feriaDestinoId: number) => {
+    const feriaOrigen = ferias.find((f) =>
+      (f.eventos ?? []).some((e) => e.id === eventoId),
+    );
+    if (feriaOrigen?.id === feriaDestinoId) return; // soltado en su propia columna
+
+    const evento = feriaOrigen?.eventos?.find((e) => e.id === eventoId);
+    if (!evento) return;
+
+    // Optimista: se mueve en pantalla antes de que responda el backend: la
+    // interacción de arrastrar se siente lenta si hay que esperar al
+    // request para ver el resultado.
+    setFerias((prev) =>
+      prev.map((f) => {
+        if (f.id === feriaOrigen?.id) {
+          return {
+            ...f,
+            eventos: (f.eventos ?? []).filter((e) => e.id !== eventoId),
+          };
+        }
+        if (f.id === feriaDestinoId) {
+          return {
+            ...f,
+            eventos: [
+              ...(f.eventos ?? []),
+              { ...evento, feriaId: feriaDestinoId },
+            ],
+          };
+        }
+        return f;
+      }),
+    );
+
+    try {
+      await FeriasService.asignarEventos(feriaDestinoId, [eventoId]);
+      toast.success("Evento reasignado");
+    } catch {
+      toast.error("No se pudo reasignar el evento");
+      // Revierte el optimista si el backend rechazó el cambio
+      setFerias((prev) =>
+        prev.map((f) => {
+          if (f.id === feriaDestinoId) {
+            return {
+              ...f,
+              eventos: (f.eventos ?? []).filter((e) => e.id !== eventoId),
+            };
+          }
+          if (f.id === feriaOrigen?.id) {
+            return { ...f, eventos: [...(f.eventos ?? []), evento] };
+          }
+          return f;
+        }),
+      );
+    }
+  };
+
   const feriasDelModulo = filtroModalidad
     ? ferias.filter((f) => eventosDelModulo(f).length > 0)
     : ferias;
@@ -247,157 +281,21 @@ const FeriasManagement = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        // Tablero tipo Jira: una columna por feria, scroll horizontal. Cada
+        // columna es su propia zona de drop (drag-and-drop nativo, mismo
+        // mecanismo que ya usa CreateFeriaModal/EventosParaAsignar).
+        <div className="flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
           {feriasMostradas.map((feria, i) => (
             <div
               key={feria.id}
               className="opacity-0 animate-[fadeIn_0.4s_ease-in-out_forwards]"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <FlipCard
-                ariaLabel={`Feria ${feria.nombre}`}
-                width={2000}
-                height={360}
-                radius={12}
-                background="#ffffff"
-                color="#111827"
-                shadowColor="#059669"
-                shadowOpacity={0.25}
-                tiltMax={6}
-                glareOpacity={0.12}
-                hoverScale={1.01}
-                draggable={false}
-                front={
-                  <div className="w-full h-full bg-gradient-to-br from-emerald-500/10 to-emerald-500/25 flex items-center justify-center relative">
-                    {feria.imagenUrl ? (
-                      <img
-                        src={feria.imagenUrl}
-                        alt={feria.nombre}
-                        className={`w-full h-full object-cover ${feria.visible === false ? "grayscale" : ""}`}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display =
-                            "none";
-                        }}
-                      />
-                    ) : (
-                      <CalendarDays className="h-10 w-10 text-emerald-500/40" />
-                    )}
-
-                    <span className="absolute top-2 left-2 text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-                      FERIA
-                    </span>
-
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      {feria.visible === false && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-800/70 text-white flex items-center gap-1">
-                          <EyeOff className="h-3 w-3" /> Oculta
-                        </span>
-                      )}
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-emerald-700 flex items-center gap-1">
-                        <Ticket className="h-3 w-3" />
-                        {eventosDelModulo(feria).length} evento
-                        {eventosDelModulo(feria).length === 1 ? "" : "s"}
-                      </span>
-                    </div>
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pt-8 pb-2.5">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {feria.nombre}
-                      </p>
-                      {feria.descripcion && (
-                        <p className="text-[11px] text-white/80 line-clamp-1 mt-0.5">
-                          {feria.descripcion}
-                        </p>
-                      )}
-                      <p className="flex items-center gap-1 text-[10px] text-white/70 mt-1">
-                        <CalendarDays className="h-3 w-3 flex-shrink-0" />
-                        {formatDisplayDate(feria.fechaInicio)} —{" "}
-                        {formatDisplayDate(feria.fechaFin)}
-                      </p>
-                    </div>
-                  </div>
-                }
-                back={
-                  <div className="w-full h-full bg-white flex flex-col p-4">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-semibold text-gray-800 truncate flex-1">
-                        {feria.nombre}
-                      </h3>
-                      <div
-                        className="flex items-center gap-1"
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleVisibility(feria);
-                          }}
-                          title={
-                            feria.visible === false
-                              ? "Mostrar en app"
-                              : "Ocultar de app"
-                          }
-                          className="flex-shrink-0 h-7 w-7 rounded-full border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center transition-colors"
-                        >
-                          {feria.visible === false ? (
-                            <Eye className="h-3.5 w-3.5" />
-                          ) : (
-                            <EyeOff className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                        <span className="flex-shrink-0 h-7 w-7 rounded-full border border-gray-200 text-gray-400 flex items-center justify-center">
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 space-y-1.5 overflow-hidden">
-                      {eventosDelModulo(feria).length > 0 ? (
-                        agruparPorModalidad(eventosDelModulo(feria)).map(
-                          ([modalidad, count]) => (
-                            <div
-                              key={modalidad}
-                              className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100"
-                            >
-                              <span className="h-8 w-8 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                                {modalidad === EventoModalidad.FISICO ? (
-                                  <Ticket className="h-4 w-4" />
-                                ) : (
-                                  <Smartphone className="h-4 w-4" />
-                                )}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-gray-800 truncate">
-                                  {MODALIDAD_LABEL[modalidad]}
-                                </p>
-                                <p className="text-[11px] text-gray-400 truncate">
-                                  {count} evento{count === 1 ? "" : "s"}
-                                </p>
-                              </div>
-                            </div>
-                          ),
-                        )
-                      ) : (
-                        <p className="text-xs text-gray-300 text-center py-6">
-                          Sin eventos asignados
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/admin/boleteria/ferias/${feria.id}`);
-                      }}
-                      className="mt-3 w-full py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                    >
-                      Editar feria
-                    </button>
-                  </div>
-                }
+              <FeriaKanbanColumn
+                feria={feria}
+                eventos={eventosDelModulo(feria)}
+                onToggleVisibility={handleToggleVisibility}
+                onDropEvento={handleDropEvento}
               />
             </div>
           ))}

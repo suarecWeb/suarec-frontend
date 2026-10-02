@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import {
   X,
   CalendarDays,
-  MapPin,
   FileText,
   Upload,
   Smartphone,
@@ -16,6 +15,7 @@ import { Evento, EventoModalidad } from "@/interfaces/event.interface";
 import FeriasService from "@/services/FeriasService";
 import toast from "react-hot-toast";
 import SelectorRecinto from "./SelectorRecinto";
+import FeriaMapaPicker from "./FeriaMapaPicker";
 import EventosParaAsignar, {
   EventosParaAsignarRef,
 } from "./EventosParaAsignar";
@@ -34,6 +34,8 @@ const EMPTY_FORM: CreateFeriaDto = {
   fechaInicio: "",
   fechaFin: "",
   ubicacion: "",
+  latitud: null,
+  longitud: null,
   recintoId: null,
 };
 
@@ -365,24 +367,16 @@ export default function CreateFeriaModal({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  <MapPin className="h-3 w-3 inline mr-1" />
-                  Ubicación <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.ubicacion}
-                  onChange={(e) => handleChange("ubicacion", e.target.value)}
-                  placeholder="Ciudad o dirección"
-                  className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.ubicacion ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
-                />
-                {errors.ubicacion && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.ubicacion}
-                  </p>
-                )}
-              </div>
+              <FeriaMapaPicker
+                ubicacion={form.ubicacion}
+                onUbicacionChange={(value) => handleChange("ubicacion", value)}
+                latitud={form.latitud ?? null}
+                longitud={form.longitud ?? null}
+                onCoordenadasChange={(lat, lng) =>
+                  setForm((prev) => ({ ...prev, latitud: lat, longitud: lng }))
+                }
+                errorUbicacion={errors.ubicacion}
+              />
 
               {/* Drop zone: arrastras una card desde el pool de la derecha
                 y se suelta aca -- se asigna al hacer submit, no antes. */}
