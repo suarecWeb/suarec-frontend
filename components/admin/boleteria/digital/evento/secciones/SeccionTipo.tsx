@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Armchair, DollarSign, Lock, Ticket } from "lucide-react";
 import { EventoTipo } from "@/interfaces/event.interface";
 import { CUPOS_POR_PALCO } from "../../../palcos/estadosPalco";
@@ -11,6 +12,7 @@ import {
   formatPriceDisplay,
   parsePriceInput,
 } from "../opciones";
+import AyudaPrecioBase from "./AyudaPrecioBase";
 
 interface SeccionTipoProps {
   f: FormularioEvento;
@@ -31,6 +33,7 @@ function CampoPrecio({
   placeholder,
   obligatorio = false,
   error,
+  ayuda,
 }: {
   id: string;
   etiqueta: string;
@@ -39,17 +42,22 @@ function CampoPrecio({
   placeholder: string;
   obligatorio?: boolean;
   error?: string;
+  // Botón "?" junto a la etiqueta (fuera del label, para no enfocar el campo)
+  ayuda?: ReactNode;
 }) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className={`${claseEtiqueta} flex items-center gap-1`}
-      >
-        <DollarSign className="h-3 w-3" />
-        <span>{etiqueta}</span>
-        {obligatorio && <span className="text-red-400">*</span>}
-      </label>
+      <div className="flex items-center gap-1.5 mb-1">
+        <label
+          htmlFor={id}
+          className="flex items-center gap-1 text-xs font-medium text-gray-600"
+        >
+          <DollarSign className="h-3 w-3" />
+          <span>{etiqueta}</span>
+          {obligatorio && <span className="text-red-400">*</span>}
+        </label>
+        {ayuda}
+      </div>
       <input
         id={id}
         type="text"
@@ -164,6 +172,7 @@ export default function SeccionTipo({
               placeholder="Ej. 1.000.000"
               obligatorio
               error={errores.precioBase}
+              ayuda={<AyudaPrecioBase esPalco />}
             />
             <CampoPrecio
               id="evento-cargo"
@@ -207,8 +216,10 @@ export default function SeccionTipo({
               etiqueta="Precio base"
               valor={form.precioBase}
               onCambiar={(v) => cambiar("precioBase", v)}
-              placeholder="Gratis"
+              placeholder="Ej. 50.000"
+              obligatorio
               error={errores.precioBase}
+              ayuda={<AyudaPrecioBase esPalco={false} />}
             />
           </div>
           <div className="sm:w-1/2 sm:pr-1.5">

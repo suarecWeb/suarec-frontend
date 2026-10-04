@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { claseCampo, formatPriceDisplay, parsePriceInput } from "../opciones";
+import {
+  PRECIO_MINIMO,
+  claseCampo,
+  formatPriceDisplay,
+  parsePriceInput,
+} from "../opciones";
 
-// Mismos límites que el backend (GuardarPreciosDto) y el mínimo de boleta
-const PRECIO_MINIMO = 2000;
+// Mismos límites que el backend (GuardarPreciosDto)
 const PRECIO_MAXIMO = 999_999_999;
 
 const plural = (n: number) => `${n} palco${n === 1 ? "" : "s"}`;

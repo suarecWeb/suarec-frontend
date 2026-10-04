@@ -79,6 +79,11 @@ export const TIPO_OPCIONES: {
   },
 ];
 
+// Mínimo de lo que se cobra por la pasarela (precio base y precio de cada
+// palco): cobra un costo por cada transacción, así que no puede ser gratis.
+// Igual que el backend (PRECIO_MINIMO_DIGITAL)
+export const PRECIO_MINIMO = 10_000;
+
 export const formatPriceDisplay = (value: number | undefined): string =>
   value !== undefined ? value.toLocaleString("es-CO") : "";
 

@@ -9,6 +9,7 @@ import {
   EventoTipo,
 } from "@/interfaces/event.interface";
 import { toDatetimeLocal } from "@/lib/TimeZone";
+import { PRECIO_MINIMO } from "../opciones";
 
 export type CampoConError =
   | keyof CreateEventoDto
@@ -39,7 +40,8 @@ const desdeEvento = (evento: Evento): CreateEventoDto => ({
   fechaEvento: toDatetimeLocal(evento.fechaEvento),
   ubicacion: evento.ubicacion,
   aforoTotal: evento.aforoTotal ? entero(evento.aforoTotal) : undefined,
-  precioBase: entero(evento.precioBase),
+  // Un evento viejo en $0 aparece vacío: hay que ponerle precio
+  precioBase: evento.precioBase ? entero(evento.precioBase) : undefined,
   comision: entero(evento.comision),
   estado: evento.estado,
   formatId: evento.formatId,
@@ -185,11 +187,12 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
         e.aforoTotal = "El aforo no puede superar 4000";
     }
 
-    if (esPalco && form.precioBase === undefined)
-      e.precioBase =
-        "Un evento PALCO necesita precio base: es lo que vale cada palco sin precio propio";
-    else if (form.precioBase !== undefined && form.precioBase < 2000)
-      e.precioBase = "El precio mínimo de la boleta es $2.000 COP";
+    // Obligatorio y desde $10.000: la pasarela cobra un costo por cada
+    // transacción (también lo exige el backend)
+    if (form.precioBase === undefined)
+      e.precioBase = "El precio base es obligatorio";
+    else if (form.precioBase < PRECIO_MINIMO)
+      e.precioBase = "El precio mínimo es $10.000 COP";
 
     if (!form.formatId) e.formatId = "Debes seleccionar un formato de imagen";
     if (!editando && !imagenArchivo)
