@@ -4,6 +4,7 @@ import {
   CreateRecintoDto,
   UpdateRecintoDto,
   GuardarFigurasDto,
+  ImpactoRecinto,
 } from "@/interfaces/recinto.interface";
 
 // Solo super admin (SuperAdminGuard en todo el controlador). JSON plano,
@@ -34,6 +35,11 @@ const RecintosService = {
     id: number,
     dto: GuardarFigurasDto,
   ): Promise<{ data: Recinto }> => api.put(`${BASE}/${id}/figuras`, dto),
+
+  // Qué ferias usan el recinto, sus eventos futuros y qué palcos tienen
+  // ventas o están apartados (aviso del editor, RN-09)
+  getImpacto: (id: number): Promise<{ data: ImpactoRecinto }> =>
+    api.get(`${BASE}/${id}/impacto`),
 };
 
 export default RecintosService;

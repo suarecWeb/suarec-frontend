@@ -73,6 +73,47 @@ export interface FiguraAGuardar {
 export interface GuardarFigurasDto {
   versionBase: string;
   figuras: FiguraAGuardar[];
+  // PEN-11: el admin confirmó que mueve o cambia el tamaño de palcos ya
+  // vendidos (sin esto, el backend responde con la lista para confirmar)
+  confirmarCambiosEnVendidos?: boolean;
+}
+
+// GET /recintos/:id/impacto (RN-09, ítem 7): qué ferias usan el recinto,
+// sus eventos PALCO futuros y qué palcos están protegidos. Se marcan los
+// vendidos y los apartados; los eventos cancelados no cuentan
+export type MotivoProteccion = "VENDIDO" | "APARTADO";
+
+export interface PalcoProtegido {
+  figuraId: number;
+  nombre: string | null;
+  // VENDIDO: solo cambios visuales; APARTADO: no se toca nada
+  motivo: MotivoProteccion;
+  // En cuántos eventos futuros está vendido o apartado
+  eventos: number;
+}
+
+export interface EventoAfectado {
+  eventoId: number;
+  nombre: string;
+  fechaEvento: string;
+  feria: { id: number; nombre: string } | null;
+  vendidos: number;
+  apartados: number;
+  enCompra: number;
+}
+
+export interface ImpactoRecinto {
+  tieneVentas: boolean;
+  ferias: { id: number; nombre: string }[];
+  eventosFuturos: EventoAfectado[];
+  palcosProtegidos: PalcoProtegido[];
+}
+
+// Un palco vendido al que se le cambió la posición o el tamaño (PEN-11)
+export interface PalcoVendidoMovido {
+  id: number;
+  nombre: string | null;
+  eventos: number;
 }
 
 // Un problema devuelto por el backend al guardar. indice = posicion en

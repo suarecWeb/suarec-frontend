@@ -10,7 +10,11 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { Recinto, RecintoFiguraForma } from "@/interfaces/recinto.interface";
+import {
+  PalcoVendidoMovido,
+  Recinto,
+  RecintoFiguraForma,
+} from "@/interfaces/recinto.interface";
 import {
   FiguraEditor,
   COLOR_PALCO,
@@ -38,8 +42,11 @@ import { usePortapapeles } from "./hooks/usePortapapeles";
 import { useAtajosTeclado } from "./hooks/useAtajosTeclado";
 import { useBorradorRecinto } from "./hooks/useBorradorRecinto";
 import { useGuardarDibujo } from "./hooks/useGuardarDibujo";
+import { useVentasDelRecinto } from "./hooks/useVentasDelRecinto";
 import BarraHerramientas from "./barra/BarraHerramientas";
 import AvisosEditor from "./barra/AvisosEditor";
+import AvisoVentas from "./barra/AvisoVentas";
+import ConfirmarGuardadoRecinto from "./barra/ConfirmarGuardadoRecinto";
 import Lienzo from "./lienzo/Lienzo";
 import PanelPropiedades from "./panel/PanelPropiedades";
 
@@ -97,6 +104,9 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     agregarVarias,
   );
   const guardado = useGuardarDibujo(recinto.id);
+  // Ítem 7 (RN-09): palcos con ventas en eventos futuros
+  const ventas = useVentasDelRecinto(recinto.id);
+  const { conBloqueoPorVenta, marcasDe, proteccionDe } = ventas;
   const hayCambios = useMemo(
     () => JSON.stringify(figuras) !== JSON.stringify(base.figuras),
     [figuras, base.figuras],
@@ -142,8 +152,27 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     }
   }, [pantalla, ajustar]);
 
-  const guardarDibujo = async () => {
-    const recintoGuardado = await guardado.guardar(figuras, base.version);
+  // Con ventas, siempre se confirma antes de guardar (RN-09) y se listan
+  // los vendidos movidos (PEN-11). Si el backend lo pide igual, también
+  const [confirmando, setConfirmando] = useState<PalcoVendidoMovido[] | null>(
+    null,
+  );
+  const porConfirmar = confirmando ?? guardado.porConfirmar;
+  const cerrarConfirmacion = () => {
+    setConfirmando(null);
+    guardado.cancelarConfirmacion();
+  };
+  const pedirGuardar = () =>
+    ventas.hayVentas
+      ? setConfirmando(ventas.vendidosMovidos(figuras, base.figuras))
+      : guardarDibujo();
+
+  const guardarDibujo = async (confirmado = false) => {
+    const recintoGuardado = await guardado.guardar(
+      figuras,
+      base.version,
+      confirmado,
+    );
     if (!recintoGuardado) return;
     // Las nuevas vuelven con su id: el dibujo guardado es la nueva base
     const figurasGuardadas = figurasDelRecinto(recintoGuardado);
@@ -153,28 +182,56 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
     toast.success("Recinto guardado");
   };
 
-  const figurasEnOrden = useMemo(() => ordenDeDibujo(figuras), [figuras]);
+  // Lo que ve el lienzo: los apartados se tratan como bloqueados (ítem 7)
+  const figurasVista = useMemo(
+    () => conBloqueoPorVenta(figuras),
+    [conBloqueoPorVenta, figuras],
+  );
+  const marcas = useMemo(() => marcasDe(figuras), [marcasDe, figuras]);
+  const figurasEnOrden = useMemo(
+    () => ordenDeDibujo(figurasVista),
+    [figurasVista],
+  );
   const seleccionadas = useMemo(
     () => figuras.filter((f) => seleccion.includes(f.clave)),
     [figuras, seleccion],
   );
+  // Igual, pero como las ve el lienzo (para mover, alinear y el panel)
+  const seleccionadasVista = useMemo(
+    () => figurasVista.filter((f) => seleccion.includes(f.clave)),
+    [figurasVista, seleccion],
+  );
   // El panel de propiedades completo, solo con UNA
   const figuraSeleccionada =
-    seleccionadas.length === 1 ? seleccionadas[0] : null;
+    seleccionadasVista.length === 1 ? seleccionadasVista[0] : null;
   // El recuadro y Ctrl/Cmd+A ignoran las bloqueadas (como Canva): se pueden
   // seleccionar palcos encima de una tarima bloqueada sin arrastrarla
   const clavesLibres = useMemo(
-    () => figuras.filter((f) => !f.bloqueada).map((f) => f.clave),
-    [figuras],
+    () => figurasVista.filter((f) => !f.bloqueada).map((f) => f.clave),
+    [figurasVista],
   );
 
   // ─── ACCIONES SOBRE LA SELECCION ────────────────────────────────────────
 
   const borrarSeleccion = useCallback(() => {
     if (seleccionadas.length === 0) return;
-    const libres = seleccionadas.filter((f) => !f.bloqueada);
-    const bloqueadas = seleccionadas.filter((f) => f.bloqueada);
+    // Un palco con ventas no se borra (RN-08, ítem 7)
+    const conVentas = seleccionadas.filter((f) => proteccionDe(f));
+    const libres = seleccionadas.filter(
+      (f) => !f.bloqueada && !proteccionDe(f),
+    );
+    const bloqueadas = seleccionadas.filter(
+      (f) => f.bloqueada && !proteccionDe(f),
+    );
     if (libres.length > 0) borrarVarias(libres.map((f) => f.clave));
+    if (conVentas.length > 0) {
+      toast(
+        conVentas.length === 1
+          ? `${nombreParaMostrar(conVentas[0])} tiene ventas: no se puede borrar`
+          : `${conVentas.length} palcos con ventas no se borraron`,
+        { icon: "🎟️" },
+      );
+    }
     if (bloqueadas.length > 0) {
       toast(
         bloqueadas.length === 1
@@ -184,24 +241,25 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
       );
     }
     // Quedan elegidas solo las que no se pudieron borrar
-    setSeleccion(bloqueadas.map((f) => f.clave));
-  }, [seleccionadas, borrarVarias, setSeleccion]);
+    setSeleccion([...bloqueadas, ...conVentas].map((f) => f.clave));
+  }, [seleccionadas, borrarVarias, setSeleccion, proteccionDe]);
 
   // Bloquear o desbloquear lo seleccionado (una o un grupo)
+  // Un apartado no se toca, tampoco su candado (ítem 7)
   const bloquearSeleccion = useCallback(
     (bloquear: boolean) => {
-      seleccionadas.forEach((f) =>
-        actualizar(f.clave, { bloqueada: bloquear }),
-      );
+      seleccionadas
+        .filter((f) => proteccionDe(f)?.motivo !== "APARTADO")
+        .forEach((f) => actualizar(f.clave, { bloqueada: bloquear }));
     },
-    [seleccionadas, actualizar],
+    [seleccionadas, actualizar, proteccionDe],
   );
 
   // Alinear: varias entre ellas, o una contra el lienzo. Un solo paso
   const alinearSeleccion = useCallback(
     (modo: Alineacion) =>
-      actualizarVarias(alinearFiguras(seleccionadas, modo, lienzo)),
-    [seleccionadas, lienzo, actualizarVarias],
+      actualizarVarias(alinearFiguras(seleccionadasVista, modo, lienzo)),
+    [seleccionadasVista, lienzo, actualizarVarias],
   );
 
   // Repetir en fila o abanico: todas las copias en un solo paso y quedan
@@ -225,8 +283,8 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
   // Distribuir: mismo espacio entre las elegidas, en un solo paso
   const distribuirSeleccion = useCallback(
     (eje: Distribucion) =>
-      actualizarVarias(distribuirFiguras(seleccionadas, eje, lienzo)),
-    [seleccionadas, lienzo, actualizarVarias],
+      actualizarVarias(distribuirFiguras(seleccionadasVista, eje, lienzo)),
+    [seleccionadasVista, lienzo, actualizarVarias],
   );
 
   // Capas: las bloqueadas no cambian de lugar (las demas si pasan por
@@ -234,10 +292,10 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
   const ordenarSeleccion = useCallback(
     (modo: Orden) =>
       ordenar(
-        seleccionadas.filter((f) => !f.bloqueada).map((f) => f.clave),
+        seleccionadasVista.filter((f) => !f.bloqueada).map((f) => f.clave),
         modo,
       ),
-    [seleccionadas, ordenar],
+    [seleccionadasVista, ordenar],
   );
 
   // Donde esta la figura elegida dentro de su grupo (para el panel)
@@ -361,7 +419,7 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
         onAlejar={() => zoomEn(centroPantalla, 1 / FACTOR_BOTON)}
         onAcercar={() => zoomEn(centroPantalla, FACTOR_BOTON)}
         onAjustar={ajustar}
-        onGuardar={guardarDibujo}
+        onGuardar={pedirGuardar}
       />
 
       <AvisosEditor
@@ -372,6 +430,7 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
         onRecuperar={recuperarBorrador}
         onDescartar={borrador.descartar}
       />
+      <AvisoVentas impacto={ventas.impacto} error={ventas.error} />
 
       <div className="relative flex gap-3 h-[calc(100vh-360px)] min-h-[480px]">
         <Lienzo
@@ -384,9 +443,10 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
           aPuntoLogico={aPuntoLogico}
           figuras={figurasEnOrden}
           errores={errores}
+          marcas={marcas}
           cuadricula={cuadricula.paso}
           fantasmas={vistaPrevia}
-          seleccionadas={seleccionadas}
+          seleccionadas={seleccionadasVista}
           clavesLibres={clavesLibres}
           onPresionar={alPresionar}
           onClic={alHacerClic}
@@ -399,6 +459,9 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
         <fieldset disabled={guardando} className="contents">
           <PanelPropiedades
             figura={figuraSeleccionada}
+            proteccion={
+              figuraSeleccionada ? proteccionDe(figuraSeleccionada) : undefined
+            }
             // Las que existen: tras deshacer, una seleccionada puede ya no
             // estar en el dibujo
             totalSeleccionadas={seleccionadas.length}
@@ -453,6 +516,18 @@ export default function RecintoEditor({ recinto }: RecintoEditorProps) {
           </div>
         )}
       </div>
+
+      {porConfirmar && (
+        <ConfirmarGuardadoRecinto
+          impacto={ventas.impacto}
+          movidos={porConfirmar}
+          onCancelar={cerrarConfirmacion}
+          onConfirmar={() => {
+            cerrarConfirmacion();
+            guardarDibujo(true);
+          }}
+        />
+      )}
 
       <p className="text-[11px] text-gray-400">
         Rueda: zoom · Arrastrar el fondo: mover la vista · Shift + arrastrar:

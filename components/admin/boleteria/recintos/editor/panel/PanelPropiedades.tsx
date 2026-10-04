@@ -13,10 +13,13 @@ import { Alineacion, Distribucion, Orden } from "../acomodar";
 import BotonesOrden from "./BotonesOrden";
 import BotonesAlinear from "./BotonesAlinear";
 import Repetir from "./Repetir";
+import { PalcoProtegido } from "@/interfaces/recinto.interface";
 
 interface PanelPropiedadesProps {
   // La figura si hay UNA sola seleccionada
   figura: FiguraEditor | null;
+  // Si es un palco con ventas en eventos futuros (ítem 7, RN-09)
+  proteccion?: PalcoProtegido;
   totalSeleccionadas: number;
   error?: string;
   lienzoAncho: number;
@@ -53,6 +56,7 @@ const etiquetaClase = "block text-xs font-medium text-gray-600 mb-1";
 // color, rotacion y si la etiqueta gira con la figura
 export default function PanelPropiedades({
   figura,
+  proteccion,
   totalSeleccionadas,
   error,
   lienzoAncho,
@@ -146,16 +150,43 @@ export default function PanelPropiedades({
   }
 
   const esPalco = figura.tipo === "PALCO";
+  // Vendido: no cambia nombre ni tipo. Apartado: no se toca nada (el
+  // editor ya lo trata como bloqueado)
+  const apartado = proteccion?.motivo === "APARTADO";
+  const sinNombreNiTipo = figura.bloqueada || !!proteccion;
 
   return (
     <aside className="w-64 flex-shrink-0 rounded-xl border border-gray-200 p-4 flex flex-col gap-4 overflow-y-auto">
       {resumen}
 
-      {/* Bloqueada: los campos quedan deshabilitados. "Tamano" va aparte
-          porque ahi esta el candado, que debe seguir activo */}
+      {proteccion && (
+        <p
+          role="note"
+          className="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-xs text-indigo-900"
+        >
+          {apartado ? (
+            <>
+              <strong>★ Apartado</strong> en {proteccion.eventos}{" "}
+              {proteccion.eventos === 1 ? "evento" : "eventos"}: no se puede
+              modificar ni borrar.
+            </>
+          ) : (
+            <>
+              <strong>✓ Vendido</strong> en {proteccion.eventos}{" "}
+              {proteccion.eventos === 1 ? "evento" : "eventos"}: puedes moverlo
+              o cambiar su tamaño y color (al guardar te pediremos confirmar).
+              No se puede renombrar, cambiar de tipo ni borrar.
+            </>
+          )}
+        </p>
+      )}
+
+      {/* Bloqueada (o con ventas): nombre y tipo quedan deshabilitados.
+          "Tamano" va aparte porque ahi esta el candado, que debe seguir
+          activo */}
       <fieldset
-        disabled={figura.bloqueada}
-        className={`flex flex-col gap-4 min-w-0 ${figura.bloqueada ? "opacity-50" : ""}`}
+        disabled={sinNombreNiTipo}
+        className={`flex flex-col gap-4 min-w-0 ${sinNombreNiTipo ? "opacity-50" : ""}`}
       >
         <div>
           {/* Obligatorio solo en el palco: una referencia decorativa puede
@@ -215,13 +246,16 @@ export default function PanelPropiedades({
         </div>
       </fieldset>
 
-      <CamposTamano
-        figura={figura}
-        lienzoAncho={lienzoAncho}
-        lienzoAlto={lienzoAlto}
-        onCambiar={onCambiar}
-        onBloquear={onBloquear}
-      />
+      {/* Apartado: tampoco se desbloquea con el candado */}
+      <fieldset disabled={apartado} className="contents">
+        <CamposTamano
+          figura={figura}
+          lienzoAncho={lienzoAncho}
+          lienzoAlto={lienzoAlto}
+          onCambiar={onCambiar}
+          onBloquear={onBloquear}
+        />
+      </fieldset>
 
       <fieldset
         disabled={figura.bloqueada}

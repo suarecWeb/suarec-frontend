@@ -51,6 +51,8 @@ interface LienzoProps {
   // Ya en orden de dibujo: referencias debajo, palcos encima (RN-04)
   figuras: FiguraEditor[];
   errores: Record<string, string>;
+  // Palcos con ventas (ítem 7): clave -> marca (✓ vendido, ★ apartado)
+  marcas?: Record<string, string>;
   // Tamano de celda si la cuadrícula esta prendida; null si no
   cuadricula: number | null;
   // Vista previa de "Repetir": copias que aun no existen
@@ -78,6 +80,7 @@ export default function Lienzo({
   aPuntoLogico,
   figuras,
   errores,
+  marcas,
   cuadricula,
   fantasmas,
   seleccionadas,
@@ -281,6 +284,7 @@ export default function Lienzo({
                 lienzoAncho={lienzo.ancho}
                 lienzoAlto={lienzo.alto}
                 conError={!!errores[figura.clave]}
+                marca={marcas?.[figura.clave]}
                 cuadricula={cuadricula}
                 guia={guia}
                 onPresionar={onPresionar}

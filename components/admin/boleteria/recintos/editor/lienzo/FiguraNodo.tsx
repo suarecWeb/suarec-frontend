@@ -26,6 +26,8 @@ interface FiguraNodoProps {
   lienzoAncho: number;
   lienzoAlto: number;
   conError: boolean;
+  // Palco con ventas (ítem 7): ✓ vendido, ★ apartado, junto al nombre
+  marca?: string;
   // Tamano de celda si la cuadrícula esta prendida (imán al mover)
   cuadricula: number | null;
   // La figura que se agarro para arrastrar y donde estaba el puntero
@@ -48,6 +50,7 @@ const FiguraNodo = memo(function FiguraNodo({
   lienzoAncho,
   lienzoAlto,
   conError,
+  marca,
   cuadricula,
   guia,
   onPresionar,
@@ -163,7 +166,8 @@ const FiguraNodo = memo(function FiguraNodo({
     rotation: figura.rotacion,
     fill: rellenoDe(figura),
     stroke: conError ? "#dc2626" : esPalco ? "#1f2937" : figura.color,
-    strokeWidth: conError ? 2 : 1,
+    // Con ventas: borde más grueso, además de la marca
+    strokeWidth: conError || marca ? 2 : 1,
     strokeScaleEnabled: false,
     // Palco solido; referencia con borde punteado (RN-04)
     dash: esPalco ? undefined : [6, 4],
@@ -210,7 +214,13 @@ const FiguraNodo = memo(function FiguraNodo({
         offsetX={figura.ancho / 2}
         offsetY={figura.alto / 2}
         rotation={figura.etiquetaRotada ? figura.rotacion : 0}
-        text={figura.bloqueada ? `🔒 ${figura.nombre}`.trim() : figura.nombre}
+        text={
+          marca
+            ? `${marca} ${figura.nombre}`
+            : figura.bloqueada
+              ? `🔒 ${figura.nombre}`.trim()
+              : figura.nombre
+        }
         fontSize={tamanoFuente}
         fontStyle={esPalco ? "bold" : "normal"}
         fill={colorDeTexto(figura)}

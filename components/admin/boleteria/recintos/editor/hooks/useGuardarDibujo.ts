@@ -1,6 +1,10 @@
 import { useCallback, useState } from "react";
 import RecintosService from "@/services/RecintosService";
-import { ErrorDeFigura, Recinto } from "@/interfaces/recinto.interface";
+import {
+  ErrorDeFigura,
+  PalcoVendidoMovido,
+  Recinto,
+} from "@/interfaces/recinto.interface";
 import { FiguraEditor, dibujoAEnvio } from "../figuras";
 
 // Guardar el dibujo en el sistema: un solo envio, todo o nada (el backend
@@ -15,6 +19,11 @@ export const useGuardarDibujo = (recintoId: number) => {
   // Problemas generales (version vieja, figuras borradas que no se podian
   // borrar, errores de red...)
   const [erroresGenerales, setErroresGenerales] = useState<string[]>([]);
+  // PEN-11: el backend pidió confirmar porque se movieron palcos vendidos
+  // (por si el editor no lo detectó antes, ej. otra pestaña)
+  const [porConfirmar, setPorConfirmar] = useState<PalcoVendidoMovido[] | null>(
+    null,
+  );
 
   const limpiarErrores = useCallback(() => {
     setErroresPorFigura({});
@@ -26,13 +35,16 @@ export const useGuardarDibujo = (recintoId: number) => {
     async (
       figuras: FiguraEditor[],
       versionBase: string,
+      confirmarCambiosEnVendidos = false,
     ): Promise<Recinto | null> => {
       setGuardando(true);
       limpiarErrores();
+      setPorConfirmar(null);
       try {
         const res = await RecintosService.guardarFiguras(recintoId, {
           versionBase,
           figuras: dibujoAEnvio(figuras),
+          ...(confirmarCambiosEnVendidos && { confirmarCambiosEnVendidos }),
         });
         return res.data;
       } catch (err: any) {
@@ -40,6 +52,10 @@ export const useGuardarDibujo = (recintoId: number) => {
         const porFigura: Record<string, string> = {};
         const generales: string[] = [];
 
+        if (data?.codigo === "CONFIRMAR_PALCOS_VENDIDOS") {
+          setPorConfirmar(data.palcos as PalcoVendidoMovido[]);
+          return null;
+        }
         if (data?.codigo === "FIGURAS_CON_ERRORES") {
           generales.push(data.message);
           (data.errores as ErrorDeFigura[]).forEach((e) => {
@@ -75,5 +91,7 @@ export const useGuardarDibujo = (recintoId: number) => {
     erroresPorFigura,
     erroresGenerales,
     limpiarErrores,
+    porConfirmar,
+    cancelarConfirmacion: () => setPorConfirmar(null),
   };
 };
