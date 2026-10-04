@@ -40,8 +40,11 @@ import ControlesZoom from "./ControlesZoom";
 export default function PalcosEvento({
   eventoId,
   palcoInicial = null,
+  volver,
 }: {
   eventoId: number;
+  // Se conserva al pasar a otro evento de la feria (pestañas del evento)
+  volver?: string;
   // El palco elegido viaja en la direccion (?palco=) al pasar a otro
   // evento de la feria (es el mismo recinto): asi se compara, ej. Palco 3
   // vendido el viernes y libre el sabado (CA-11)
@@ -67,6 +70,7 @@ export default function PalcosEvento({
       mapa={carga.datos}
       palcoId={palcoId}
       onElegirPalco={setPalcoId}
+      volver={volver}
     />
   );
 }
@@ -75,12 +79,14 @@ interface ContenidoEventoProps {
   mapa: MapaEventoPalco;
   palcoId: number | null;
   onElegirPalco: (id: number) => void;
+  volver?: string;
 }
 
 function ContenidoEvento({
   mapa,
   palcoId,
   onElegirPalco,
+  volver,
 }: ContenidoEventoProps) {
   const { evento, recinto, deLaFeria } = mapa;
   const pasado = esPasado(evento.fechaEvento);
@@ -178,6 +184,7 @@ function ContenidoEvento({
             evento={anterior}
             direccion="anterior"
             palcoId={palcoId}
+            volver={volver}
           />
           <span className="text-xs text-gray-400 whitespace-nowrap">
             {posicion + 1} de {ordenados.length}
@@ -186,6 +193,7 @@ function ContenidoEvento({
             evento={siguiente}
             direccion="siguiente"
             palcoId={palcoId}
+            volver={volver}
           />
         </nav>
       </div>
@@ -316,10 +324,12 @@ function NavegarEvento({
   evento,
   direccion,
   palcoId,
+  volver,
 }: {
   evento?: { id: number; nombre: string };
   direccion: "anterior" | "siguiente";
   palcoId: number | null;
+  volver?: string;
 }) {
   const Icono = direccion === "anterior" ? ChevronLeft : ChevronRight;
   const titulo =
@@ -340,7 +350,7 @@ function NavegarEvento({
   }
   return (
     <Link
-      href={rutaPalcosEvento(evento.id, palcoId)}
+      href={rutaPalcosEvento(evento.id, palcoId, volver)}
       aria-label={`${titulo}: ${evento.nombre}`}
       title={`${titulo}: ${evento.nombre}`}
       className={`${clases} border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#097EEC]`}

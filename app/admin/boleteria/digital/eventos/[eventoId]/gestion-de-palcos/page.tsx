@@ -1,76 +1,27 @@
 "use client";
 
-import Link from "next/link";
-import Navbar from "@/components/navbar";
-import RoleGuard from "@/components/role-guard";
-import PalcosEvento from "@/components/admin/boleteria/palcos/PalcosEvento";
-import { RUTA_TAB_PALCOS } from "@/components/admin/boleteria/palcos/rutas";
-import { ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
+import GestionPalcosEvento from "@/components/admin/boleteria/digital/evento/pestanas/GestionPalcosEvento";
 
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: 0.5, ease: "easeOut" as const },
-  },
-};
-
-interface PalcosEventoPageProps {
+interface GestionPalcosPageProps {
   params: { eventoId: string };
   // ?palco=ID: el palco que venia elegido desde otro evento de la feria
   searchParams: { palco?: string };
 }
 
-// Gestion de palcos de un evento (se llega desde Ferias -> tab "Gestion de
-// palcos"). Dirección: /admin/boleteria/digital/eventos/[id]/gestion-de-palcos,
-// junto a crear y editar. Sin panel lateral: el mapa necesita todo el ancho
-const PalcosEventoPageContent = ({
+// Pestaña "Gestión de palcos" de un evento PALCO. El acceso, la barra y
+// ?volver= son del layout ([eventoId]/layout.tsx); se llega también desde
+// Ferias -> tab "Gestión de palcos"
+const GestionPalcosPage = ({
   params,
   searchParams,
-}: PalcosEventoPageProps) => {
+}: GestionPalcosPageProps) => {
   const palco = Number(searchParams.palco);
-
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate">
-      <Navbar />
-      <div className="bg-gray-50 min-h-screen pb-12 pt-16 lg:pt-20">
-        <div className="bg-[#097EEC] text-white py-8 shadow-sm">
-          <div className="container mx-auto px-4 flex items-center gap-3">
-            <Link
-              href={RUTA_TAB_PALCOS}
-              aria-label="Volver a Gestión de palcos"
-              className="flex items-center justify-center p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold">Gestión de palcos</h1>
-              <p className="mt-2 text-blue-100">
-                Estado de cada palco en este evento: libre, en compra, apartado
-                o vendido
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 -mt-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
-            <PalcosEvento
-              eventoId={Number(params.eventoId)}
-              palcoInicial={Number.isInteger(palco) && palco > 0 ? palco : null}
-            />
-          </div>
-        </div>
-      </div>
-    </motion.div>
+    <GestionPalcosEvento
+      eventoId={Number(params.eventoId)}
+      palcoInicial={Number.isInteger(palco) && palco > 0 ? palco : null}
+    />
   );
 };
 
-const PalcosEventoPage = (props: PalcosEventoPageProps) => (
-  <RoleGuard allowedRoles={["ADMIN"]}>
-    <PalcosEventoPageContent {...props} />
-  </RoleGuard>
-);
-
-export default PalcosEventoPage;
+export default GestionPalcosPage;

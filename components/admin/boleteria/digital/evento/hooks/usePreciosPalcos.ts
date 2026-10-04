@@ -52,6 +52,17 @@ export function usePreciosPalcos(
       )
       .map(([figuraId, precio]) => ({ figuraId, precio }));
 
+  // Distintos de los guardados (para avisar antes de cambiar de pestaña).
+  // Con otro recinto los guardados no cuentan: el cambio de feria ya avisa
+  const cambiados = useMemo(() => {
+    const guardados =
+      original && recintoId === recintoOriginal ? original.precios : [];
+    return (
+      precios.size !== guardados.length ||
+      guardados.some((p) => precios.get(p.figuraId) !== p.precio)
+    );
+  }, [precios, original, recintoId, recintoOriginal]);
+
   const preciosPerdidos = useMemo(
     () => (recintoCambia ? (original?.precios.length ?? 0) : 0),
     [recintoCambia, original],
@@ -79,6 +90,7 @@ export function usePreciosPalcos(
     recintoCambia,
     preciosPerdidos,
     vendidos,
+    cambiados,
   };
 }
 

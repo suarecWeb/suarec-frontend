@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import { RUTA_BOLETERIA_DIGITAL } from "./rutas";
+import { RUTA_BOLETERIA_DIGITAL } from "../rutas";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -18,12 +18,14 @@ const pageVariants = {
 };
 
 // Boceto acordado: barra fija arriba con ← título y los botones; debajo,
-// la miga de pan "Boletería › Digital". El menú lateral marca Digital. En
-// el celular los botones quedan fijos abajo
+// la miga de pan "Boletería › Digital" y, en un PALCO, las pestañas del
+// evento. El menú lateral marca Digital. En el celular los botones quedan
+// fijos abajo
 export default function MarcoPaginaEvento({
   titulo,
   volver,
   acciones,
+  pestanas,
   children,
 }: {
   titulo: string;
@@ -31,6 +33,8 @@ export default function MarcoPaginaEvento({
   // Cancelar y Crear/Guardar (no hay mientras carga el evento). Se pintan
   // en la barra azul de arriba y, en el celular, en la barra blanca de abajo
   acciones?: (lugar: "arriba" | "abajo") => ReactNode;
+  // "Datos y precios" | "Gestión de palcos" (PestanasEvento)
+  pestanas?: ReactNode;
   children: ReactNode;
 }) {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
@@ -82,6 +86,11 @@ export default function MarcoPaginaEvento({
               </div>
             )}
           </div>
+          {pestanas && (
+            <div className="container mx-auto px-4 -mt-1 overflow-x-auto">
+              {pestanas}
+            </div>
+          )}
         </div>
 
         <div className="container mx-auto px-4 pt-6 flex">

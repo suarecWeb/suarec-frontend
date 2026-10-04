@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, ReactNode, useMemo, useState } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import { AlertTriangle } from "lucide-react";
 import { Evento, EventoTipo } from "@/interfaces/event.interface";
@@ -10,14 +9,15 @@ import { useFormularioEvento } from "./hooks/useFormularioEvento";
 import { useFerias, useMapaOriginal, useRecinto } from "./hooks/useDatosEvento";
 import { usePreciosPalcos } from "./hooks/usePreciosPalcos";
 import { useGuardarEvento } from "./hooks/useGuardarEvento";
-import MarcoPaginaEvento from "./MarcoPaginaEvento";
+import { EnMarcoEvento } from "./layout/LayoutEvento";
+import { FORM_ID } from "./layout/botonesGuardar";
 import SeccionDatos from "./secciones/SeccionDatos";
 import SeccionTipo from "./secciones/SeccionTipo";
 import CodigosRegalo from "./secciones/CodigosRegalo";
 import PanelFeria from "./panel-feria/PanelFeria";
 import PreciosPalcos from "./precios/PreciosPalcos";
-import ConfirmarEventoPalco from "./confirmaciones/ConfirmarEventoPalco";
-import ConfirmarCambioFeria from "./confirmaciones/ConfirmarCambioFeria";
+import ConfirmarEventoPalco from "./modal-confirmaciones/ConfirmarEventoPalco";
+import ConfirmarCambioFeria from "./modal-confirmaciones/ConfirmarCambioFeria";
 import {
   avisosAlConfirmar,
   avisosDeFeria,
@@ -25,7 +25,6 @@ import {
 } from "./reglasFeria";
 import { diaBogota, diaCorto } from "./fechas";
 
-const FORM_ID = "formulario-evento";
 const TARJETA =
   "bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 min-w-0";
 
@@ -56,8 +55,9 @@ const ARRIBA =
   "contents xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-6 xl:items-start";
 const LUGAR = {
   datos: "order-1 xl:order-none xl:col-start-1 xl:row-start-1",
+  // Fija debajo de la barra azul (más alta con las pestañas de un PALCO)
   feria:
-    "order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-3 xl:sticky xl:top-44 min-w-0",
+    "order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-3 xl:sticky min-w-0",
   tipo: "order-3 xl:order-none xl:col-start-1 xl:row-start-2",
   precios: "order-4 xl:order-none",
   codigos: "order-5 xl:order-none xl:col-start-1 xl:row-start-3",
@@ -175,50 +175,22 @@ export default function FormularioEventoDigital({
     if (!ok) setConfirmando(false);
   };
 
+  // Al editar: si hay algo sin guardar, cambiar de pestaña pregunta
+  const hayCambios = f.hayCambios || precios.cambiados;
+
   const textoGuardar = guardando
     ? "Guardando..."
     : evento
       ? "Guardar cambios"
       : "Crear evento";
-  const acciones = (lugar: "arriba" | "abajo") =>
-    lugar === "arriba" ? (
-      <>
-        <Link
-          href={volver}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-        >
-          Cancelar
-        </Link>
-        <button
-          type="submit"
-          form={FORM_ID}
-          disabled={guardando}
-          className="px-4 py-2 text-sm font-semibold rounded-lg bg-white text-[#097EEC] hover:bg-blue-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          {textoGuardar}
-        </button>
-      </>
-    ) : (
-      <>
-        <Link
-          href={volver}
-          className="flex-1 text-center whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          Cancelar
-        </Link>
-        <button
-          type="submit"
-          form={FORM_ID}
-          disabled={guardando}
-          className="flex-1 whitespace-nowrap px-3 py-2 text-sm font-medium text-white bg-[#097EEC] rounded-lg hover:bg-[#0562C7] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          {textoGuardar}
-        </button>
-      </>
-    );
-
   return (
-    <MarcoPaginaEvento titulo={titulo} volver={volver} acciones={acciones}>
+    <EnMarcoEvento
+      titulo={titulo}
+      volver={volver}
+      texto={textoGuardar}
+      guardando={guardando}
+      hayCambios={hayCambios}
+    >
       <form id={FORM_ID} onSubmit={enviar} noValidate className="space-y-6">
         {f.errores.servidor && (
           <p
@@ -236,7 +208,9 @@ export default function FormularioEventoDigital({
               <SeccionDatos f={f} choqueFecha={choqueFecha} />
             </Seccion>
 
-            <aside className={LUGAR.feria}>
+            <aside
+              className={`${LUGAR.feria} ${editandoPalco ? "xl:top-52" : "xl:top-44"}`}
+            >
               <Seccion titulo="Feria y recinto">
                 <PanelFeria
                   ferias={ferias}
@@ -337,6 +311,6 @@ export default function FormularioEventoDigital({
           onCancelar={() => setConfirmando(false)}
         />
       )}
-    </MarcoPaginaEvento>
+    </EnMarcoEvento>
   );
 }

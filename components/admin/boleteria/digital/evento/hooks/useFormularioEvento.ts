@@ -124,6 +124,17 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
 
   const esPalco = tipo === EventoTipo.PALCO;
 
+  // Al editar: algo distinto de lo guardado (para avisar antes de cambiar
+  // de pestaña). Los precios de los palcos los cuenta usePreciosPalcos
+  const [formInicial] = useState(form);
+  const hayCambios =
+    editando &&
+    (JSON.stringify(form) !== JSON.stringify(formInicial) ||
+      tipo !== (evento?.tipo ?? null) ||
+      cargoSuarec !== entero(evento?.cargoSuarec) ||
+      !!imagenArchivo ||
+      imagenQuitada);
+
   // recintoDeLaFeria: null si la feria elegida no tiene recinto.
   // choqueFecha: otro PALCO de la feria ese dia (PEN-10), ya escrito.
   // palcosDelDibujo: null mientras carga el recinto
@@ -267,6 +278,7 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
     },
     validar,
     aDto,
+    hayCambios,
   };
 }
 
