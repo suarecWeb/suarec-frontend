@@ -120,11 +120,23 @@ const SidebarRoot = () => {
     },
   ];
 
+  // Una subpagina (ej. /admin/boleteria/digital/eventos/crear) marca la
+  // seccion de la que cuelga
+  const valores = items.flatMap((item) => [
+    item.value,
+    ...(item.children?.map((kid) => kid.value) ?? []),
+  ]);
+  const seccionDe = (ruta: string) =>
+    valores.includes(ruta)
+      ? ruta
+      : (valores
+          .filter((v): v is string => !!v && ruta.startsWith(`${v}/`))
+          .sort((a, b) => b.length - a.length)[0] ?? ruta);
   const currentValue =
     pathname === "/admin/notificaciones" &&
     searchParams.get("tab") === "banners"
       ? "/admin/notificaciones?tab=banners"
-      : pathname;
+      : seccionDe(pathname);
   const activeSectionIndex = items.findIndex((item) =>
     item.children?.some((kid) => kid.value === currentValue),
   );
