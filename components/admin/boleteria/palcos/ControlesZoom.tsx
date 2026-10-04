@@ -7,6 +7,9 @@ interface ControlesZoomProps {
   onAcercar: () => void;
   onAlejar: () => void;
   onAjustar: () => void;
+  // En la linea del titulo (precios de la pagina de evento) en vez de
+  // encima del mapa
+  enLinea?: boolean;
 }
 
 // Mismo estilo que los del editor de recintos (BarraHerramientas)
@@ -21,12 +24,13 @@ export default function ControlesZoom({
   onAcercar,
   onAlejar,
   onAjustar,
+  enLinea = false,
 }: ControlesZoomProps) {
   return (
     <div
       // Presionar un boton no debe empezar a arrastrar el mapa
       onPointerDown={(e) => e.stopPropagation()}
-      className="absolute top-4 right-4 flex items-center gap-1 rounded-xl bg-white/90 p-1 shadow-sm border border-gray-200"
+      className={`${enLinea ? "" : "absolute top-4 right-4 "}flex items-center gap-1 rounded-xl bg-white/90 p-1 shadow-sm border border-gray-200`}
     >
       <button
         type="button"

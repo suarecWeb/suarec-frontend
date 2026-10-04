@@ -7,16 +7,17 @@ const CLASES: Record<EstadoEventoPalco, string> = {
   cancelado: "bg-red-50 text-red-700 border-red-200",
 };
 
-export default function EstadoEventoBadge({
-  estado,
-}: {
-  estado: EstadoEventoPalco;
-}) {
+// estado llega del backend (preventa | venta | cerrado | cancelado); uno
+// desconocido se muestra tal cual, en gris
+export default function EstadoEventoBadge({ estado }: { estado: string }) {
+  const conocido = estado in CLASES ? (estado as EstadoEventoPalco) : null;
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${CLASES[estado]}`}
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+        conocido ? CLASES[conocido] : CLASES.cerrado
+      }`}
     >
-      {ETIQUETA_ESTADO_EVENTO[estado]}
+      {conocido ? ETIQUETA_ESTADO_EVENTO[conocido] : estado}
     </span>
   );
 }

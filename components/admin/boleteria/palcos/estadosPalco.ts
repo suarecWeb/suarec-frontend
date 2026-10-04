@@ -1,4 +1,5 @@
 import { Recinto } from "@/interfaces/recinto.interface";
+import { PalcoOcupadoAdmin } from "@/interfaces/palcos.interface";
 
 // Estado de un palco EN UN EVENTO. El recinto es solo el plano: lo que se
 // vende es el palco en un evento, y el mismo palco puede estar vendido el
@@ -46,73 +47,47 @@ export const ESTILO_ESTADO: Record<
   },
 };
 
-// Lo que se sabe de un palco ocupado en un evento. Los datos de quien lo
-// compro o aparto solo los ve el admin (PEN-5 aplica a la app)
-export interface PalcoOcupado {
-  estado: Exclude<EstadoPalco, "LIBRE">;
-  // EN_COMPRA: cuanto le queda a la reserva (RN-06)
-  minutosRestantes?: number;
-  // APARTADO (RN-10, PEN-14)
-  apartadoPor?: string;
-  nota?: string;
-  // VENDIDO (RN-19)
-  comprador?: string;
-  monto?: number;
-  // Cuando se aparto o se vendio
-  fecha?: string;
-}
-
 export type EstadoEventoPalco = "preventa" | "venta" | "cerrado" | "cancelado";
-
-// Un evento PALCO con su mapa. palcos: id de figura -> ocupado; el que no
-// esta, esta libre
-export interface EventoConPalcos {
-  id: number;
-  nombre: string;
-  fechaEvento: string;
-  estado: EstadoEventoPalco;
-  precioPalco: number;
-  // Cargo SUAREC: una sola vez por palco (RN-15)
-  cargoSuarec: number;
-  feria: { id: number; nombre: string };
-  // El de su feria (RN-13); null si la feria no tiene recinto
-  recinto: Recinto | null;
-  palcos: Record<number, PalcoOcupado>;
-}
-
-export interface FeriaConPalcos {
-  id: number;
-  nombre: string;
-  recinto: Recinto | null;
-  eventos: EventoConPalcos[];
-}
-
-export const estadoDe = (
-  evento: EventoConPalcos,
-  figuraId: number,
-): EstadoPalco => evento.palcos[figuraId]?.estado ?? "LIBRE";
-
-// Cuantos palcos hay en cada estado. Total = palcos dibujados (RN-20)
-export const contarEstados = (evento: EventoConPalcos) => {
-  const conteo: Record<EstadoPalco, number> = {
-    LIBRE: 0,
-    EN_COMPRA: 0,
-    APARTADO: 0,
-    VENDIDO: 0,
-  };
-  const palcos = (evento.recinto?.figuras ?? []).filter(
-    (f) => f.tipo === "PALCO",
-  );
-  palcos.forEach((f) => conteo[estadoDe(evento, f.id)]++);
-  return { conteo, total: palcos.length };
-};
-
-export const esPasado = (evento: EventoConPalcos) =>
-  new Date(evento.fechaEvento).getTime() < Date.now();
 
 export const ETIQUETA_ESTADO_EVENTO: Record<EstadoEventoPalco, string> = {
   preventa: "Preventa",
   venta: "En venta",
   cerrado: "Cerrado",
   cancelado: "Cancelado",
+};
+
+export const esPasado = (fechaEvento: string) =>
+  new Date(fechaEvento).getTime() < Date.now();
+
+// Minutos que le quedan a una reserva (RN-06). 0 o menos: ya vencio y la
+// liberara la revision del pago (fase 4)
+export const minutosRestantes = (reservadoHasta: string | null) =>
+  reservadoHasta === null
+    ? null
+    : Math.ceil((new Date(reservadoHasta).getTime() - Date.now()) / 60000);
+
+// Los palcos ocupados del evento por id de figura
+export const ocupadosPorFigura = (palcos: PalcoOcupadoAdmin[]) =>
+  new Map(palcos.map((p) => [p.figuraId, p]));
+
+// Cuantos palcos hay en cada estado, contando SOLO los que estan dibujados
+// (total = palcos del recinto, RN-20). fueraDelDibujo: ventas de palcos
+// que ya no estan en el dibujo (borrados despues de un evento pasado)
+export const contarMapa = (
+  recinto: Recinto,
+  ocupados: Map<number, PalcoOcupadoAdmin>,
+) => {
+  const conteo: Record<EstadoPalco, number> = {
+    LIBRE: 0,
+    EN_COMPRA: 0,
+    APARTADO: 0,
+    VENDIDO: 0,
+  };
+  const palcos = (recinto.figuras ?? []).filter((f) => f.tipo === "PALCO");
+  const dibujados = new Set(palcos.map((f) => f.id));
+  palcos.forEach((f) => conteo[ocupados.get(f.id)?.estado ?? "LIBRE"]++);
+  const fueraDelDibujo = Array.from(ocupados.keys()).filter(
+    (id) => !dibujados.has(id),
+  ).length;
+  return { conteo, total: palcos.length, fueraDelDibujo };
 };

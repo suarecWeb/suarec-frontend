@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
+  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   History,
@@ -11,31 +11,32 @@ import {
   MapPinOff,
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/TimeZone";
+import { MapaEventoPalco } from "@/interfaces/palcos.interface";
+import { formatCurrency } from "@/lib/formatCurrency";
 import VistaPreviaRecinto from "../recintos/vista-previa/VistaPreviaRecinto";
 import { FiguraEditor, figurasDelRecinto } from "../recintos/editor/figuras";
-import { buscarEventoDePrueba } from "./datosDePrueba";
 import {
   ESTADOS_PALCO,
   ESTILO_ESTADO,
-  EventoConPalcos,
-  contarEstados,
+  EstadoPalco,
+  contarMapa,
   esPasado,
-  estadoDe,
+  ocupadosPorFigura,
 } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
 import PanelPalco from "./PanelPalco";
-import AvisoDatosDePrueba from "./AvisoDatosDePrueba";
-import { rutaPalcosEvento } from "./PalcosPorFeria";
+import { Cargando, ErrorCarga } from "./EstadoCarga";
+import { useMapaEvento } from "./usePalcosEventos";
+import { rutaPalcosEvento } from "./rutas";
 import { useZoomMapa } from "./useZoomMapa";
 import ControlesZoom from "./ControlesZoom";
 
-export const RUTA_TAB_PALCOS = "/admin/boleteria/ferias?tab=gestion-palcos";
-
-// Los palcos de UN evento: el recinto de su feria con cada palco pintado
-// segun lo que paso con el EN ESTE EVENTO (libre, en compra, apartado,
-// vendido). Al tocar un palco se ve su detalle. Solo para mirar: apartar,
-// liberar y descargar boletas son de la fase 7
+// Los palcos de UN evento, leidos de la base (GET /palcos/eventos/:id): el
+// recinto de su feria con cada palco pintado segun lo que paso con el EN
+// ESTE EVENTO (libre, en compra, apartado, vendido). Al tocar un palco se
+// ve su detalle. Solo para mirar: apartar, liberar y descargar boletas son
+// de la fase 7
 export default function PalcosEvento({
   eventoId,
   palcoInicial = null,
@@ -46,30 +47,24 @@ export default function PalcosEvento({
   // vendido el viernes y libre el sabado (CA-11)
   palcoInicial?: number | null;
 }) {
-  const encontrado = buscarEventoDePrueba(eventoId);
   const [palcoId, setPalcoId] = useState<number | null>(palcoInicial);
+  const { carga, reintentar } = useMapaEvento(eventoId);
 
-  if (!encontrado) {
+  if (carga.estado === "cargando") {
+    return <Cargando texto="Cargando el mapa del evento…" />;
+  }
+  if (carga.estado === "error") {
     return (
-      <div className="py-20 text-center">
-        <h2 className="text-base font-semibold text-gray-700">
-          Evento no encontrado
-        </h2>
-        <Link
-          href={RUTA_TAB_PALCOS}
-          className="mt-3 inline-flex items-center gap-1.5 text-sm text-[#097EEC] hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver a Gestión de palcos
-        </Link>
-      </div>
+      <ErrorCarga
+        mensaje={carga.mensaje}
+        onReintentar={carga.noEncontrado ? undefined : reintentar}
+        conVolver
+      />
     );
   }
-
   return (
     <ContenidoEvento
-      evento={encontrado.evento}
-      deLaFeria={encontrado.deLaFeria}
+      mapa={carga.datos}
       palcoId={palcoId}
       onElegirPalco={setPalcoId}
     />
@@ -77,20 +72,39 @@ export default function PalcosEvento({
 }
 
 interface ContenidoEventoProps {
-  evento: EventoConPalcos;
-  deLaFeria: EventoConPalcos[];
+  mapa: MapaEventoPalco;
   palcoId: number | null;
   onElegirPalco: (id: number) => void;
 }
 
 function ContenidoEvento({
-  evento,
-  deLaFeria,
+  mapa,
   palcoId,
   onElegirPalco,
 }: ContenidoEventoProps) {
-  const pasado = esPasado(evento);
-  const { recinto } = evento;
+  const { evento, recinto, deLaFeria } = mapa;
+  const pasado = esPasado(evento.fechaEvento);
+  const ocupados = useMemo(() => ocupadosPorFigura(mapa.palcos), [mapa.palcos]);
+  const estadoDe = useCallback(
+    (figuraId: number): EstadoPalco =>
+      ocupados.get(figuraId)?.estado ?? "LIBRE",
+    [ocupados],
+  );
+  const conteos = recinto ? contarMapa(recinto, ocupados) : null;
+  // Precio de cada palco en este evento: el propio o el base (RN-12)
+  const precioDe = useMemo(() => {
+    const propios = new Map(
+      (mapa.precios ?? []).map((p) => [p.figuraId, p.precio]),
+    );
+    return (figuraId: number) => ({
+      precio: propios.get(figuraId) ?? evento.precioPalco,
+      propio: propios.has(figuraId),
+    });
+  }, [mapa.precios, evento.precioPalco]);
+  // Ventas que no se ven en el mapa: palcos de otro recinto (RN-24) o
+  // borrados del dibujo despues de un evento pasado
+  const fueraDelMapa =
+    mapa.palcosFueraDelRecinto + (conteos?.fueraDelDibujo ?? 0);
 
   // Anterior y siguiente evento de la misma feria, por fecha
   const ordenados = [...deLaFeria].sort(
@@ -107,18 +121,20 @@ function ContenidoEvento({
   );
   const palco: FiguraEditor | null =
     figuras.find((f) => f.id === palcoId && f.tipo === "PALCO") ?? null;
-  const estadoPalco = palco ? estadoDe(evento, palco.id as number) : "LIBRE";
+  const estadoPalco = palco ? estadoDe(palco.id as number) : "LIBRE";
 
   const estiloDePalco = useCallback(
     (f: FiguraEditor) => {
-      const estilo = ESTILO_ESTADO[estadoDe(evento, f.id as number)];
+      const estilo = ESTILO_ESTADO[estadoDe(f.id as number)];
+      const { precio } = precioDe(f.id as number);
       return {
         color: estilo.color,
         marca: estilo.marca,
-        descripcion: `${f.nombre}, ${estilo.etiqueta.toLowerCase()}`,
+        descripcion: `${f.nombre}, ${estilo.etiqueta.toLowerCase()}, ${formatCurrency(precio)}`,
+        detalle: formatCurrency(precio, { compact: true }),
       };
     },
-    [evento],
+    [estadoDe, precioDe],
   );
   const elegir = useCallback(
     (f: FiguraEditor) => f.id !== undefined && onElegirPalco(f.id),
@@ -134,8 +150,6 @@ function ContenidoEvento({
 
   return (
     <div className="flex flex-col gap-5">
-      <AvisoDatosDePrueba />
-
       {/* Evento: feria, recinto, fecha y estado + anterior/siguiente */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div className="min-w-0">
@@ -146,7 +160,8 @@ function ContenidoEvento({
             <EstadoEventoBadge estado={evento.estado} />
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            {formatDisplayDate(evento.fechaEvento)} · {evento.feria.nombre}
+            {formatDisplayDate(evento.fechaEvento)}
+            {evento.feria && ` · ${evento.feria.nombre}`}
             {recinto && (
               <span className="inline-flex items-center gap-1 ml-2">
                 <MapPin className="h-3.5 w-3.5" />
@@ -175,6 +190,15 @@ function ContenidoEvento({
         </nav>
       </div>
 
+      {fueraDelMapa > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          {fueraDelMapa} venta(s) de este evento son de palcos que ya no están
+          en el dibujo del recinto (se borraron o la feria cambió de recinto):
+          no aparecen en el mapa.
+        </div>
+      )}
+
       {pasado && (
         <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
           <History className="h-4 w-4 flex-shrink-0" />
@@ -195,7 +219,9 @@ function ContenidoEvento({
         </div>
       ) : (
         <>
-          <ContadoresPalcos {...contarEstados(evento)} />
+          {conteos && (
+            <ContadoresPalcos conteo={conteos.conteo} total={conteos.total} />
+          )}
 
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 min-w-0 flex flex-col gap-3">
@@ -246,7 +272,10 @@ function ContenidoEvento({
               evento={evento}
               palco={palco}
               estado={estadoPalco}
-              ocupado={palco ? evento.palcos[palco.id as number] : undefined}
+              {...(palco
+                ? precioDe(palco.id as number)
+                : { precio: evento.precioPalco, propio: false })}
+              ocupado={palco ? ocupados.get(palco.id as number) : undefined}
               pasado={pasado}
             />
           </div>
@@ -288,7 +317,7 @@ function NavegarEvento({
   direccion,
   palcoId,
 }: {
-  evento?: EventoConPalcos;
+  evento?: { id: number; nombre: string };
   direccion: "anterior" | "siguiente";
   palcoId: number | null;
 }) {
@@ -311,7 +340,7 @@ function NavegarEvento({
   }
   return (
     <Link
-      href={`${rutaPalcosEvento(evento.id)}${palcoId ? `?palco=${palcoId}` : ""}`}
+      href={rutaPalcosEvento(evento.id, palcoId)}
       aria-label={`${titulo}: ${evento.nombre}`}
       title={`${titulo}: ${evento.nombre}`}
       className={`${clases} border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#097EEC]`}

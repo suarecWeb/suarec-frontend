@@ -3,9 +3,8 @@
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
-import PalcosEvento, {
-  RUTA_TAB_PALCOS,
-} from "@/components/admin/boleteria/palcos/PalcosEvento";
+import PalcosEvento from "@/components/admin/boleteria/palcos/PalcosEvento";
+import { RUTA_TAB_PALCOS } from "@/components/admin/boleteria/palcos/rutas";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,7 +23,8 @@ interface PalcosEventoPageProps {
 }
 
 // Gestion de palcos de un evento (se llega desde Ferias -> tab "Gestion de
-// palcos"). Sin panel lateral: el mapa necesita todo el ancho
+// palcos"). Dirección: /admin/boleteria/digital/eventos/[id]/gestion-de-palcos,
+// junto a crear y editar. Sin panel lateral: el mapa necesita todo el ancho
 const PalcosEventoPageContent = ({
   params,
   searchParams,

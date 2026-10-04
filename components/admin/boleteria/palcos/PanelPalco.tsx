@@ -4,21 +4,39 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import { formatDisplayDate } from "@/lib/TimeZone";
 import { FiguraEditor } from "../recintos/editor/figuras";
 import {
+  MapaEventoPalco,
+  PalcoOcupadoAdmin,
+} from "@/interfaces/palcos.interface";
+import {
   CUPOS_POR_PALCO,
   ESTILO_ESTADO,
   EstadoPalco,
-  EventoConPalcos,
-  PalcoOcupado,
+  minutosRestantes,
 } from "./estadosPalco";
 
 interface PanelPalcoProps {
-  evento: EventoConPalcos;
+  evento: MapaEventoPalco["evento"];
   // El palco elegido en el mapa (null: ninguno)
   palco: FiguraEditor | null;
   estado: EstadoPalco;
-  ocupado?: PalcoOcupado;
+  // Precio de ESTE palco en el evento: el propio o el base (RN-12)
+  precio: number;
+  propio: boolean;
+  ocupado?: PalcoOcupadoAdmin;
   pasado: boolean;
 }
+
+// "Cliente" + su correo en chico
+const Persona = ({ nombre, email }: { nombre: string; email?: string }) => (
+  <span className="flex flex-col items-end">
+    <span>{nombre}</span>
+    {email && (
+      <span className="text-[11px] font-normal text-gray-400 break-all">
+        {email}
+      </span>
+    )}
+  </span>
+);
 
 const Fila = ({ etiqueta, valor }: { etiqueta: string; valor: ReactNode }) => (
   <div className="flex justify-between gap-3 text-sm">
@@ -46,11 +64,21 @@ const BotonFase7 = ({
   </button>
 );
 
+// "Quedan 6 min" o, si ya vencio, que se liberara al revisar el pago
+const textoReserva = (minutos: number | null) => {
+  if (minutos === null) return "Alguien lo está pagando.";
+  if (minutos <= 0)
+    return "La reserva ya venció: se liberará al revisar el pago (fase 4).";
+  return `Alguien lo está pagando: quedan ~${minutos} min de reserva.`;
+};
+
 // Detalle del palco elegido en el mapa del evento. Cambia segun su estado
 export default function PanelPalco({
   evento,
   palco,
   estado,
+  precio,
+  propio,
   ocupado,
   pasado,
 }: PanelPalcoProps) {
@@ -66,7 +94,7 @@ export default function PanelPalco({
   }
 
   const { etiqueta, color, marca } = ESTILO_ESTADO[estado];
-  const totalPalco = evento.precioPalco + evento.cargoSuarec;
+  const totalPalco = precio + evento.cargoSuarec;
 
   return (
     <aside
@@ -97,8 +125,8 @@ export default function PanelPalco({
           }
         />
         <Fila
-          etiqueta="Precio del palco"
-          valor={formatCurrency(evento.precioPalco)}
+          etiqueta={propio ? "Precio del palco (propio)" : "Precio del palco"}
+          valor={formatCurrency(precio)}
         />
         {/* RN-15: el cargo va UNA vez por palco */}
         <Fila
@@ -131,11 +159,25 @@ export default function PanelPalco({
         {estado === "EN_COMPRA" && (
           <>
             <p className="text-sm text-gray-600">
-              Alguien lo está pagando
-              {ocupado?.minutosRestantes !== undefined &&
-                `: quedan ~${ocupado.minutosRestantes} min de reserva`}
-              .
+              {ocupado?.graciaHasta
+                ? "Pago en verificación con el banco (RN-17)."
+                : textoReserva(
+                    minutosRestantes(ocupado?.reservadoHasta ?? null),
+                  )}
             </p>
+            {ocupado?.comprador && (
+              <dl className="flex flex-col gap-2">
+                <Fila
+                  etiqueta="Comprador"
+                  valor={
+                    <Persona
+                      nombre={ocupado.comprador.nombre}
+                      email={ocupado.comprador.email}
+                    />
+                  }
+                />
+              </dl>
+            )}
             <p className="text-[11px] text-gray-400">
               Mientras dure la compra nadie lo puede apartar ni modificar
               (RN-06). Si no paga a tiempo, se libera solo.
@@ -146,14 +188,15 @@ export default function PanelPalco({
         {estado === "APARTADO" && ocupado && (
           <>
             <dl className="flex flex-col gap-2">
-              <Fila etiqueta="Apartado por" valor={ocupado.apartadoPor} />
+              <Fila
+                etiqueta="Apartado por"
+                valor={ocupado.apartadoPor?.nombre ?? "Sin dato"}
+              />
               {ocupado.nota && <Fila etiqueta="Nota" valor={ocupado.nota} />}
-              {ocupado.fecha && (
-                <Fila
-                  etiqueta="Fecha"
-                  valor={formatDisplayDate(ocupado.fecha)}
-                />
-              )}
+              <Fila
+                etiqueta="Fecha"
+                valor={formatDisplayDate(ocupado.actualizadoEn)}
+              />
             </dl>
             {!pasado && (
               <BotonFase7 icono={<Unlock className="h-4 w-4" />}>
@@ -172,16 +215,26 @@ export default function PanelPalco({
         {estado === "VENDIDO" && ocupado && (
           <>
             <dl className="flex flex-col gap-2">
-              <Fila etiqueta="Comprador" valor={ocupado.comprador} />
-              {ocupado.monto !== undefined && (
+              <Fila
+                etiqueta="Comprador"
+                valor={
+                  ocupado.comprador ? (
+                    <Persona
+                      nombre={ocupado.comprador.nombre}
+                      email={ocupado.comprador.email}
+                    />
+                  ) : (
+                    "Sin dato"
+                  )
+                }
+              />
+              {ocupado.monto !== null && (
                 <Fila etiqueta="Pagó" valor={formatCurrency(ocupado.monto)} />
               )}
-              {ocupado.fecha && (
-                <Fila
-                  etiqueta="Fecha de compra"
-                  valor={formatDisplayDate(ocupado.fecha)}
-                />
-              )}
+              <Fila
+                etiqueta="Fecha de compra"
+                valor={formatDisplayDate(ocupado.actualizadoEn)}
+              />
               <Fila etiqueta="Boletas" valor={CUPOS_POR_PALCO} />
             </dl>
             <BotonFase7 icono={<Download className="h-4 w-4" />}>

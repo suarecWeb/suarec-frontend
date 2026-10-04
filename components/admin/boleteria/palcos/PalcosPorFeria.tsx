@@ -10,54 +10,75 @@ import {
   Ticket,
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/TimeZone";
-import { FERIAS_DE_PRUEBA } from "./datosDePrueba";
-import { contarEstados, esPasado, EventoConPalcos } from "./estadosPalco";
+import { EventoPalcoResumen } from "@/interfaces/palcos.interface";
+import { esPasado } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
-import AvisoDatosDePrueba from "./AvisoDatosDePrueba";
+import { Cargando, ErrorCarga } from "./EstadoCarga";
+import { useEventosConPalcos } from "./usePalcosEventos";
+import { rutaPalcosEvento } from "./rutas";
 
 type Cuando = "proximos" | "pasados";
-
-export const rutaPalcosEvento = (eventoId: number) =>
-  `/admin/boleteria/eventos/${eventoId}/palcos`;
 
 const coincide = (texto: string, busqueda: string) =>
   texto.toLowerCase().includes(busqueda.trim().toLowerCase());
 
-// Tab "Gestion de palcos" de Ferias: los eventos PALCO agrupados por feria. Al elegir
-// uno se abre su mapa (lo vendido, libre, en compra y apartado). Solo
-// para mirar por ahora: apartar palcos es de la fase 7
+// Tab "Gestion de palcos" de Ferias: los eventos PALCO agrupados por
+// feria, leidos de la base (GET /palcos/eventos). Al elegir uno se abre su
+// mapa (lo vendido, libre, en compra y apartado). Solo para mirar por
+// ahora: apartar palcos es de la fase 7
 export default function PalcosPorFeria() {
   const [busqueda, setBusqueda] = useState("");
   const [cuando, setCuando] = useState<Cuando>("proximos");
+  const { carga, reintentar } = useEventosConPalcos();
+  const todas = carga.estado === "listo" ? carga.datos : null;
 
   const ferias = useMemo(
     () =>
-      FERIAS_DE_PRUEBA.map((feria) => {
-        const eventos = feria.eventos
-          .filter((e) => (cuando === "pasados" ? esPasado(e) : !esPasado(e)))
-          .filter(
-            (e) =>
-              !busqueda.trim() ||
-              coincide(e.nombre, busqueda) ||
-              coincide(feria.nombre, busqueda),
-          )
-          .sort((a, b) => {
-            const diferencia =
-              new Date(a.fechaEvento).getTime() -
-              new Date(b.fechaEvento).getTime();
-            // Proximos: el mas cercano primero; pasados: el mas reciente
-            return cuando === "proximos" ? diferencia : -diferencia;
-          });
-        return { ...feria, eventos };
-      }).filter((feria) => feria.eventos.length > 0),
-    [busqueda, cuando],
+      (todas ?? [])
+        .map((feria) => {
+          const eventos = feria.eventos
+            .filter((e) =>
+              cuando === "pasados"
+                ? esPasado(e.fechaEvento)
+                : !esPasado(e.fechaEvento),
+            )
+            .filter(
+              (e) =>
+                !busqueda.trim() ||
+                coincide(e.nombre, busqueda) ||
+                coincide(feria.nombre, busqueda),
+            )
+            .sort((a, b) => {
+              const diferencia =
+                new Date(a.fechaEvento).getTime() -
+                new Date(b.fechaEvento).getTime();
+              // Proximos: el mas cercano primero; pasados: el mas reciente
+              return cuando === "proximos" ? diferencia : -diferencia;
+            });
+          return { ...feria, eventos };
+        })
+        .filter((feria) => feria.eventos.length > 0)
+        // La feria con el evento mas cercano (o el pasado mas reciente)
+        // primero
+        .sort((a, b) => {
+          const diferencia =
+            new Date(a.eventos[0].fechaEvento).getTime() -
+            new Date(b.eventos[0].fechaEvento).getTime();
+          return cuando === "proximos" ? diferencia : -diferencia;
+        }),
+    [todas, busqueda, cuando],
   );
+
+  if (carga.estado === "cargando") {
+    return <Cargando texto="Cargando los eventos de palcos…" />;
+  }
+  if (carga.estado === "error") {
+    return <ErrorCarga mensaje={carga.mensaje} onReintentar={reintentar} />;
+  }
 
   return (
     <div className="flex flex-col gap-5">
-      <AvisoDatosDePrueba />
-
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <label className="relative flex-1">
           <span className="sr-only">Buscar evento o feria</span>
@@ -107,6 +128,8 @@ export default function PalcosPorFeria() {
           </h3>
           <p className="mt-1.5 text-sm text-gray-400">
             Aquí aparecen los eventos de tipo PALCO de cada feria.
+            {todas?.length === 0 &&
+              " Crea un evento PALCO en una feria con recinto para verlo aquí."}
           </p>
         </div>
       ) : (
@@ -138,7 +161,7 @@ export default function PalcosPorFeria() {
             <ul className="divide-y divide-gray-100">
               {feria.eventos.map((evento) => (
                 <li key={evento.id}>
-                  <FilaEvento evento={evento} />
+                  <FilaEvento evento={evento} conRecinto={!!feria.recinto} />
                 </li>
               ))}
             </ul>
@@ -149,7 +172,13 @@ export default function PalcosPorFeria() {
   );
 }
 
-function FilaEvento({ evento }: { evento: EventoConPalcos }) {
+function FilaEvento({
+  evento,
+  conRecinto,
+}: {
+  evento: EventoPalcoResumen;
+  conRecinto: boolean;
+}) {
   const datos = (
     <>
       <div className="min-w-0 flex-1">
@@ -164,19 +193,30 @@ function FilaEvento({ evento }: { evento: EventoConPalcos }) {
         </p>
       </div>
       <div className="sm:w-[420px] flex-shrink-0">
-        {evento.recinto ? (
-          <ContadoresPalcos {...contarEstados(evento)} compacto />
+        {conRecinto ? (
+          <ContadoresPalcos
+            conteo={evento.conteo}
+            total={evento.total}
+            compacto
+          />
         ) : (
           <span className="text-xs text-gray-400">
             Sin mapa hasta asignar un recinto
           </span>
+        )}
+        {evento.fueraDelRecinto > 0 && (
+          <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-700">
+            <AlertTriangle className="h-3 w-3" />
+            {evento.fueraDelRecinto} venta(s) en palcos que ya no están en el
+            recinto
+          </p>
         )}
       </div>
     </>
   );
 
   // Sin recinto no hay mapa que abrir
-  if (!evento.recinto) {
+  if (!conRecinto) {
     return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 opacity-70">
         {datos}
