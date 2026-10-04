@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, EyeOff, Monitor, Smartphone } from "lucide-react";
+import { CalendarDays, Edit, EyeOff, Monitor, Smartphone } from "lucide-react";
 import { Evento, EventoEstado } from "@/interfaces/event.interface";
 import { formatDisplayDate } from "@/lib/TimeZone";
 
@@ -25,13 +25,15 @@ const ESTADO_CONFIG: Record<EventoEstado, { label: string; color: string }> = {
 
 interface EventKanbanTicketProps {
   event: Evento;
+  // Botón de editar (lápiz). Sin esto, el ticket no se puede editar
+  onEditar?: () => void;
 }
 
 // Ticket plano estilo Jira para la columna del tablero -- a diferencia de
 // EventFlipCard (que sigue intacto para Eventos/Asignar/EditFeria), acá no
 // hay flip ni imagen grande: solo nombre + chips de estado + pie con fecha
 // e ícono de formato, para que quepan más eventos visibles por columna.
-const EventKanbanTicket = ({ event }: EventKanbanTicketProps) => (
+const EventKanbanTicket = ({ event, onEditar }: EventKanbanTicketProps) => (
   <div className="rounded-md border border-gray-200 bg-white p-2.5 hover:border-gray-300 hover:shadow-sm transition-all">
     <div className="flex items-start gap-2">
       <div className="h-8 w-8 rounded flex-shrink-0 overflow-hidden bg-[#097EEC]/10 flex items-center justify-center">
@@ -51,6 +53,22 @@ const EventKanbanTicket = ({ event }: EventKanbanTicketProps) => (
       <p className="text-[12.5px] font-medium text-gray-800 leading-snug line-clamp-2 flex-1">
         {event.nombre}
       </p>
+      {onEditar && (
+        <button
+          type="button"
+          // Un clic edita; arrastrar el ticket sigue moviéndolo de feria
+          draggable={false}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditar();
+          }}
+          title="Editar evento"
+          aria-label={`Editar ${event.nombre}`}
+          className="p-1 -mr-1 -mt-1 rounded text-gray-400 hover:text-[#097EEC] hover:bg-[#097EEC]/5 transition-colors flex-shrink-0"
+        >
+          <Edit className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
 
     <div className="mt-2 flex items-center gap-1 flex-wrap">

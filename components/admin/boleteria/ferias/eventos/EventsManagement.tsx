@@ -12,6 +12,11 @@ import CreateEventModal from "./CreateEventModal";
 import EditEventModal from "./EditEventModal";
 import EventFlipCard from "./EventFlipCard";
 import {
+  paginaActual,
+  rutaEditarEvento,
+  rutaCrearEvento,
+} from "../../digital/evento/rutas";
+import {
   CalendarDays,
   PlusCircle,
   EyeOff,
@@ -170,6 +175,16 @@ const EventsManagement = ({
     return null;
   }
 
+  // Digital: pagina de evento. Fisico: su ventana de siempre
+  const abrirCrear = () =>
+    modoFisico
+      ? setShowCreateModal(true)
+      : router.push(rutaCrearEvento(paginaActual()));
+  const abrirEditar = (event: Evento) =>
+    event.modalidad === EventoModalidad.FISICO || !event.id
+      ? setEventToEdit(event)
+      : router.push(rutaEditarEvento(event.id, paginaActual()));
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
@@ -177,7 +192,7 @@ const EventsManagement = ({
           Eventos ({eventosFiltrados.length})
         </h2>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={abrirCrear}
           className="inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
         >
           <PlusCircle className="h-4 w-4" />
@@ -223,7 +238,7 @@ const EventsManagement = ({
           </p>
 
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={abrirCrear}
             className="mt-4 inline-flex items-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
           >
             <PlusCircle className="h-4 w-4" />
@@ -272,7 +287,7 @@ const EventsManagement = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEventToEdit(event);
+                          abrirEditar(event);
                         }}
                         className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
                         title="Editar"

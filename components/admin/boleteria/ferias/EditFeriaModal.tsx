@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   X,
   CalendarDays,
@@ -22,12 +23,17 @@ import {
   Feria,
   UpdateFeriaDto,
 } from "@/interfaces/feria.interface";
-import { Evento, CreateEventoDto } from "@/interfaces/event.interface";
+import {
+  Evento,
+  CreateEventoDto,
+  EventoModalidad,
+} from "@/interfaces/event.interface";
 import EventFlipCard from "@/components/admin/boleteria/ferias/eventos/EventFlipCard";
 import EditEventModal from "@/components/admin/boleteria/ferias/eventos/EditEventModal";
 import EventsService from "@/services/EventsService";
 import toast from "react-hot-toast";
 import SelectorRecinto from "./SelectorRecinto";
+import { paginaActual, rutaEditarEvento } from "../digital/evento/rutas";
 import FeriaMapaPicker from "./FeriaMapaPicker";
 
 interface EditFeriaModalProps {
@@ -109,6 +115,13 @@ export default function EditFeriaModal({
     feria.eventos ?? [],
   );
   const [eventoToEdit, setEventoToEdit] = useState<Evento | null>(null);
+  const router = useRouter();
+
+  // Digital: pagina de evento. Fisico: su ventana de siempre
+  const abrirEditar = (evento: Evento) =>
+    evento.modalidad === EventoModalidad.FISICO || !evento.id
+      ? setEventoToEdit(evento)
+      : router.push(rutaEditarEvento(evento.id, paginaActual()));
 
   const handleEditEvento = async (
     id: number,
@@ -461,7 +474,7 @@ export default function EditFeriaModal({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEventoToEdit(evento);
+                            abrirEditar(evento);
                           }}
                           className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
                           title="Editar evento"

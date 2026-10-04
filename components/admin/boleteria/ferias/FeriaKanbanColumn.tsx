@@ -5,9 +5,13 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { CalendarDays, Edit, Eye, EyeOff, Ticket } from "lucide-react";
 import { Feria } from "@/interfaces/feria.interface";
-import { Evento } from "@/interfaces/event.interface";
+import { Evento, EventoModalidad } from "@/interfaces/event.interface";
 import EventKanbanTicket from "@/components/admin/boleteria/ferias/eventos/EventKanbanTicket";
 import { formatDisplayDate } from "@/lib/TimeZone";
+import {
+  paginaActual,
+  rutaEditarEvento,
+} from "@/components/admin/boleteria/digital/evento/rutas";
 
 interface FeriaKanbanColumnProps {
   feria: Feria;
@@ -160,7 +164,19 @@ export default function FeriaKanbanColumn({
               }}
               className="cursor-grab active:cursor-grabbing"
             >
-              <EventKanbanTicket event={evento} />
+              {/* Los digitales se editan en su página; los físicos
+                  siguen con su ventana en Boletería física */}
+              <EventKanbanTicket
+                event={evento}
+                onEditar={
+                  evento.id && evento.modalidad !== EventoModalidad.FISICO
+                    ? () =>
+                        router.push(
+                          rutaEditarEvento(evento.id!, paginaActual()),
+                        )
+                    : undefined
+                }
+              />
             </div>
           ))
         )}

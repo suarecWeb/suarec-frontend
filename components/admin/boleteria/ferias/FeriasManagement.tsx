@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Feria, CreateFeriaDto } from "@/interfaces/feria.interface";
 import {
   CreateEventoDto,
@@ -12,6 +13,10 @@ import EventsService from "@/services/EventsService";
 import CreateFeriaModal from "@/components/admin/boleteria/ferias/CreateFeriaModal";
 import CreateEventModal from "@/components/admin/boleteria/ferias/eventos/CreateEventModal";
 import FeriaKanbanColumn from "@/components/admin/boleteria/ferias/FeriaKanbanColumn";
+import {
+  paginaActual,
+  rutaCrearEvento,
+} from "@/components/admin/boleteria/digital/evento/rutas";
 import { CalendarDays, PlusCircle, EyeOff, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -25,12 +30,17 @@ interface FeriasManagementProps {
   // Pasa a CreateEventModal para que "Crear evento" desde Ferias cree el
   // tipo de evento correcto según el módulo (digital vs física).
   modoFisico?: boolean;
+  // Boletería digital: las ferias se crean en su propia sección (Ferias),
+  // no desde aquí
+  ocultarCrearFeria?: boolean;
 }
 
 const FeriasManagement = ({
   filtroModalidad,
   modoFisico = false,
+  ocultarCrearFeria = false,
 }: FeriasManagementProps = {}) => {
+  const router = useRouter();
   const [ferias, setFerias] = useState<Feria[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -220,15 +230,22 @@ const FeriasManagement = ({
             </button>
           )}
           <div className="flex flex-col items-stretch gap-2">
+            {!ocultarCrearFeria && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all font-medium shadow-sm shadow-emerald-100"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Crear feria
+              </button>
+            )}
             <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all font-medium shadow-sm shadow-emerald-100"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Crear feria
-            </button>
-            <button
-              onClick={() => setShowCreateEventModal(true)}
+              onClick={() =>
+                // Digital: pagina de evento. Fisico: su ventana de siempre
+                modoFisico
+                  ? setShowCreateEventModal(true)
+                  : router.push(rutaCrearEvento(paginaActual()))
+              }
               className="inline-flex items-center justify-center gap-2 bg-[#097EEC] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#0562C7] active:scale-[0.98] transition-all font-medium shadow-sm shadow-blue-100"
             >
               <PlusCircle className="h-4 w-4" />
@@ -268,17 +285,28 @@ const FeriasManagement = ({
 
           <p className="mt-1.5 text-sm text-gray-400">
             {feriasDelModulo.length === 0
-              ? "Crea la primera feria para agrupar eventos bajo ella."
+              ? ocultarCrearFeria
+                ? "Las ferias se crean en la sección Ferias."
+                : "Crea la primera feria para agrupar eventos bajo ella."
               : `Hay ${feriasOcultas.length} sin organizar -- usa "Mostrar no organizadas" arriba para verlas y activarlas.`}
           </p>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-600 hover:underline font-medium"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Crear feria
-          </button>
+          {ocultarCrearFeria ? (
+            <button
+              onClick={() => router.push("/admin/boleteria/ferias")}
+              className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-600 hover:underline font-medium"
+            >
+              Ir a Ferias
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-600 hover:underline font-medium"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Crear feria
+            </button>
+          )}
         </div>
       ) : (
         // Tablero tipo Jira: una columna por feria, scroll horizontal. Cada

@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Edit, CalendarDays } from "lucide-react";
-import { Evento, CreateEventoDto } from "@/interfaces/event.interface";
+import {
+  Evento,
+  CreateEventoDto,
+  EventoModalidad,
+} from "@/interfaces/event.interface";
 import EventFlipCard from "./EventFlipCard";
 import EditEventModal from "./EditEventModal";
 import EventsService from "@/services/EventsService";
+import { paginaActual, rutaEditarEvento } from "../../digital/evento/rutas";
 
 interface FeriaEventosProps {
   eventos: Evento[];
@@ -16,6 +22,13 @@ interface FeriaEventosProps {
 export default function FeriaEventos({ eventos }: FeriaEventosProps) {
   const [eventosAsignados, setEventosAsignados] = useState<Evento[]>(eventos);
   const [eventoToEdit, setEventoToEdit] = useState<Evento | null>(null);
+  const router = useRouter();
+
+  // Digital: pagina de evento. Fisico: su ventana de siempre
+  const abrirEditar = (evento: Evento) =>
+    evento.modalidad === EventoModalidad.FISICO || !evento.id
+      ? setEventoToEdit(evento)
+      : router.push(rutaEditarEvento(evento.id, paginaActual()));
 
   const handleEditEvento = async (
     id: number,
@@ -60,7 +73,7 @@ export default function FeriaEventos({ eventos }: FeriaEventosProps) {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setEventoToEdit(evento);
+                    abrirEditar(evento);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm px-3 py-2 rounded-lg hover:bg-gray-50 active:scale-[0.98] transition-all font-medium"
                   title="Editar evento"

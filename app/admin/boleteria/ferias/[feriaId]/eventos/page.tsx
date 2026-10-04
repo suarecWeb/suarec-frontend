@@ -6,7 +6,8 @@ import Navbar from "@/components/navbar";
 import RoleGuard from "@/components/role-guard";
 import FeriaEventos from "@/components/admin/boleteria/ferias/eventos/FeriaEventos";
 import { useFeriaAdmin } from "@/hooks/useFeriaAdmin";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PlusCircle } from "lucide-react";
+import { rutaCrearEvento } from "@/components/admin/boleteria/digital/evento/rutas";
 import { motion } from "framer-motion";
 
 const pageVariants = {
@@ -37,10 +38,21 @@ const FeriaEventosPageContent = () => {
                 <ArrowLeft className="h-5 w-5" />
               </motion.button>
             </Link>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-3xl font-bold">Eventos</h1>
               <p className="mt-2 text-blue-100">{feria?.nombre ?? "Feria"}</p>
             </div>
+            {/* Evento digital con esta feria ya elegida */}
+            <Link
+              href={rutaCrearEvento(
+                `/admin/boleteria/ferias/${feriaId}/eventos`,
+                feriaId,
+              )}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white text-[#097EEC] hover:bg-blue-50 shadow"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Crear evento
+            </Link>
           </div>
         </div>
 

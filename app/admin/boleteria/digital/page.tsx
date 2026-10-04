@@ -154,6 +154,7 @@ const BoleteriaPageContent = () => {
                           propia sección: /admin/boleteria/ferias */}
                       <FeriasManagement
                         filtroModalidad={EventoModalidad.DIGITAL}
+                        ocultarCrearFeria
                       />
                       <div
                         className={
