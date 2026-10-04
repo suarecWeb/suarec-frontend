@@ -46,7 +46,10 @@ export default function PestanasEvento({
   ];
 
   const alTocar = (e: MouseEvent, href: string) => {
-    if (!hayCambios) return;
+    // Abrir en otra pestaña del navegador (Ctrl/Cmd/Shift + clic) no pierde
+    // los cambios de esta: no se pregunta
+    const otraPestana = e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0;
+    if (!hayCambios || otraPestana) return;
     e.preventDefault();
     setDestino(href);
   };

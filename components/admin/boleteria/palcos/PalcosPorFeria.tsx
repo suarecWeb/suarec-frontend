@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/TimeZone";
 import { EventoPalcoResumen } from "@/interfaces/palcos.interface";
-import { esPasado } from "./estadosPalco";
+import { esPasado, textoVentasFueraDelMapa } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
 import { Cargando, ErrorCarga } from "./EstadoCarga";
@@ -207,8 +207,7 @@ function FilaEvento({
         {evento.fueraDelRecinto > 0 && (
           <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-700">
             <AlertTriangle className="h-3 w-3" />
-            {evento.fueraDelRecinto} venta(s) en palcos que ya no están en el
-            recinto
+            {textoVentasFueraDelMapa(evento.fueraDelRecinto)}
           </p>
         )}
       </div>

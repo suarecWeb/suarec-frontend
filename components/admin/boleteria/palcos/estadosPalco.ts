@@ -13,6 +13,12 @@ export type EstadoPalco = "LIBRE" | "EN_COMPRA" | "APARTADO" | "VENDIDO";
 // Cupos y boletas de un palco (RN-01; CUPOS_POR_PALCO del backend)
 export const CUPOS_POR_PALCO = 10;
 
+// Aviso de ventas que no se ven en el mapa de hoy, igual en la lista y en
+// el mapa: el palco se borro del dibujo, dejo de ser PALCO o la feria
+// cambio de recinto (RN-24)
+export const textoVentasFueraDelMapa = (n: number) =>
+  `${n} venta(s) en palcos que ya no están en el mapa (se borraron, cambiaron de tipo o la feria cambió de recinto)`;
+
 export const ESTADOS_PALCO: EstadoPalco[] = [
   "LIBRE",
   "EN_COMPRA",

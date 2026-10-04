@@ -22,13 +22,14 @@ import {
   contarMapa,
   esPasado,
   ocupadosPorFigura,
+  textoVentasFueraDelMapa,
 } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
 import PanelPalco from "./PanelPalco";
 import { Cargando, ErrorCarga } from "./EstadoCarga";
 import { useMapaEvento } from "./usePalcosEventos";
-import { rutaPalcosEvento } from "./rutas";
+import { RUTA_TAB_PALCOS, rutaPalcosEvento } from "./rutas";
 import { useZoomMapa } from "./useZoomMapa";
 import ControlesZoom from "./ControlesZoom";
 
@@ -61,7 +62,7 @@ export default function PalcosEvento({
       <ErrorCarga
         mensaje={carga.mensaje}
         onReintentar={carga.noEncontrado ? undefined : reintentar}
-        conVolver
+        volver={volver ?? RUTA_TAB_PALCOS}
       />
     );
   }
@@ -201,9 +202,7 @@ function ContenidoEvento({
       {fueraDelMapa > 0 && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          {fueraDelMapa} venta(s) de este evento son de palcos que ya no están
-          en el dibujo del recinto (se borraron o la feria cambió de recinto):
-          no aparecen en el mapa.
+          {textoVentasFueraDelMapa(fueraDelMapa)}
         </div>
       )}
 

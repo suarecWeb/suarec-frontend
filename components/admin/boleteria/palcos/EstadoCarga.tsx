@@ -15,15 +15,16 @@ export function Cargando({ texto }: { texto: string }) {
   );
 }
 
-// Si fallo: reintentar (error de red o del servidor) o volver (no existe)
+// Si fallo: reintentar (error de red o del servidor) o volver (no existe).
+// volver: a donde regresa el boton (sin el, no se muestra)
 export function ErrorCarga({
   mensaje,
   onReintentar,
-  conVolver = false,
+  volver,
 }: {
   mensaje: string;
   onReintentar?: () => void;
-  conVolver?: boolean;
+  volver?: string;
 }) {
   return (
     <div role="alert" className="py-16 text-center">
@@ -40,13 +41,15 @@ export function ErrorCarga({
             Reintentar
           </button>
         )}
-        {conVolver && (
+        {volver && (
           <Link
-            href={RUTA_TAB_PALCOS}
+            href={volver}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-[#097EEC] hover:underline"
           >
             <ArrowLeft className="h-4 w-4" />
-            Volver a Gestión de palcos
+            {volver === RUTA_TAB_PALCOS
+              ? "Volver a Gestión de palcos"
+              : "Volver"}
           </Link>
         )}
       </div>
