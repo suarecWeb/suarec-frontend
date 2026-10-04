@@ -19,7 +19,8 @@ interface SeccionTipoProps {
   // Tipo con el que se creó (al editar). Un PALCO no cambia de tipo y otro
   // tipo no pasa a PALCO: sus palcos y ventas dependen de eso (backend)
   tipoOriginal?: EventoTipo;
-  // La feria elegida tiene recinto: sin él no se venden palcos
+  // La feria elegida tiene recinto: sin él, un PALCO se vende sin mapa
+  // (como antes: aforo escrito y precio base, RN-13)
   feriaConRecinto: boolean;
   // Palcos dibujados en el recinto de la feria; null si aún no hay
   palcosDelDibujo: number | null;
@@ -82,7 +83,8 @@ export default function SeccionTipo({
 }: SeccionTipoProps) {
   const { form, cambiar, errores } = f;
   const editando = tipoOriginal !== undefined;
-  const palcoApagado = editando || !feriaConRecinto;
+  const palcoApagado = editando;
+  const conMapa = f.esPalco && feriaConRecinto;
 
   return (
     <div className="space-y-4">
@@ -133,11 +135,11 @@ export default function SeccionTipo({
                 nuevo.
               </p>
             ) : (
+              f.esPalco &&
               !feriaConRecinto && (
-                <p
-                  className={`mt-1 text-[11px] ${f.esPalco ? "text-red-500" : "text-gray-400"}`}
-                >
-                  La feria necesita un recinto para vender palcos.
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Sin recinto, el PALCO se vende sin mapa, como antes: con aforo
+                  y precio base.
                 </p>
               )
             )}
@@ -145,7 +147,7 @@ export default function SeccionTipo({
         )}
       </div>
 
-      {f.esPalco ? (
+      {conMapa ? (
         <>
           <p className="flex items-center gap-1.5 text-sm text-gray-700">
             <Armchair className="h-4 w-4 text-gray-400" />

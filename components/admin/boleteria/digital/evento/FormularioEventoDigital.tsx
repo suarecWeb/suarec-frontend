@@ -110,13 +110,26 @@ export default function FormularioEventoDigital({
   const original = mapa.estado === "listo" ? mapa.datos : null;
   const precios = usePreciosPalcos(original, recintoId);
   const feriaCambia = !!evento && f.form.feriaId !== evento.feriaId;
-  const situacion = { original, feriaCambia, precios };
+  // Un PALCO vendido sin mapa no puede pasar a una feria con recinto: esas
+  // boletas no tienen palco (RN-25)
+  const vendidasSinMapa =
+    editandoPalco && original && !original.recinto
+      ? (evento?.aforoTotal ?? 0) - (evento?.aforoDisponible ?? 0)
+      : 0;
+  const situacion = {
+    original,
+    feriaCambia,
+    precios,
+    vendidasSinMapa,
+    recintoNuevo: recintoId !== null,
+  };
   const bloqueo = bloqueoDeFeria(situacion);
 
-  // PEN-10: otro PALCO de la feria el mismo día (en hora de Colombia). El
-  // backend también lo frena; aquí se avisa junto a la fecha
+  // PEN-10: otro PALCO de la feria el mismo día (en hora de Colombia), solo
+  // en ferias con recinto (sin mapa no se comparten palcos). El backend
+  // también lo frena; aquí se avisa junto a la fecha
   const choqueFecha = useMemo(() => {
-    if (!feria || !f.form.fechaEvento) return null;
+    if (!feria?.recintoId || !f.form.fechaEvento) return null;
     const dia = f.form.fechaEvento.slice(0, 10);
     const otro = (feria.eventos ?? []).find(
       (e) =>
@@ -144,9 +157,11 @@ export default function FormularioEventoDigital({
 
   const { guardando, guardar } = useGuardarEvento(f, evento, volver);
   const [confirmando, setConfirmando] = useState(false);
-  // Los precios solo se mandan si se pudieron leer (al editar)
+  // Precios por palco solo con mapa, y si se pudieron leer (al editar)
   const preciosAGuardar = () =>
-    f.esPalco && (!editandoPalco || mapa.estado === "listo")
+    f.esPalco &&
+    recintoId !== null &&
+    (!editandoPalco || mapa.estado === "listo")
       ? precios.paraGuardar(palcoIds, f.form.precioBase)
       : null;
 
@@ -157,16 +172,20 @@ export default function FormularioEventoDigital({
       recintoDeLaFeria: recintoId,
       choqueFecha,
       palcosDelDibujo,
+      feriaCambia,
     });
     if (!valido || bloqueo) {
       toast.error(bloqueo ?? "Revisa los campos marcados en rojo");
       return;
     }
-    if (f.esPalco && recinto.estado !== "listo") {
+    // Con mapa: esperar el recinto y confirmar (resumen de precios). Sin
+    // mapa se guarda directo, como los demás tipos
+    const conMapa = f.esPalco && recintoId !== null;
+    if (conMapa && recinto.estado !== "listo") {
       toast.error("Espera a que cargue el recinto de la feria");
       return;
     }
-    if (f.esPalco && (!evento || feriaCambia)) setConfirmando(true);
+    if (conMapa && (!evento || feriaCambia)) setConfirmando(true);
     else guardar({ precios: preciosAGuardar(), palcosDelDibujo });
   };
 
@@ -177,6 +196,8 @@ export default function FormularioEventoDigital({
 
   // Al editar: si hay algo sin guardar, cambiar de pestaña pregunta
   const hayCambios = f.hayCambios || precios.cambiados;
+  // Un PALCO con recinto tiene pestañas en la barra (más alta)
+  const conPestanas = editandoPalco && !!evento?.feria?.recintoId;
 
   const textoGuardar = guardando
     ? "Guardando..."
@@ -209,7 +230,7 @@ export default function FormularioEventoDigital({
             </Seccion>
 
             <aside
-              className={`${LUGAR.feria} ${editandoPalco ? "xl:top-52" : "xl:top-44"}`}
+              className={`${LUGAR.feria} ${conPestanas ? "xl:top-52" : "xl:top-44"}`}
             >
               <Seccion titulo="Feria y recinto">
                 <PanelFeria
@@ -259,7 +280,9 @@ export default function FormularioEventoDigital({
               >
                 {!recintoId ? (
                   <p className="py-8 text-center text-sm text-gray-400">
-                    Elige una feria con recinto para poner los precios.
+                    Sin recinto, el PALCO se vende sin mapa y todos valen el
+                    precio base. Para poner precio por palco, elige una feria
+                    con recinto.
                   </p>
                 ) : recinto.estado === "error" ? (
                   <ErrorCarga

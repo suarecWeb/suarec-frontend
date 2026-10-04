@@ -137,15 +137,18 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
 
   // recintoDeLaFeria: null si la feria elegida no tiene recinto.
   // choqueFecha: otro PALCO de la feria ese dia (PEN-10), ya escrito.
-  // palcosDelDibujo: null mientras carga el recinto
+  // palcosDelDibujo: null mientras carga el recinto.
+  // feriaCambia: al editar, se eligio otra feria
   const validar = ({
     recintoDeLaFeria,
     choqueFecha,
     palcosDelDibujo,
+    feriaCambia = false,
   }: {
     recintoDeLaFeria: number | null;
     choqueFecha: string | null;
     palcosDelDibujo: number | null;
+    feriaCambia?: boolean;
   }): boolean => {
     const e: Errores = {};
     const nombre = form.nombre.trim();
@@ -185,9 +188,11 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
       e.nombreOrganizador =
         "El nombre del organizador no puede superar 150 caracteres";
 
-    // Aforo obligatorio (la base no acepta 0). En PALCO no se escribe:
-    // son los palcos dibujados en el recinto de la feria
-    if (!esPalco) {
+    // Aforo obligatorio (la base no acepta 0). En un PALCO con mapa no se
+    // escribe: son los palcos dibujados en el recinto de la feria. Un PALCO
+    // sin recinto se vende como antes, con el aforo que escribe el admin
+    const conMapa = esPalco && !!recintoDeLaFeria;
+    if (!conMapa) {
       if (form.aforoTotal === undefined)
         e.aforoTotal = "El aforo es obligatorio";
       else if (!Number.isInteger(form.aforoTotal))
@@ -210,15 +215,10 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
       e.imagen = "La imagen del evento es obligatoria";
     if (!tipo) e.tipo = "Debes seleccionar el tipo de evento";
 
-    // Un PALCO necesita el mapa de su feria (tambien lo frena el backend)
-    if (esPalco && !form.feriaId)
-      e.feriaId = "Un evento PALCO necesita una feria con recinto";
-    else if (esPalco && !recintoDeLaFeria)
-      e.feriaId =
-        "Esta feria no tiene recinto: asígnale uno en Ferias o elige otra";
-    // Sin palcos el aforo seria 0 y la base no lo acepta
-    // (eventos_aforo_total_check)
-    else if (esPalco && !editando && palcosDelDibujo === 0)
+    // Con recinto pero sin palcos dibujados el aforo seria 0 y la base no
+    // lo acepta (eventos_aforo_total_check). Al crear, o al editar si se
+    // cambia a esa feria. Tambien lo frena el backend
+    if (conMapa && (!editando || feriaCambia) && palcosDelDibujo === 0)
       e.feriaId =
         "El recinto de esta feria no tiene palcos dibujados: dibújalos en Recintos o elige otra feria";
 
@@ -233,17 +233,19 @@ export function useFormularioEvento(evento?: Evento, feriaInicial?: number) {
     return Object.keys(e).length === 0;
   };
 
-  // Lo que se manda al backend. En PALCO el admin no escribe el aforo: al
-  // crear es la cantidad de palcos del dibujo (la base exige aforo > 0,
-  // eventos_aforo_total_check). Al editar no se toca, para no chocar con
-  // las ventas; en la fase 4 se calcula al vuelo
+  // Lo que se manda al backend. En un PALCO con mapa el admin no escribe el
+  // aforo: al crear van los palcos del dibujo (el backend igual lo calcula
+  // con el dibujo) y al editar no se manda. Sin mapa (palcosDelDibujo null:
+  // la feria no tiene recinto) va el que escribe el admin, como en los
+  // demas tipos
   const aDto = (palcosDelDibujo?: number | null): CreateEventoDto => ({
     ...form,
-    aforoTotal: esPalco
-      ? editando
-        ? undefined
-        : (palcosDelDibujo ?? undefined)
-      : form.aforoTotal,
+    aforoTotal:
+      esPalco && palcosDelDibujo !== null && palcosDelDibujo !== undefined
+        ? editando
+          ? undefined
+          : palcosDelDibujo
+        : form.aforoTotal,
     tipo: tipo ?? undefined,
     cargoSuarec,
     ...(editando

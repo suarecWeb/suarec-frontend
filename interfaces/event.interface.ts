@@ -52,7 +52,13 @@ export interface Evento {
   formatId?: number;
   format?: EventoFormat;
   feriaId?: number;
-  feria?: { id: number; nombre: string; visible?: boolean };
+  feria?: {
+    id: number;
+    nombre: string;
+    visible?: boolean;
+    // Sin recinto, un evento PALCO se vende sin mapa (RN-13)
+    recintoId?: number | null;
+  };
   organizadorId?: number;
   visible?: boolean;
   createdAt?: string;

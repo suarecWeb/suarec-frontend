@@ -56,7 +56,7 @@ export default function PanelFeria({
     <div className="space-y-3">
       <div>
         <label htmlFor="evento-feria" className={claseEtiqueta}>
-          Feria {esPalco && <span className="text-red-400">*</span>}
+          Feria
         </label>
         <SelectorFeria
           ferias={ferias.datos}
@@ -139,8 +139,8 @@ function RecintoDeLaFeria({
           Esta feria no tiene recinto asignado
         </p>
         {esPalco && (
-          <p className="mt-1 text-xs text-red-500">
-            Un evento PALCO necesita uno para vender sus palcos.
+          <p className="mt-1 text-xs text-gray-500">
+            El PALCO se vende sin mapa, como antes: con aforo y precio base.
           </p>
         )}
       </div>

@@ -9,6 +9,10 @@ interface Situacion {
   original: MapaEventoPalco | null;
   feriaCambia: boolean;
   precios: PreciosPalcosEstado;
+  // Boletas vendidas de un PALCO sin mapa (feria sin recinto)
+  vendidasSinMapa: number;
+  // La feria elegida tiene recinto
+  recintoNuevo: boolean;
 }
 
 const ventasDe = (o: MapaEventoPalco | null) =>
@@ -22,13 +26,17 @@ export const bloqueoDeFeria = ({
   original,
   feriaCambia,
   precios,
+  vendidasSinMapa,
+  recintoNuevo,
 }: Situacion): string | null => {
   if (!original || !feriaCambia) return null;
   if (original.palcos.some((p) => p.estado === "EN_COMPRA"))
     return "Hay una compra de palco en curso en este evento: espera a que termine para cambiar la feria.";
   const ventas = ventasDe(original);
   if (ventas > 0 && precios.recintoCambia)
-    return `Este evento tiene ${palcos(ventas, "vendido")} o apartado${ventas === 1 ? "" : "s"} y esa feria usa otro recinto: no se puede cambiar (RN-25). Reubicar las ventas llega en la fase 7.`;
+    return `Este evento tiene ${palcos(ventas, "vendido")} o apartado${ventas === 1 ? "" : "s"} y esa feria ${recintoNuevo ? "usa otro recinto" : "no tiene recinto"}: no se puede cambiar (RN-25). Reubicar las ventas llega en la fase 7.`;
+  if (vendidasSinMapa > 0 && recintoNuevo && !original.recinto)
+    return `Este evento PALCO ya vendió ${vendidasSinMapa} boleta${vendidasSinMapa === 1 ? "" : "s"} sin mapa: no puede pasar a una feria con recinto porque esas ventas no tienen palco (RN-25).`;
   return null;
 };
 

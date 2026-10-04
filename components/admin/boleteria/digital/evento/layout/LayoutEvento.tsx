@@ -89,7 +89,9 @@ export default function LayoutEvento({
             : undefined
         }
         pestanas={
-          enGestion || evento?.tipo === EventoTipo.PALCO ? (
+          // Gestión de palcos solo tiene sentido con mapa (feria con recinto)
+          enGestion ||
+          (evento?.tipo === EventoTipo.PALCO && !!evento.feria?.recintoId) ? (
             <PestanasEvento
               eventoId={eventoId}
               activa={enGestion ? "palcos" : "datos"}
