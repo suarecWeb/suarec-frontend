@@ -104,7 +104,8 @@ export default function EditFeriaModal({
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
-  // RN-24: el backend avisa si el cambio de recinto afecta palcos vendidos
+  // RN-25: el backend pide confirmar si la feria tiene eventos PALCO (y
+  // bloquea si tienen palcos vendidos o apartados)
   const [aviso, setAviso] = useState<AvisoCambioRecinto | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const totalEventos = feria.eventos?.length ?? 0;
@@ -525,15 +526,15 @@ export default function EditFeriaModal({
               className="flex items-center gap-2 text-sm font-semibold text-amber-800"
             >
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              {aviso.palcosAfectados === 1
-                ? "1 palco ya está reservado o vendido"
-                : `${aviso.palcosAfectados} palcos ya están reservados o vendidos`}
+              {aviso.eventosPalco === 1
+                ? "Esta feria tiene 1 evento PALCO"
+                : `Esta feria tiene ${aviso.eventosPalco} eventos PALCO`}
             </p>
             <p className="mt-1 text-xs text-amber-700">
               {form.recintoId === null
-                ? "Si quitas el recinto"
-                : "Si cambias el recinto"}
-              , esos palcos dejan de verse en el mapa de esta feria.
+                ? "Si quitas el recinto, se venden sin mapa"
+                : "Si cambias el recinto, su mapa pasa a ser el del recinto nuevo"}{" "}
+              y se borran sus precios por palco.
             </p>
             <div className="mt-3 flex gap-2">
               <button

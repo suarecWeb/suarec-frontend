@@ -38,13 +38,15 @@ export interface CreateFeriaDto {
 }
 
 export interface UpdateFeriaDto extends Partial<CreateFeriaDto> {
-  // RN-24: reenviar con true despues de que el admin confirma el aviso
+  // RN-25: reenviar con true despues de que el admin confirma el aviso
   confirmarCambioRecinto?: boolean;
 }
 
-// 409 del backend cuando el cambio de recinto afecta palcos vendidos
+// 409 del backend al cambiar o quitar el recinto de una feria con eventos
+// PALCO sin ventas: su mapa cambia y se borran sus precios por palco. Con
+// ventas el backend bloquea (RN-25) y no hay nada que confirmar
 export interface AvisoCambioRecinto {
   message: string;
   requiereConfirmacion: true;
-  palcosAfectados: number;
+  eventosPalco: number;
 }

@@ -138,11 +138,10 @@ const FeriasManagement = ({
       ? (feria.eventos ?? []).filter((e) => e.modalidad === filtroModalidad)
       : (feria.eventos ?? []);
 
-  // Soltar un evento arrastrado sobre una columna: reasigna su feria.
-  // Reusa el mismo endpoint de asignación en bloque que ya usa
-  // CreateFeriaModal (PATCH /ferias/:id/eventos), con un solo id -- el
-  // backend solo hace un UPDATE de feriaId, ya es "mover" de por sí (un
-  // evento no puede tener dos ferias a la vez).
+  // Soltar un evento arrastrado sobre una columna: reasigna su feria con
+  // PATCH /events/:id, el mismo de editar el evento, para que apliquen las
+  // mismas reglas (RN-25, PEN-10, recinto sin palcos). Cambiar la feria ya
+  // es "mover" (un evento no puede tener dos ferias a la vez)
   const handleDropEvento = async (eventoId: number, feriaDestinoId: number) => {
     const feriaOrigen = ferias.find((f) =>
       (f.eventos ?? []).some((e) => e.id === eventoId),
@@ -177,10 +176,18 @@ const FeriasManagement = ({
     );
 
     try {
-      await FeriasService.asignarEventos(feriaDestinoId, [eventoId]);
+      // El mismo endpoint que editar el evento: aplica las reglas de PALCO
+      // (RN-25, PEN-10, recinto sin palcos) y limpia la caché de ferias
+      await EventsService.updateEvent(String(eventoId), {
+        feriaId: feriaDestinoId,
+      });
       toast.success("Evento reasignado");
-    } catch {
-      toast.error("No se pudo reasignar el evento");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(
+        typeof msg === "string" ? msg : "No se pudo reasignar el evento",
+        { duration: 6000 },
+      );
       // Revierte el optimista si el backend rechazó el cambio
       setFerias((prev) =>
         prev.map((f) => {

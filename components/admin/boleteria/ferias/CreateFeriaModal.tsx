@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
 import { Evento, EventoModalidad } from "@/interfaces/event.interface";
-import FeriasService from "@/services/FeriasService";
+import EventsService from "@/services/EventsService";
 import toast from "react-hot-toast";
 import SelectorRecinto from "./SelectorRecinto";
 import FeriaMapaPicker from "./FeriaMapaPicker";
@@ -175,18 +175,35 @@ export default function CreateFeriaModal({
 
       // La asignacion de eventos es un paso aparte de crear la feria -- si
       // falla, la feria ya quedo creada, no se pierde el trabajo del admin.
+      // Uno por uno con el mismo endpoint que editar el evento (aplica las
+      // reglas de PALCO); si alguno no se puede, se dice cual y por que
       if (eventosAsignados.length > 0 && feriaCreada?.id) {
-        try {
-          const res = await FeriasService.asignarEventos(
-            feriaCreada.id,
-            eventosAsignados.map((ev) => ev.id!),
-          );
-          onEventosAsignados?.(res.data);
-        } catch {
-          toast.error(
-            "La feria se creó, pero falló asignar los eventos arrastrados. Puedes asignarlos desde Editar.",
-          );
+        const asignados: Evento[] = [];
+        const fallidos: string[] = [];
+        for (const ev of eventosAsignados) {
+          try {
+            await EventsService.updateEvent(String(ev.id), {
+              feriaId: feriaCreada.id,
+            });
+            asignados.push({ ...ev, feriaId: feriaCreada.id });
+          } catch (err: any) {
+            const msg = err?.response?.data?.message;
+            fallidos.push(
+              `${ev.nombre}: ${typeof msg === "string" ? msg : "no se pudo asignar"}`,
+            );
+          }
         }
+        if (asignados.length > 0)
+          onEventosAsignados?.({ ...feriaCreada, eventos: asignados });
+        if (fallidos.length > 0)
+          toast.error(
+            `La feria se creó, pero ${
+              fallidos.length === 1
+                ? "un evento no se pudo asignar"
+                : `${fallidos.length} eventos no se pudieron asignar`
+            }. ${fallidos.join(" · ")}`,
+            { duration: 10000 },
+          );
       }
 
       onClose();
