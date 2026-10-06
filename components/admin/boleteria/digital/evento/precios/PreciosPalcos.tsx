@@ -48,7 +48,10 @@ export default function PreciosPalcos({
       ),
     [recinto],
   );
-  const seleccion = useSeleccionPalcos(palcos);
+  // Un palco vendido conserva su precio: no se puede elegir (el backend
+  // también lo rechaza)
+  const bloqueados = useMemo(() => new Set(vendidos.keys()), [vendidos]);
+  const seleccion = useSeleccionPalcos(palcos, bloqueados);
   const { elegidos } = seleccion;
 
   // Resumen: primero el base, luego los propios del más caro al más barato
@@ -93,7 +96,9 @@ export default function PreciosPalcos({
         precio !== undefined ? formatCurrency(precio, { compact: true }) : "—",
       descripcion: `${f.nombre}, ${
         precio !== undefined ? formatCurrency(precio) : "sin precio"
-      }${g?.propio ? " (precio propio)" : ""}${vendido ? ", vendido" : ""}`,
+      }${g?.propio ? " (precio propio)" : ""}${
+        vendido ? ", vendido (su precio no se puede cambiar)" : ""
+      }`,
     };
   };
 
@@ -129,6 +134,8 @@ export default function PreciosPalcos({
           <p className="mt-0.5 text-xs text-gray-500">
             Elige palcos en el mapa (clic, Shift + clic o arrastrando un
             recuadro)
+            {listaVendidos.length > 0 &&
+              ". Los vendidos (✓) conservan su precio y no se pueden elegir"}
           </p>
         </div>
         <ControlesZoom

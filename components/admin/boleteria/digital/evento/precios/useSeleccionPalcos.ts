@@ -29,12 +29,17 @@ const cajaDe = (p: Palco) => {
 // Elegir palcos igual que en el editor de recintos: clic (solo ese),
 // Shift + clic (sumar o quitar), recuadro (los que toca; con Shift se
 // suman) y clic en el fondo (ninguno). En el celular cada toque suma o
-// quita
-export function useSeleccionPalcos(palcos: Palco[]) {
+// quita. Los bloqueados (vendidos) no se eligen nunca: su precio no cambia
+export function useSeleccionPalcos(
+  palcos: Palco[],
+  bloqueados: Set<number> = new Set(),
+) {
   const [elegidos, setElegidos] = useState<Set<number>>(new Set());
+  const libres = (ids: number[]) => ids.filter((id) => !bloqueados.has(id));
 
   const elegirPalco = (f: FiguraEditor, como: ComoSeEligio) => {
     const id = f.id!;
+    if (bloqueados.has(id)) return;
     if (como.shift || como.tactil)
       setElegidos((prev) => {
         const sig = new Set(prev);
@@ -47,6 +52,7 @@ export function useSeleccionPalcos(palcos: Palco[]) {
 
   const elegirEnZona = (z: VistaDelMapa, conShift: boolean) => {
     const tocados = palcos
+      .filter((p) => !bloqueados.has(p.id))
       .filter((p) => {
         const c = cajaDe(p);
         return (
@@ -66,8 +72,8 @@ export function useSeleccionPalcos(palcos: Palco[]) {
     elegidos,
     elegirPalco,
     elegirEnZona,
-    elegirVarios: (ids: number[]) => setElegidos(new Set(ids)),
-    elegirTodos: () => setElegidos(new Set(palcos.map((p) => p.id))),
+    elegirVarios: (ids: number[]) => setElegidos(new Set(libres(ids))),
+    elegirTodos: () => setElegidos(new Set(libres(palcos.map((p) => p.id)))),
     limpiar: () => setElegidos(new Set()),
   };
 }

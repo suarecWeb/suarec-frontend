@@ -26,29 +26,36 @@ export function usePreciosPalcos(
     );
   }, [original, recintoId, recintoOriginal]);
 
+  // Un palco vendido nunca cambia de precio (ni se le pone ni se le quita)
   const asignar = (ids: number[], precio: number) =>
     setPrecios((prev) => {
       const sig = new Map(prev);
-      ids.forEach((id) => sig.set(id, precio));
+      ids
+        .filter((id) => !vendidos.has(id))
+        .forEach((id) => sig.set(id, precio));
       return sig;
     });
 
   const volverAlBase = (ids: number[]) =>
     setPrecios((prev) => {
       const sig = new Map(prev);
-      ids.forEach((id) => sig.delete(id));
+      ids.filter((id) => !vendidos.has(id)).forEach((id) => sig.delete(id));
       return sig;
     });
 
   // Lo que se envia: solo palcos que siguen en el dibujo y con un precio
-  // distinto del base (igual al base = sin precio propio)
+  // distinto del base (igual al base = sin precio propio). Un vendido va
+  // siempre con el precio que tenía, aunque hoy sea igual al base: si se
+  // omitiera, el backend lo tomaría como un cambio y lo rechazaría
   const paraGuardar = (
     palcosDelDibujo: Set<number>,
     precioBase?: number,
   ): PrecioPalco[] =>
     Array.from(precios.entries())
       .filter(
-        ([id, precio]) => palcosDelDibujo.has(id) && precio !== precioBase,
+        ([id, precio]) =>
+          palcosDelDibujo.has(id) &&
+          (precio !== precioBase || vendidos.has(id)),
       )
       .map(([figuraId, precio]) => ({ figuraId, precio }));
 

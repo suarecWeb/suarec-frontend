@@ -94,7 +94,10 @@ export default function PanelPalco({
   }
 
   const { etiqueta, color, marca } = ESTILO_ESTADO[estado];
-  const totalPalco = precio + evento.cargoSuarec;
+  // Number(): si el backend manda un monto como texto ("10000"), sumarlo lo
+  // pegaba ("1000010000") en vez de sumarlo (hallazgo 5 del 05-10-2026)
+  const cargo = Number(evento.cargoSuarec) || 0;
+  const totalPalco = Number(precio) + cargo;
 
   return (
     <aside
@@ -129,10 +132,7 @@ export default function PanelPalco({
           valor={formatCurrency(precio)}
         />
         {/* RN-15: el cargo va UNA vez por palco */}
-        <Fila
-          etiqueta="Cargo SUAREC"
-          valor={formatCurrency(evento.cargoSuarec)}
-        />
+        <Fila etiqueta="Cargo SUAREC" valor={formatCurrency(cargo)} />
         <Fila etiqueta="Total" valor={formatCurrency(totalPalco)} />
       </dl>
 
