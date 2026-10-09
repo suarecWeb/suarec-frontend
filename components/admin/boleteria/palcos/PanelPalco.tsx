@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Download, Lock, MousePointerClick, Unlock, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { formatDisplayDate } from "@/lib/TimeZone";
+import { formatDisplayDate, formatDisplayTime } from "@/lib/TimeZone";
 import { FiguraEditor } from "../recintos/editor/figuras";
 import {
   MapaEventoPalco,
@@ -11,7 +11,9 @@ import {
   CUPOS_POR_PALCO,
   ESTILO_ESTADO,
   EstadoPalco,
-  minutosRestantes,
+  cuentaRegresiva,
+  finDeLaCompra,
+  segundosRestantes,
 } from "./estadosPalco";
 
 interface PanelPalcoProps {
@@ -24,6 +26,8 @@ interface PanelPalcoProps {
   propio: boolean;
   ocupado?: PalcoOcupadoAdmin;
   pasado: boolean;
+  // Hora del servidor (ms) para el contador
+  ahora: number;
 }
 
 // "Cliente" + su correo en chico
@@ -64,12 +68,44 @@ const BotonFase7 = ({
   </button>
 );
 
-// "Quedan 6 min" o, si ya vencio, que se liberara al revisar el pago
-const textoReserva = (minutos: number | null) => {
-  if (minutos === null) return "Alguien lo está pagando.";
-  if (minutos <= 0)
-    return "La reserva ya venció: se liberará al revisar el pago (fase 4).";
-  return `Alguien lo está pagando: quedan ~${minutos} min de reserva.`;
+// Menos de esto (segundos), el contador se pone en rojo
+const POCO_TIEMPO = 2 * 60;
+
+// "Reservado a las 3:45 p. m. · quedan 7:05", o el margen con el banco
+const ContadorCompra = ({
+  ocupado,
+  ahora,
+}: {
+  ocupado?: PalcoOcupadoAdmin;
+  ahora: number;
+}) => {
+  const restante = segundosRestantes(finDeLaCompra(ocupado), ahora);
+  if (restante === null) {
+    return <p className="text-sm text-gray-600">Alguien lo está pagando.</p>;
+  }
+  const inicio = ocupado?.graciaHasta
+    ? "Pago en verificación"
+    : ocupado?.reservadoEn
+      ? `Reservado a las ${formatDisplayTime(ocupado.reservadoEn)}`
+      : "Reservado";
+  return (
+    <p className="text-sm text-gray-600">
+      {inicio} ·{" "}
+      {restante === 0 ? (
+        <span className="font-semibold text-gray-800 whitespace-nowrap">
+          Liberando…
+        </span>
+      ) : (
+        <span
+          className={`font-semibold tabular-nums whitespace-nowrap ${
+            restante < POCO_TIEMPO ? "text-red-600" : "text-gray-800"
+          }`}
+        >
+          quedan {cuentaRegresiva(restante)}
+        </span>
+      )}
+    </p>
+  );
 };
 
 // Detalle del palco elegido en el mapa del evento. Cambia segun su estado
@@ -81,6 +117,7 @@ export default function PanelPalco({
   propio,
   ocupado,
   pasado,
+  ahora,
 }: PanelPalcoProps) {
   if (!palco) {
     return (
@@ -158,13 +195,7 @@ export default function PanelPalco({
 
         {estado === "EN_COMPRA" && (
           <>
-            <p className="text-sm text-gray-600">
-              {ocupado?.graciaHasta
-                ? "Pago en verificación con el banco (RN-17)."
-                : textoReserva(
-                    minutosRestantes(ocupado?.reservadoHasta ?? null),
-                  )}
-            </p>
+            <ContadorCompra ocupado={ocupado} ahora={ahora} />
             {ocupado?.comprador && (
               <dl className="flex flex-col gap-2">
                 <Fila
@@ -179,8 +210,8 @@ export default function PanelPalco({
               </dl>
             )}
             <p className="text-[11px] text-gray-400">
-              Mientras dure la compra nadie lo puede apartar ni modificar
-              (RN-06). Si no paga a tiempo, se libera solo.
+              Mientras dure la compra nadie lo puede apartar ni modificar. Si no
+              paga a tiempo, se libera solo.
             </p>
           </>
         )}

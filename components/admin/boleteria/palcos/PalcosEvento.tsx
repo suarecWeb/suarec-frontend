@@ -11,7 +11,10 @@ import {
   MapPinOff,
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/TimeZone";
-import { MapaEventoPalco } from "@/interfaces/palcos.interface";
+import {
+  AvisoPalcoAdmin,
+  MapaEventoPalco,
+} from "@/interfaces/palcos.interface";
 import { formatCurrency } from "@/lib/formatCurrency";
 import VistaPreviaRecinto from "../recintos/vista-previa/VistaPreviaRecinto";
 import { FiguraEditor, figurasDelRecinto } from "../recintos/editor/figuras";
@@ -20,15 +23,22 @@ import {
   ESTILO_ESTADO,
   EstadoPalco,
   contarMapa,
+  cuentaRegresiva,
   esPasado,
+  finDeLaCompra,
+  hayContador,
   ocupadosPorFigura,
+  segundosRestantes,
   textoVentasFueraDelMapa,
 } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
+import IndicadorEnVivo from "./IndicadorEnVivo";
 import PanelPalco from "./PanelPalco";
 import { Cargando, ErrorCarga } from "./EstadoCarga";
 import { useMapaEvento } from "./usePalcosEventos";
+import { LiveStatus, usePalcosSocket } from "./usePalcosSocket";
+import { useServerClock } from "./useServerClock";
 import { RUTA_TAB_PALCOS, rutaPalcosEvento } from "./rutas";
 import { useZoomMapa } from "./useZoomMapa";
 import ControlesZoom from "./ControlesZoom";
@@ -52,7 +62,32 @@ export default function PalcosEvento({
   palcoInicial?: number | null;
 }) {
   const [palcoId, setPalcoId] = useState<number | null>(palcoInicial);
-  const { carga, reintentar } = useMapaEvento(eventoId);
+  const { carga, desfase, reintentar, refrescar, aplicarAviso } =
+    useMapaEvento(eventoId);
+
+  const alAviso = useCallback(
+    (aviso: AvisoPalcoAdmin) => {
+      aplicarAviso(aviso);
+      // El aviso no trae el monto ni la nota: se piden si es el palco abierto
+      if (
+        aviso.figuraId === palcoId &&
+        (aviso.estado === "VENDIDO" || aviso.estado === "APARTADO")
+      ) {
+        refrescar();
+      }
+    },
+    [aplicarAviso, refrescar, palcoId],
+  );
+  const enVivo = usePalcosSocket(eventoId, alAviso, refrescar);
+
+  // El detalle del palco se pide fresco al tocarlo
+  const elegirPalco = useCallback(
+    (id: number) => {
+      setPalcoId(id);
+      refrescar();
+    },
+    [refrescar],
+  );
 
   if (carga.estado === "cargando") {
     return <Cargando texto="Cargando el mapa del evento…" />;
@@ -70,8 +105,10 @@ export default function PalcosEvento({
     <ContenidoEvento
       mapa={carga.datos}
       palcoId={palcoId}
-      onElegirPalco={setPalcoId}
+      onElegirPalco={elegirPalco}
       volver={volver}
+      desfase={desfase}
+      enVivo={enVivo}
     />
   );
 }
@@ -81,6 +118,8 @@ interface ContenidoEventoProps {
   palcoId: number | null;
   onElegirPalco: (id: number) => void;
   volver?: string;
+  desfase: number;
+  enVivo: LiveStatus;
 }
 
 function ContenidoEvento({
@@ -88,9 +127,12 @@ function ContenidoEvento({
   palcoId,
   onElegirPalco,
   volver,
+  desfase,
+  enVivo,
 }: ContenidoEventoProps) {
   const { evento, recinto, deLaFeria } = mapa;
   const pasado = esPasado(evento.fechaEvento);
+  const ahora = useServerClock(desfase, hayContador(mapa.palcos));
   const ocupados = useMemo(() => ocupadosPorFigura(mapa.palcos), [mapa.palcos]);
   const estadoDe = useCallback(
     (figuraId: number): EstadoPalco =>
@@ -132,16 +174,28 @@ function ContenidoEvento({
 
   const estiloDePalco = useCallback(
     (f: FiguraEditor) => {
-      const estilo = ESTILO_ESTADO[estadoDe(f.id as number)];
+      const estado = estadoDe(f.id as number);
+      const estilo = ESTILO_ESTADO[estado];
       const { precio } = precioDe(f.id as number);
+      const restante =
+        estado === "EN_COMPRA"
+          ? segundosRestantes(
+              finDeLaCompra(ocupados.get(f.id as number)),
+              ahora,
+            )
+          : null;
       return {
         color: estilo.color,
         marca: estilo.marca,
         descripcion: `${f.nombre}, ${estilo.etiqueta.toLowerCase()}, ${formatCurrency(precio)}`,
-        detalle: formatCurrency(precio, { compact: true }),
+        // En compra: el tiempo que le queda en vez del precio
+        detalle:
+          restante !== null
+            ? cuentaRegresiva(restante)
+            : formatCurrency(precio, { compact: true }),
       };
     },
-    [estadoDe, precioDe],
+    [estadoDe, precioDe, ocupados, ahora],
   );
   const elegir = useCallback(
     (f: FiguraEditor) => f.id !== undefined && onElegirPalco(f.id),
@@ -165,6 +219,7 @@ function ContenidoEvento({
               {evento.nombre}
             </h2>
             <EstadoEventoBadge estado={evento.estado} />
+            <IndicadorEnVivo conexion={enVivo} />
           </div>
           <p className="mt-1 text-sm text-gray-500">
             {formatDisplayDate(evento.fechaEvento)}
@@ -284,6 +339,7 @@ function ContenidoEvento({
                 : { precio: evento.precioPalco, propio: false })}
               ocupado={palco ? ocupados.get(palco.id as number) : undefined}
               pasado={pasado}
+              ahora={ahora}
             />
           </div>
         </>

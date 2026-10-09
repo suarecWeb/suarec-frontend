@@ -1,5 +1,9 @@
 import { Recinto } from "@/interfaces/recinto.interface";
-import { PalcoOcupadoAdmin } from "@/interfaces/palcos.interface";
+import {
+  AvisoPalcoAdmin,
+  MapaEventoPalco,
+  PalcoOcupadoAdmin,
+} from "@/interfaces/palcos.interface";
 
 // Estado de un palco EN UN EVENTO. El recinto es solo el plano: lo que se
 // vende es el palco en un evento, y el mismo palco puede estar vendido el
@@ -65,12 +69,57 @@ export const ETIQUETA_ESTADO_EVENTO: Record<EstadoEventoPalco, string> = {
 export const esPasado = (fechaEvento: string) =>
   new Date(fechaEvento).getTime() < Date.now();
 
-// Minutos que le quedan a una reserva (RN-06). 0 o menos: ya vencio y la
-// liberara la revision del pago (fase 4)
-export const minutosRestantes = (reservadoHasta: string | null) =>
-  reservadoHasta === null
+// Hasta cuando corre una compra: el margen con el banco si ya empezo, si
+// no la reserva
+export const finDeLaCompra = (p?: PalcoOcupadoAdmin) =>
+  p?.graciaHasta ?? p?.reservadoHasta ?? null;
+
+// Segundos que faltan (0 si ya paso); null sin hora
+export const segundosRestantes = (hasta: string | null, ahora: number) =>
+  hasta === null
     ? null
-    : Math.ceil((new Date(reservadoHasta).getTime() - Date.now()) / 60000);
+    : Math.max(0, Math.floor((new Date(hasta).getTime() - ahora) / 1000));
+
+// "7:05"
+export const cuentaRegresiva = (segundos: number) =>
+  `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, "0")}`;
+
+export const hayContador = (palcos: PalcoOcupadoAdmin[]) =>
+  palcos.some((p) => p.estado === "EN_COMPRA" && finDeLaCompra(p) !== null);
+
+// El mapa despues del aviso de un palco: libre sale de la lista; si no,
+// toma el estado nuevo. Lo que el aviso no trae (monto, nota, quien lo
+// aparto) se conserva solo si el estado no cambio
+export const conAviso = (
+  mapa: MapaEventoPalco,
+  aviso: AvisoPalcoAdmin,
+): MapaEventoPalco => {
+  const { figuraId, estado } = aviso;
+  if (figuraId === undefined || !estado) return mapa;
+  const previo = mapa.palcos.find((p) => p.figuraId === figuraId);
+  const resto = mapa.palcos.filter((p) => p.figuraId !== figuraId);
+  if (estado === "LIBRE") return { ...mapa, palcos: resto };
+  const mismo = previo?.estado === estado ? previo : undefined;
+  return {
+    ...mapa,
+    palcos: [
+      ...resto,
+      {
+        figuraId,
+        estado,
+        palcoNombre: previo?.palcoNombre ?? "",
+        reservadoEn: aviso.reservadoEn ?? null,
+        reservadoHasta: aviso.reservadoHasta ?? null,
+        graciaHasta: aviso.graciaHasta ?? null,
+        monto: mismo?.monto ?? null,
+        comprador: aviso.comprador ?? null,
+        apartadoPor: mismo?.apartadoPor ?? null,
+        nota: mismo?.nota ?? null,
+        actualizadoEn: mismo?.actualizadoEn ?? aviso.cambiadoEn,
+      },
+    ],
+  };
+};
 
 // Los palcos ocupados del evento por id de figura
 export const ocupadosPorFigura = (palcos: PalcoOcupadoAdmin[]) =>

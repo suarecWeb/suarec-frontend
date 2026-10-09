@@ -36,6 +36,8 @@ export interface PalcoOcupadoAdmin {
   estado: EstadoPalcoOcupado;
   // Nombre copiado al vender (RN-19)
   palcoNombre: string;
+  // Cuando lo tomo el comprador o lo aparto el admin
+  reservadoEn: string | null;
   // EN_COMPRA: hasta cuando dura la reserva (RN-06)
   reservadoHasta: string | null;
   // Pago en curso con el banco: ventana de gracia (RN-17)
@@ -81,4 +83,20 @@ export interface MapaEventoPalco {
   precios: PrecioPalco[];
   // Los eventos PALCO de la feria, por fecha (anterior/siguiente)
   deLaFeria: { id: number; nombre: string; fechaEvento: string }[];
+  // Hora del servidor al responder: el contador no depende del reloj del computador
+  servidorAhora: string;
+}
+
+// Aviso en vivo de un palco para el admin. reload: cambio todo el mapa
+// (precios, dibujo, recinto o estado del evento) y hay que pedirlo de nuevo
+export interface AvisoPalcoAdmin {
+  eventoId: number;
+  figuraId?: number;
+  estado?: "LIBRE" | EstadoPalcoOcupado;
+  reservadoEn?: string | null;
+  reservadoHasta?: string | null;
+  graciaHasta?: string | null;
+  comprador?: PalcoOcupadoAdmin["comprador"];
+  reload: boolean;
+  cambiadoEn: string;
 }
