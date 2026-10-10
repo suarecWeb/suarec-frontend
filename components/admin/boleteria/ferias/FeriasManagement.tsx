@@ -131,6 +131,27 @@ const FeriasManagement = ({
     }
   };
 
+  const handleToggleVisibilityEvento = async (evento: Evento) => {
+    if (!evento.id) return;
+    const newVisible = evento.visible === false;
+    try {
+      await EventsService.setVisibility(evento.id, newVisible);
+      setFerias((prev) =>
+        prev.map((f) => ({
+          ...f,
+          eventos: (f.eventos ?? []).map((e) =>
+            e.id === evento.id ? { ...e, visible: newVisible } : e,
+          ),
+        })),
+      );
+      toast.success(
+        newVisible ? "Evento visible en la app" : "Evento oculto de la app",
+      );
+    } catch {
+      toast.error("Error al cambiar visibilidad del evento");
+    }
+  };
+
   // Eventos de una feria que le corresponden a este módulo (todos si no hay
   // filtro de modalidad).
   const eventosDelModulo = (feria: Feria): Evento[] =>
@@ -330,6 +351,7 @@ const FeriasManagement = ({
                 feria={feria}
                 eventos={eventosDelModulo(feria)}
                 onToggleVisibility={handleToggleVisibility}
+                onToggleVisibilityEvento={handleToggleVisibilityEvento}
                 onDropEvento={handleDropEvento}
               />
             </div>

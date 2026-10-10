@@ -19,6 +19,8 @@ interface FeriaKanbanColumnProps {
   // la columna solo pinta lo que le llega.
   eventos: Evento[];
   onToggleVisibility: (feria: Feria) => void;
+  // Ocultar o mostrar un evento en la app (el ojo de su ticket)
+  onToggleVisibilityEvento: (evento: Evento) => void;
   // Se dispara al soltar un evento arrastrado desde OTRA columna sobre esta.
   // El padre decide si hace falta llamar al backend (puede venir de la misma
   // feria, ver nota en FeriasManagement).
@@ -33,6 +35,7 @@ export default function FeriaKanbanColumn({
   feria,
   eventos,
   onToggleVisibility,
+  onToggleVisibilityEvento,
   onDropEvento,
 }: FeriaKanbanColumnProps) {
   const router = useRouter();
@@ -175,6 +178,9 @@ export default function FeriaKanbanColumn({
                           rutaEditarEvento(evento.id!, paginaActual()),
                         )
                     : undefined
+                }
+                onCambiarVisibilidad={
+                  evento.id ? () => onToggleVisibilityEvento(evento) : undefined
                 }
               />
             </div>

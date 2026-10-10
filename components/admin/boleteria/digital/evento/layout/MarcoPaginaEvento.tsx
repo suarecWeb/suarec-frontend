@@ -25,11 +25,15 @@ export default function MarcoPaginaEvento({
   titulo,
   volver,
   acciones,
+  extra,
   pestanas,
   children,
 }: {
   titulo: string;
   volver: string;
+  // Botón que va en la barra azul también en el celular (ocultar o mostrar
+  // el evento en la app)
+  extra?: ReactNode;
   // Cancelar y Crear/Guardar (no hay mientras carga el evento). Se pintan
   // en la barra azul de arriba y, en el celular, en la barra blanca de abajo
   acciones?: (lugar: "arriba" | "abajo") => ReactNode;
@@ -80,6 +84,7 @@ export default function MarcoPaginaEvento({
                 </Link>
               </nav>
             </div>
+            {extra && <div className="flex-shrink-0">{extra}</div>}
             {acciones && (
               <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                 {acciones("arriba")}

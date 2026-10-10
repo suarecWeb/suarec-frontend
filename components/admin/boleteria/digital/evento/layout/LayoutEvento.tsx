@@ -9,11 +9,13 @@ import {
   useState,
 } from "react";
 import { useSearchParams, useSelectedLayoutSegment } from "next/navigation";
+import toast from "react-hot-toast";
 import EventsService from "@/services/EventsService";
 import { Evento, EventoTipo } from "@/interfaces/event.interface";
 import { Carga, useCarga } from "../../../palcos/usePalcosEventos";
 import { RUTA_TAB_PALCOS } from "../../../palcos/rutas";
 import MarcoPaginaEvento from "./MarcoPaginaEvento";
+import BotonVisibilidad from "./BotonVisibilidad";
 import PestanasEvento from "./PestanasEvento";
 import { botonesGuardar } from "./botonesGuardar";
 import { RUTA_BOLETERIA_DIGITAL, volverSeguro } from "../rutas";
@@ -78,11 +80,43 @@ export default function LayoutEvento({
   const evento = carga.estado === "listo" ? carga.datos : null;
   const datos = !enGestion ? guardado : null;
 
+  // Visibilidad en la app: se cambia sin volver a pedir el evento, para no
+  // tocar lo que se está editando
+  const [visibleCambiado, setVisibleCambiado] = useState<boolean | null>(null);
+  const [cambiandoVisible, setCambiandoVisible] = useState(false);
+  useEffect(() => setVisibleCambiado(null), [eventoId]);
+  const visible = visibleCambiado ?? evento?.visible !== false;
+  const cambiarVisibilidad = async () => {
+    if (!evento?.id || cambiandoVisible) return;
+    const nuevo = !visible;
+    setCambiandoVisible(true);
+    try {
+      await EventsService.setVisibility(evento.id, nuevo);
+      setVisibleCambiado(nuevo);
+      toast.success(
+        nuevo ? "Evento visible en la app" : "Evento oculto de la app",
+      );
+    } catch {
+      toast.error("Error al cambiar visibilidad del evento");
+    } finally {
+      setCambiandoVisible(false);
+    }
+  };
+
   return (
     <LayoutEventoContext.Provider value={valor}>
       <MarcoPaginaEvento
         titulo={evento ? `Editar evento: ${evento.nombre}` : "Editar evento"}
         volver={volver}
+        extra={
+          evento ? (
+            <BotonVisibilidad
+              visible={visible}
+              cambiando={cambiandoVisible}
+              onClick={cambiarVisibilidad}
+            />
+          ) : undefined
+        }
         acciones={
           datos
             ? botonesGuardar(volver, datos.texto, datos.guardando)
