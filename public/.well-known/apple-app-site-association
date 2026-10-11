@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appID": "TEAMID_PENDIENTE.com.suarecsas.suarec",
+        "paths": ["/publications/*", "/eventos/*"]
+      }
+    ]
+  }
+}
