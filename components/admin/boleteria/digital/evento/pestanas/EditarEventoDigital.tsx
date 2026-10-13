@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { EventoModalidad } from "@/interfaces/event.interface";
-import { Cargando, ErrorCarga } from "../../../palcos/EstadoCarga";
+import { Cargando, ErrorCarga } from "../../palcos/EstadoCarga";
 import FormularioEventoDigital from "../FormularioEventoDigital";
 import { useLayoutEvento } from "../layout/LayoutEvento";
 

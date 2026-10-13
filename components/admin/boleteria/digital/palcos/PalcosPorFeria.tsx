@@ -15,7 +15,7 @@ import { esPasado, textoVentasFueraDelMapa } from "./estadosPalco";
 import ContadoresPalcos from "./ContadoresPalcos";
 import EstadoEventoBadge from "./EstadoEventoBadge";
 import { Cargando, ErrorCarga } from "./EstadoCarga";
-import { useEventosConPalcos } from "./usePalcosEventos";
+import { useEventosConPalcos } from "./hooks/usePalcosEventos";
 import { rutaPalcosEvento } from "./rutas";
 
 type Cuando = "proximos" | "pasados";
@@ -25,8 +25,7 @@ const coincide = (texto: string, busqueda: string) =>
 
 // Tab "Gestion de palcos" de Ferias: los eventos PALCO agrupados por
 // feria, leidos de la base (GET /palcos/eventos). Al elegir uno se abre su
-// mapa (lo vendido, libre, en compra y apartado). Solo para mirar por
-// ahora: apartar palcos es de la fase 7
+// mapa (lo vendido, libre, en compra y apartado), donde se aparta
 export default function PalcosPorFeria() {
   const [busqueda, setBusqueda] = useState("");
   const [cuando, setCuando] = useState<Cuando>("proximos");

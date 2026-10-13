@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { VistaDelMapa } from "../recintos/vista-previa/VistaPreviaRecinto";
+import { VistaDelMapa } from "../../../recintos/vista-previa/VistaPreviaRecinto";
 
 interface Punto {
   x: number;

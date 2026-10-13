@@ -3,7 +3,7 @@
 import FeriasService from "@/services/FeriasService";
 import RecintosService from "@/services/RecintosService";
 import PalcosService from "@/services/PalcosService";
-import { useCarga } from "../../../palcos/usePalcosEventos";
+import { useCarga } from "../../palcos/hooks/usePalcosEventos";
 import { Feria } from "@/interfaces/feria.interface";
 import { Recinto } from "@/interfaces/recinto.interface";
 import { MapaEventoPalco } from "@/interfaces/palcos.interface";

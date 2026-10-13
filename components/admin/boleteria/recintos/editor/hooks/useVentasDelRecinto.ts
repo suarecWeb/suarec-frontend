@@ -5,7 +5,7 @@ import {
   PalcoProtegido,
   PalcoVendidoMovido,
 } from "@/interfaces/recinto.interface";
-import { ESTILO_ESTADO } from "../../../palcos/estadosPalco";
+import { ESTILO_ESTADO } from "../../../digital/palcos/estadosPalco";
 import { FiguraEditor } from "../figuras";
 
 // PEN-11: mover o cambiar el tamaño (o la forma) de un vendido pide

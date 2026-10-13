@@ -1,4 +1,4 @@
-import { LiveStatus } from "./usePalcosSocket";
+import { LiveStatus } from "@/hooks/boleteria/usePalcosSocket";
 
 const BASE =
   "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium";

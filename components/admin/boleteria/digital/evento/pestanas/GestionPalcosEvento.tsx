@@ -1,6 +1,6 @@
 "use client";
 
-import PalcosEvento from "../../../palcos/PalcosEvento";
+import PalcosEvento from "../../palcos/PalcosEvento";
 import { useLayoutEvento } from "../layout/LayoutEvento";
 
 // Pestaña "Gestión de palcos": el mapa con el estado de cada palco

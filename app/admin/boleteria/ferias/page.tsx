@@ -7,7 +7,7 @@ import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import FeriasManagement from "@/components/admin/boleteria/ferias/FeriasManagement";
-import PalcosPorFeria from "@/components/admin/boleteria/palcos/PalcosPorFeria";
+import PalcosPorFeria from "@/components/admin/boleteria/digital/palcos/PalcosPorFeria";
 import { CalendarDays, Ticket } from "lucide-react";
 import { motion } from "framer-motion";
 

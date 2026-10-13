@@ -34,7 +34,7 @@ export const bloqueoDeFeria = ({
     return "Hay una compra de palco en curso en este evento: espera a que termine para cambiar la feria.";
   const ventas = ventasDe(original);
   if (ventas > 0 && precios.recintoCambia)
-    return `Este evento tiene ${palcos(ventas, "vendido")} o apartado${ventas === 1 ? "" : "s"} y esa feria ${recintoNuevo ? "usa otro recinto" : "no tiene recinto"}: no se puede cambiar (RN-25). Reubicar las ventas llega en la fase 7.`;
+    return `Este evento tiene ${palcos(ventas, "vendido")} o apartado${ventas === 1 ? "" : "s"} y esa feria ${recintoNuevo ? "usa otro recinto" : "no tiene recinto"}: no se puede cambiar (RN-25). Si son apartados, libéralos primero; los palcos vendidos no se pueden pasar a otro recinto.`;
   if (vendidasSinMapa > 0 && recintoNuevo && !original.recinto)
     return `Este evento PALCO ya vendió ${vendidasSinMapa} boleta${vendidasSinMapa === 1 ? "" : "s"} sin mapa: no puede pasar a una feria con recinto porque esas ventas no tienen palco (RN-25).`;
   return null;

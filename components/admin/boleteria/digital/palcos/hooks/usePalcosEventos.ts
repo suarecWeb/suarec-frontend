@@ -7,7 +7,7 @@ import {
   FeriaConEventosPalco,
   MapaEventoPalco,
 } from "@/interfaces/palcos.interface";
-import { conAviso } from "./estadosPalco";
+import { conAviso } from "../estadosPalco";
 
 export type Carga<T> =
   | { estado: "cargando" }
