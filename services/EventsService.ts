@@ -77,6 +77,10 @@ const EventsService = {
   getEventById: (id: number): Promise<{ data: Evento }> =>
     api.get(`${BASE}/${id}`),
 
+  // Completo para editarlo (feria, formato y comisión): solo súper admin
+  getEventByIdAdmin: (id: number): Promise<{ data: Evento }> =>
+    api.get(`${BASE}/admin/${id}`),
+
   createEvent: (
     dto: CreateEventoDto,
     imageFile?: File,

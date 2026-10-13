@@ -36,7 +36,7 @@ export default function FeriaEventos({ eventos }: FeriaEventosProps) {
     imageFile?: File,
   ) => {
     await EventsService.updateEvent(String(id), dto, imageFile);
-    const updated = await EventsService.getEventById(id);
+    const updated = await EventsService.getEventByIdAdmin(id);
     setEventosAsignados((prev) =>
       prev.map((e) => (e.id === id ? updated.data : e)),
     );

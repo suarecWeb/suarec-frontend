@@ -67,7 +67,7 @@ export default function LayoutEvento({
       : RUTA_BOLETERIA_DIGITAL;
 
   const { carga, reintentar } = useCarga<Evento>(
-    () => EventsService.getEventById(eventoId),
+    () => EventsService.getEventByIdAdmin(eventoId),
     "No se pudo cargar el evento",
     eventoId,
   );
