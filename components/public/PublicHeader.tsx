@@ -18,9 +18,6 @@ export default function PublicHeader() {
             height={28}
             className="h-7 w-7 object-contain"
           />
-          <span className="text-lg font-extrabold tracking-wide text-white">
-            SUAREC
-          </span>
         </Link>
         <a
           href={GOOGLE_PLAY_URL}
