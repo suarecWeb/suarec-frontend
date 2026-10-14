@@ -1,13 +1,15 @@
 import api from "./axios_config";
 import {
+  ApartarPalcoDatos,
   FeriaConEventosPalco,
   MapaEventoPalco,
+  PalcoOcupadoAdmin,
   PrecioPalco,
   PreciosEvento,
 } from "@/interfaces/palcos.interface";
 
-// "Gestion de palcos" y precios por palco: solo super admin (SuperAdminGuard
-// en el controlador). Reservar y apartar son de las fases 4 y 7
+// "Gestion de palcos", precios por palco y apartar palcos: solo super admin
+// (SuperAdminGuard en el controlador)
 const BASE = "/suarec/palcos";
 
 const PalcosService = {
@@ -30,6 +32,37 @@ const PalcosService = {
     precios: PrecioPalco[],
   ): Promise<{ data: PreciosEvento }> =>
     api.put(`${BASE}/eventos/${eventoId}/precios`, { precios }),
+
+  // Un PDF con las boletas de un palco apartado (una por página)
+  descargarBoletasPdf: (
+    eventoId: number,
+    figuraId: number,
+  ): Promise<{ data: Blob }> =>
+    api.get(`${BASE}/eventos/${eventoId}/palcos/${figuraId}/boletas-pdf`, {
+      responseType: "blob",
+    }),
+
+  // Un palco apartado pasa a vendido; ahí se generan sus 10 boletas
+  marcarVendido: (
+    eventoId: number,
+    figuraId: number,
+  ): Promise<{ data: { figuraId: number; estado: "VENDIDO" } }> =>
+    api.post(`${BASE}/eventos/${eventoId}/palcos/${figuraId}/marcar-vendido`),
+
+  // Libera un palco apartado: vuelve a estar libre para todos
+  liberarPalco: (
+    eventoId: number,
+    figuraId: number,
+  ): Promise<{ data: { figuraId: number; estado: "LIBRE" } }> =>
+    api.post(`${BASE}/eventos/${eventoId}/palcos/${figuraId}/liberar`),
+
+  // Aparta un palco libre para un cliente; responde el palco ya apartado
+  apartarPalco: (
+    eventoId: number,
+    figuraId: number,
+    datos: ApartarPalcoDatos,
+  ): Promise<{ data: PalcoOcupadoAdmin }> =>
+    api.post(`${BASE}/eventos/${eventoId}/palcos/${figuraId}/apartar`, datos),
 };
 
 export default PalcosService;

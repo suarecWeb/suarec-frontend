@@ -4,7 +4,7 @@ import { MouseEvent, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { rutaPalcosEvento } from "../../../palcos/rutas";
+import { rutaPalcosEvento } from "../../palcos/rutas";
 import { rutaEditarEvento } from "../rutas";
 import ConfirmarSalirSinGuardar from "../modal-confirmaciones/ConfirmarSalirSinGuardar";
 

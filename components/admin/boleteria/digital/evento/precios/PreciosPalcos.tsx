@@ -8,8 +8,8 @@ import {
   FiguraEditor,
   figurasDelRecinto,
 } from "../../../recintos/editor/figuras";
-import { useZoomMapa } from "../../../palcos/useZoomMapa";
-import ControlesZoom from "../../../palcos/ControlesZoom";
+import { useZoomMapa } from "../../palcos/hooks/useZoomMapa";
+import ControlesZoom from "../../palcos/ControlesZoom";
 import { PreciosPalcosEstado } from "../hooks/usePreciosPalcos";
 import { Palco, useSeleccionPalcos } from "./useSeleccionPalcos";
 import PanelPrecio from "./PanelPrecio";

@@ -4,7 +4,7 @@ import { FormEvent, ReactNode, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AlertTriangle } from "lucide-react";
 import { Evento, EventoTipo } from "@/interfaces/event.interface";
-import { Cargando, ErrorCarga } from "../../palcos/EstadoCarga";
+import { Cargando, ErrorCarga } from "../palcos/EstadoCarga";
 import { useFormularioEvento } from "./hooks/useFormularioEvento";
 import { useFerias, useMapaOriginal, useRecinto } from "./hooks/useDatosEvento";
 import { usePreciosPalcos } from "./hooks/usePreciosPalcos";

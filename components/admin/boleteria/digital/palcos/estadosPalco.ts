@@ -7,19 +7,19 @@ import {
 
 // Estado de un palco EN UN EVENTO. El recinto es solo el plano: lo que se
 // vende es el palco en un evento, y el mismo palco puede estar vendido el
-// viernes y libre el sabado (CA-11)
+// viernes y libre el sabado
 //   LIBRE      se puede comprar o apartar
-//   EN_COMPRA  alguien lo esta pagando (RN-06): nadie lo puede tocar
-//   APARTADO   lo aparto el admin (RN-10, PEN-13): no vence, se puede liberar
-//   VENDIDO    pagado (RN-08)
+//   EN_COMPRA  alguien lo esta pagando: nadie lo puede tocar
+//   APARTADO   lo aparto el admin: no vence; se marca vendido o se libera
+//   VENDIDO    pagado
 export type EstadoPalco = "LIBRE" | "EN_COMPRA" | "APARTADO" | "VENDIDO";
 
-// Cupos y boletas de un palco (RN-01; CUPOS_POR_PALCO del backend)
+// Cupos y boletas de un palco (CUPOS_POR_PALCO del backend)
 export const CUPOS_POR_PALCO = 10;
 
 // Aviso de ventas que no se ven en el mapa de hoy, igual en la lista y en
 // el mapa: el palco se borro del dibujo, dejo de ser PALCO o la feria
-// cambio de recinto (RN-24)
+// cambio de recinto
 export const textoVentasFueraDelMapa = (n: number) =>
   `${n} venta(s) en palcos que ya no están en el mapa (se borraron, cambiaron de tipo o la feria cambió de recinto)`;
 
@@ -69,6 +69,36 @@ export const ETIQUETA_ESTADO_EVENTO: Record<EstadoEventoPalco, string> = {
 export const esPasado = (fechaEvento: string) =>
   new Date(fechaEvento).getTime() < Date.now();
 
+// El evento sigue en pie hasta las 3:00 a. m. de Colombia (UTC-5) del dia
+// siguiente: la misma regla del backend
+export const finDelEvento = (fechaEvento: string) => {
+  const colombia = new Date(new Date(fechaEvento).getTime() - 5 * 3600 * 1000);
+  return Date.UTC(
+    colombia.getUTCFullYear(),
+    colombia.getUTCMonth(),
+    colombia.getUTCDate() + 1,
+    8,
+  );
+};
+
+// Apartar: solo en preventa o venta y con el evento en pie (ahora: hora
+// del servidor)
+export const sePuedeApartar = (
+  evento: { estado: string; fechaEvento: string },
+  ahora: number,
+) =>
+  (evento.estado === "preventa" || evento.estado === "venta") &&
+  ahora < finDelEvento(evento.fechaEvento);
+
+// Vender o liberar un apartado ya hecho: también con las ventas cerradas,
+// mientras el evento no esté cancelado ni haya pasado
+export const sePuedeResolverApartado = (
+  evento: { estado: string; fechaEvento: string },
+  ahora: number,
+) =>
+  ["preventa", "venta", "cerrado"].includes(evento.estado) &&
+  ahora < finDelEvento(evento.fechaEvento);
+
 // Hasta cuando corre una compra: el margen con el banco si ya empezo, si
 // no la reserva
 export const finDeLaCompra = (p?: PalcoOcupadoAdmin) =>
@@ -88,8 +118,8 @@ export const hayContador = (palcos: PalcoOcupadoAdmin[]) =>
   palcos.some((p) => p.estado === "EN_COMPRA" && finDeLaCompra(p) !== null);
 
 // El mapa despues del aviso de un palco: libre sale de la lista; si no,
-// toma el estado nuevo. Lo que el aviso no trae (monto, nota, quien lo
-// aparto) se conserva solo si el estado no cambio
+// toma el estado nuevo. Lo que el aviso no trae (el monto) se conserva
+// solo si el estado no cambio
 export const conAviso = (
   mapa: MapaEventoPalco,
   aviso: AvisoPalcoAdmin,
@@ -113,8 +143,15 @@ export const conAviso = (
         graciaHasta: aviso.graciaHasta ?? null,
         monto: mismo?.monto ?? null,
         comprador: aviso.comprador ?? null,
-        apartadoPor: mismo?.apartadoPor ?? null,
-        nota: mismo?.nota ?? null,
+        apartadoPor:
+          aviso.apartadoPor !== undefined
+            ? aviso.apartadoPor
+            : (mismo?.apartadoPor ?? null),
+        nota: aviso.nota !== undefined ? aviso.nota : (mismo?.nota ?? null),
+        cliente:
+          aviso.cliente !== undefined
+            ? aviso.cliente
+            : (mismo?.cliente ?? null),
         actualizadoEn: mismo?.actualizadoEn ?? aviso.cambiadoEn,
       },
     ],
@@ -126,7 +163,7 @@ export const ocupadosPorFigura = (palcos: PalcoOcupadoAdmin[]) =>
   new Map(palcos.map((p) => [p.figuraId, p]));
 
 // Cuantos palcos hay en cada estado, contando SOLO los que estan dibujados
-// (total = palcos del recinto, RN-20). fueraDelDibujo: ventas de palcos
+// (total = palcos del recinto). fueraDelDibujo: ventas de palcos
 // que ya no estan en el dibujo (borrados despues de un evento pasado)
 export const contarMapa = (
   recinto: Recinto,

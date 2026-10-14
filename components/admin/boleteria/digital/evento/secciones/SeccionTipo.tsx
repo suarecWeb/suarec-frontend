@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { Armchair, DollarSign, Lock, Ticket } from "lucide-react";
 import { EventoTipo } from "@/interfaces/event.interface";
-import { CUPOS_POR_PALCO } from "../../../palcos/estadosPalco";
+import { CUPOS_POR_PALCO } from "../../palcos/estadosPalco";
 import { FormularioEvento } from "../hooks/useFormularioEvento";
 import {
   TIPO_OPCIONES,

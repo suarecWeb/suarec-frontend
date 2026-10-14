@@ -131,7 +131,7 @@ const EventsManagement = ({
   ) => {
     await EventsService.updateEvent(String(id), dto, imageFile);
     await generarCodigos(id, codigosACrear);
-    const updated = await EventsService.getEventById(id);
+    const updated = await EventsService.getEventByIdAdmin(id);
     setEvents((prev) => prev.map((e) => (e.id === id ? updated.data : e)));
     toast.success("Evento actualizado");
   };

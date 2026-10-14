@@ -7,7 +7,7 @@ interface ContadoresPalcosProps {
   compacto?: boolean;
 }
 
-// Cuantos palcos hay en cada estado. El total sale del dibujo (RN-20)
+// Cuantos palcos hay en cada estado. El total sale del dibujo
 export default function ContadoresPalcos({
   conteo,
   total,

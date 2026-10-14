@@ -44,10 +44,28 @@ export interface PalcoOcupadoAdmin {
   graciaHasta: string | null;
   monto: number | null;
   comprador: { id: number; nombre: string; email: string } | null;
-  apartadoPor: { id: number; nombre: string } | null;
+  // Solo en los palcos que aparto el admin
+  apartadoPor: { id: number; nombre: string; foto: string | null } | null;
   nota: string | null;
+  cliente: ClientePalco | null;
   // Cuando quedo en su estado actual
   actualizadoEn: string;
+}
+
+// Para quien aparto el admin el palco
+export interface ClientePalco {
+  nombre: string;
+  correo: string | null;
+  cedula: string | null;
+}
+
+// POST /palcos/eventos/:id/palcos/:figuraId/apartar
+export interface ApartarPalcoDatos {
+  estado: "RESERVADO" | "VENDIDO";
+  nota: string;
+  clienteNombre: string;
+  clienteCorreo: string;
+  clienteCedula: string;
 }
 
 // Precio propio de un palco en un evento (RN-12). El palco que no viene
@@ -97,6 +115,9 @@ export interface AvisoPalcoAdmin {
   reservadoHasta?: string | null;
   graciaHasta?: string | null;
   comprador?: PalcoOcupadoAdmin["comprador"];
+  apartadoPor?: PalcoOcupadoAdmin["apartadoPor"];
+  nota?: string | null;
+  cliente?: ClientePalco | null;
   reload: boolean;
   cambiadoEn: string;
 }
