@@ -10,9 +10,10 @@ import { Send, History, Megaphone, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationsSendForm from "@/components/admin/notificaciones/NotificationsSendForm";
 import NotificationsHistory from "@/components/admin/notificaciones/NotificationsHistory";
+import NotificationsScheduleForm from "@/components/admin/notificaciones/NotificationsScheduleForm";
 import BannerSlidesManagement from "@/components/admin/boleteria/digital/banners/BannerSlidesManagement";
 
-type NotificationsTab = "enviar" | "historial" | "banners";
+type NotificationsTab = "enviar" | "programadas" | "historial" | "banners";
 
 const TAB_CONFIG: Record<
   NotificationsTab,
@@ -21,6 +22,10 @@ const TAB_CONFIG: Record<
   enviar: {
     label: "Enviar",
     icon: <Send className="h-4 w-4" />,
+  },
+  programadas: {
+    label: "Programadas",
+    icon: <Clock className="h-4 w-4" />,
   },
   historial: {
     label: "Historial",
@@ -47,7 +52,10 @@ const pageVariants = {
 };
 
 const isNotificationsTab = (value: string | null): value is NotificationsTab =>
-  value === "enviar" || value === "historial" || value === "banners";
+  value === "enviar" ||
+  value === "programadas" ||
+  value === "historial" ||
+  value === "banners";
 
 const NotificationsPageContent = () => {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
@@ -106,17 +114,6 @@ const NotificationsPageContent = () => {
                   {TAB_CONFIG[tab].label}
                 </motion.button>
               ))}
-
-              {/* Programados: deshabilitado por ahora, todavía no existe la funcionalidad */}
-              <button
-                type="button"
-                disabled
-                title="Próximamente"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm bg-white text-gray-300 cursor-not-allowed"
-              >
-                <Clock className="h-4 w-4" />
-                Programados
-              </button>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden">
@@ -129,6 +126,7 @@ const NotificationsPageContent = () => {
                   exit="exit"
                 >
                   {activeTab === "enviar" && <NotificationsSendForm />}
+                  {activeTab === "programadas" && <NotificationsScheduleForm />}
                   {activeTab === "historial" && <NotificationsHistory />}
                   {activeTab === "banners" && <BannerSlidesManagement />}
                 </motion.div>
