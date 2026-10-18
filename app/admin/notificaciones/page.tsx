@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import { Send, History } from "lucide-react";
+import { Send, History, Megaphone, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import NotificationsSendForm from "@/components/admin/NotificationsSendForm";
-import NotificationsHistory from "@/components/admin/NotificationsHistory";
+import NotificationsSendForm from "@/components/admin/notificaciones/NotificationsSendForm";
+import NotificationsHistory from "@/components/admin/notificaciones/NotificationsHistory";
+import NotificationsScheduleForm from "@/components/admin/notificaciones/NotificationsScheduleForm";
+import BannerSlidesManagement from "@/components/admin/boleteria/digital/banners/BannerSlidesManagement";
 
-type NotificationsTab = "enviar" | "historial";
+type NotificationsTab = "enviar" | "programadas" | "historial" | "banners";
 
 const TAB_CONFIG: Record<
   NotificationsTab,
@@ -20,9 +23,17 @@ const TAB_CONFIG: Record<
     label: "Enviar",
     icon: <Send className="h-4 w-4" />,
   },
+  programadas: {
+    label: "Programadas",
+    icon: <Clock className="h-4 w-4" />,
+  },
   historial: {
     label: "Historial",
     icon: <History className="h-4 w-4" />,
+  },
+  banners: {
+    label: "Banners",
+    icon: <Megaphone className="h-4 w-4" />,
   },
 };
 
@@ -40,9 +51,23 @@ const pageVariants = {
   },
 };
 
+const isNotificationsTab = (value: string | null): value is NotificationsTab =>
+  value === "enviar" ||
+  value === "programadas" ||
+  value === "historial" ||
+  value === "banners";
+
 const NotificationsPageContent = () => {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
-  const [activeTab, setActiveTab] = useState<NotificationsTab>("enviar");
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<NotificationsTab>(
+    isNotificationsTab(tabFromUrl) ? tabFromUrl : "enviar",
+  );
+
+  useEffect(() => {
+    setActiveTab(isNotificationsTab(tabFromUrl) ? tabFromUrl : "enviar");
+  }, [tabFromUrl]);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate">
@@ -101,7 +126,9 @@ const NotificationsPageContent = () => {
                   exit="exit"
                 >
                   {activeTab === "enviar" && <NotificationsSendForm />}
+                  {activeTab === "programadas" && <NotificationsScheduleForm />}
                   {activeTab === "historial" && <NotificationsHistory />}
+                  {activeTab === "banners" && <BannerSlidesManagement />}
                 </motion.div>
               </AnimatePresence>
             </div>

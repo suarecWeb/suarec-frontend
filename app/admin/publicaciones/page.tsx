@@ -13,7 +13,7 @@ import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { Pagination } from "@/components/ui/pagination";
-import { PublicationDetailModal } from "./PublicationDetailModal";
+import { PublicationDetailModal } from "@/components/admin/publicaciones/PublicationDetailModal";
 import {
   Search,
   Briefcase,

@@ -1,0 +1,488 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import {
+  X,
+  CalendarDays,
+  FileText,
+  Upload,
+  Smartphone,
+  Monitor,
+  Ticket,
+} from "lucide-react";
+import { CreateFeriaDto, Feria } from "@/interfaces/feria.interface";
+import { Evento, EventoModalidad } from "@/interfaces/event.interface";
+import EventsService from "@/services/EventsService";
+import toast from "react-hot-toast";
+import SelectorRecinto from "./SelectorRecinto";
+import FeriaMapaPicker from "./FeriaMapaPicker";
+import EventosParaAsignar, {
+  EventosParaAsignarRef,
+} from "./EventosParaAsignar";
+
+interface CreateFeriaModalProps {
+  onClose: () => void;
+  onSubmit: (dto: CreateFeriaDto, imageFile?: File) => Promise<Feria>;
+  // Se llama despues de asignar por drag-and-drop los eventos elegidos a la
+  // feria recien creada, con la feria ya actualizada (trae sus eventos).
+  onEventosAsignados?: (feria: Feria) => void;
+}
+
+const EMPTY_FORM: CreateFeriaDto = {
+  nombre: "",
+  descripcion: "",
+  fechaInicio: "",
+  fechaFin: "",
+  ubicacion: "",
+  latitud: null,
+  longitud: null,
+  recintoId: null,
+};
+
+// Mismo catálogo de formatos que usan los eventos (tabla `format`) --
+// las ferias no tienen boleta física, así que solo mobile/desktop aplican.
+const FORMAT_OPTIONS: {
+  id: number;
+  label: string;
+  resolution: string;
+  ratio: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: 1,
+    label: "Móvil",
+    resolution: "1080 × 1920 px",
+    ratio: "aspect-[9/16]",
+    icon: <Smartphone className="h-4 w-4" />,
+  },
+  {
+    id: 2,
+    label: "Web",
+    resolution: "1280 × 720 px",
+    ratio: "aspect-video",
+    icon: <Monitor className="h-4 w-4" />,
+  },
+];
+
+export default function CreateFeriaModal({
+  onClose,
+  onSubmit,
+  onEventosAsignados,
+}: CreateFeriaModalProps) {
+  const [form, setForm] = useState<CreateFeriaDto>(EMPTY_FORM);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CreateFeriaDto, string>>
+  >({});
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Eventos arrastrados a "Eventos asignados" (se asignan al hacer submit).
+  // El pool paginado vive en EventosParaAsignar; el modal solo guarda los
+  // elegidos y le resuelve al pool el id que viaja en el drag & drop.
+  const [eventosAsignados, setEventosAsignados] = useState<Evento[]>([]);
+  const poolRef = useRef<EventosParaAsignarRef>(null);
+
+  const esElegible = (e: Evento) =>
+    !e.feriaId && e.visible === true && e.modalidad === EventoModalidad.DIGITAL;
+
+  const serverError = (errors as any)._server as string | undefined;
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
+  // Los updaters de setState deben ser puros (sin side effects como llamar
+  // otro setState adentro) -- en StrictMode (dev) React los invoca 2 veces
+  // para detectar justamente eso, y un setState anidado ahi se duplicaba.
+  const moverAAsignados = (eventoId: number) => {
+    // El evento se busca en el pool paginado (no solo en "disponibles")
+    // porque con el toggle "ver todos" el drag puede iniciar desde esa vista.
+    const evento = poolRef.current?.resolverEvento(eventoId);
+    if (!evento || !esElegible(evento)) return;
+    setEventosAsignados((prev) => [...prev, evento]);
+  };
+
+  const moverADisponibles = (eventoId: number) => {
+    const evento = eventosAsignados.find((e) => e.id === eventoId);
+    if (!evento) return;
+    setEventosAsignados((prev) => prev.filter((e) => e.id !== eventoId));
+    // Vuelve al pool aunque no este en la pagina cargada (ver reincorporar)
+    poolRef.current?.reincorporar(evento);
+  };
+
+  const validate = (): boolean => {
+    const next: typeof errors = {};
+
+    if (!form.nombre.trim()) next.nombre = "El nombre es obligatorio";
+    else if (form.nombre.trim().length < 3)
+      next.nombre = "El nombre debe tener al menos 3 caracteres";
+    else if (form.nombre.trim().length > 150)
+      next.nombre = "El nombre no puede superar 150 caracteres";
+
+    if (form.descripcion && form.descripcion.length > 2000)
+      next.descripcion = "La descripción no puede superar 2000 caracteres";
+
+    if (!form.fechaInicio)
+      next.fechaInicio = "La fecha de inicio es obligatoria";
+    if (!form.fechaFin) next.fechaFin = "La fecha de fin es obligatoria";
+
+    if (form.fechaInicio && form.fechaFin) {
+      const inicio = new Date(form.fechaInicio);
+      const fin = new Date(form.fechaFin);
+      if (fin < inicio)
+        next.fechaFin = "La fecha de fin no puede ser anterior a la de inicio";
+    }
+
+    if (!form.ubicacion.trim()) next.ubicacion = "La ubicación es obligatoria";
+    else if (form.ubicacion.trim().length > 200)
+      next.ubicacion = "La ubicación no puede superar 200 caracteres";
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleChange = (field: keyof CreateFeriaDto, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const selectedFormat = FORMAT_OPTIONS.find((f) => f.id === form.formatId);
+
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const feriaCreada = await onSubmit(form, imageFile ?? undefined);
+
+      // La asignacion de eventos es un paso aparte de crear la feria -- si
+      // falla, la feria ya quedo creada, no se pierde el trabajo del admin.
+      // Uno por uno con el mismo endpoint que editar el evento (aplica las
+      // reglas de PALCO); si alguno no se puede, se dice cual y por que
+      if (eventosAsignados.length > 0 && feriaCreada?.id) {
+        const asignados: Evento[] = [];
+        const fallidos: string[] = [];
+        for (const ev of eventosAsignados) {
+          try {
+            await EventsService.updateEvent(String(ev.id), {
+              feriaId: feriaCreada.id,
+            });
+            asignados.push({ ...ev, feriaId: feriaCreada.id });
+          } catch (err: any) {
+            const msg = err?.response?.data?.message;
+            fallidos.push(
+              `${ev.nombre}: ${typeof msg === "string" ? msg : "no se pudo asignar"}`,
+            );
+          }
+        }
+        if (asignados.length > 0)
+          onEventosAsignados?.({ ...feriaCreada, eventos: asignados });
+        if (fallidos.length > 0)
+          toast.error(
+            `La feria se creó, pero ${
+              fallidos.length === 1
+                ? "un evento no se pudo asignar"
+                : `${fallidos.length} eventos no se pudieron asignar`
+            }. ${fallidos.join(" · ")}`,
+            { duration: 10000 },
+          );
+      }
+
+      onClose();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      if (Array.isArray(msg)) {
+        setErrors((prev) => ({ ...prev, _server: msg.join(", ") }) as any);
+      } else if (typeof msg === "string") {
+        setErrors((prev) => ({ ...prev, _server: msg }) as any);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-[#097EEC]" />
+            <h2 className="text-base font-semibold text-gray-800">
+              Crear feria
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5">
+          {serverError && (
+            <div className="mb-4 flex items-start gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              <X className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{serverError}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,320px)_1fr] gap-6">
+            {/* Columna izquierda: datos de la feria -- panel propio, separado
+              del panel derecho por el shell glassy del modal (gap-6) */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+              {/* Selector de formato */}
+              <div className="flex gap-2 mb-1">
+                {FORMAT_OPTIONS.map((fmt) => (
+                  <button
+                    key={fmt.id}
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, formatId: fmt.id }))
+                    }
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      form.formatId === fmt.id
+                        ? "border-[#097EEC] bg-[#097EEC]/5 text-[#097EEC]"
+                        : "border-gray-200 text-gray-400 hover:border-gray-300"
+                    }`}
+                  >
+                    {fmt.icon}
+                    {fmt.label}
+                  </button>
+                ))}
+              </div>
+              {selectedFormat && (
+                <p className="text-[11px] text-gray-400 text-center mb-2">
+                  Resolución recomendada:{" "}
+                  <span className="font-semibold text-gray-600">
+                    {selectedFormat.resolution}
+                  </span>
+                </p>
+              )}
+
+              {imagePreview ? (
+                <div
+                  className={`relative rounded-xl overflow-hidden border border-gray-200 w-full ${selectedFormat?.ratio ?? "aspect-video"}`}
+                >
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="create-feria-image-input"
+                  className={`cursor-pointer border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#097EEC] hover:text-[#097EEC] transition-colors w-full ${selectedFormat?.ratio ?? "h-40"}`}
+                >
+                  <Upload className="h-6 w-6" />
+                  <span className="text-xs">
+                    Haz clic para subir una imagen
+                  </span>
+                </label>
+              )}
+              <input
+                id="create-feria-image-input"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFile}
+              />
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Nombre <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.nombre}
+                  onChange={(e) => handleChange("nombre", e.target.value)}
+                  placeholder="Ej. Feria 53 de Santander de Quilichao"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.nombre ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+                />
+                {errors.nombre && (
+                  <p className="mt-1 text-xs text-red-500">{errors.nombre}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <FileText className="h-3 w-3 inline mr-1" />
+                  Descripción
+                </label>
+                <textarea
+                  value={form.descripcion ?? ""}
+                  onChange={(e) => handleChange("descripcion", e.target.value)}
+                  placeholder="Describe la feria..."
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 outline-none transition-all resize-none focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] focus:bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <CalendarDays className="h-3 w-3 inline mr-1" />
+                    Fecha inicio <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.fechaInicio}
+                    onChange={(e) =>
+                      handleChange("fechaInicio", e.target.value)
+                    }
+                    className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.fechaInicio ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+                  />
+                  {errors.fechaInicio && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.fechaInicio}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <CalendarDays className="h-3 w-3 inline mr-1" />
+                    Fecha fin <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.fechaFin}
+                    onChange={(e) => handleChange("fechaFin", e.target.value)}
+                    className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#097EEC]/20 focus:border-[#097EEC] ${errors.fechaFin ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"}`}
+                  />
+                  {errors.fechaFin && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.fechaFin}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <FeriaMapaPicker
+                ubicacion={form.ubicacion}
+                onUbicacionChange={(value) => handleChange("ubicacion", value)}
+                latitud={form.latitud ?? null}
+                longitud={form.longitud ?? null}
+                onCoordenadasChange={(lat, lng) =>
+                  setForm((prev) => ({ ...prev, latitud: lat, longitud: lng }))
+                }
+                errorUbicacion={errors.ubicacion}
+              />
+
+              {/* Drop zone: arrastras una card desde el pool de la derecha
+                y se suelta aca -- se asigna al hacer submit, no antes. */}
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const id = Number(e.dataTransfer.getData("text/plain"));
+                  if (id) moverAAsignados(id);
+                }}
+                className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-3 min-h-[110px]"
+              >
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 mb-2">
+                  <Ticket className="h-3.5 w-3.5" />
+                  Eventos asignados ({eventosAsignados.length})
+                </p>
+                {eventosAsignados.length === 0 ? (
+                  <p className="text-[11px] text-emerald-600/60 text-center py-4">
+                    Arrastra eventos aquí desde la derecha
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {eventosAsignados.map((evento) => (
+                      <div
+                        key={evento.id}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-emerald-100"
+                      >
+                        <p className="text-xs text-gray-700 truncate flex-1">
+                          {evento.nombre}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => moverADisponibles(evento.id!)}
+                          className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
+                          title="Quitar de esta feria"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Fin columna izquierda */}
+
+            {/* Columna derecha: arriba el recinto de la feria (selector de
+              mapa; una feria nueva no tiene eventos, no aplica el aviso de
+              RN-24) y justo debajo los eventos para arrastrar */}
+            <div className="flex flex-col gap-4 min-w-0">
+              <SelectorRecinto
+                compacto
+                valor={form.recintoId ?? null}
+                asignadoId={null}
+                onCambiar={(recintoId) =>
+                  setForm((prev) => ({ ...prev, recintoId }))
+                }
+              />
+
+              {/* Columna derecha: pool de eventos que se pueden arrastrar hacia
+                "Eventos asignados" (paginado, filtrado en servidor). Con el
+                toggle se ve el catalogo completo: esos no se pueden
+                arrastrar, quedan atenuados con el motivo. */}
+              <EventosParaAsignar
+                ref={poolRef}
+                asignadosIds={eventosAsignados.map((e) => e.id!)}
+              />
+            </div>
+          </div>
+          {/* Fin grid de 2 columnas */}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[#097EEC] rounded-lg hover:bg-[#0562C7] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Creando..." : "Crear feria"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

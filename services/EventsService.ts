@@ -1,5 +1,9 @@
 import api from "./axios_config";
-import { CreateEventoDto, Evento } from "@/interfaces/event.interface";
+import {
+  CreateEventoDto,
+  Evento,
+  EventoModalidad,
+} from "@/interfaces/event.interface";
 import {
   BoletaSoporte,
   DetalleTransaccion,
@@ -29,6 +33,14 @@ import {
 
 const BASE = "/suarec/events";
 
+// Filtros del listado admin paginado. El backend solo los aplica junto a
+// page/limit (sin paginacion ignora los filtros y responde la lista completa).
+export interface FiltrosEventosAdmin {
+  sinFeria?: boolean;
+  visible?: boolean;
+  modalidad?: EventoModalidad;
+}
+
 const EventsService = {
   getAllEvents: (): Promise<{ data: Evento[] }> => api.get(BASE),
 
@@ -36,10 +48,12 @@ const EventsService = {
     api.get(`${BASE}/admin/all`),
 
   // Versión paginada del listado admin — para pantallas que no deben traer
-  // todos los eventos de una vez (ej. Estadísticas de boletería)
+  // todos los eventos de una vez (ej. Estadísticas de boletería, eventos
+  // para asignar a una feria)
   getEventosAdminPaginados: (
     page: number,
     limit: number,
+    filtros?: FiltrosEventosAdmin,
   ): Promise<{
     data: {
       eventos: Evento[];
@@ -47,10 +61,25 @@ const EventsService = {
       page: number;
       totalPaginas: number;
     };
-  }> => api.get(`${BASE}/admin/all`, { params: { page, limit } }),
+  }> =>
+    api.get(`${BASE}/admin/all`, {
+      params: {
+        page,
+        limit,
+        ...(filtros?.sinFeria !== undefined
+          ? { sinFeria: filtros.sinFeria }
+          : {}),
+        ...(filtros?.visible !== undefined ? { visible: filtros.visible } : {}),
+        ...(filtros?.modalidad ? { modalidad: filtros.modalidad } : {}),
+      },
+    }),
 
   getEventById: (id: number): Promise<{ data: Evento }> =>
     api.get(`${BASE}/${id}`),
+
+  // Completo para editarlo (feria, formato y comisión): solo súper admin
+  getEventByIdAdmin: (id: number): Promise<{ data: Evento }> =>
+    api.get(`${BASE}/admin/${id}`),
 
   createEvent: (
     dto: CreateEventoDto,
@@ -72,6 +101,8 @@ const EventsService = {
     id: string,
     dto: Partial<CreateEventoDto>,
     imageFile?: File,
+    ticketTemplateFile?: File,
+    logoPatrocinadoresFile?: File,
   ): Promise<{ data: Evento }> => {
     const form = new FormData();
     Object.entries(dto).forEach(([key, value]) => {
@@ -81,6 +112,9 @@ const EventsService = {
     });
 
     if (imageFile) form.append("image", imageFile);
+    if (ticketTemplateFile) form.append("ticketTemplate", ticketTemplateFile);
+    if (logoPatrocinadoresFile)
+      form.append("logoPatrocinadores", logoPatrocinadoresFile);
     return api.patch(`${BASE}/${id}`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -126,29 +160,6 @@ const EventsService = {
   }> =>
     api.get(`${BASE}/boletas/transacciones`, {
       params: onlyProduction ? { environment: "production" } : {},
-    }),
-
-  // Versión paginada para la tab Ventas: la búsqueda y los filtros de estado,
-  // evento y ambiente se aplican en el backend (no en memoria)
-  getTransaccionesPaginadas: (
-    page: number,
-    limit: number,
-    filtros: {
-      search?: string;
-      estado?: string;
-      eventoId?: number;
-      environment?: string;
-    } = {},
-  ): Promise<{
-    data: {
-      transacciones: TransaccionBoleta[];
-      total: number;
-      page: number;
-      totalPaginas: number;
-    };
-  }> =>
-    api.get(`${BASE}/boletas/transacciones`, {
-      params: { page, limit, ...filtros },
     }),
 
   // Listado paginado de boletas validadas por QR (Estadísticas de boletería).

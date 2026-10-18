@@ -18,6 +18,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://suarec.com"),
   title:
     "SUAREC - Conectamos talento excepcional con oportunidades extraordinarias",
   description:
@@ -48,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${inter.className} ${plusJakarta.variable}`}>
         <NotificationProvider>
           <WebSocketProvider>

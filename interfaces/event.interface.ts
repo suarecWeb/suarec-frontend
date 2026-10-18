@@ -10,6 +10,7 @@ export enum EventoTipo {
   GENERAL = "GENERAL",
   VIP = "VIP",
   PALCO = "PALCO",
+  PALCO_INDIVIDUAL = "PALCO_INDIVIDUAL",
 }
 
 // Modalidad del evento — canal exclusivo: digital (online) o físico (taquilla)
@@ -34,6 +35,8 @@ export interface Evento {
   fechaEvento: string;
   ubicacion: string;
   imagenUrl?: string;
+  plantillaTicketUrl?: string | null;
+  logoPatrocinadoresUrl?: string | null;
   aforoTotal?: number;
   aforoDisponible?: number;
   precioBase?: number;
@@ -48,6 +51,14 @@ export interface Evento {
   modalidad?: EventoModalidad;
   formatId?: number;
   format?: EventoFormat;
+  feriaId?: number;
+  feria?: {
+    id: number;
+    nombre: string;
+    visible?: boolean;
+    // Sin recinto, un evento PALCO se vende sin mapa (RN-13)
+    recintoId?: number | null;
+  };
   organizadorId?: number;
   visible?: boolean;
   createdAt?: string;
@@ -68,5 +79,8 @@ export interface CreateEventoDto {
   estado?: EventoEstado;
   modalidad?: EventoModalidad;
   formatId?: number;
+  feriaId?: number;
   removeImage?: boolean;
+  removePlantillaTicket?: boolean;
+  removeLogoPatrocinadores?: boolean;
 }
