@@ -9,6 +9,7 @@ import {
   Users,
   Ticket as TicketIcon,
   Bell,
+  Mail,
   Megaphone,
   CalendarDays,
   Smartphone,
@@ -115,6 +116,14 @@ const SidebarRoot = () => {
           value: "/admin/notificaciones?tab=banners",
           label: "Banners",
           icon: <Megaphone className="h-4 w-4" />,
+        },
+        {
+          // Plantillas de correo + campañas (roadmap
+          // email-templates-campanas.txt). Página propia: el editor con
+          // preview no cabe en una pestaña de Notificaciones.
+          value: "/admin/email",
+          label: "Email",
+          icon: <Mail className="h-4 w-4" />,
         },
       ],
     },

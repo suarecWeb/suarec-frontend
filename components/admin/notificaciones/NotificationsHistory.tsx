@@ -11,10 +11,16 @@ const STATUS_CONFIG: Record<
   PushBroadcastItem["status"],
   { label: string; className: string }
 > = {
-  pending: { label: "Pendiente", className: "bg-gray-100 text-gray-600" },
-  processing: { label: "Enviando", className: "bg-blue-100 text-blue-600" },
-  done: { label: "Enviado", className: "bg-green-100 text-green-700" },
-  failed: { label: "Falló", className: "bg-red-100 text-red-700" },
+  pending: { label: "En espera", className: "bg-gray-100 text-gray-600" },
+  processing: {
+    label: "Envío en curso",
+    className: "bg-blue-100 text-blue-600",
+  },
+  done: { label: "Envío finalizado", className: "bg-green-100 text-green-700" },
+  failed: {
+    label: "No se pudo completar",
+    className: "bg-red-100 text-red-700",
+  },
 };
 
 const NotificationsHistory = () => {
@@ -81,9 +87,17 @@ const NotificationsHistory = () => {
                 {status.label}
               </span>
               {item.status === "done" && (
-                <span className="text-xs text-gray-400">
-                  {item.successCount} de {item.totalTokens ?? 0} exitosos
-                </span>
+                <div className="text-xs text-gray-500 text-right space-y-0.5">
+                  <p>Envíos aceptados: {item.successCount}</p>
+                  {item.totalTokens != null && (
+                    <p>Destinos: {item.totalTokens}</p>
+                  )}
+                  {item.errorCount > 0 && (
+                    <p className="text-amber-700">
+                      Envíos con error: {item.errorCount}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
