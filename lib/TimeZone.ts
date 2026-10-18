@@ -34,3 +34,14 @@ export const formatDisplayDate = (iso: string): string => {
     hour12: true,
   });
 };
+
+export const formatDisplayTime = (iso: string): string => {
+  if (!iso) return "";
+
+  return new Date(iso).toLocaleTimeString("es-CO", {
+    timeZone: TZ,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
