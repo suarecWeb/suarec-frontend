@@ -254,9 +254,12 @@ export default function FormularioEventoDigital({
               />
             </Seccion>
 
-            <Seccion titulo="3 · Códigos de regalo" className={LUGAR.codigos}>
-              <CodigosRegalo f={f} evento={evento} />
-            </Seccion>
+            {/* En un evento PALCO no se muestran los códigos de regalo */}
+            {!f.esPalco && (
+              <Seccion titulo="3 · Códigos de regalo" className={LUGAR.codigos}>
+                <CodigosRegalo f={f} evento={evento} />
+              </Seccion>
+            )}
           </div>
 
           {f.esPalco &&
