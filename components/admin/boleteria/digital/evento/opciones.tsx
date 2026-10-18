@@ -1,5 +1,12 @@
 import { ReactNode } from "react";
-import { Armchair, Monitor, Smartphone, Star, User } from "lucide-react";
+import {
+  Armchair,
+  LucideIcon,
+  Monitor,
+  Smartphone,
+  Star,
+  User,
+} from "lucide-react";
 import { EventoEstado, EventoTipo } from "@/interfaces/event.interface";
 
 // Las mismas opciones que tenian las ventanas de crear y editar evento
@@ -78,6 +85,34 @@ export const TIPO_OPCIONES: {
     icon: <Armchair className="h-4 w-4" />,
   },
 ];
+
+// El tipo de boleta, con borde para no confundirlo con el estado. Lo usan
+// el tablero de Ferias y las tarjetas de Estadísticas
+export const TIPO_CONFIG: Record<
+  EventoTipo,
+  { label: string; icon: LucideIcon; color: string }
+> = {
+  [EventoTipo.GENERAL]: {
+    label: "General",
+    icon: User,
+    color: "border-gray-200 text-gray-600",
+  },
+  [EventoTipo.VIP]: {
+    label: "VIP",
+    icon: Star,
+    color: "border-amber-200 text-amber-700",
+  },
+  [EventoTipo.PALCO]: {
+    label: "Palco",
+    icon: Armchair,
+    color: "border-purple-200 text-purple-700",
+  },
+  [EventoTipo.PALCO_INDIVIDUAL]: {
+    label: "Palco individual",
+    icon: Armchair,
+    color: "border-indigo-200 text-indigo-700",
+  },
+};
 
 // Mínimo de lo que se cobra por la pasarela (precio base y precio de cada
 // palco): cobra un costo por cada transacción, así que no puede ser gratis.

@@ -19,7 +19,7 @@ export default function BotonVisibilidad({
       disabled={cambiando}
       title={texto}
       aria-label={texto}
-      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+      className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
         visible
           ? "bg-white/10 hover:bg-white/20"
           : "bg-amber-300 text-amber-900 hover:bg-amber-200"

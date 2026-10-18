@@ -3,11 +3,12 @@
 import { useEffect } from "react";
 import { X, TrendingUp, Ticket, Receipt, BadgePercent } from "lucide-react";
 import { motion } from "framer-motion";
-import { Evento } from "@/interfaces/event.interface";
+import { Evento, EventoTipo } from "@/interfaces/event.interface";
 import {
   TransaccionBoleta,
   TransaccionEstado,
 } from "@/interfaces/boleta.interface";
+import DetalleEventoPalco from "./DetalleEventoPalco";
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -72,6 +73,10 @@ const EstadisticasEventoModal = ({
     evento.precioBase ?? aprobadas[0]?.precioPorBoleta ?? 0;
   const cargoUnitario = evento.cargoSuarec ?? aprobadas[0]?.cargoPorBoleta ?? 0;
 
+  // PALCO con mapa: el precio es de cada palco y cada venta es un palco
+  const palcoConMapa =
+    evento.tipo === EventoTipo.PALCO && !!evento.feria?.recintoId;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -105,119 +110,135 @@ const EstadisticasEventoModal = ({
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* Precios unitarios configurados en el evento */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Ticket className="h-3.5 w-3.5 text-gray-400" />
-                <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-                  Precio por boleta
-                </p>
-              </div>
-              <p className="text-base font-semibold text-gray-700">
-                {formatCOP(precioUnitario)}
-              </p>
-            </div>
-            <div className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <BadgePercent className="h-3.5 w-3.5 text-blue-500" />
-                <p className="text-[11px] text-blue-600 font-medium uppercase tracking-wider">
-                  Costo de servicio por boleta
-                </p>
-              </div>
-              <p className="text-base font-semibold text-blue-700">
-                {formatCOP(cargoUnitario)}
-              </p>
-            </div>
-          </div>
-
-          {aprobadas.length === 0 ? (
-            <div className="py-10 text-center">
-              <TrendingUp className="h-8 w-8 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 font-medium">
-                Este evento aún no registra ventas aprobadas
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Las estadísticas aparecerán aquí cuando se venda la primera
-                boleta
-              </p>
-            </div>
+          {palcoConMapa && evento.id !== undefined ? (
+            <DetalleEventoPalco
+              eventoId={evento.id}
+              cargo={cargoUnitario}
+              libres={disponibles}
+              ventas={{
+                recaudado,
+                valorPalcos: valorBoletas,
+                cargoReunido: costoServicio,
+                palcosVendidos: boletasVendidas,
+              }}
+            />
           ) : (
             <>
-              {/* Tarjeta principal: recaudo del evento */}
-              <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                  <p className="text-[11px] text-emerald-600 font-medium uppercase tracking-wider">
-                    Recaudado por este evento
+              {/* Precios unitarios configurados en el evento */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Ticket className="h-3.5 w-3.5 text-gray-400" />
+                    <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
+                      Precio por boleta
+                    </p>
+                  </div>
+                  <p className="text-base font-semibold text-gray-700">
+                    {formatCOP(precioUnitario)}
                   </p>
                 </div>
-                <p className="text-xl font-bold text-emerald-700">
-                  {formatCOP(recaudado)}
-                </p>
-                <p className="text-[11px] text-emerald-500 mt-0.5">
-                  {boletasVendidas}{" "}
-                  {boletasVendidas === 1
-                    ? "boleta vendida"
-                    : "boletas vendidas"}{" "}
-                  en {aprobadas.length}{" "}
-                  {aprobadas.length === 1 ? "venta" : "ventas"}
-                </p>
-              </div>
-
-              {/* Desglose del recaudo */}
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                  <span className="text-gray-400 flex items-center gap-1.5">
-                    <Ticket className="h-3.5 w-3.5" />
-                    Valor de las boletas
-                  </span>
-                  <span className="font-medium text-gray-700">
-                    {formatCOP(valorBoletas)}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                  <span className="text-gray-400 flex items-center gap-1.5">
-                    <BadgePercent className="h-3.5 w-3.5" />
-                    Costo de servicio reunido
-                    <span className="text-[10px] text-gray-300">
-                      ({formatCOP(cargoUnitario)} × {boletasVendidas})
-                    </span>
-                  </span>
-                  <span className="font-medium text-gray-700">
-                    {formatCOP(costoServicio)}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                  <span className="text-gray-400 flex items-center gap-1.5">
-                    <Receipt className="h-3.5 w-3.5" />
-                    Boletas vendidas
-                  </span>
-                  <span className="font-medium text-gray-700">
-                    {boletasVendidas} / {total}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-gray-50">
-                  <span className="text-gray-400">Boletas disponibles</span>
-                  <span
-                    className={`font-medium ${disponibles === 0 ? "text-red-500" : "text-gray-700"}`}
-                  >
-                    {disponibles}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1.5">
-                  <span className="text-gray-400">Número de ventas</span>
-                  <span className="font-medium text-gray-700">
-                    {aprobadas.length}
-                  </span>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <BadgePercent className="h-3.5 w-3.5 text-blue-500" />
+                    <p className="text-[11px] text-blue-600 font-medium uppercase tracking-wider">
+                      Costo de servicio por boleta
+                    </p>
+                  </div>
+                  <p className="text-base font-semibold text-blue-700">
+                    {formatCOP(cargoUnitario)}
+                  </p>
                 </div>
               </div>
 
-              <p className="text-[11px] text-gray-400">
-                Valor de las boletas + costo de servicio = recaudado del evento.
-                La suma de todos los eventos equivale al recaudo global de esta
-                página.
-              </p>
+              {aprobadas.length === 0 ? (
+                <div className="py-10 text-center">
+                  <TrendingUp className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 font-medium">
+                    Este evento aún no registra ventas aprobadas
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Las estadísticas aparecerán aquí cuando se venda la primera
+                    boleta
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Tarjeta principal: recaudo del evento */}
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                      <p className="text-[11px] text-emerald-600 font-medium uppercase tracking-wider">
+                        Recaudado por este evento
+                      </p>
+                    </div>
+                    <p className="text-xl font-bold text-emerald-700">
+                      {formatCOP(recaudado)}
+                    </p>
+                    <p className="text-[11px] text-emerald-500 mt-0.5">
+                      {boletasVendidas}{" "}
+                      {boletasVendidas === 1
+                        ? "boleta vendida"
+                        : "boletas vendidas"}{" "}
+                      en {aprobadas.length}{" "}
+                      {aprobadas.length === 1 ? "venta" : "ventas"}
+                    </p>
+                  </div>
+
+                  {/* Desglose del recaudo */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between py-1.5 border-b border-gray-50">
+                      <span className="text-gray-400 flex items-center gap-1.5">
+                        <Ticket className="h-3.5 w-3.5" />
+                        Valor de las boletas
+                      </span>
+                      <span className="font-medium text-gray-700">
+                        {formatCOP(valorBoletas)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-gray-50">
+                      <span className="text-gray-400 flex items-center gap-1.5">
+                        <BadgePercent className="h-3.5 w-3.5" />
+                        Costo de servicio reunido
+                        <span className="text-[10px] text-gray-300">
+                          ({formatCOP(cargoUnitario)} × {boletasVendidas})
+                        </span>
+                      </span>
+                      <span className="font-medium text-gray-700">
+                        {formatCOP(costoServicio)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-gray-50">
+                      <span className="text-gray-400 flex items-center gap-1.5">
+                        <Receipt className="h-3.5 w-3.5" />
+                        Boletas vendidas
+                      </span>
+                      <span className="font-medium text-gray-700">
+                        {boletasVendidas} / {total}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-gray-50">
+                      <span className="text-gray-400">Boletas disponibles</span>
+                      <span
+                        className={`font-medium ${disponibles === 0 ? "text-red-500" : "text-gray-700"}`}
+                      >
+                        {disponibles}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1.5">
+                      <span className="text-gray-400">Número de ventas</span>
+                      <span className="font-medium text-gray-700">
+                        {aprobadas.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-gray-400">
+                    Valor de las boletas + costo de servicio = recaudado del
+                    evento. La suma de todos los eventos equivale al recaudo
+                    global de esta página.
+                  </p>
+                </>
+              )}
             </>
           )}
         </div>

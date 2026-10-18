@@ -17,7 +17,7 @@ export function botonesGuardar(
       <>
         <Link
           href={volver}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+          className="px-4 py-2.5 text-sm font-medium rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
         >
           Cancelar
         </Link>
@@ -25,7 +25,7 @@ export function botonesGuardar(
           type="submit"
           form={FORM_ID}
           disabled={guardando}
-          className="px-4 py-2 text-sm font-semibold rounded-lg bg-white text-[#097EEC] hover:bg-blue-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2.5 text-sm font-medium rounded-xl bg-white text-[#097EEC] hover:bg-blue-50 shadow disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {texto}
         </button>

@@ -43,6 +43,9 @@ export interface PalcoOcupadoAdmin {
   // Pago en curso con el banco: ventana de gracia (RN-17)
   graciaHasta: string | null;
   monto: number | null;
+  // Precio cobrado en la compra por la app (sin el cargo); null en los del
+  // admin. Los avisos en vivo no lo traen
+  precioVenta?: number | null;
   comprador: { id: number; nombre: string; email: string } | null;
   // Solo en los palcos que aparto el admin
   apartadoPor: { id: number; nombre: string; foto: string | null } | null;

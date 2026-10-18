@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import EventsService from "@/services/EventsService";
-import { Evento } from "@/interfaces/event.interface";
+import { Evento, EventoTipo } from "@/interfaces/event.interface";
 import {
   TransaccionBoleta,
   TransaccionEstado,
@@ -29,6 +29,7 @@ import {
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import EstadisticasEventoModal from "./EstadisticasEventoModal";
+import { TIPO_CONFIG } from "../evento/opciones";
 import { DatePicker, hoyColombia } from "@/components/ui/DatePicker";
 import { ValidadorResumen } from "@/interfaces/ventaFisica.interface";
 
@@ -481,6 +482,10 @@ const EstadisticasManagement = () => {
                     ? Math.round((regalosCanjeados / aforoRegalo) * 100)
                     : 0;
                 const isNext = nextEvent?.id === event.id;
+                const tipo = event.tipo ? TIPO_CONFIG[event.tipo] : undefined;
+                // PALCO con mapa: el aforo son palcos y lo apartado cuenta como vendido
+                const palcoConMapa =
+                  event.tipo === EventoTipo.PALCO && !!event.feria?.recintoId;
 
                 return (
                   <motion.div
@@ -507,6 +512,15 @@ const EstadisticasManagement = () => {
                       )}
                     </div>
 
+                    {tipo && (
+                      <span
+                        className={`mb-2 inline-flex items-center gap-1 rounded border bg-white px-1.5 py-0.5 text-[10px] font-semibold ${tipo.color}`}
+                      >
+                        <tipo.icon className="h-2.5 w-2.5" />
+                        {tipo.label}
+                      </span>
+                    )}
+
                     <div className="space-y-1.5 text-xs text-gray-500">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 text-gray-300" />
@@ -525,12 +539,16 @@ const EstadisticasManagement = () => {
                     <div className="mt-3">
                       <div className="flex items-center justify-between text-xs mb-1">
                         <span className="text-gray-500">
-                          {vendidas} / {total} vendidas
+                          {palcoConMapa
+                            ? `${vendidas} de ${total} palcos vendidos`
+                            : `${vendidas} / ${total} vendidas`}
                         </span>
                         <span
                           className={`font-medium ${disponible === 0 ? "text-red-500" : "text-emerald-600"}`}
                         >
-                          {disponible} disp.
+                          {palcoConMapa
+                            ? `${disponible} ${disponible === 1 ? "libre" : "libres"}`
+                            : `${disponible} disp.`}
                         </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">

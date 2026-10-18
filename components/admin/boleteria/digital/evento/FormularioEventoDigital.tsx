@@ -55,9 +55,9 @@ const ARRIBA =
   "contents xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-6 xl:items-start";
 const LUGAR = {
   datos: "order-1 xl:order-none xl:col-start-1 xl:row-start-1",
-  // Fija debajo de la barra azul (más alta con las pestañas de un PALCO)
+  // Fija debajo del menú de arriba
   feria:
-    "order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-3 xl:sticky min-w-0",
+    "order-2 xl:order-none xl:col-start-2 xl:row-start-1 xl:row-span-3 xl:sticky xl:top-24 min-w-0",
   tipo: "order-3 xl:order-none xl:col-start-1 xl:row-start-2",
   precios: "order-4 xl:order-none",
   codigos: "order-5 xl:order-none xl:col-start-1 xl:row-start-3",
@@ -196,8 +196,6 @@ export default function FormularioEventoDigital({
 
   // Al editar: si hay algo sin guardar, cambiar de pestaña pregunta
   const hayCambios = f.hayCambios || precios.cambiados;
-  // Un PALCO con recinto tiene pestañas en la barra (más alta)
-  const conPestanas = editandoPalco && !!evento?.feria?.recintoId;
 
   const textoGuardar = guardando
     ? "Guardando..."
@@ -229,9 +227,7 @@ export default function FormularioEventoDigital({
               <SeccionDatos f={f} choqueFecha={choqueFecha} />
             </Seccion>
 
-            <aside
-              className={`${LUGAR.feria} ${conPestanas ? "xl:top-52" : "xl:top-44"}`}
-            >
+            <aside className={LUGAR.feria}>
               <Seccion titulo="Feria y recinto">
                 <PanelFeria
                   ferias={ferias}
