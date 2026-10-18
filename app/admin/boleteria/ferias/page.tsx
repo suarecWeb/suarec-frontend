@@ -1,14 +1,11 @@
 "use client";
 
-import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import AdminSidePanel from "@/components/AdminSidePanel";
 import RoleGuard from "@/components/role-guard";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import FeriasManagement from "@/components/admin/boleteria/ferias/FeriasManagement";
-import PalcosPorFeria from "@/components/admin/boleteria/digital/palcos/PalcosPorFeria";
-import { CalendarDays, Ticket } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { motion } from "framer-motion";
 
 const pageVariants = {
@@ -19,11 +16,9 @@ const pageVariants = {
   },
 };
 
-// Ferias: las ferias y sus eventos. Gestion de palcos: los eventos PALCO de
-// cada feria; al elegir uno se ve su mapa con lo vendido, libre, en compra
-// y apartado. (No "Gestion de recinto": choca con Boleteria -> Recintos,
-// que es el editor del plano)
-type FeriasTab = "ferias" | "gestion-palcos";
+// Ferias: las ferias y sus eventos. El mapa de palcos de cada evento está en
+// su pestaña "Gestión de palcos" (Editar evento)
+type FeriasTab = "ferias";
 
 const TAB_CONFIG: Record<
   FeriasTab,
@@ -34,28 +29,11 @@ const TAB_CONFIG: Record<
     subtitulo: "Cada feria agrupa sus eventos, digitales y físicos",
     icon: <CalendarDays className="h-4 w-4" />,
   },
-  "gestion-palcos": {
-    label: "Gestión de palcos",
-    subtitulo:
-      "Estado de cada palco por evento: libre, en compra, apartado o vendido",
-    icon: <Ticket className="h-4 w-4" />,
-  },
 };
-
-const RUTA = "/admin/boleteria/ferias";
 
 const FeriasPageContent = () => {
   const { width: panelWidth, onMouseDown: onPanelDrag } = useResizablePanel();
-  // El tab va en la direccion (?tab=gestion-palcos): al volver del mapa de
-  // un evento o al recargar, sigue en el mismo tab
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const tab: FeriasTab =
-    searchParams.get("tab") === "gestion-palcos" ? "gestion-palcos" : "ferias";
-  const cambiarTab = (nuevo: FeriasTab) =>
-    router.replace(nuevo === "ferias" ? RUTA : `${RUTA}?tab=${nuevo}`, {
-      scroll: false,
-    });
+  const tab: FeriasTab = "ferias";
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate">
@@ -92,7 +70,6 @@ const FeriasPageContent = () => {
                   type="button"
                   role="tab"
                   aria-selected={tab === t}
-                  onClick={() => cambiarTab(t)}
                   whileTap={{ scale: 0.97 }}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm ${
                     tab === t
@@ -110,7 +87,7 @@ const FeriasPageContent = () => {
               role="tabpanel"
               className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden"
             >
-              {tab === "ferias" ? <FeriasManagement /> : <PalcosPorFeria />}
+              <FeriasManagement />
             </div>
           </div>
         </div>
@@ -119,12 +96,9 @@ const FeriasPageContent = () => {
   );
 };
 
-// Suspense: lo pide useSearchParams para compilar la pagina
 const FeriasPage = () => (
   <RoleGuard allowedRoles={["ADMIN"]}>
-    <Suspense fallback={null}>
-      <FeriasPageContent />
-    </Suspense>
+    <FeriasPageContent />
   </RoleGuard>
 );
 
