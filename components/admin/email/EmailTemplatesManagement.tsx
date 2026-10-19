@@ -48,6 +48,8 @@ const EmailTemplatesManagement = () => {
   useEffect(() => {
     void cargar();
     void cargarCupo();
+    const timer = window.setInterval(() => void cargarCupo(), 30000);
+    return () => window.clearInterval(timer);
   }, [cargar, cargarCupo]);
 
   // Si se eliminaron todas, crea una base editable sin depender del seed.
@@ -118,10 +120,12 @@ const EmailTemplatesManagement = () => {
           <p className="text-sm text-gray-700">
             Cupo de hoy:{" "}
             <span className="font-bold text-[#097EEC]">{cupo.restantes}</span>{" "}
-            envíos restantes de {cupo.tope} ({cupo.usados} usados)
+            envíos disponibles de {cupo.tope} ({cupo.usados} usados y{" "}
+            {cupo.reservados ?? 0} reservados para lotes en proceso)
             <span className="block text-xs text-gray-400 mt-0.5">
-              Las pruebas a colegas no consumen cupo — solo las campañas a todos
-              los usuarios
+              Cupo compartido entre campañas; se renueva a las 7 p. m. de
+              Colombia (00:00 UTC). Incluye intentos sin confirmación. Las
+              pruebas no consumen este cupo.
             </span>
           </p>
         </div>

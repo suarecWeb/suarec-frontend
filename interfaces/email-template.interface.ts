@@ -42,8 +42,10 @@ export interface UpdateEmailTemplateDto {
 }
 
 export interface CupoHoy {
+  destinatariosTotal: number;
   tope: number;
   usados: number;
+  reservados: number;
   restantes: number;
 }
 
@@ -53,6 +55,10 @@ export interface ResultadoCampana {
   enviados: number;
   fallidos: number;
   cupoRestante?: number;
+  loteRestantes?: number;
+  pendientes?: number;
+  inciertos?: number;
+  estado?: "pendiente" | "completada";
 }
 
 export interface EmailCampaign {
@@ -64,5 +70,10 @@ export interface EmailCampaign {
   enviados: number;
   fallidos: number;
   esPrueba: boolean;
+  loteRestantes: number;
+  loteDia: string | null;
+  pendientes: number;
+  inciertos: number;
+  estado: "pendiente" | "completada";
   createdAt: string;
 }

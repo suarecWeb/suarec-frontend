@@ -38,6 +38,7 @@ const EmailTemplateEditor = ({
   const [confirmando, setConfirmando] = useState<"prueba" | "todos" | null>(
     null,
   );
+  const envioEnCurso = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cuando cambia la plantilla seleccionada, carga su preview guardado
@@ -129,6 +130,8 @@ const EmailTemplateEditor = ({
   };
 
   const enviar = async (tipo: "prueba" | "todos") => {
+    if (envioEnCurso.current) return;
+    envioEnCurso.current = true;
     setEnviando(tipo);
     try {
       const { data } =
@@ -136,12 +139,16 @@ const EmailTemplateEditor = ({
           ? await EmailTemplatesService.enviarPruebaColegas(template.id)
           : await EmailTemplatesService.enviarCampana(template.id);
       toast.success(
-        `Envío terminado: ${data.enviados} enviados, ${data.fallidos} fallidos de ${data.destinatariosTotal}`,
+        tipo === "todos"
+          ? `Campaña #${data.campanaId}: lote de hasta ${data.loteRestantes ?? 0} destinatarios en proceso. El resto esperará otro clic. Consulta el progreso en Campañas.`
+          : `Envío terminado: ${data.enviados} enviados, ${data.fallidos} fallidos de ${data.destinatariosTotal}`,
+        { duration: 7000 },
       );
       onCupoChange();
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "No se pudo enviar");
     } finally {
+      envioEnCurso.current = false;
       setEnviando(null);
       setConfirmando(null);
     }
@@ -262,6 +269,14 @@ const EmailTemplateEditor = ({
           </div>
         </div>
 
+        <p className="text-xs text-gray-500">
+          Cada clic envía un lote de hasta {cupo?.restantes ?? "…"}{" "}
+          destinatarios, según el cupo disponible. Los demás quedan pendientes
+          hasta que vuelvas a pulsar Enviar a todos con cupo disponible. Se
+          conserva el contenido guardado al iniciar la campaña y no se repiten
+          destinatarios ya atendidos.
+        </p>
+
         {/* Acciones */}
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
           <button
@@ -280,7 +295,7 @@ const EmailTemplateEditor = ({
             <button
               type="button"
               onClick={() => void enviar("prueba")}
-              disabled={enviando !== null}
+              disabled={enviando !== null || guardando}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold animate-pulse"
             >
               <Send className="h-4 w-4" />
@@ -292,6 +307,7 @@ const EmailTemplateEditor = ({
             <button
               type="button"
               onClick={() => setConfirmando("prueba")}
+              disabled={enviando !== null || guardando}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-700 text-sm font-semibold transition-colors"
             >
               <Send className="h-4 w-4" />
@@ -303,18 +319,19 @@ const EmailTemplateEditor = ({
             <button
               type="button"
               onClick={() => void enviar("todos")}
-              disabled={enviando !== null}
+              disabled={enviando !== null || guardando}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold animate-pulse"
             >
               <Users className="h-4 w-4" />
               {enviando === "todos"
-                ? "Enviando campaña..."
-                : `¿Seguro? Enviar a todos (${cupo?.restantes ?? "?"} cupo hoy)`}
+                ? "Iniciando campaña..."
+                : `Confirmar: ${cupo?.destinatariosTotal ?? "?"} destinatarios (${cupo?.restantes ?? "?"} cupos hoy)`}
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setConfirmando("todos")}
+              disabled={enviando !== null || guardando}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-sm font-semibold transition-colors"
             >
               <Users className="h-4 w-4" />

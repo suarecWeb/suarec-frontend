@@ -60,8 +60,7 @@ const EmailTemplatesService = {
   getHistorial: (): Promise<{ data: EmailCampaign[] }> =>
     api.get(BASE_CAMPAIGNS),
 
-  // UC-5: envío a todos los usuarios con email verificado (tope diario en
-  // servidor — si el lote no cabe, el backend responde 409 sin enviar nada)
+  // UC-5: autoriza el siguiente lote manual con el cupo disponible del día.
   enviarCampana: (templateId: number): Promise<{ data: ResultadoCampana }> =>
     api.post(`${BASE_CAMPAIGNS}/${templateId}/send`),
 
