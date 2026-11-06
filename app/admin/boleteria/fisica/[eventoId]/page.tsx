@@ -68,7 +68,7 @@ const BoleteriaFisicaDetalleContent = () => {
       return;
     }
 
-    EventsService.getEventById(eventoId)
+    EventsService.getEventByIdAdmin(eventoId)
       .then((res) => setEvento(res.data))
       .catch(() => {
         toast.error("No se pudo cargar el evento");
