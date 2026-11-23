@@ -9,6 +9,7 @@ import {
   BoleteriaFisicaTicket,
   type BoleteriaFisicaTicketRef,
 } from "@/components/admin/boleteria/fisica/BoleteriaFisicaTicket";
+import { PlantillaDedicada } from "@/interfaces/plantilla-dedicada.interface";
 import EventsService from "@/services/EventsService";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
 import { MetodoPagoFisico } from "@/interfaces/boleteria-fisica.interface";
@@ -88,6 +89,31 @@ const parsePriceInput = (raw: string): number | undefined => {
 };
 
 export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
+  const [plantillaDedicada, setPlantillaDedicada] =
+    useState<PlantillaDedicada | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(true);
+  const [templateError, setTemplateError] = useState(false);
+  const [templateRetry, setTemplateRetry] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setTemplateLoading(true);
+    setTemplateError(false);
+    setPlantillaDedicada(null);
+    EventsService.getPlantillaDedicada()
+      .then(({ data }) => {
+        if (active) setPlantillaDedicada(data);
+      })
+      .catch(() => {
+        if (active) setTemplateError(true);
+      })
+      .finally(() => {
+        if (active) setTemplateLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [evento?.id, templateRetry]);
+
   const [qrValue, setQrValue] = useState("SUAREC-EVT-001-TKT-0001");
   const [tipoBoleta, setTipoBoleta] = useState<
     "GENERAL" | "VIP" | "PALCO_INDIVIDUAL"
@@ -209,6 +235,12 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
   }, []);
 
   const handleVender = async () => {
+    if (templateLoading || templateError || !plantillaDedicada) {
+      toast.error(
+        "Espera a que se consulte el modo de impresión antes de vender.",
+      );
+      return;
+    }
     if (!evento?.id) {
       toast.error("No hay un evento seleccionado");
       return;
@@ -282,7 +314,10 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
         setQrIds(nuevosQrIds);
       });
 
-      ticketRef.current?.handleAgentPrint();
+      // Impresión automática en ambos modos (taquilla: una venta = una boleta
+      // que sale sola). Se pasa el ventaId recién creado para no depender de
+      // que el re-render ya haya propagado el prop al componente de ticket.
+      ticketRef.current?.handleAgentPrint(ventaRes.data.ventaId);
 
       toast.success(`Venta #${res.data.ventaId} confirmada`);
 
@@ -656,7 +691,7 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleVender}
-          disabled={vendiendo}
+          disabled={vendiendo || templateLoading || templateError}
           className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] disabled:opacity-60 transition-colors shadow"
         >
           {vendiendo ? (
@@ -742,8 +777,14 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
         <div className="w-full flex justify-end gap-3 mb-4">
           <button
             type="button"
+            disabled={
+              templateLoading ||
+              templateError ||
+              (plantillaDedicada?.activa === true &&
+                (!resultadoVenta || vendiendo))
+            }
             onClick={() => ticketRef.current?.handlePrint()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] transition-colors shadow"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[#097EEC] text-white hover:bg-[#0766c2] disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow"
           >
             <Printer className="h-4 w-4" />
             Imprimir {qrValues.length || cantidad} ticket
@@ -751,26 +792,46 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           </button>
         </div>
 
-        <BoleteriaFisicaTicket
-          ref={ticketRef}
-          qrValue={qrValue}
-          qrValues={qrValues.length > 0 ? qrValues : undefined}
-          qrIds={qrIds.length > 0 ? qrIds : undefined}
-          tipoBoleta={tipoBoleta}
-          precio={String(precio)}
-          fechaCompra={fechaCompra}
-          cantidad={cantidad}
-          esPreview
-          evento={{
-            nombre: evento?.nombre,
-            fecha: fechaEvento,
-            hora: horaEvento,
-            lugar: ubicacion,
-            descripcion: evento?.descripcion,
-            plantillaTicketUrl: evento?.plantillaTicketUrl,
-            logoPatrocinadoresUrl: evento?.logoPatrocinadoresUrl,
-          }}
-        />
+        {templateLoading ? (
+          <p role="status">Consultando modo de impresión...</p>
+        ) : templateError ? (
+          <div role="alert" className="text-sm text-red-700">
+            No se pudo consultar el modo de impresión.{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => setTemplateRetry((value) => value + 1)}
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <BoleteriaFisicaTicket
+            key={evento?.id}
+            plantillaDedicada={plantillaDedicada}
+            ventaId={resultadoVenta?.ventaId}
+            ref={ticketRef}
+            qrValue={qrValue}
+            qrValues={qrValues.length > 0 ? qrValues : undefined}
+            qrIds={qrIds.length > 0 ? qrIds : undefined}
+            tipoBoleta={tipoBoleta}
+            precio={String(precio)}
+            fechaCompra={fechaCompra}
+            cantidad={cantidad}
+            esPreview
+            evento={{
+              nombre: evento?.nombre,
+              fecha: fechaEvento,
+              hora: horaEvento,
+              lugar: ubicacion,
+              descripcion: evento?.descripcion,
+              plantillaTicketUrl: evento?.plantillaTicketUrl,
+              logoPatrocinadoresUrl: evento?.logoPatrocinadoresUrl,
+              boletaImagenes: evento?.boletaImagenes,
+              boletaImagenesRecorte: evento?.boletaImagenesRecorte,
+            }}
+          />
+        )}
       </motion.div>
 
       {/* Overlay de carga fullscreen al confirmar venta */}
@@ -779,7 +840,9 @@ export const VentaFisicaPanel = ({ evento, onBack }: VentaFisicaPanelProps) => {
           <Loader2 className="h-12 w-12 text-white animate-spin mb-4" />
           <p className="text-white text-lg font-medium">Confirmando venta</p>
           <p className="text-white/70 text-sm mt-1">
-            Generando boletas e impresión...
+            {plantillaDedicada?.activa
+              ? "Generando boletas para revisar antes de imprimir..."
+              : "Generando boletas e impresión..."}
           </p>
         </div>
       )}

@@ -31,6 +31,12 @@ import {
   LoteFisicoResumen,
 } from "@/interfaces/boleteria-fisica.interface";
 
+import {
+  PlantillaDedicada,
+  PayloadImpresionDedicada,
+  ClaveImagenBoletaDedicada,
+} from "@/interfaces/plantilla-dedicada.interface";
+
 const BASE = "/suarec/events";
 
 // Filtros del listado admin paginado. El backend solo los aplica junto a
@@ -42,6 +48,19 @@ export interface FiltrosEventosAdmin {
 }
 
 const EventsService = {
+  getImpresionDedicada: (
+    ventaId: number,
+  ): Promise<{ data: PayloadImpresionDedicada }> =>
+    api.get(`${BASE}/boletas-fisicas/${ventaId}/imprimir-dedicada`),
+
+  getPlantillaDedicada: (): Promise<{ data: PlantillaDedicada }> =>
+    api.get(`${BASE}/boletas-fisicas/plantilla-dedicada`),
+
+  updatePlantillaDedicada: (
+    plantilla: PlantillaDedicada,
+  ): Promise<{ data: PlantillaDedicada }> =>
+    api.put(`${BASE}/boletas-fisicas/plantilla-dedicada`, plantilla),
+
   getAllEvents: (): Promise<{ data: Evento[] }> => api.get(BASE),
 
   getAllEventsAdmin: (): Promise<{ data: Evento[] }> =>
@@ -103,11 +122,19 @@ const EventsService = {
     imageFile?: File,
     ticketTemplateFile?: File,
     logoPatrocinadoresFile?: File,
+    boletaImagenFiles?: Partial<Record<ClaveImagenBoletaDedicada, File>>,
   ): Promise<{ data: Evento }> => {
     const form = new FormData();
     Object.entries(dto).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        form.append(key, String(value));
+        if (key === "removeBoletaImagenes" && Array.isArray(value)) {
+          value.forEach((slot) => form.append(key, slot));
+        } else if (key === "boletaImagenesRecorte") {
+          // El DTO del backend lo espera como string JSON (multipart).
+          form.append(key, JSON.stringify(value));
+        } else {
+          form.append(key, String(value));
+        }
       }
     });
 
@@ -115,6 +142,9 @@ const EventsService = {
     if (ticketTemplateFile) form.append("ticketTemplate", ticketTemplateFile);
     if (logoPatrocinadoresFile)
       form.append("logoPatrocinadores", logoPatrocinadoresFile);
+    Object.entries(boletaImagenFiles ?? {}).forEach(([slot, file]) => {
+      if (file) form.append(slot, file);
+    });
     return api.patch(`${BASE}/${id}`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });

@@ -8,12 +8,19 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import BoleteriaDedicadaTicket from "./BoleteriaDedicadaTicket";
+import {
+  PlantillaDedicada,
+  RecorteImagen,
+} from "@/interfaces/plantilla-dedicada.interface";
 import html2canvas from "html2canvas";
 import { TicketVisual } from "./TicketVisual";
 
+// `ventaId` opcional: al confirmar una venta se pasa el id recien creado para
+// imprimir sin depender de que el re-render ya haya propagado el prop.
 export type BoleteriaFisicaTicketRef = {
-  handlePrint: () => void;
-  handleAgentPrint: () => void;
+  handlePrint: (ventaId?: number) => void | Promise<void>;
+  handleAgentPrint: (ventaId?: number) => void | Promise<void>;
 };
 
 interface EventoInfo {
@@ -24,9 +31,13 @@ interface EventoInfo {
   descripcion?: string;
   plantillaTicketUrl?: string | null;
   logoPatrocinadoresUrl?: string | null;
+  boletaImagenes?: Record<string, string> | null;
+  boletaImagenesRecorte?: Record<string, RecorteImagen> | null;
 }
 
 interface BoleteriaFisicaTicketProps {
+  plantillaDedicada?: PlantillaDedicada | null;
+  ventaId?: number;
   qrValue: string;
   qrValues?: string[];
   qrIds?: string[];
@@ -38,11 +49,16 @@ interface BoleteriaFisicaTicketProps {
   esPreview?: boolean;
 }
 
-// El agente de impresión abre el primer puerto libre a partir del 3001 en
-// cada máquina; el frontend lo descubre preguntando /health en ese rango.
+// Puertos donde puede vivir el agente de impresión; el frontend lo descubre
+// preguntando /health en cada uno. El 3100 va primero porque es el puerto
+// actual del agente: el rango 3001-3010 quedó obsoleto cuando el agente se
+// movió para dejar de pelear con el backend NestJS por el 3001 (en Windows
+// ambos podían "ocupar" el 3001 a la vez, uno por IPv4 y otro por IPv6, y
+// quién atendía cada request dependía del orden de arranque).
 // La URL configurada manualmente en Configuración (localStorage) tiene prioridad.
-const AGENT_PORT_START = 3001;
-const AGENT_PORT_ATTEMPTS = 10;
+const AGENT_PORTS = [
+  3100, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010,
+];
 const AGENT_CONFIG_KEY = "suarec-boleteria-fisica-config";
 
 let discoveredAgentUrl: string | null = null;
@@ -88,9 +104,14 @@ async function resolvePrintAgentUrl(): Promise<string> {
     // Config inválida en localStorage: se sigue con el escaneo de puertos.
   }
 
+  // Mismo host desde el que se sirve el panel: con "localhost" fijo, abrir el
+  // admin desde otro equipo de la red (http://192.168.x.x:3000) buscaba el
+  // agente en ESE equipo y no en el que tiene la impresora.
+  const host = window.location.hostname || "localhost";
+
   const probes = await Promise.all(
-    Array.from({ length: AGENT_PORT_ATTEMPTS }, (_, i) => {
-      const url = `http://localhost:${AGENT_PORT_START + i}`;
+    AGENT_PORTS.map((port) => {
+      const url = `http://${host}:${port}`;
       return probePrintAgent(url).then((ok) => (ok ? url : null));
     }),
   );
@@ -101,7 +122,7 @@ async function resolvePrintAgentUrl(): Promise<string> {
   }
 
   throw new Error(
-    `No se encontró el agente de impresión (puertos ${AGENT_PORT_START}-${AGENT_PORT_START + AGENT_PORT_ATTEMPTS - 1}). Verifica que esté corriendo en esta máquina.`,
+    `No se encontró el agente de impresión en ${host} (puertos ${AGENT_PORTS.join(", ")}). Verifica que esté corriendo en la máquina que tiene la impresora.`,
   );
 }
 
@@ -116,7 +137,7 @@ function generarQrSecuencial(baseQr: string, index: number): string {
   return `${prefix}${nextNumber}`;
 }
 
-export const BoleteriaFisicaTicket = forwardRef<
+const PosFisicaTicket = forwardRef<
   BoleteriaFisicaTicketRef,
   BoleteriaFisicaTicketProps
 >(function BoleteriaFisicaTicket(
@@ -427,6 +448,45 @@ export const BoleteriaFisicaTicket = forwardRef<
       `}</style>
     </div>
   );
+});
+
+export const BoleteriaFisicaTicket = forwardRef<
+  BoleteriaFisicaTicketRef,
+  BoleteriaFisicaTicketProps
+>(function BoleteriaFisicaTicket(props, ref) {
+  if (props.plantillaDedicada?.activa === true) {
+    return (
+      <BoleteriaDedicadaTicket
+        ref={ref}
+        plantilla={props.plantillaDedicada}
+        ventaId={props.ventaId}
+        cantidad={props.cantidad}
+        previewImagenes={{
+          ...props.evento?.boletaImagenes,
+          ...(props.evento?.logoPatrocinadoresUrl
+            ? { logoPatrocinadores: props.evento.logoPatrocinadoresUrl }
+            : {}),
+        }}
+        previewRecortes={props.evento?.boletaImagenesRecorte ?? undefined}
+        previewValues={{
+          tipoBoleta: (props.tipoBoleta ?? "GENERAL").replace(/_/g, " "),
+          descripcion: props.evento?.descripcion ?? "",
+          fecha: props.evento?.fecha ?? "",
+          hora: props.evento?.hora ?? "",
+          lugar: props.evento?.lugar ?? "",
+          precio: new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+            maximumFractionDigits: 0,
+          }).format(Number(props.precio) || 0),
+          fechaCompra: props.fechaCompra,
+          qrId: "Se asigna al confirmar",
+        }}
+        resolveAgentUrl={resolvePrintAgentUrl}
+      />
+    );
+  }
+  return <PosFisicaTicket {...props} ref={ref} />;
 });
 
 export default BoleteriaFisicaTicket;

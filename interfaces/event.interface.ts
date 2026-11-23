@@ -1,3 +1,8 @@
+import type {
+  ClaveImagenBoletaDedicada,
+  RecorteImagen,
+} from "./plantilla-dedicada.interface";
+
 export enum EventoEstado {
   PREVENTA = "preventa",
   VENTA = "venta",
@@ -37,6 +42,9 @@ export interface Evento {
   imagenUrl?: string;
   plantillaTicketUrl?: string | null;
   logoPatrocinadoresUrl?: string | null;
+  boletaImagenes?: Record<string, string> | null;
+  // Encuadre de cada imagen de la boleta (fracciones 0..1 de la fuente).
+  boletaImagenesRecorte?: Record<string, RecorteImagen> | null;
   aforoTotal?: number;
   aforoDisponible?: number;
   precioBase?: number;
@@ -83,4 +91,8 @@ export interface CreateEventoDto {
   removeImage?: boolean;
   removePlantillaTicket?: boolean;
   removeLogoPatrocinadores?: boolean;
+  removeBoletaImagenes?: ClaveImagenBoletaDedicada[];
+  // Encuadre por ranura: { "imagenArtista": {x,y,w,h} }. El servicio lo
+  // serializa como JSON porque el endpoint recibe multipart/form-data.
+  boletaImagenesRecorte?: Record<string, RecorteImagen> | null;
 }
